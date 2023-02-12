@@ -1,12 +1,46 @@
 "use strict"
+
+
 class Shader {
     program;
     uniformLocations = [];
 
+    static defaultVertexShaderCode = `#version 300 es
+
+    in vec3 inPos;
+    in vec3 inNor;
+    in vec2 inTc;
+    
+    out vec3 N;
+    out vec2 TC;
+    
+    uniform mat4 TMat;
+    
+    void main(){
+        N = inNor;
+        TC = inTc;
+        gl_Position = TMat * vec4(inPos, 1);
+    }`;
+
+    static defaultFragmentShaderCode = `#version 300 es
+
+    precision highp float;
+    
+    uniform sampler2D albedo;
+    
+    in vec3 N;
+    in vec2 TC;
+    out vec4 outColor;
+    
+    void main(){
+        outColor = texture(albedo, TC);
+    }`
+
     constructor(vs, fs) {
-        this.program = this.#createProgram(
-            this.#createShader(gl.VERTEX_SHADER, getTextFromFile(vs)), this.#createShader(gl.FRAGMENT_SHADER, getTextFromFile(fs)));
-        if (!this.program) throw "Could not create shader!";
+        this.program = Shader.#createProgram(
+            Shader.#createShader(gl.VERTEX_SHADER,
+                vs), Shader.#createShader(gl.FRAGMENT_SHADER,
+                    fs));
 
         for (let i = 2; i < arguments.length; i++) {
             this.uniformLocations.push(gl.getUniformLocation(this.program, arguments[i]));
@@ -17,7 +51,7 @@ class Shader {
         gl.uniformMatrix4fv(this.uniformLocations[loc], true, new Float32Array(mat4));
     }
 
-    #createShader(type, source) {
+    static #createShader(type, source) {
         let shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
@@ -29,7 +63,7 @@ class Shader {
         return undefined;
     }
 
-    #createProgram(vertexShader, fragmentShader) {
+    static #createProgram(vertexShader, fragmentShader) {
         let program = gl.createProgram();
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
@@ -37,7 +71,7 @@ class Shader {
         if (gl.getProgramParameter(program, gl.LINK_STATUS))
             return program;
 
-        console.log(gl.getProgramInfoLog(program));
+        console.error(gl.getProgramInfoLog(program));
         gl.deleteProgram(program);
         return undefined;
     }

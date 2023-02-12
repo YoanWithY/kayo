@@ -8,7 +8,7 @@ function init() {
     if (!gl)
         return;
 
-    shader = new Shader("staticMesh3Vert.glsl", "staticPBRMRFrag.glsl", "TMat");
+    shader = new Shader(Shader.defaultVertexShaderCode, Shader.defaultFragmentShaderCode, "TMat");
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);

@@ -19,9 +19,6 @@ function setupCanvas(canvas) {
 
 setupCanvas(glCanvas);
 
-function getTextFromFile(file) {
-    const request = new XMLHttpRequest();
-    request.open('GET', file, false);
-    request.send(null);
-    return request.responseText;
+async function textFromFile(file) {
+    return await (await fetch(file)).text();
 }
