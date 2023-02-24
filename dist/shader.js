@@ -1,15 +1,9 @@
 "use strict";
-var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-};
-var _a, _Shader_createShader, _Shader_createProgram;
 let projection = mat4.perspective(60, gl.canvas.width / gl.canvas.height, 0.1, 1000);
 class Shader {
     constructor(vs, fs, ...args) {
         this.uniformLocations = [];
-        this.program = __classPrivateFieldGet(Shader, _a, "m", _Shader_createProgram).call(Shader, __classPrivateFieldGet(Shader, _a, "m", _Shader_createShader).call(Shader, gl.VERTEX_SHADER, vs), __classPrivateFieldGet(Shader, _a, "m", _Shader_createShader).call(Shader, gl.FRAGMENT_SHADER, fs));
+        this.program = Shader.createProgram(Shader.createShader(gl.VERTEX_SHADER, vs), Shader.createShader(gl.FRAGMENT_SHADER, fs));
         gl.uniformBlockBinding(this.program, gl.getUniformBlockIndex(this.program, "view"), 0);
         gl.uniformBlockBinding(this.program, gl.getUniformBlockIndex(this.program, "model"), 1);
         for (let i = 0; i < args.length; i++) {
@@ -34,27 +28,28 @@ class Shader {
     loadMat4(loc, mat4) {
         gl.uniformMatrix4fv(this.uniformLocations[loc], false, new Float32Array(mat4));
     }
+    static createShader(type, source) {
+        let shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+            return shader;
+        console.log(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        throw undefined;
+    }
+    static createProgram(vertexShader, fragmentShader) {
+        let program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        if (gl.getProgramParameter(program, gl.LINK_STATUS))
+            return program;
+        console.error(gl.getProgramInfoLog(program));
+        gl.deleteProgram(program);
+        throw undefined;
+    }
 }
-_a = Shader, _Shader_createShader = function _Shader_createShader(type, source) {
-    let shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS))
-        return shader;
-    console.log(gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
-    throw undefined;
-}, _Shader_createProgram = function _Shader_createProgram(vertexShader, fragmentShader) {
-    let program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-    if (gl.getProgramParameter(program, gl.LINK_STATUS))
-        return program;
-    console.error(gl.getProgramInfoLog(program));
-    gl.deleteProgram(program);
-    throw undefined;
-};
 Shader.numModelMats = 1024;
 Shader.defaultVertexShaderCode = `#version 300 es
 

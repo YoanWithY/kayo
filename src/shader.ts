@@ -135,9 +135,9 @@ class Shader {
     }`
 
     constructor(vs: string, fs: string, ...args: string[]) {
-        this.program = Shader.#createProgram(
-            Shader.#createShader(gl.VERTEX_SHADER, vs),
-            Shader.#createShader(gl.FRAGMENT_SHADER, fs));
+        this.program = Shader.createProgram(
+            Shader.createShader(gl.VERTEX_SHADER, vs),
+            Shader.createShader(gl.FRAGMENT_SHADER, fs));
 
         gl.uniformBlockBinding(this.program, gl.getUniformBlockIndex(this.program, "view"), 0);
         gl.uniformBlockBinding(this.program, gl.getUniformBlockIndex(this.program, "model"), 1);
@@ -171,7 +171,7 @@ class Shader {
         gl.uniformMatrix4fv(this.uniformLocations[loc], false, new Float32Array(mat4));
     }
 
-    static #createShader(type: number, source: string) {
+    private static createShader(type: number, source: string) {
         let shader = gl.createShader(type) as WebGLShader;
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
@@ -183,7 +183,7 @@ class Shader {
         throw undefined;
     }
 
-    static #createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader) {
+    private static createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader) {
         let program = gl.createProgram() as WebGLProgram;
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
