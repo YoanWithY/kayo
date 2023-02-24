@@ -5,17 +5,24 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGL Test</title>
+    <link rel="stylesheet" href="style.css">
+    <title>Kayo Engine</title>
 </head>
 
 <body>
-    <h1>Kayo</h1>
-    <canvas id="glCanvas" width="1024" height="512"></canvas>
-    <script src="glInit.js"></script>
-    <script src="math.js"></script>
-    <script src="shader.js"></script>
-    <script src="glStaticObject.js"></script>
-    <script src="renderer.js"></script>
+    <div style="position:absolute; z-index:1;">
+        <p>Kayo Engine Pre-Alpha 0.0.1</p>
+        <div>FPS: <span id="fps"></span></div>
+    </div>
+
+    <canvas id="glCanvas"></canvas>
+    <script src="dist/glInit.js"></script>
+    <script src="dist/math.js"></script>
+    <script src="dist/shader.js"></script>
+    <script src="dist/glStaticObject.js"></script>
+    <script src="dist/project.js"></script>
+    <script src="dist/scene.js"></script>
+    <script src="dist/renderer.js"></script>
 </body>
 
 </html>
