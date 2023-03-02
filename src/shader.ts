@@ -131,7 +131,7 @@ class Shader {
     void main(){
         float wp = weight / z;
         outColor = color;
-        outColor.a *= min(wp, 1.0) * smoothstep(30.0, 15.0, length(cPos));
+        outColor.a *= min(wp, 1.0) * smoothstep(50.0, 10.0, length(cPos));
     }`
 
     constructor(vs: string, fs: string, ...args: string[]) {

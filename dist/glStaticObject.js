@@ -153,7 +153,7 @@ class Lines extends glObject {
     }
     appendLongLine(p, t, color) {
         let tn = vec3.scalarMul(vec3.normalize(t), 10);
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 5; i++) {
             this.append(vec3.add(p, vec3.scalarMul(tn, i)).concat(vec3.add(p, vec3.scalarMul(tn, i + 1))), color);
             this.append(vec3.add(p, vec3.scalarMul(tn, -i)).concat(vec3.add(p, vec3.scalarMul(tn, -(i + 1)))), color);
         }

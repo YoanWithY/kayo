@@ -8,7 +8,7 @@ let line = new Lines(1);
 line.appendLongLine([0, 0, 0], [1, 0, 0], [1, 0, 0, 0.4]);
 line.appendLongLine([0, 0, 0], [0, 1, 0], [0, 1, 0, 0.4]);
 line.appendLongLine([0, 0, 0], [0, 0, 1], [0, 0, 1, 0.4]);
-line.appendGrid(30);
+line.appendGrid(50);
 line.build();
 function init() {
     if (!gl)
@@ -20,14 +20,17 @@ function init() {
     gl.clearColor(0.1, 0.1, 0.1, 1);
     shader2d = new Shader(Shader.defaultLineVertexShaderCode, Shader.defaultLineFragmentShaderCode);
     gl.disable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
     gl.enable(gl.DEPTH_TEST);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.modelTransformationUB);
-    objs.push(new Cube(0));
-    const ts = objs[0].transformationStack;
-    ts[0].setValues(1, 1, 1);
-    ts[2].setValues(1, 1, 1);
-    Shader.loadModelMatrix(0, ts.getTransformationMatrix());
+    for (let i = 0; i < 100; i++) {
+        objs.push(new Cube(i));
+        const ts = objs[i].transformationStack;
+        ts[1].setValues(Math.random(), Math.random(), Math.random());
+        ts[2].setValues(Math.random() * 100 - 50, Math.random() * 100 - 50, Math.random() * 100 - 50);
+        Shader.loadModelMatrix(i, ts.getTransformationMatrix());
+    }
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     setupCanvas();
     window.requestAnimationFrame(renderloop);
@@ -38,12 +41,12 @@ function renderloop(timestamp) {
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
     mat.bindTextures();
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
-    let val = timestamp / 5000;
-    let viewMat = mat4.rotateZ(mat4.rotateX(mat4.translate(mat4.rotationX(toRAD(-90)), 0, 10, 0), 0.4), val);
+    let val = timestamp / 10000;
+    let viewMat = mat4.rotateZ(mat4.rotateX(mat4.translate(mat4.rotationX(toRAD(-90)), 0, 10, 0), 0.5), val);
     Shader.loadViewMatrix(viewMat);
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     gl.useProgram(shader.program);
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < objs.length; i++) {
         let o = objs[i];
         shader.loadui(0, o.index);
         o.bind();
