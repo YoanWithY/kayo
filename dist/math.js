@@ -66,8 +66,19 @@ class vec3 extends vec2 {
     static scalarDiv(v, s) {
         return [v[0] / s, v[1] / s, v[2] / s];
     }
+    static cross(a, b) {
+        return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    }
     static norm(a) {
         return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+    }
+    static sphericalToEuclidian(theta, phi, r) {
+        const st = Math.sin(theta);
+        return [r * st * Math.cos(phi), r * st * Math.sin(phi), r * Math.cos(theta)];
+    }
+    static sphericalToEuclidian2(theta, phi) {
+        const st = Math.sin(theta);
+        return [st * Math.cos(phi), st * Math.sin(phi), Math.cos(theta)];
     }
     static normalize(a) {
         const l = 1.0 / vec3.norm(a);
@@ -77,6 +88,9 @@ class vec3 extends vec2 {
         return [a[0], a[1], a[2]];
     }
 }
+vec3.X = [1, 0, 0];
+vec3.Y = [0, 1, 0];
+vec3.Z = [0, 0, 1];
 class vec4 extends vec3 {
     static add(a, b) {
         return [a[0] + b[0], a[1] + b[1], a[2] + b[2], a[3] + b[3]];
@@ -142,6 +156,9 @@ class mat4 {
     }
     static transpose(m) {
         return [m[0], m[4], m[8], m[12], m[1], m[5], m[9], m[13], m[2], m[6], m[10], m[14], m[3], m[7], m[11], m[15]];
+    }
+    static getTranslation(m) {
+        return [m[12], m[13], m[14]];
     }
     static translation(x, y, z) {
         return [

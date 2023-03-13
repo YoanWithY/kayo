@@ -2,23 +2,17 @@
 let shader;
 let shader2d;
 let mat = new material();
+let cam = new Camera();
 mat.setTexture(0, "TexturesCom_Tiles_Decorative_1K_albedo.png");
 let objs = [];
-let line = new Lines(1);
-line.appendLongLine([0, 0, 0], [1, 0, 0], [1, 0, 0, 0.4]);
-line.appendLongLine([0, 0, 0], [0, 1, 0], [0, 1, 0, 0.4]);
-line.appendLongLine([0, 0, 0], [0, 0, 1], [0, 0, 1, 0.4]);
-line.appendGrid(50);
-line.build();
 function init() {
     if (!gl)
         return;
-    shader = new Shader(Shader.defaultVertexShaderCode, Shader.defaultFragmentShaderCode, "index");
+    shader = new Shader(Shader.defaultVertexShaderCode, Shader.defaultFragmentShaderCode, ["index"]);
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
     gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array(projection.concat(mat4.identity())));
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     gl.clearColor(0.1, 0.1, 0.1, 1);
-    shader2d = new Shader(Shader.defaultLineVertexShaderCode, Shader.defaultLineFragmentShaderCode);
     gl.disable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
     gl.enable(gl.DEPTH_TEST);
@@ -31,6 +25,7 @@ function init() {
         ts[2].setValues(Math.random() * 100 - 50, Math.random() * 100 - 50, Math.random() * 100 - 50);
         Shader.loadModelMatrix(i, ts.getTransformationMatrix());
     }
+    cam.transformationStack[2].setValues(0, 0, 10);
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     setupCanvas();
     window.requestAnimationFrame(renderloop);
@@ -42,8 +37,11 @@ function renderloop(timestamp) {
     mat.bindTextures();
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
     let val = timestamp / 10000;
-    let viewMat = mat4.rotateZ(mat4.rotateX(mat4.translate(mat4.rotationX(toRAD(-90)), 0, 10, 0), 0.5), val);
+    cam.transformationStack[2].setValues(-4 * Math.sin(val), -4 * Math.cos(val), 4);
+    cam.transformationStack[1].setValues(toRAD(90), -val, 0);
+    let viewMat = cam.getViewMatrix();
     Shader.loadViewMatrix(viewMat);
+    Shader.loadCameraPosition(cam.getWorldLocation());
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     gl.useProgram(shader.program);
     for (let i = 0; i < objs.length; i++) {
@@ -52,11 +50,8 @@ function renderloop(timestamp) {
         o.bind();
         o.render();
     }
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.useProgram(shader2d.program);
-    line.prepAndRender(mat4.mult(projection, viewMat));
-    gl.disable(gl.BLEND);
+    Grid3D.prep(cam.getWorldLocation());
+    Grid3D.render();
     window.requestAnimationFrame(renderloop);
     fpsElem.textContent = (1000 / (timestamp - prevTime)).toFixed(0);
     prevTime = timestamp;

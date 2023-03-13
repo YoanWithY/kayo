@@ -1,5 +1,10 @@
 "use strict"
 let projection = mat4.perspective(60, gl.canvas.width / gl.canvas.height, 0.1, 1000);
+const ubView = `layout(std140) uniform view {
+    mat4 projectionMat;
+    mat4 viewMat;
+    vec4 cameraPosition;
+};`
 class Shader {
     program: WebGLProgram;
     uniformLocations: WebGLUniformLocation[] = [];
@@ -20,10 +25,7 @@ class Shader {
     out vec2 TC;
     out vec3 barycentric;
     
-    layout(std140) uniform view {
-        mat4 projectionMat;
-        mat4 viewMat;
-    };
+   ${ubView}
 
     layout(std140) uniform model{
       mat4 modelMat[${Shader.numModelMats}];
@@ -79,71 +81,44 @@ class Shader {
 
     static modelTransformationUB = gl.createBuffer();
     static viewUB = gl.createBuffer();
+    static gridDataBuffer = gl.createBuffer();
 
     static {
         gl.bindBufferBase(gl.UNIFORM_BUFFER, 0, Shader.viewUB);
-        gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(2 * 16), gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(2 * 16 + 4), gl.DYNAMIC_DRAW);
 
         gl.bindBufferBase(gl.UNIFORM_BUFFER, 1, Shader.modelTransformationUB);
         gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(Shader.numModelMats * 16), gl.DYNAMIC_DRAW);
+
+        gl.bindBufferBase(gl.UNIFORM_BUFFER, 2, Shader.gridDataBuffer);
+        gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(2 * 2 * 64 * 16), gl.DYNAMIC_DRAW);
+
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     }
 
-    static defaultLineVertexShaderCode = `#version 300 es
-
-    in vec3 inPos;
-    in vec2 inOff;
-    in vec4 inColor;
-    in float inWeight;
-    
-    layout(std140) uniform view {
-        mat4 projectionMat;
-        mat4 viewMat;
-    };
-
-    out vec4 color;
-    out float weight;
-    out vec3 cPos;
-    out float z;
-    
-    void main(){
-        cPos = (viewMat * vec4(inPos, 1)).xyz;
-        gl_Position = projectionMat * vec4(cPos, 1);
-        gl_Position += vec4(inOff * 2.0 * gl_Position.w, 0,0);
-        color = inColor;
-        weight = inWeight / sqrt(2.0) * gl_Position.w;   
-        z = gl_Position.w;   
-    }`;
-
-    static defaultLineFragmentShaderCode = `#version 300 es
-
+    static emptyFragmentShader = `#version 300 es
     precision highp float;
-    
-    uniform sampler2D albedo;
-    
-    in vec4 color;
-    in float weight;
-    in vec3 cPos;
-    in float z;
-
-    out vec4 outColor;
-    
     void main(){
-        float wp = weight / z;
-        outColor = color;
-        outColor.a *= min(wp, 1.0) * smoothstep(50.0, 10.0, length(cPos));
     }`
 
-    constructor(vs: string, fs: string, ...args: string[]) {
+    constructor(vs: string, fs: string, uniforms?: string[], transformFeedbackVarings?: string[], bufferMode?: number) {
         this.program = Shader.createProgram(
             Shader.createShader(gl.VERTEX_SHADER, vs),
-            Shader.createShader(gl.FRAGMENT_SHADER, fs));
+            Shader.createShader(gl.FRAGMENT_SHADER, fs), transformFeedbackVarings, bufferMode);
 
-        gl.uniformBlockBinding(this.program, gl.getUniformBlockIndex(this.program, "view"), 0);
-        gl.uniformBlockBinding(this.program, gl.getUniformBlockIndex(this.program, "model"), 1);
+        let ub;
+        if ((ub = gl.getUniformBlockIndex(this.program, "view")) < 128)
+            gl.uniformBlockBinding(this.program, ub, 0);
+        if ((ub = gl.getUniformBlockIndex(this.program, "model")) < 128)
+            gl.uniformBlockBinding(this.program, ub, 1);
+        if ((ub = gl.getUniformBlockIndex(this.program, "grid")) < 128)
+            gl.uniformBlockBinding(this.program, ub, 2);
 
-        for (let i = 0; i < args.length; i++) {
-            this.uniformLocations.push(gl.getUniformLocation(this.program, args[i]) as WebGLUniformLocation);
+
+        if (uniforms !== undefined) {
+            for (let i = 0; i < uniforms.length; i++) {
+                this.uniformLocations.push(gl.getUniformLocation(this.program, uniforms[i]) as WebGLUniformLocation);
+            }
         }
     }
 
@@ -155,12 +130,24 @@ class Shader {
         gl.bufferSubData(gl.UNIFORM_BUFFER, 64, new Float32Array(mat));
     }
 
+    static loadCameraPosition(pos: number[]) {
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 128, new Float32Array(pos));
+    }
+
     static loadModelMatrix(i: number, mat: number[]) {
         gl.bufferSubData(gl.UNIFORM_BUFFER, i * 64, new Float32Array(mat));
     }
 
     loadf(loc: number, f: number) {
         gl.uniform1f(this.uniformLocations[loc], f);
+    }
+
+    loadVec2(loc: number, x: number, y: number) {
+        gl.uniform2f(this.uniformLocations[loc], x, y);
+    }
+
+    loadVec3(loc: number, x: number, y: number, z: number) {
+        gl.uniform3f(this.uniformLocations[loc], x, y, z);
     }
 
     loadui(loc: number, i: number) {
@@ -183,10 +170,14 @@ class Shader {
         throw undefined;
     }
 
-    private static createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader) {
+    private static createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader, transformFeedbackVarings?: string[], bufferMode?: number) {
         let program = gl.createProgram() as WebGLProgram;
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
+
+        if (transformFeedbackVarings !== undefined && bufferMode !== undefined)
+            gl.transformFeedbackVaryings(program, transformFeedbackVarings, bufferMode);
+
         gl.linkProgram(program);
         if (gl.getProgramParameter(program, gl.LINK_STATUS))
             return program;

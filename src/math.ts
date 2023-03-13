@@ -1,4 +1,3 @@
-
 function toDEG(RAD: number) {
     return RAD * 57.295779513082320876798154814105;
 }
@@ -61,6 +60,10 @@ class vec2 {
  * @class Providing static to typical vector 3 functionalities.
  * @author YoGames Studios */
 class vec3 extends vec2 {
+    static readonly X = [1, 0, 0];
+    static readonly Y = [0, 1, 0];
+    static readonly Z = [0, 0, 1];
+
     static add(a: number[], b: number[]) {
         return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
     }
@@ -93,8 +96,22 @@ class vec3 extends vec2 {
         return [v[0] / s, v[1] / s, v[2] / s];
     }
 
+    static cross(a: number[], b: number[]) {
+        return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    }
+
     static norm(a: number[]) {
         return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+    }
+
+    static sphericalToEuclidian(theta: number, phi: number, r: number) {
+        const st = Math.sin(theta);
+        return [r * st * Math.cos(phi), r * st * Math.sin(phi), r * Math.cos(theta)];
+    }
+
+    static sphericalToEuclidian2(theta: number, phi: number) {
+        const st = Math.sin(theta);
+        return [st * Math.cos(phi), st * Math.sin(phi), Math.cos(theta)];
     }
 
     static normalize(a: number[]) {
@@ -153,7 +170,6 @@ class vec4 extends vec3 {
         return [a[0] * l, a[1] * l, a[2] * l, a[3] * l];
     }
 }
-
 
 /**
  * @class Providing static to typical matrix 4x4 functionalities.
@@ -246,6 +262,10 @@ class mat4 {
      */
     static transpose(m: number[]) {
         return [m[0], m[4], m[8], m[12], m[1], m[5], m[9], m[13], m[2], m[6], m[10], m[14], m[3], m[7], m[11], m[15]];
+    }
+
+    static getTranslation(m: number[]) {
+        return [m[12], m[13], m[14]];
     }
 
     /**Returns a translation matrix
