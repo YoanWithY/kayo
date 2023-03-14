@@ -27,10 +27,10 @@ class Grid3D {
     static minorRange = 200;
     static vertexShaderCode = `#version 300 es
 
-    in vec3 inPos;
-    in vec2 inOff;
-    in float inWeight;
-    in uint axis;
+    layout(location = 0) in vec3 inPos;
+    layout(location = 1) in vec2 inOff;
+    layout(location = 2) in float inWeight;
+    layout(location = 3) in uint axis;
     
     ${ubView}
 
@@ -238,6 +238,8 @@ class Grid3D {
             ind.push(i, i + 1, i + 3, i + 3, i + 1, i + 4, i + 1, i + 2, i + 4, i + 4, i + 2, i + 5);
 
         this.count = ind.length;
+
+        console.log(this.numLineSegments * 6);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.IBO);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ind), gl.STATIC_DRAW);

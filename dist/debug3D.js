@@ -103,10 +103,10 @@ _a = Grid3D;
 Grid3D.minorRange = 200;
 Grid3D.vertexShaderCode = `#version 300 es
 
-    in vec3 inPos;
-    in vec2 inOff;
-    in float inWeight;
-    in uint axis;
+    layout(location = 0) in vec3 inPos;
+    layout(location = 1) in vec2 inOff;
+    layout(location = 2) in float inWeight;
+    layout(location = 3) in uint axis;
     
     ${ubView}
 
@@ -240,6 +240,7 @@ Grid3D.renderShader = new Shader(_a.vertexShaderCode, _a.fragmentShaderCode, ["p
     for (let i = 0; i < _a.numLineSegments * 6; i += 6)
         ind.push(i, i + 1, i + 3, i + 3, i + 1, i + 4, i + 1, i + 2, i + 4, i + 4, i + 2, i + 5);
     _a.count = ind.length;
+    console.log(_a.numLineSegments * 6);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, _a.IBO);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ind), gl.STATIC_DRAW);
     gl.bindVertexArray(null);
