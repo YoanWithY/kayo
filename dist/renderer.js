@@ -30,14 +30,21 @@ function init() {
     setupCanvas();
     window.requestAnimationFrame(renderloop);
 }
+let frameCounter = 0;
 let prevTime = 0;
+let prevFPS = [];
 const fpsElem = document.querySelector("#fps");
+function avg(arr) {
+    let sum = 0;
+    arr.forEach(v => sum += v);
+    return sum / arr.length;
+}
 function renderloop(timestamp) {
     gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
     mat.bindTextures();
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
-    let val = timestamp / 10000;
-    cam.transformationStack[2].setValues(-4 * Math.sin(val), -4 * Math.cos(val), 4);
+    let val = timestamp / 5000;
+    cam.transformationStack[2].setValues(-64 * Math.sin(val), -64 * Math.cos(val), 30);
     cam.transformationStack[1].setValues(toRAD(90), -val, 0);
     let viewMat = cam.getViewMatrix();
     Shader.loadViewMatrix(viewMat);
@@ -53,7 +60,9 @@ function renderloop(timestamp) {
     Grid3D.prep(cam.getWorldLocation());
     Grid3D.render();
     window.requestAnimationFrame(renderloop);
-    fpsElem.textContent = (1000 / (timestamp - prevTime)).toFixed(0);
+    prevFPS[frameCounter % 16] = Math.round(1000 / (timestamp - prevTime));
+    fpsElem.textContent = (avg(prevFPS)).toFixed(0);
     prevTime = timestamp;
+    frameCounter++;
 }
 init();

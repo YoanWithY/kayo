@@ -25,54 +25,49 @@ void main(){
 }
 `;
 class Grid3D {
-    static appendD(lsPos, pos, weight, d) {
-        const subs = Math.floor((128 - Math.sqrt(64 * (d - 1))) / 8);
+    static subdivisons(d) {
+        return Math.max(Math.floor((128 - Math.sqrt(64 * (d - 1))) / 8), 2);
+    }
+    static appendD(pos, weight, d, spacing) {
+        const subs = this.subdivisons(d);
         const dists = [];
         for (let x = 0; x <= subs; x++) {
             const dn = x / subs;
-            dists[x] = 196 * dn * dn;
+            dists[x] = this.minorRange * dn * dn;
         }
         const max = dists.length - 1;
         for (let i = 0; i < max; i++) {
             pos.push(dists[i], d, 0, dists[i], d, 0, dists[i], d, 0, dists[i + 1], d, 0, dists[i + 1], d, 0, dists[i + 1], d, 0);
             weight.push(0, 0, 255, 0, 0, 0, 0, 0, 255, 0, 0, 0);
-            lsPos.push(dists[i], d, 0, dists[i + 1], d, 0);
         }
         for (let i = 0; i < max; i++) {
             pos.push(-dists[i], d, 0, -dists[i], d, 0, -dists[i], d, 0, -dists[i + 1], d, 0, -dists[i + 1], d, 0, -dists[i + 1], d, 0);
             weight.push(0, 0, 255, 0, 0, 0, 0, 0, 255, 0, 0, 0);
-            lsPos.push(-dists[i], d, 0, -dists[i + 1], d, 0);
         }
         for (let i = 0; i < max; i++) {
             pos.push(d, dists[i], 0, d, dists[i], 0, d, dists[i], 0, d, dists[i + 1], 0, d, dists[i + 1], 0, d, dists[i + 1], 0);
             weight.push(0, 1, 255, 1, 0, 1, 0, 1, 255, 1, 0, 1);
-            lsPos.push(d, dists[i], 0, d, dists[i + 1], 0);
         }
         for (let i = 0; i < max; i++) {
             pos.push(d, -dists[i], 0, d, -dists[i], 0, d, -dists[i], 0, d, -dists[i + 1], 0, d, -dists[i + 1], 0, d, -dists[i + 1], 0);
             weight.push(0, 1, 255, 1, 0, 1, 0, 1, 255, 1, 0, 1);
-            lsPos.push(d, -dists[i], 0, d, -dists[i + 1], 0);
         }
-        const nd = 1 - d;
+        const nd = spacing - d;
         for (let i = 0; i < max; i++) {
             pos.push(dists[i], nd, 0, dists[i], nd, 0, dists[i], nd, 0, dists[i + 1], nd, 0, dists[i + 1], nd, 0, dists[i + 1], nd, 0);
             weight.push(0, 0, 255, 0, 0, 0, 0, 0, 255, 0, 0, 0);
-            lsPos.push(dists[i], nd, 0, dists[i + 1], nd, 0);
         }
         for (let i = 0; i < max; i++) {
             pos.push(-dists[i], nd, 0, -dists[i], nd, 0, -dists[i], nd, 0, -dists[i + 1], nd, 0, -dists[i + 1], nd, 0, -dists[i + 1], nd, 0);
             weight.push(0, 0, 255, 0, 0, 0, 0, 0, 255, 0, 0, 0);
-            lsPos.push(-dists[i], nd, 0, -dists[i + 1], nd, 0);
         }
         for (let i = 0; i < max; i++) {
             pos.push(nd, dists[i], 0, nd, dists[i], 0, nd, dists[i], 0, nd, dists[i + 1], 0, nd, dists[i + 1], 0, nd, dists[i + 1], 0);
             weight.push(0, 1, 255, 1, 0, 1, 0, 1, 255, 1, 0, 1);
-            lsPos.push(nd, dists[i], 0, nd, dists[i + 1], 0);
         }
         for (let i = 0; i < max; i++) {
             pos.push(nd, -dists[i], 0, nd, -dists[i], 0, nd, -dists[i], 0, nd, -dists[i + 1], 0, nd, -dists[i + 1], 0, nd, -dists[i + 1], 0);
             weight.push(0, 1, 255, 1, 0, 1, 0, 1, 255, 1, 0, 1);
-            lsPos.push(nd, -dists[i], 0, nd, -dists[i + 1], 0);
         }
     }
     static prep(wl) {
@@ -105,6 +100,7 @@ class Grid3D {
     }
 }
 _a = Grid3D;
+Grid3D.minorRange = 200;
 Grid3D.vertexShaderCode = `#version 300 es
 
     in vec3 inPos;
@@ -120,6 +116,7 @@ Grid3D.vertexShaderCode = `#version 300 es
     out float weight;
     out vec4 color;
     out float z, minFade, maxFade;
+    bool isX, isY;
 
     float rand(float f){
         return fract(sin(f * 100.923) * 43758.5453);
@@ -133,35 +130,45 @@ Grid3D.vertexShaderCode = `#version 300 es
         return axis == 1u && p.x == 0.0;
     }
 
-    bool isMajor(vec3 p){
-        return  axis == 0u && int(p.y) % 5 == 0 || axis == 1u && int(p.x) % 5 == 0;
+    bool isMedium(vec3 p){
+        return  isX && int(p.y) % 10 == 0 || isY && int(p.x) % 10 == 0;
+    }
+    const float mediumStartP = ${(_a.minorRange + 10).toFixed(1)}, mediumStartN = -mediumStartP + 10.0;
+    bool isMediumLine(vec3 p){
+        return isX && (p.y >= mediumStartP || p.y <= mediumStartN) || isY && (p.x >= mediumStartP || p.x <= mediumStartN);
     }
 
     // #define DEBUG
-    #define AXIS_COLOR vec4(0.25, 0.25, 0.25, 0.25)
-    #define RED vec4(1.0, 0.0, 0.0, 0.25)
-    #define GREEN vec4(0.0, 1.0, 0.0, 0.25)
+    #define AXIS_COLOR vec4(0.25, 0.25, 0.25, 1.0)
+    #define RED vec4(1.0, 0.0, 0.0, 1.0)
+    #define GREEN vec4(0.0, 1.0, 0.0, 1.0)
     
     void main(){
-        vec3 camPosOff = vec3(floor(cameraPosition.xy), 0);
-        vec3 worldPos = inPos + camPosOff;
+        isX = axis == 0u;
+        isY = axis == 1u;
 
-        cPos = (viewMat * vec4(worldPos, 1)).xyz;
-        gl_Position = projectionMat * vec4(cPos, 1);
-        gl_Position += vec4(inOff * gl_Position.w, 0,0);
+        vec3 offset = isMediumLine(inPos) ? vec3(floor(cameraPosition.xy / 10.0) * 10.0, 0.0) : vec3(floor(cameraPosition.xy), 0.0);
+        vec3 worldPos = inPos;
+        worldPos *= isMedium(worldPos + offset) ? isX ? vec3(2.5, 1.0, 0.0) : vec3(1.0, 2.5, 0.0) : vec3(1.0); 
+        worldPos += offset;
 
         #ifdef DEBUG
         color = vec4(rand(float(gl_VertexID / 6)), rand(float(gl_VertexID / 6 + 1)), rand(float(gl_VertexID / 6 + 2)), 1);
         minFade = 1000.0;
         maxFade = 1024.0;
 
-        #else
+        #else 
         color = isXAxis(worldPos) ? RED : isYAxis(worldPos) ? GREEN : AXIS_COLOR;
-        bool major = isMajor(worldPos);
-        float fadeFac = min(abs(cameraPosition.z / 64.0) + 0.5, 1.0);
-        minFade = (major ? 64.0 : 0.0) * fadeFac;
-        maxFade = (major ? 195.0 : 128.0) * fadeFac;
+        bool major = isMedium(worldPos);
+        float fadeFac = min(abs(cameraPosition.z / 64.0) + 0.25, 1.0);
+        minFade = 0.0;
+        maxFade = major ? 500.0 : ${_a.minorRange.toFixed(1)} * fadeFac;
+
         #endif
+
+        cPos = (viewMat * vec4(worldPos, 1)).xyz;
+        gl_Position = projectionMat * vec4(cPos, 1);
+        gl_Position += vec4(inOff * gl_Position.w, 0,0);
 
         weight = inWeight * pxLineWidth * gl_Position.w;   
         z = gl_Position.w;  
@@ -172,19 +179,22 @@ Grid3D.fragmentShaderCode = `#version 300 es
     in vec4 color;
     in float weight;
     in vec3 cPos;
-    in float z, minFade, maxFade;
+    in float z, minFade, maxFade; 
 
     out vec4 outColor;
+
+    float linearStep(float min, float max, float v) {
+        return clamp((v - min) / (max - min), 0.0, 1.0);
+    }
     
     void main(){
         float wp = weight / z;
         outColor = color;
-        outColor.a *= min(wp, 1.0) * smoothstep(maxFade, minFade, length(cPos));
+        outColor.a *= min(wp, 1.0) * smoothstep(maxFade, minFade, length(cPos)) * max(dot(normalize(-cPos), vec3(0,1,0)), 0.1);
     }`;
 Grid3D.TF = gl.createTransformFeedback();
 Grid3D.VAO = gl.createVertexArray();
 Grid3D.dataVAO = gl.createVertexArray();
-Grid3D.dataPBO = gl.createBuffer();
 Grid3D.PBO = gl.createBuffer();
 Grid3D.OBO = gl.createBuffer();
 Grid3D.WBO = gl.createBuffer();
@@ -198,24 +208,24 @@ Grid3D.renderShader = new Shader(_a.vertexShaderCode, _a.fragmentShaderCode, ["p
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, _a.TF);
     gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, _a.OBO);
     gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
-    gl.bindVertexArray(_a.dataVAO);
-    const lsPos = [];
     const pos = [];
     const weight = [];
-    for (let d = 1; d <= 196; d++)
-        _a.appendD(lsPos, pos, weight, d);
-    gl.bindBuffer(gl.ARRAY_BUFFER, _a.dataPBO);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lsPos), gl.STATIC_DRAW);
-    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+    for (let d = 1; d <= _a.minorRange; d++)
+        _a.appendD(pos, weight, d, 1);
+    for (let d = _a.minorRange + 10; d <= 500; d += 10)
+        _a.appendD(pos, weight, d, 10);
+    gl.bindVertexArray(_a.dataVAO);
+    gl.bindBuffer(gl.ARRAY_BUFFER, _a.PBO);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 72, 0);
     gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 72, 36);
     gl.enableVertexAttribArray(1);
     gl.bindVertexArray(_a.VAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, _a.PBO);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.STATIC_DRAW);
     gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(0);
-    _a.numLineSegments = lsPos.length / 3 / 2;
+    _a.numLineSegments = pos.length / 3 / 6;
     gl.bindBuffer(gl.ARRAY_BUFFER, _a.OBO);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(_a.numLineSegments * 6 * 2), gl.DYNAMIC_COPY);
     gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);

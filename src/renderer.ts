@@ -38,8 +38,16 @@ function init() {
     setupCanvas();
     window.requestAnimationFrame(renderloop);
 }
+let frameCounter = 0;
 let prevTime = 0;
+let prevFPS: number[] = [];
 const fpsElem = document.querySelector("#fps") as HTMLSpanElement;
+
+function avg(arr: number[]) {
+    let sum = 0;
+    arr.forEach(v => sum += v);
+    return sum / arr.length;
+}
 
 function renderloop(timestamp: number) {
 
@@ -47,9 +55,9 @@ function renderloop(timestamp: number) {
     mat.bindTextures();
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
 
-    let val = timestamp / 10000;
+    let val = timestamp / 5000;
     // let viewMat = mat4.rotateZ(mat4.rotateX(mat4.translate(mat4.rotationX(toRAD(-90)), 0, 10, 0), 0.5), val);
-    cam.transformationStack[2].setValues(-4 * Math.sin(val), -4 * Math.cos(val), 4);
+    cam.transformationStack[2].setValues(-64 * Math.sin(val), -64 * Math.cos(val), 30);
     cam.transformationStack[1].setValues(toRAD(90), -val, 0);
     let viewMat = cam.getViewMatrix();
     Shader.loadViewMatrix(viewMat);
@@ -68,8 +76,11 @@ function renderloop(timestamp: number) {
     Grid3D.render();
 
     window.requestAnimationFrame(renderloop);
-    fpsElem.textContent = (1000 / (timestamp - prevTime)).toFixed(0);
+
+    prevFPS[frameCounter % 16] = Math.round(1000 / (timestamp - prevTime));
+    fpsElem.textContent = (avg(prevFPS)).toFixed(0);
     prevTime = timestamp;
+    frameCounter++;
 }
 init();
 

@@ -24,6 +24,7 @@ void main(){
 `
 
 class Grid3D {
+    static minorRange = 200;
     static vertexShaderCode = `#version 300 es
 
     in vec3 inPos;
@@ -39,6 +40,7 @@ class Grid3D {
     out float weight;
     out vec4 color;
     out float z, minFade, maxFade;
+    bool isX, isY;
 
     float rand(float f){
         return fract(sin(f * 100.923) * 43758.5453);
@@ -52,35 +54,45 @@ class Grid3D {
         return axis == 1u && p.x == 0.0;
     }
 
-    bool isMajor(vec3 p){
-        return  axis == 0u && int(p.y) % 5 == 0 || axis == 1u && int(p.x) % 5 == 0;
+    bool isMedium(vec3 p){
+        return  isX && int(p.y) % 10 == 0 || isY && int(p.x) % 10 == 0;
+    }
+    const float mediumStartP = ${(this.minorRange + 10).toFixed(1)}, mediumStartN = -mediumStartP + 10.0;
+    bool isMediumLine(vec3 p){
+        return isX && (p.y >= mediumStartP || p.y <= mediumStartN) || isY && (p.x >= mediumStartP || p.x <= mediumStartN);
     }
 
     // #define DEBUG
-    #define AXIS_COLOR vec4(0.25, 0.25, 0.25, 0.25)
-    #define RED vec4(1.0, 0.0, 0.0, 0.25)
-    #define GREEN vec4(0.0, 1.0, 0.0, 0.25)
+    #define AXIS_COLOR vec4(0.25, 0.25, 0.25, 1.0)
+    #define RED vec4(1.0, 0.0, 0.0, 1.0)
+    #define GREEN vec4(0.0, 1.0, 0.0, 1.0)
     
     void main(){
-        vec3 camPosOff = vec3(floor(cameraPosition.xy), 0);
-        vec3 worldPos = inPos + camPosOff;
+        isX = axis == 0u;
+        isY = axis == 1u;
 
-        cPos = (viewMat * vec4(worldPos, 1)).xyz;
-        gl_Position = projectionMat * vec4(cPos, 1);
-        gl_Position += vec4(inOff * gl_Position.w, 0,0);
+        vec3 offset = isMediumLine(inPos) ? vec3(floor(cameraPosition.xy / 10.0) * 10.0, 0.0) : vec3(floor(cameraPosition.xy), 0.0);
+        vec3 worldPos = inPos;
+        worldPos *= isMedium(worldPos + offset) ? isX ? vec3(2.5, 1.0, 0.0) : vec3(1.0, 2.5, 0.0) : vec3(1.0); 
+        worldPos += offset;
 
         #ifdef DEBUG
         color = vec4(rand(float(gl_VertexID / 6)), rand(float(gl_VertexID / 6 + 1)), rand(float(gl_VertexID / 6 + 2)), 1);
         minFade = 1000.0;
         maxFade = 1024.0;
 
-        #else
+        #else 
         color = isXAxis(worldPos) ? RED : isYAxis(worldPos) ? GREEN : AXIS_COLOR;
-        bool major = isMajor(worldPos);
-        float fadeFac = min(abs(cameraPosition.z / 64.0) + 0.5, 1.0);
-        minFade = (major ? 64.0 : 0.0) * fadeFac;
-        maxFade = (major ? 195.0 : 128.0) * fadeFac;
+        bool major = isMedium(worldPos);
+        float fadeFac = min(abs(cameraPosition.z / 64.0) + 0.25, 1.0);
+        minFade = 0.0;
+        maxFade = major ? 500.0 : ${this.minorRange.toFixed(1)} * fadeFac;
+
         #endif
+
+        cPos = (viewMat * vec4(worldPos, 1)).xyz;
+        gl_Position = projectionMat * vec4(cPos, 1);
+        gl_Position += vec4(inOff * gl_Position.w, 0,0);
 
         weight = inWeight * pxLineWidth * gl_Position.w;   
         z = gl_Position.w;  
@@ -92,20 +104,23 @@ class Grid3D {
     in vec4 color;
     in float weight;
     in vec3 cPos;
-    in float z, minFade, maxFade;
+    in float z, minFade, maxFade; 
 
     out vec4 outColor;
+
+    float linearStep(float min, float max, float v) {
+        return clamp((v - min) / (max - min), 0.0, 1.0);
+    }
     
     void main(){
         float wp = weight / z;
         outColor = color;
-        outColor.a *= min(wp, 1.0) * smoothstep(maxFade, minFade, length(cPos));
+        outColor.a *= min(wp, 1.0) * smoothstep(maxFade, minFade, length(cPos)) * max(dot(normalize(-cPos), vec3(0,1,0)), 0.1);
     }`
 
     static TF = gl.createTransformFeedback();
     static VAO = gl.createVertexArray();
     static dataVAO = gl.createVertexArray();
-    static dataPBO = gl.createBuffer();
     static PBO = gl.createBuffer();
     static OBO = gl.createBuffer();
     static WBO = gl.createBuffer();
@@ -116,12 +131,16 @@ class Grid3D {
     static lineGenShader = new Shader(lineSegmentGeometryGenerationVertexShader, Shader.emptyFragmentShader, ["posOff", "fac"], ["p0OL", "p0OM", "p0OR", "p1OL", "p1OM", "p1OR"], gl.INTERLEAVED_ATTRIBS);
     static renderShader = new Shader(this.vertexShaderCode, this.fragmentShaderCode, ["pxLineWidth"]);
 
-    private static appendD(lsPos: number[], pos: number[], weight: number[], d: number) {
-        const subs = Math.floor((128 - Math.sqrt(64 * (d - 1))) / 8);
+    private static subdivisons(d: number) {
+        return Math.max(Math.floor((128 - Math.sqrt(64 * (d - 1))) / 8), 2);
+    }
+
+    private static appendD(pos: number[], weight: number[], d: number, spacing: number) {
+        const subs = this.subdivisons(d);
         const dists: number[] = [];
         for (let x = 0; x <= subs; x++) {
             const dn = x / subs; // normalized distance
-            dists[x] = 196 * dn * dn;
+            dists[x] = this.minorRange * dn * dn;
         }
 
         const max = dists.length - 1;
@@ -129,50 +148,42 @@ class Grid3D {
         for (let i = 0; i < max; i++) {//Q1 x ->
             pos.push(dists[i], d, 0, dists[i], d, 0, dists[i], d, 0, dists[i + 1], d, 0, dists[i + 1], d, 0, dists[i + 1], d, 0);
             weight.push(0, 0, 255, 0, 0, 0, 0, 0, 255, 0, 0, 0);
-            lsPos.push(dists[i], d, 0, dists[i + 1], d, 0);
         }
 
         for (let i = 0; i < max; i++) {//Q2 x ->
             pos.push(-dists[i], d, 0, -dists[i], d, 0, -dists[i], d, 0, -dists[i + 1], d, 0, -dists[i + 1], d, 0, -dists[i + 1], d, 0);
             weight.push(0, 0, 255, 0, 0, 0, 0, 0, 255, 0, 0, 0);
-            lsPos.push(-dists[i], d, 0, -dists[i + 1], d, 0);
         }
 
         for (let i = 0; i < max; i++) { //Q1 y ->
             pos.push(d, dists[i], 0, d, dists[i], 0, d, dists[i], 0, d, dists[i + 1], 0, d, dists[i + 1], 0, d, dists[i + 1], 0);
             weight.push(0, 1, 255, 1, 0, 1, 0, 1, 255, 1, 0, 1);
-            lsPos.push(d, dists[i], 0, d, dists[i + 1], 0);
         }
 
         for (let i = 0; i < max; i++) { //Q4 y ->
             pos.push(d, -dists[i], 0, d, -dists[i], 0, d, -dists[i], 0, d, -dists[i + 1], 0, d, -dists[i + 1], 0, d, -dists[i + 1], 0);
             weight.push(0, 1, 255, 1, 0, 1, 0, 1, 255, 1, 0, 1);
-            lsPos.push(d, -dists[i], 0, d, -dists[i + 1], 0);
         }
 
-        const nd = 1 - d;
+        const nd = spacing - d;
         for (let i = 0; i < max; i++) { //Q3 x ->
             pos.push(dists[i], nd, 0, dists[i], nd, 0, dists[i], nd, 0, dists[i + 1], nd, 0, dists[i + 1], nd, 0, dists[i + 1], nd, 0);
             weight.push(0, 0, 255, 0, 0, 0, 0, 0, 255, 0, 0, 0);
-            lsPos.push(dists[i], nd, 0, dists[i + 1], nd, 0);
         }
 
         for (let i = 0; i < max; i++) { //Q4 x ->
             pos.push(-dists[i], nd, 0, -dists[i], nd, 0, -dists[i], nd, 0, -dists[i + 1], nd, 0, -dists[i + 1], nd, 0, -dists[i + 1], nd, 0);
             weight.push(0, 0, 255, 0, 0, 0, 0, 0, 255, 0, 0, 0);
-            lsPos.push(-dists[i], nd, 0, -dists[i + 1], nd, 0);
         }
 
         for (let i = 0; i < max; i++) { //Q2 y ->
             pos.push(nd, dists[i], 0, nd, dists[i], 0, nd, dists[i], 0, nd, dists[i + 1], 0, nd, dists[i + 1], 0, nd, dists[i + 1], 0);
             weight.push(0, 1, 255, 1, 0, 1, 0, 1, 255, 1, 0, 1);
-            lsPos.push(nd, dists[i], 0, nd, dists[i + 1], 0);
 
         }
         for (let i = 0; i < max; i++) { //Q3 y ->
             pos.push(nd, -dists[i], 0, nd, -dists[i], 0, nd, -dists[i], 0, nd, -dists[i + 1], 0, nd, -dists[i + 1], 0, nd, -dists[i + 1], 0);
             weight.push(0, 1, 255, 1, 0, 1, 0, 1, 255, 1, 0, 1);
-            lsPos.push(nd, -dists[i], 0, nd, -dists[i + 1], 0);
         }
     }
 
@@ -181,31 +192,35 @@ class Grid3D {
         gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, this.OBO);
         gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
 
-        // Raw Grid data -> input for transform feedback geometry shader
-        gl.bindVertexArray(this.dataVAO);
-
-        const lsPos: number[] = [];
         const pos: number[] = [];
         const weight: number[] = [];
 
-        for (let d = 1; d <= 196; d++)
-            this.appendD(lsPos, pos, weight, d);
+        for (let d = 1; d <= this.minorRange; d++)
+            this.appendD(pos, weight, d, 1);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.dataPBO);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lsPos), gl.STATIC_DRAW);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+        for (let d = this.minorRange + 10; d <= 500; d += 10)
+            this.appendD(pos, weight, d, 10);
+
+        // for (let d = 400; d <= 1000; d += 100)
+        //     this.appendD(pos, weight, d);
+
+        // Raw Grid data -> input for transform feedback geometry shader
+        gl.bindVertexArray(this.dataVAO);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.PBO);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 72, 0);
         gl.enableVertexAttribArray(0);
-        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 72, 36);
         gl.enableVertexAttribArray(1);
 
         // renderable geometry data -> output of transform feedback geometry shader and static data
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.PBO);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.STATIC_DRAW);
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(0);
 
-        this.numLineSegments = lsPos.length / 3 / 2;
+        this.numLineSegments = pos.length / 3 / 6;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.OBO);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.numLineSegments * 6 * 2), gl.DYNAMIC_COPY);
         gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
@@ -217,8 +232,6 @@ class Grid3D {
         gl.vertexAttribIPointer(3, 1, gl.UNSIGNED_BYTE, 2, 1);
         gl.enableVertexAttribArray(2);
         gl.enableVertexAttribArray(3);
-
-
 
         const ind: number[] = [];
         for (let i = 0; i < this.numLineSegments * 6; i += 6)
