@@ -24,6 +24,7 @@ void main(){
     p0OR = p1OR = -p0OL;
 }
 `;
+const debudHint = "DEBUGn";
 class Grid3D {
     static subdivisons(d) {
         return Math.max(Math.floor((128 - Math.sqrt(64 * (d - 1))) / 8), 2);
@@ -88,7 +89,7 @@ class Grid3D {
     static render() {
         gl.enable(gl.BLEND);
         gl.depthMask(false);
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.SRC_ALPHA, gl.ONE);
         gl.useProgram(this.renderShader.program);
         this.renderShader.loadf(0, (this.lineWidth * window.devicePixelRatio + 1) / 2);
         gl.bindVertexArray(this.VAO);
@@ -101,6 +102,7 @@ class Grid3D {
 }
 _a = Grid3D;
 Grid3D.minorRange = 200;
+Grid3D.majorRange = 500;
 Grid3D.vertexShaderCode = `#version 300 es
 
     layout(location = 0) in vec3 inPos;
@@ -115,7 +117,7 @@ Grid3D.vertexShaderCode = `#version 300 es
     out vec3 cPos;
     out float weight;
     out vec4 color;
-    out float z, minFade, maxFade;
+    out float z, maxFade;
     bool isX, isY;
 
     float rand(float f){
@@ -133,36 +135,49 @@ Grid3D.vertexShaderCode = `#version 300 es
     bool isMedium(vec3 p){
         return  isX && int(p.y) % 10 == 0 || isY && int(p.x) % 10 == 0;
     }
+
+    bool isLarge(vec3 p){
+        return  isX && int(p.y) % 100 == 0 || isY && int(p.x) % 100 == 0;
+    }
     const float mediumStartP = ${(_a.minorRange + 10).toFixed(1)}, mediumStartN = -mediumStartP + 10.0;
+    const float largeStartP = ${(_a.majorRange + 100).toFixed(1)}, largeStartN = -largeStartP + 100.0;
+
     bool isMediumLine(vec3 p){
         return isX && (p.y >= mediumStartP || p.y <= mediumStartN) || isY && (p.x >= mediumStartP || p.x <= mediumStartN);
     }
 
-    // #define DEBUG
-    #define AXIS_COLOR vec4(0.25, 0.25, 0.25, 1.0)
+    bool isLargeLine(vec3 p){
+        return isX && (p.y >= largeStartP || p.y <= largeStartN) || isY && (p.x >= largeStartP || p.x <= largeStartN);
+    }
+
+    #define ${debudHint}
+    #define AXIS_COLOR vec4(0.2, 0.2, 0.2, 1.0)
     #define RED vec4(1.0, 0.0, 0.0, 1.0)
     #define GREEN vec4(0.0, 1.0, 0.0, 1.0)
+
+    float linearStep(float min, float max, float v) {
+        return clamp((v - min) / (max - min), 0.0, 1.0);
+    }
     
     void main(){
         isX = axis == 0u;
         isY = axis == 1u;
 
-        vec3 offset = isMediumLine(inPos) ? vec3(floor(cameraPosition.xy / 10.0) * 10.0, 0.0) : vec3(floor(cameraPosition.xy), 0.0);
+        vec3 offset = isLargeLine(inPos) ? vec3(floor(cameraPosition.xy / 100.0) * 100.0, 0.0) : isMediumLine(inPos) ? vec3(floor(cameraPosition.xy / 10.0) * 10.0, 0.0) : vec3(floor(cameraPosition.xy), 0.0);
         vec3 worldPos = inPos;
-        worldPos *= isMedium(worldPos + offset) ? isX ? vec3(2.5, 1.0, 0.0) : vec3(1.0, 2.5, 0.0) : vec3(1.0); 
+        vec3 futureWP = worldPos + offset;
+        float lineScale = isLarge(futureWP) ? 5.0 : isMedium(futureWP) ? 2.5 : 1.0;
+        worldPos *= isX ? vec3(lineScale, 1.0, 0.0) : vec3(1.0, lineScale, 0.0); 
         worldPos += offset;
 
         #ifdef DEBUG
         color = vec4(rand(float(gl_VertexID / 6)), rand(float(gl_VertexID / 6 + 1)), rand(float(gl_VertexID / 6 + 2)), 1);
-        minFade = 1000.0;
         maxFade = 1024.0;
 
         #else 
-        color = isXAxis(worldPos) ? RED : isYAxis(worldPos) ? GREEN : AXIS_COLOR;
-        bool major = isMedium(worldPos);
-        float fadeFac = min(abs(cameraPosition.z / 64.0) + 0.25, 1.0);
-        minFade = 0.0;
-        maxFade = major ? 500.0 : ${_a.minorRange.toFixed(1)} * fadeFac;
+        bool isXAxis = isXAxis(worldPos), isYAxis = isYAxis(worldPos);
+        color = isXAxis ? RED : isYAxis ? GREEN : AXIS_COLOR;
+        maxFade = (isLarge(worldPos) ? 1500.0 : isMedium(worldPos) ? ${(_a.majorRange * 1.5).toFixed(1)} :  ${(_a.minorRange * 1.6).toFixed(1)}) * sqrt(linearStep(0.0, 32.0, abs(cameraPosition.z))); 
 
         #endif
 
@@ -175,11 +190,13 @@ Grid3D.vertexShaderCode = `#version 300 es
     }`;
 Grid3D.fragmentShaderCode = `#version 300 es
     precision highp float;
+
+    #define ${debudHint}
     
     in vec4 color;
     in float weight;
     in vec3 cPos;
-    in float z, minFade, maxFade; 
+    in float z, maxFade; 
 
     out vec4 outColor;
 
@@ -190,7 +207,11 @@ Grid3D.fragmentShaderCode = `#version 300 es
     void main(){
         float wp = weight / z;
         outColor = color;
-        outColor.a *= min(wp, 1.0) * smoothstep(maxFade, minFade, length(cPos)) * max(dot(normalize(-cPos), vec3(0,1,0)), 0.1);
+        float ff = linearStep(maxFade, 0.0, length(cPos));
+        float ff2 = ff * ff;
+        #ifndef DEBUG
+        outColor.a *= min(wp, 1.0) * ff2 * ff2;
+        #endif
     }`;
 Grid3D.TF = gl.createTransformFeedback();
 Grid3D.VAO = gl.createVertexArray();
@@ -200,7 +221,7 @@ Grid3D.OBO = gl.createBuffer();
 Grid3D.WBO = gl.createBuffer();
 Grid3D.IBO = gl.createBuffer();
 Grid3D.numLineSegments = 0;
-Grid3D.lineWidth = 1;
+Grid3D.lineWidth = 1.0;
 Grid3D.count = 0;
 Grid3D.lineGenShader = new Shader(lineSegmentGeometryGenerationVertexShader, Shader.emptyFragmentShader, ["posOff", "fac"], ["p0OL", "p0OM", "p0OR", "p1OL", "p1OM", "p1OR"], gl.INTERLEAVED_ATTRIBS);
 Grid3D.renderShader = new Shader(_a.vertexShaderCode, _a.fragmentShaderCode, ["pxLineWidth"]);
@@ -212,8 +233,10 @@ Grid3D.renderShader = new Shader(_a.vertexShaderCode, _a.fragmentShaderCode, ["p
     const weight = [];
     for (let d = 1; d <= _a.minorRange; d++)
         _a.appendD(pos, weight, d, 1);
-    for (let d = _a.minorRange + 10; d <= 500; d += 10)
+    for (let d = _a.minorRange + 10; d <= _a.majorRange; d += 10)
         _a.appendD(pos, weight, d, 10);
+    for (let d = _a.majorRange + 100; d <= 1000; d += 100)
+        _a.appendD(pos, weight, d, 100);
     gl.bindVertexArray(_a.dataVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, _a.PBO);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.STATIC_DRAW);

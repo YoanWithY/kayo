@@ -14,7 +14,7 @@ function init() {
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
     gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array(projection.concat(mat4.identity())));
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
-    gl.clearColor(0.1, 0.1, 0.1, 1);
+    gl.clearColor(0.1, 0.1, 0.1, 1.0);
 
     // transformfeedback for dynamic grid generation
 
@@ -57,7 +57,7 @@ function renderloop(timestamp: number) {
 
     let val = timestamp / 5000;
     // let viewMat = mat4.rotateZ(mat4.rotateX(mat4.translate(mat4.rotationX(toRAD(-90)), 0, 10, 0), 0.5), val);
-    cam.transformationStack[2].setValues(-64 * Math.sin(val), -64 * Math.cos(val), 30);
+    cam.transformationStack[2].setValues(-400 * Math.sin(val), -400 * Math.cos(val), 50 * Math.sin(val));
     cam.transformationStack[1].setValues(toRAD(90), -val, 0);
     let viewMat = cam.getViewMatrix();
     Shader.loadViewMatrix(viewMat);
