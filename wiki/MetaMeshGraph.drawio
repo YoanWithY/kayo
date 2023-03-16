@@ -64,7 +64,7 @@
                 <mxCell id="34" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;html=1;labelBackgroundColor=default;strokeColor=#808080;fontFamily=Helvetica;fontSize=11;fontColor=#808080;startArrow=diamondThin;startFill=0;endArrow=none;endFill=0;" edge="1" parent="1" source="27" target="5">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="35" value="1..2" style="edgeLabel;html=1;align=center;verticalAlign=bottom;resizable=0;points=[];fontSize=11;fontFamily=Helvetica;fontColor=#808080;labelBackgroundColor=none;" vertex="1" connectable="0" parent="34">
+                <mxCell id="35" value="0..2" style="edgeLabel;html=1;align=center;verticalAlign=bottom;resizable=0;points=[];fontSize=11;fontFamily=Helvetica;fontColor=#808080;labelBackgroundColor=none;" vertex="1" connectable="0" parent="34">
                     <mxGeometry x="-0.6731" relative="1" as="geometry">
                         <mxPoint x="3" as="offset"/>
                     </mxGeometry>
