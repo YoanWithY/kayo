@@ -6,16 +6,28 @@
     <meta http-equiv="X-UA-Compatible">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="ui-styles.css">
+
     <title>Kayo Engine</title>
 </head>
 
 <body>
-    <div style="position:absolute; z-index:1;">
+
+    <div style="position:absolute; z-index:2;">
         <p>Kayo Engine Pre-Alpha 0.0.1</p>
         <div>FPS: <span id="fps"></span></div>
     </div>
 
     <canvas id="glCanvas"></canvas>
+
+    <split-pane-container id="wrapper">
+        <splitable-pane>
+            <split-button-ul></split-button-ul>
+            <split-button-ur></split-button-ur>
+        </splitable-pane>
+    </split-pane-container>
+
+    <script src="dist/ui.js"></script>
     <script src="dist/glInit.js"></script>
     <script src="dist/math.js"></script>
     <script src="dist/transformation.js"></script>

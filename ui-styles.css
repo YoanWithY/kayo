@@ -1,0 +1,119 @@
+:root {
+    --radius: 4px;
+    --transition-duration: 200ms;
+    --split-pane-divider-size: 8px;
+    --split-pane-divider-color: rgb(22, 22, 22);
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    width: 100vw;
+    height: 100vh;
+    touch-action: none;
+}
+
+split-pane-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+split-pane-container[split-pane-container-orientation="none"] {
+    flex-direction: unset;
+}
+
+split-pane-container[split-pane-container-orientation="vertical"] {
+    flex-direction: row;
+}
+
+split-pane-container[split-pane-container-orientation="horizontal"] {
+    flex-direction: column;
+}
+
+splitable-pane {
+    position: relative;
+    background-color: rgb(128, 83, 83, 0);
+    width: 100%;
+    height: 100%;
+    min-width: 32px;
+    min-height: 32px;
+    overflow: hidden;
+    border-radius: var(--radius);
+}
+
+split-pane-divider {
+    background-color: var(--split-pane-divider-color);
+}
+
+split-pane-divider[split-pane-divider-orientation="vertical"] {
+    width: var(--split-pane-divider-size);
+    min-width: var(--split-pane-divider-size);
+    height: 100%;
+    cursor: ew-resize;
+}
+
+split-pane-divider[split-pane-divider-orientation="horizontal"] {
+    height: var(--split-pane-divider-size);
+    min-height: var(--split-pane-divider-size);
+    width: 100%;
+    cursor: ns-resize;
+}
+
+split-button-ul,
+split-button-ur,
+split-button-ll,
+split-button-lr {
+    width: 16px;
+    height: 16px;
+    overflow: hidden;
+    display: inline-block;
+    background-color: gray;
+    opacity: 0;
+    cursor: cell;
+    transition: var(--transition-duration);
+}
+
+split-button-ul {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 0 0 var(--radius) 0;
+}
+
+split-button-ur {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border-radius: 0 0 0 var(--radius);
+}
+
+split-button-ll {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    border-radius: 0 var(--radius) 0 0;
+
+}
+
+split-button-lr {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    border-radius: var(--radius) 0 0 0;
+
+}
+
+split-button-ul:hover,
+split-button-ur:hover,
+split-button-ll:hover,
+split-button-lr:hover {
+    opacity: 0.5;
+}
