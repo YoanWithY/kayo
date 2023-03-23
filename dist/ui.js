@@ -1,4 +1,234 @@
 "use strict";
+var _a, _b;
+class PaneStripe extends HTMLElement {
+    static createPaneStripe() {
+        return document.createElement("pane-stripe");
+    }
+}
+_a = PaneStripe;
+PaneStripe.size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pane-stripe-hight").replace("px", ""));
+PaneStripe.size2 = _a.size * 2;
+class SelectionPane extends HTMLElement {
+    static createSelectionPane(data) {
+        const p = document.createElement("selection-pane");
+        return p;
+    }
+}
+class ViewPortPane extends HTMLElement {
+    static createViewportPane(data) {
+        const p = document.createElement("viewport-pane");
+        return p;
+    }
+}
+class SplitablePane extends HTMLElement {
+    static createSplitablePane(paneConstructor, paneData, orientation, rect) {
+        const newSplitablePane = document.createElement("splitable-pane");
+        const strip = PaneStripe.createPaneStripe();
+        newSplitablePane.appendChild(strip);
+        const pane = paneConstructor(paneData);
+        newSplitablePane.appendChild(pane);
+        newSplitablePane.append(document.createElement("split-button-ul"), document.createElement("split-button-ur"), document.createElement("split-button-ll"), document.createElement("split-button-lr"));
+        if (orientation && rect) {
+            if (orientation == "vertical")
+                newSplitablePane.style.width = (rect.width - SplitPaneDivider.size) / 2 + "px";
+            else
+                newSplitablePane.style.height = (rect.height - SplitPaneDivider.size) / 2 + "px";
+        }
+        return newSplitablePane;
+    }
+    getPaneStripe() {
+        return this.children[0];
+    }
+    getContentPane() {
+        return this.children[1];
+    }
+    removePrevious(container, orientation) {
+        let prev = this.previousElementSibling;
+        if (prev)
+            container.removeChild(prev);
+        if ((prev = this.previousElementSibling) instanceof HTMLElement) {
+            if (orientation == "verical")
+                this.style.width = this.getBoundingClientRect().width + SplitPaneDivider.size + prev.getBoundingClientRect().width + "px";
+            else
+                this.style.height = this.getBoundingClientRect().height + SplitPaneDivider.size + prev.getBoundingClientRect().height + "px";
+            container.removeChild(prev);
+        }
+    }
+    removeNext(container, orientation) {
+        let next = this.nextElementSibling;
+        if (next)
+            container.removeChild(next);
+        if ((next = this.nextElementSibling) instanceof HTMLElement) {
+            if (orientation == "vertical")
+                this.style.width = this.getBoundingClientRect().width + SplitPaneDivider.size + next.getBoundingClientRect().width + "px";
+            else
+                this.style.height = this.getBoundingClientRect().height + SplitPaneDivider.size + next.getBoundingClientRect().height + "px";
+            container.removeChild(next);
+        }
+    }
+    minHeight() {
+        return PaneStripe.size2;
+    }
+    minWidth() {
+        return PaneStripe.size2;
+    }
+}
+class SplitPaneDivider extends HTMLElement {
+    constructor() {
+        super();
+        this.isMouseDown = 0;
+        this.ondragstart = e => { return false; };
+        const mD = (event) => {
+            this.isMouseDown = 1;
+            document.body.addEventListener('mousemove', mV);
+            document.body.addEventListener('mouseup', end);
+        };
+        const mV = (e) => {
+            if (this.isMouseDown === 1) {
+                const parent = this.parentElement;
+                if (!(parent instanceof SplitPaneContainer))
+                    return;
+                const prev = this.previousElementSibling;
+                if (!(prev instanceof SplitPaneContainer || prev instanceof SplitablePane))
+                    return;
+                const next = this.nextElementSibling;
+                if (!(next instanceof SplitPaneContainer || next instanceof SplitablePane))
+                    return;
+                const prevBB = prev.getBoundingClientRect();
+                const nextBB = next.getBoundingClientRect();
+                if (parent.getAttribute("split-pane-container-orientation") == "vertical") {
+                    let prevNewWidth = Math.floor(Math.max(e.clientX - prevBB.x, prev.minWidth()));
+                    let nextNewWidth = Math.floor(nextBB.width + (prevBB.width - prevNewWidth));
+                    if (nextNewWidth < PaneStripe.size2) {
+                        prevNewWidth -= PaneStripe.size2 - nextNewWidth;
+                        nextNewWidth = PaneStripe.size2;
+                    }
+                    prev.style.width = prevNewWidth + "px";
+                    next.style.width = nextNewWidth + "px";
+                }
+                else {
+                    let prevNewHeight = Math.floor(Math.max(e.clientY - prevBB.y, prev.minHeight()));
+                    let nextNewHeight = Math.floor(nextBB.height + (prevBB.height - prevNewHeight));
+                    if (nextNewHeight < PaneStripe.size2) {
+                        prevNewHeight -= PaneStripe.size2 - nextNewHeight;
+                        nextNewHeight = PaneStripe.size2;
+                    }
+                    prev.style.height = prevNewHeight + "px";
+                    next.style.height = nextNewHeight + "px";
+                }
+            }
+            else
+                end();
+        };
+        const end = () => {
+            this.isMouseDown = 0;
+            document.body.removeEventListener('mouseup', end);
+            this.removeEventListener('mousemove', mV);
+        };
+        this.addEventListener("mousedown", mD);
+    }
+    static createSplitPaneDivider(orientation) {
+        const spd = document.createElement("split-pane-divider");
+        spd.setAttribute("split-pane-divider-orientation", orientation);
+        return spd;
+    }
+}
+SplitPaneDivider.size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-size").replace("px", ""));
+class SplitPaneContainer extends HTMLElement {
+    static createSplitPaneContainer(orientation, rect) {
+        const c = document.createElement("split-pane-container");
+        c.setAttribute("split-pane-container-orientation", orientation);
+        if (orientation == "vertical") {
+            c.style.height = rect.height + "px";
+        }
+        else {
+            c.style.width = rect.width + "px";
+        }
+        return c;
+    }
+    static createRoot() {
+        const c = document.createElement("split-pane-container");
+        c.setAttribute("split-pane-container-orientation", "none");
+        c.setAttribute("id", "wrapper");
+        c.appendChild(SplitablePane.createSplitablePane(ViewPortPane.createViewportPane));
+        return c;
+    }
+    minHeight() {
+        return Number.parseInt(this.style.minHeight.replace("px", ""));
+    }
+    minWidth() {
+        return Number.parseInt(this.style.minWidth.replace("px", ""));
+    }
+    updateSizesRecursively() {
+        const orientation = this.getAttribute("split-pane-container-orientation");
+        if (orientation == "none") {
+            const child = this.firstElementChild;
+            if (child instanceof HTMLElement) {
+                child.style.width = "";
+                child.style.height = "";
+            }
+            this.style.minWidth = PaneStripe.size2 + "px";
+            this.style.minHeight = PaneStripe.size2 + "px";
+        }
+        else if (orientation == "vertical") {
+            let minWidth = 0;
+            let minHeight = 0;
+            this.childNodes.forEach((sp, key, parent) => {
+                if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
+                    sp.style.height = "";
+                    if (sp.nextElementSibling) {
+                        sp.style.flex = "";
+                        sp.style.width = sp.getBoundingClientRect().width + "px";
+                    }
+                    else {
+                        sp.style.flex = "1";
+                        sp.style.width = sp.getBoundingClientRect().width + "px";
+                    }
+                    if (sp instanceof SplitPaneContainer)
+                        sp.updateSizesRecursively();
+                    minHeight = Math.max(minHeight, sp.minHeight());
+                    minWidth += sp.minWidth();
+                }
+                else if (sp instanceof SplitPaneDivider) {
+                    minWidth += SplitPaneDivider.size;
+                }
+            });
+            this.style.minWidth = minWidth + "px";
+            this.style.minHeight = minHeight + "px";
+        }
+        else {
+            let minWidth = 0;
+            let minHeight = 0;
+            this.childNodes.forEach((sp, key, parent) => {
+                if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
+                    sp.style.width = "";
+                    if (sp.nextElementSibling) {
+                        sp.style.flex = "";
+                        sp.style.height = sp.getBoundingClientRect().height + "px";
+                    }
+                    else {
+                        sp.style.flex = "1";
+                        sp.style.height = sp.getBoundingClientRect().height + "px";
+                    }
+                    if (sp instanceof SplitPaneContainer)
+                        sp.updateSizesRecursively();
+                    minHeight += sp.minHeight();
+                    minWidth = Math.max(minWidth, sp.minWidth());
+                }
+                else if (sp instanceof SplitPaneDivider) {
+                    minHeight += SplitPaneDivider.size;
+                }
+            });
+            this.style.minWidth = minWidth + "px";
+            this.style.minHeight = minHeight + "px";
+        }
+    }
+}
+_b = SplitPaneContainer;
+SplitPaneContainer.rootSplitPaneContainer = SplitPaneContainer.createRoot();
+(() => {
+    document.body.appendChild(_b.rootSplitPaneContainer);
+})();
 class SplitButton extends HTMLElement {
     constructor() {
         super();
@@ -62,7 +292,7 @@ class SplitButtonUL extends SplitButton {
         if (dx >= 0 && Math.abs(dy) <= dx || dy >= 0 && Math.abs(dx) <= dy) {
             const orientation = dx >= dy ? "vertical" : "horizontal";
             const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-            const newSplitablePane = SplitablePane.createSplitablePane(orientation, splitablePane.getBoundingClientRect());
+            const newSplitablePane = SplitablePane.createSplitablePane(SelectionPane.createSelectionPane, null, orientation, splitablePane.getBoundingClientRect());
             const bb = splitablePane.getBoundingClientRect();
             SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
             if (spo == "none") {
@@ -107,7 +337,7 @@ class SplitButtonUR extends SplitButton {
         if (dx <= 0 && Math.abs(dy) <= Math.abs(dx) || dy >= 0 && Math.abs(dx) <= dy) {
             const orientation = Math.abs(dx) >= dy ? "vertical" : "horizontal";
             const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-            const newSplitablePane = SplitablePane.createSplitablePane(orientation, splitablePane.getBoundingClientRect());
+            const newSplitablePane = SplitablePane.createSplitablePane(SelectionPane.createSelectionPane, null, orientation, splitablePane.getBoundingClientRect());
             const bb = splitablePane.getBoundingClientRect();
             SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
             if (spo == "none") {
@@ -165,7 +395,7 @@ class SplitButtonLL extends SplitButton {
         if (dx >= 0 && Math.abs(dy) <= dx || dy <= 0 && Math.abs(dx) <= Math.abs(dy)) {
             const orientation = Math.abs(dx) >= Math.abs(dy) ? "vertical" : "horizontal";
             const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-            const newSplitablePane = SplitablePane.createSplitablePane(orientation, splitablePane.getBoundingClientRect());
+            const newSplitablePane = SplitablePane.createSplitablePane(SelectionPane.createSelectionPane, null, orientation, splitablePane.getBoundingClientRect());
             const bb = splitablePane.getBoundingClientRect();
             SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
             if (spo == "none") {
@@ -223,7 +453,7 @@ class SplitButtonLR extends SplitButton {
         if (dx <= 0 && Math.abs(dy) <= Math.abs(dx) || dy <= 0 && Math.abs(dx) <= Math.abs(dy)) {
             const orientation = Math.abs(dx) >= Math.abs(dy) ? "vertical" : "horizontal";
             const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-            const newSplitablePane = SplitablePane.createSplitablePane(orientation, splitablePane.getBoundingClientRect());
+            const newSplitablePane = SplitablePane.createSplitablePane(SelectionPane.createSelectionPane, null, orientation, splitablePane.getBoundingClientRect());
             const bb = splitablePane.getBoundingClientRect();
             SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
             if (spo == "none") {
@@ -250,193 +480,8 @@ class SplitButtonLR extends SplitButton {
         this.onmouseleave = this.left;
     }
 }
-class SplitablePane extends HTMLElement {
-    static createSplitablePane(orientation, rect) {
-        const newSplitablePane = document.createElement("splitable-pane");
-        newSplitablePane.append(document.createElement("split-button-ul"), document.createElement("split-button-ur"), document.createElement("split-button-ll"), document.createElement("split-button-lr"));
-        if (orientation == "vertical")
-            newSplitablePane.style.width = (rect.width - SplitPaneDivider.size) / 2 + "px";
-        else
-            newSplitablePane.style.height = (rect.height - SplitPaneDivider.size) / 2 + "px";
-        newSplitablePane.style.backgroundColor = "rgba(" + Math.random() * 100 + "%, " + Math.random() * 100 + "%, " + Math.random() * 100 + "%, 1.0)";
-        return newSplitablePane;
-    }
-    removePrevious(container, orientation) {
-        let prev = this.previousElementSibling;
-        if (prev)
-            container.removeChild(prev);
-        if ((prev = this.previousElementSibling) instanceof HTMLElement) {
-            if (orientation == "verical")
-                this.style.width = this.getBoundingClientRect().width + SplitPaneDivider.size + prev.getBoundingClientRect().width + "px";
-            else
-                this.style.height = this.getBoundingClientRect().height + SplitPaneDivider.size + prev.getBoundingClientRect().height + "px";
-            container.removeChild(prev);
-        }
-    }
-    removeNext(container, orientation) {
-        let next = this.nextElementSibling;
-        if (next)
-            container.removeChild(next);
-        if ((next = this.nextElementSibling) instanceof HTMLElement) {
-            if (orientation == "vertical")
-                this.style.width = this.getBoundingClientRect().width + SplitPaneDivider.size + next.getBoundingClientRect().width + "px";
-            else
-                this.style.height = this.getBoundingClientRect().height + SplitPaneDivider.size + next.getBoundingClientRect().height + "px";
-            container.removeChild(next);
-        }
-    }
-    minHeight() {
-        return 32;
-    }
-    minWidth() {
-        return 32;
-    }
-}
-class SplitPaneContainer extends HTMLElement {
-    static createSplitPaneContainer(orientation, rect) {
-        const c = document.createElement("split-pane-container");
-        c.setAttribute("split-pane-container-orientation", orientation);
-        if (orientation == "vertical") {
-            c.style.height = rect.height + "px";
-        }
-        else {
-            c.style.width = rect.width + "px";
-        }
-        return c;
-    }
-    minHeight() {
-        return Number.parseInt(this.style.minHeight.replace("px", ""));
-    }
-    minWidth() {
-        return Number.parseInt(this.style.minWidth.replace("px", ""));
-    }
-    updateSizesRecursively() {
-        const orientation = this.getAttribute("split-pane-container-orientation");
-        if (orientation == "none") {
-            const child = this.firstElementChild;
-            if (child instanceof HTMLElement) {
-                child.style.width = "";
-                child.style.height = "";
-            }
-            this.style.minWidth = "32 px";
-            this.style.minHeight = "32 px";
-        }
-        else if (orientation == "vertical") {
-            let minWidth = 0;
-            let minHeight = 0;
-            this.childNodes.forEach((sp, key, parent) => {
-                if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
-                    sp.style.height = "";
-                    if (sp.nextElementSibling) {
-                        sp.style.flex = "";
-                        sp.style.width = sp.getBoundingClientRect().width + "px";
-                    }
-                    else {
-                        sp.style.flex = "1";
-                        sp.style.width = sp.getBoundingClientRect().width + "px";
-                    }
-                    if (sp instanceof SplitPaneContainer)
-                        sp.updateSizesRecursively();
-                    minHeight = Math.max(minHeight, sp.minHeight());
-                    minWidth += sp.minWidth();
-                }
-                else if (sp instanceof SplitPaneDivider) {
-                    minWidth += SplitPaneDivider.size;
-                }
-            });
-            this.style.minWidth = minWidth + "px";
-            this.style.minHeight = minHeight + "px";
-        }
-        else {
-            let minWidth = 0;
-            let minHeight = 0;
-            this.childNodes.forEach((sp, key, parent) => {
-                if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
-                    sp.style.width = "";
-                    if (sp.nextElementSibling) {
-                        sp.style.flex = "";
-                        sp.style.height = sp.getBoundingClientRect().height + "px";
-                    }
-                    else {
-                        sp.style.flex = "1";
-                        sp.style.height = sp.getBoundingClientRect().height + "px";
-                    }
-                    if (sp instanceof SplitPaneContainer)
-                        sp.updateSizesRecursively();
-                    minHeight += sp.minHeight();
-                    minWidth = Math.max(minWidth, sp.minWidth());
-                }
-                else if (sp instanceof SplitPaneDivider) {
-                    minHeight += SplitPaneDivider.size;
-                }
-            });
-            this.style.minWidth = minWidth + "px";
-            this.style.minHeight = minHeight + "px";
-        }
-    }
-}
-SplitPaneContainer.rootSplitPaneContainer = document.getElementById("wrapper");
-class SplitPaneDivider extends HTMLElement {
-    constructor() {
-        super();
-        this.isMouseDown = 0;
-        this.ondragstart = e => { return false; };
-        const mD = (event) => {
-            this.isMouseDown = 1;
-            document.body.addEventListener('mousemove', mV);
-            document.body.addEventListener('mouseup', end);
-        };
-        const mV = (e) => {
-            if (this.isMouseDown === 1) {
-                const parent = this.parentElement;
-                if (!(parent instanceof SplitPaneContainer))
-                    return;
-                const prev = this.previousElementSibling;
-                if (!(prev instanceof SplitPaneContainer || prev instanceof SplitablePane))
-                    return;
-                const next = this.nextElementSibling;
-                if (!(next instanceof SplitPaneContainer || next instanceof SplitablePane))
-                    return;
-                const prevBB = prev.getBoundingClientRect();
-                const nextBB = next.getBoundingClientRect();
-                if (parent.getAttribute("split-pane-container-orientation") == "vertical") {
-                    let prevNewWidth = Math.floor(Math.max(e.clientX - prevBB.x, prev.minWidth()));
-                    let nextNewWidth = Math.floor(nextBB.width + (prevBB.width - prevNewWidth));
-                    if (nextNewWidth < 32) {
-                        prevNewWidth -= 32 - nextNewWidth;
-                        nextNewWidth = 32;
-                    }
-                    prev.style.width = prevNewWidth + "px";
-                    next.style.width = nextNewWidth + "px";
-                }
-                else {
-                    let prevNewHeight = Math.floor(Math.max(e.clientY - prevBB.y, prev.minHeight()));
-                    let nextNewHeight = Math.floor(nextBB.height + (prevBB.height - prevNewHeight));
-                    if (nextNewHeight < 32) {
-                        prevNewHeight -= 32 - nextNewHeight;
-                        nextNewHeight = 32;
-                    }
-                    prev.style.height = prevNewHeight + "px";
-                    next.style.height = nextNewHeight + "px";
-                }
-            }
-            else
-                end();
-        };
-        const end = () => {
-            this.isMouseDown = 0;
-            document.body.removeEventListener('mouseup', end);
-            this.removeEventListener('mousemove', mV);
-        };
-        this.addEventListener("mousedown", mD);
-    }
-    static createSplitPaneDivider(orientation) {
-        const spd = document.createElement("split-pane-divider");
-        spd.setAttribute("split-pane-divider-orientation", orientation);
-        return spd;
-    }
-}
-SplitPaneDivider.size = 8;
+window.customElements.define("pane-stripe", PaneStripe);
+window.customElements.define("selection-pane", SelectionPane);
 window.customElements.define("split-button-ul", SplitButtonUL);
 window.customElements.define("split-button-ur", SplitButtonUR);
 window.customElements.define("split-button-ll", SplitButtonLL);

@@ -13,19 +13,12 @@
 
 <body>
 
-    <div style="position:absolute; z-index:2;">
+    <div style="position:absolute; z-index:2; pointer-events: none;">
         <p>Kayo Engine Pre-Alpha 0.0.1</p>
         <div>FPS: <span id="fps"></span></div>
     </div>
 
     <canvas id="glCanvas"></canvas>
-
-    <split-pane-container id="wrapper">
-        <splitable-pane>
-            <split-button-ul></split-button-ul>
-            <split-button-ur></split-button-ur>
-        </splitable-pane>
-    </split-pane-container>
 
     <script src="dist/ui.js"></script>
     <script src="dist/glInit.js"></script>

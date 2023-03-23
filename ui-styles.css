@@ -1,8 +1,13 @@
 :root {
     --radius: 4px;
     --transition-duration: 200ms;
-    --split-pane-divider-size: 8px;
-    --split-pane-divider-color: rgb(22, 22, 22);
+    --split-pane-divider-color: rgb(20, 20, 20);
+    /* Must be changed in static class */
+    --split-pane-divider-size: 4px;
+    --pane-stripe-hight: 24px;
+    --pane-stripe-color: rgb(48, 48, 48);
+    --pane-stripe-hover-color: rgb(56, 56, 56);
+    --selection-pane-color: rgb(32, 32, 32);
 }
 
 body {
@@ -40,13 +45,23 @@ split-pane-container[split-pane-container-orientation="horizontal"] {
 
 splitable-pane {
     position: relative;
-    background-color: rgb(128, 83, 83, 0);
     width: 100%;
     height: 100%;
-    min-width: 32px;
-    min-height: 32px;
+    min-width: calc(var(--pane-stripe-hight) * 2);
+    min-height: calc(var(--pane-stripe-hight) * 2);
     overflow: hidden;
     border-radius: var(--radius);
+}
+
+splitable-pane:hover>pane-stripe {
+    background-color: var(--pane-stripe-hover-color);
+}
+
+selection-pane {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: var(--selection-pane-color);
 }
 
 split-pane-divider {
@@ -67,6 +82,12 @@ split-pane-divider[split-pane-divider-orientation="horizontal"] {
     cursor: ns-resize;
 }
 
+pane-stripe {
+    display: block;
+    height: var(--pane-stripe-hight);
+    background-color: var(--pane-stripe-color);
+}
+
 split-button-ul,
 split-button-ur,
 split-button-ll,
@@ -74,7 +95,6 @@ split-button-lr {
     width: 16px;
     height: 16px;
     overflow: hidden;
-    display: inline-block;
     background-color: gray;
     opacity: 0;
     cursor: cell;

@@ -12,7 +12,7 @@ function init() {
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
     gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array(projection.concat(mat4.identity())));
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
-    gl.clearColor(0.1, 0.1, 0.1, 1.0);
+    gl.clearColor(0.07843137254901960784313725490196, 0.07843137254901960784313725490196, 0.07843137254901960784313725490196, 1.0);
     gl.disable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
     gl.enable(gl.DEPTH_TEST);
