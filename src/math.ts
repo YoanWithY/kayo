@@ -104,14 +104,42 @@ class vec3 extends vec2 {
         return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
     }
 
-    static sphericalToEuclidian(theta: number, phi: number, r: number) {
+    /**
+     * (θ, φ, r) → (x, y, z) following ISO/IEC 80000:
+     * 
+     * (θ, φ, r) ↦ (r · sin(θ) · cos(φ), r · sin(θ) · cos(φ), r · cos(θ))
+     * @param theta θ the polar angle from +Z in radiance
+     * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
+     * @param r the radial distance from the origin (optional, defaults to 1)
+     * @returns the euclidean point from the spherical coordinates
+     */
+    static sphericalToEuclidian(theta: number, phi: number, r: number = 1) {
         const st = Math.sin(theta);
         return [r * st * Math.cos(phi), r * st * Math.sin(phi), r * Math.cos(theta)];
     }
 
-    static sphericalToEuclidian2(theta: number, phi: number) {
-        const st = Math.sin(theta);
-        return [st * Math.cos(phi), st * Math.sin(phi), Math.cos(theta)];
+    /**
+     * (θ, φ) → (x, y, z) following ISO/IEC 80000:
+     * 
+     * (θ, φ) ↦ (cos(θ) · sin(φ), cos(θ) · cos(φ), sin(θ))
+     * @param theta θ the polar angle from +Z in radiance
+     * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
+     * @returns the euclidian unit tangent on the point on the longitude circle from the spherical coordinates pointing towards the increasing polar angle direction
+     */
+    static longtitudeTangent(theta: number, phi: number) {
+        const ct = Math.cos(theta);
+        return [ct * Math.sin(phi), ct * Math.cos(phi), Math.sin(theta)];
+    }
+
+    /**
+     * φ → (x, y, z) following ISO/IEC 80000:
+     * 
+     * φ ↦ (-sin(φ), cos(φ), 0)
+     * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
+     * @returns the euclidian unit tangent on the latitude circle from the azimuthal angle towards the increasing polar angle direction
+     */
+    static latitudeTangent(phi: number) {
+        return [-Math.sin(phi), Math.cos(phi), 0];
     }
 
     static normalize(a: number[]) {
@@ -175,6 +203,18 @@ class vec4 extends vec3 {
  * @class Providing static to typical matrix 4x4 functionalities.
  * @author YoGames Studios */
 class mat4 {
+
+    /**
+     * Creates a matrix from axis and translation.
+     * @param x x-axis
+     * @param y y-axis
+     * @param z z-axis
+     * @param t translation
+     * @returns the new matrix
+     */
+    static fromVec3s(x: number[] = [1, 0, 0], y: number[] = [0, 1, 0], z: number[] = [0, 0, 1], t: number[] = [0, 0, 0]) {
+        return [x[0], x[1], x[2], 0, y[0], y[1], y[2], 0, z[0], z[1], z[2], 0, t[0], t[1], t[2], 0];
+    }
 
     /**Applies a translation transformatio to the given matrix by the specified x, y and z coordinates.
      * The effect of the transformation will occure befor the effect of the original matrix.
