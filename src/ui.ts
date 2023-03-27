@@ -1,3 +1,11 @@
+function commaSeperatedStringToNumberArray(s: string) {
+    const sa = s.replace(/[^\d|,]/ig, "").split(",");
+    const ar: number[] = [];
+    for (let s of sa)
+        ar.push(parseFloat(s));
+    return ar;
+}
+
 class PaneStripe extends HTMLElement {
     static size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pane-stripe-hight").replace("px", ""));
     static size2 = this.size * 2;
@@ -15,10 +23,59 @@ class SelectionPane extends HTMLElement {
     }
 }
 
-class ViewPortPane extends HTMLElement {
+class ViewPortPane extends HTMLElement implements Camera {
+    static viewports: ViewPortPane[] = [];
+
+    framebuffer = new FrameBuffer();
+    resizeObserver = new ResizeObserver((entries, obersver) => {
+        const b = entries[0].devicePixelContentBoxSize[0];
+        this.framebuffer.init(b.inlineSize, b.blockSize);
+    });
+    sceneCamera: SceneCamera | null = null;
+
+    lookAtPos = [0, 0, 0];
+    theta = 1.1;
+    phi = 0.5;
+    r = 50;
+    near = 0.1;
+    far = 1000;
+    FOV = 1.0;
+
+    constructor() {
+        super();
+        this.resizeObserver.observe(this, { box: "device-pixel-content-box" });
+    }
+
     static createViewportPane(data: any) {
-        const p = document.createElement("viewport-pane");
+        const p = document.createElement("viewport-pane") as ViewPortPane;
+        ViewPortPane.viewports.push(p);
         return p;
+    }
+
+
+    getProjectionMatrix() {
+        return mat4.perspective(this.FOV, this.framebuffer.width / this.framebuffer.height, this.near, this.far);
+    }
+
+    getViewMatrix() {
+        const z = vec3.sphericalToEuclidian(this.theta, this.phi);
+        const p = vec3.add(this.lookAtPos, vec3.scalarMul(z, this.r));
+
+        const m = mat4.translation(-p[0], -p[1], -p[2]);
+        return mat4.mult(mat4.transpose(mat4.fromVec3s(vec3.latitudeTangent(this.phi), vec3.scalarMul(vec3.longtitudeTangent(this.theta, this.phi), -1), z)), m);
+    };
+
+    getWorldLocation() {
+        return vec3.add(this.lookAtPos, vec3.sphericalToEuclidian(this.theta, this.phi, this.r));
+    }
+
+    blit() {
+        const rect = this.getBoundingClientRect();
+        const dpr = window.devicePixelRatio;
+
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.framebuffer.finalFBO);
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+        gl.blitFramebuffer(0, 0, this.framebuffer.width, this.framebuffer.height, rect.left * dpr, gl.canvas.height - rect.bottom * dpr, rect.right * dpr, gl.canvas.height - rect.top * dpr, gl.COLOR_BUFFER_BIT, gl.NEAREST);
     }
 }
 
@@ -94,6 +151,11 @@ class SplitablePane extends HTMLElement {
 }
 
 class SplitPaneDivider extends HTMLElement {
+    static color = commaSeperatedStringToNumberArray(getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-color"));
+    static {
+        gl.clearColor(SplitPaneDivider.color[0] / 255, SplitPaneDivider.color[1] / 255, SplitPaneDivider.color[2] / 255, 1.0);
+    }
+
     static size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-size").replace("px", ""));
     isMouseDown = 0;
     constructor() {
@@ -554,11 +616,8 @@ class SplitButtonLR extends SplitButton {
     }
 }
 
-
-
-
-
 window.customElements.define("pane-stripe", PaneStripe);
+window.customElements.define("viewport-pane", ViewPortPane);
 window.customElements.define("selection-pane", SelectionPane);
 window.customElements.define("split-button-ul", SplitButtonUL);
 window.customElements.define("split-button-ur", SplitButtonUR);

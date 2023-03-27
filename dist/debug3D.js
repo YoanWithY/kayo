@@ -71,11 +71,12 @@ class Grid3D {
             weight.push(0, 1, 255, 1, 0, 1, 0, 1, 255, 1, 0, 1);
         }
     }
-    static prep(wl) {
+    static prep(view) {
         gl.enable(gl.RASTERIZER_DISCARD);
         gl.useProgram(this.lineGenShader.program);
+        const wl = view.getWorldLocation();
         this.lineGenShader.loadVec3(0, wl[0], wl[1], wl[2]);
-        this.lineGenShader.loadVec2(1, (this.lineWidth * window.devicePixelRatio + 1) / glCanvas.clientWidth / window.devicePixelRatio, (this.lineWidth * window.devicePixelRatio + 1) / glCanvas.clientHeight / window.devicePixelRatio);
+        this.lineGenShader.loadVec2(1, (this.lineWidth * window.devicePixelRatio + 1) / view.framebuffer.width, (this.lineWidth * window.devicePixelRatio + 1) / view.framebuffer.height);
         gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this.TF);
         gl.beginTransformFeedback(gl.POINTS);
         gl.bindVertexArray(this.dataVAO);
@@ -87,9 +88,7 @@ class Grid3D {
         gl.disable(gl.RASTERIZER_DISCARD);
     }
     static render() {
-        gl.enable(gl.BLEND);
         gl.depthMask(false);
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.SRC_ALPHA, gl.ONE);
         gl.useProgram(this.renderShader.program);
         this.renderShader.loadf(0, (this.lineWidth * window.devicePixelRatio + 1) / 2);
         gl.bindVertexArray(this.VAO);
@@ -97,7 +96,6 @@ class Grid3D {
         gl.bindVertexArray(null);
         gl.useProgram(null);
         gl.depthMask(true);
-        gl.disable(gl.BLEND);
     }
 }
 _a = Grid3D;
@@ -183,7 +181,7 @@ Grid3D.vertexShaderCode = `#version 300 es
 
         cPos = (viewMat * vec4(worldPos, 1)).xyz;
         gl_Position = projectionMat * vec4(cPos, 1);
-        gl_Position += vec4(inOff * gl_Position.w, 0,0);
+        gl_Position += vec4(inOff * sqrt(2.0) * gl_Position.w, 0,0);
 
         weight = inWeight * pxLineWidth * gl_Position.w;   
         z = gl_Position.w;  
@@ -263,7 +261,6 @@ Grid3D.renderShader = new Shader(_a.vertexShaderCode, _a.fragmentShaderCode, ["p
     for (let i = 0; i < _a.numLineSegments * 6; i += 6)
         ind.push(i, i + 1, i + 3, i + 3, i + 1, i + 4, i + 1, i + 2, i + 4, i + 4, i + 2, i + 5);
     _a.count = ind.length;
-    console.log(_a.numLineSegments * 6);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, _a.IBO);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ind), gl.STATIC_DRAW);
     gl.bindVertexArray(null);

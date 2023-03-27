@@ -72,13 +72,16 @@ class vec3 extends vec2 {
     static norm(a) {
         return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
     }
-    static sphericalToEuclidian(theta, phi, r) {
+    static sphericalToEuclidian(theta, phi, r = 1) {
         const st = Math.sin(theta);
         return [r * st * Math.cos(phi), r * st * Math.sin(phi), r * Math.cos(theta)];
     }
-    static sphericalToEuclidian2(theta, phi) {
-        const st = Math.sin(theta);
-        return [st * Math.cos(phi), st * Math.sin(phi), Math.cos(theta)];
+    static longtitudeTangent(theta, phi) {
+        const ct = Math.cos(theta);
+        return [ct * Math.cos(phi), ct * Math.sin(phi), -Math.sin(theta)];
+    }
+    static latitudeTangent(phi) {
+        return [-Math.sin(phi), Math.cos(phi), 0];
     }
     static normalize(a) {
         const l = 1.0 / vec3.norm(a);
@@ -125,6 +128,9 @@ class vec4 extends vec3 {
     }
 }
 class mat4 {
+    static fromVec3s(x = [1, 0, 0], y = [0, 1, 0], z = [0, 0, 1], t = [0, 0, 0]) {
+        return [x[0], x[1], x[2], 0, y[0], y[1], y[2], 0, z[0], z[1], z[2], 0, t[0], t[1], t[2], 1];
+    }
     static translate(mat, x, y, z) {
         return mat4.mult(mat, mat4.translation(x, y, z));
     }
@@ -210,7 +216,7 @@ class mat4 {
         ];
     }
     static perspective(vFOV, AR, n, f) {
-        const t = Math.tan(toRAD(vFOV) / 2) * n;
+        const t = Math.tan(vFOV / 2) * n;
         const t2 = t * 2;
         const r = t * AR;
         const r2 = r * 2;

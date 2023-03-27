@@ -106,7 +106,7 @@ class Grid3D {
 
         cPos = (viewMat * vec4(worldPos, 1)).xyz;
         gl_Position = projectionMat * vec4(cPos, 1);
-        gl_Position += vec4(inOff * gl_Position.w, 0,0);
+        gl_Position += vec4(inOff * sqrt(2.0) * gl_Position.w, 0,0);
 
         weight = inWeight * pxLineWidth * gl_Position.w;   
         z = gl_Position.w;  
@@ -259,8 +259,6 @@ class Grid3D {
 
         this.count = ind.length;
 
-        console.log(this.numLineSegments * 6);
-
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.IBO);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ind), gl.STATIC_DRAW);
 
@@ -269,12 +267,13 @@ class Grid3D {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     }
 
-    static prep(wl: number[]) {
+    static prep(view: ViewPortPane) {
         gl.enable(gl.RASTERIZER_DISCARD);
 
         gl.useProgram(this.lineGenShader.program);
+        const wl = view.getWorldLocation();
         this.lineGenShader.loadVec3(0, wl[0], wl[1], wl[2])
-        this.lineGenShader.loadVec2(1, (this.lineWidth * window.devicePixelRatio + 1) / glCanvas.clientWidth / window.devicePixelRatio, (this.lineWidth * window.devicePixelRatio + 1) / glCanvas.clientHeight / window.devicePixelRatio);
+        this.lineGenShader.loadVec2(1, (this.lineWidth * window.devicePixelRatio + 1) / view.framebuffer.width, (this.lineWidth * window.devicePixelRatio + 1) / view.framebuffer.height);
         gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this.TF);
 
         gl.beginTransformFeedback(gl.POINTS);
@@ -297,9 +296,7 @@ class Grid3D {
     }
 
     static render() {
-        gl.enable(gl.BLEND);
         gl.depthMask(false);
-        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.SRC_ALPHA, gl.ONE);
         gl.useProgram(this.renderShader.program);
         this.renderShader.loadf(0, (this.lineWidth * window.devicePixelRatio + 1) / 2);
         gl.bindVertexArray(this.VAO);
@@ -307,6 +304,5 @@ class Grid3D {
         gl.bindVertexArray(null);
         gl.useProgram(null);
         gl.depthMask(true);
-        gl.disable(gl.BLEND);
     }
 }

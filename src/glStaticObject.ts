@@ -1,25 +1,4 @@
 "use strict";
-
-class R3Objekt {
-    transformationStack;
-
-    constructor() {
-        this.transformationStack = new TransformationStack();
-    }
-
-    getWorldLocation() {
-        return mat4.getTranslation(this.transformationStack.getTransformationMatrix());
-    }
-
-}
-
-class Camera extends R3Objekt {
-
-    getViewMatrix() {
-        return this.transformationStack.getInverseEffectTransformationMatrix();
-    }
-}
-
 class glObject extends R3Objekt {
     /**Decodes the given data to an WebGL approbriate formate.
     * @param iP the set of positions required for this objct.

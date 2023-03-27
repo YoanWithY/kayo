@@ -1,5 +1,12 @@
 "use strict";
 var _a, _b;
+function commaSeperatedStringToNumberArray(s) {
+    const sa = s.replace(/[^\d|,]/ig, "").split(",");
+    const ar = [];
+    for (let s of sa)
+        ar.push(parseFloat(s));
+    return ar;
+}
 class PaneStripe extends HTMLElement {
     static createPaneStripe() {
         return document.createElement("pane-stripe");
@@ -15,11 +22,50 @@ class SelectionPane extends HTMLElement {
     }
 }
 class ViewPortPane extends HTMLElement {
+    constructor() {
+        super();
+        this.framebuffer = new FrameBuffer();
+        this.resizeObserver = new ResizeObserver((entries, obersver) => {
+            const b = entries[0].devicePixelContentBoxSize[0];
+            this.framebuffer.init(b.inlineSize, b.blockSize);
+        });
+        this.sceneCamera = null;
+        this.lookAtPos = [0, 0, 0];
+        this.theta = 1.1;
+        this.phi = 0.5;
+        this.r = 50;
+        this.near = 0.1;
+        this.far = 1000;
+        this.FOV = 1.0;
+        this.resizeObserver.observe(this, { box: "device-pixel-content-box" });
+    }
     static createViewportPane(data) {
         const p = document.createElement("viewport-pane");
+        ViewPortPane.viewports.push(p);
         return p;
     }
+    getProjectionMatrix() {
+        return mat4.perspective(this.FOV, this.framebuffer.width / this.framebuffer.height, this.near, this.far);
+    }
+    getViewMatrix() {
+        const z = vec3.sphericalToEuclidian(this.theta, this.phi);
+        const p = vec3.add(this.lookAtPos, vec3.scalarMul(z, this.r));
+        const m = mat4.translation(-p[0], -p[1], -p[2]);
+        return mat4.mult(mat4.transpose(mat4.fromVec3s(vec3.latitudeTangent(this.phi), vec3.scalarMul(vec3.longtitudeTangent(this.theta, this.phi), -1), z)), m);
+    }
+    ;
+    getWorldLocation() {
+        return vec3.add(this.lookAtPos, vec3.sphericalToEuclidian(this.theta, this.phi, this.r));
+    }
+    blit() {
+        const rect = this.getBoundingClientRect();
+        const dpr = window.devicePixelRatio;
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.framebuffer.finalFBO);
+        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+        gl.blitFramebuffer(0, 0, this.framebuffer.width, this.framebuffer.height, rect.left * dpr, gl.canvas.height - rect.bottom * dpr, rect.right * dpr, gl.canvas.height - rect.top * dpr, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+    }
 }
+ViewPortPane.viewports = [];
 class SplitablePane extends HTMLElement {
     static createSplitablePane(paneConstructor, paneData, orientation, rect) {
         const newSplitablePane = document.createElement("splitable-pane");
@@ -133,6 +179,10 @@ class SplitPaneDivider extends HTMLElement {
         return spd;
     }
 }
+SplitPaneDivider.color = commaSeperatedStringToNumberArray(getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-color"));
+(() => {
+    gl.clearColor(SplitPaneDivider.color[0] / 255, SplitPaneDivider.color[1] / 255, SplitPaneDivider.color[2] / 255, 1.0);
+})();
 SplitPaneDivider.size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-size").replace("px", ""));
 class SplitPaneContainer extends HTMLElement {
     static createSplitPaneContainer(orientation, rect) {
@@ -481,6 +531,7 @@ class SplitButtonLR extends SplitButton {
     }
 }
 window.customElements.define("pane-stripe", PaneStripe);
+window.customElements.define("viewport-pane", ViewPortPane);
 window.customElements.define("selection-pane", SelectionPane);
 window.customElements.define("split-button-ul", SplitButtonUL);
 window.customElements.define("split-button-ur", SplitButtonUR);

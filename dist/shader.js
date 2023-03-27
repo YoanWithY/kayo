@@ -25,6 +25,12 @@ class Shader {
     static loadProjectionMatrix(mat) {
         gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array(mat));
     }
+    static updateView(view) {
+        gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array(view.getProjectionMatrix().concat(view.getViewMatrix()).concat(view.getWorldLocation())));
+        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+        gl.viewport(0, 0, view.framebuffer.width, view.framebuffer.height);
+    }
     static loadViewMatrix(mat) {
         gl.bufferSubData(gl.UNIFORM_BUFFER, 64, new Float32Array(mat));
     }

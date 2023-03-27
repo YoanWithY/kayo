@@ -64,6 +64,12 @@ selection-pane {
     background-color: var(--selection-pane-color);
 }
 
+viewport-pane {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
 split-pane-divider {
     background-color: var(--split-pane-divider-color);
 }
