@@ -36,7 +36,7 @@ class ViewPortPane extends HTMLElement implements Camera {
     lookAtPos = [0, 0, 0];
     theta = 1.1;
     phi = 0.5;
-    r = 50;
+    r = 32;
     near = 0.1;
     far = 1000;
     FOV = 1.0;
@@ -69,13 +69,13 @@ class ViewPortPane extends HTMLElement implements Camera {
         return vec3.add(this.lookAtPos, vec3.sphericalToEuclidian(this.theta, this.phi, this.r));
     }
 
-    blit() {
+    applyToCanvas() {
         const rect = this.getBoundingClientRect();
         const dpr = window.devicePixelRatio;
 
-        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.framebuffer.finalFBO);
-        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
-        gl.blitFramebuffer(0, 0, this.framebuffer.width, this.framebuffer.height, rect.left * dpr, gl.canvas.height - rect.bottom * dpr, rect.right * dpr, gl.canvas.height - rect.top * dpr, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+        gl.viewport(rect.left * dpr, gl.canvas.height - rect.bottom * dpr, this.framebuffer.width, this.framebuffer.height);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        FrameBuffer.blend({ tex: [this.framebuffer.renderColorRT] }, { blend: { src: gl.ONE, dst: gl.ONE_MINUS_SRC_ALPHA }, tex: [this.framebuffer.debugColorRT] });
     }
 }
 

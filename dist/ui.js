@@ -33,7 +33,7 @@ class ViewPortPane extends HTMLElement {
         this.lookAtPos = [0, 0, 0];
         this.theta = 1.1;
         this.phi = 0.5;
-        this.r = 50;
+        this.r = 32;
         this.near = 0.1;
         this.far = 1000;
         this.FOV = 1.0;
@@ -57,12 +57,12 @@ class ViewPortPane extends HTMLElement {
     getWorldLocation() {
         return vec3.add(this.lookAtPos, vec3.sphericalToEuclidian(this.theta, this.phi, this.r));
     }
-    blit() {
+    applyToCanvas() {
         const rect = this.getBoundingClientRect();
         const dpr = window.devicePixelRatio;
-        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.framebuffer.finalFBO);
-        gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
-        gl.blitFramebuffer(0, 0, this.framebuffer.width, this.framebuffer.height, rect.left * dpr, gl.canvas.height - rect.bottom * dpr, rect.right * dpr, gl.canvas.height - rect.top * dpr, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+        gl.viewport(rect.left * dpr, gl.canvas.height - rect.bottom * dpr, this.framebuffer.width, this.framebuffer.height);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        FrameBuffer.blend({ tex: [this.framebuffer.renderColorRT] }, { blend: { src: gl.ONE, dst: gl.ONE_MINUS_SRC_ALPHA }, tex: [this.framebuffer.debugColorRT] });
     }
 }
 ViewPortPane.viewports = [];

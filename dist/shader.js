@@ -170,10 +170,6 @@ function setupCanvas() {
     if (glCanvas.width != width || glCanvas.height != height) {
         glCanvas.width = width * dpr;
         glCanvas.height = height * dpr;
-        gl.viewport(0, 0, glCanvas.width, glCanvas.height);
-        gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
-        Shader.loadProjectionMatrix(mat4.perspective(60, width / height, 0.1, 1000));
-        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     }
 }
 window.addEventListener('resize', setupCanvas);

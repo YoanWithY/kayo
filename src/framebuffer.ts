@@ -1,18 +1,20 @@
 class FrameBuffer {
-    static blendVertexShaderCode = `#version 300 es
+    static FSQVertexShaderCode = `#version 300 es
     layout(location = 0) in vec2 p;
     void main(){gl_Position = vec4(p, 0, 1);}
     `
 
-    static blendFragmentShaderCode = `#version 300 es
+    static FSQFragmentShader = `#version 300 es
     precision highp float;
     out vec4 outColor;
-    uniform sampler2D texture;
+    uniform sampler2D src;
     void main(){
-        outColor = texelFetch(texture, ivec2(gl_FragCoord.xy), 0);
+        outColor = texelFetch(src, ivec2(gl_FragCoord.xy), 0);
     }
     `
-    static blendShader = new Shader(FrameBuffer.blendVertexShaderCode, FrameBuffer.blendFragmentShaderCode);
+
+    static FSQShader = new Shader(FrameBuffer.FSQVertexShaderCode, FrameBuffer.FSQFragmentShader);
+
     static FSQ = gl.createVertexArray();
     static FSQPBO = gl.createBuffer();
     static {
@@ -24,35 +26,40 @@ class FrameBuffer {
 
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.bindVertexArray(null);
+
+        gl.useProgram(FrameBuffer.FSQShader.program);
+        gl.uniform1i(gl.getUniformLocation(FrameBuffer.FSQShader.program, "src"), 0);
+        gl.useProgram(null);
+
     }
 
     width = 16;
     height = 16;
 
-    finalFBO = gl.createFramebuffer();
-    finalDepthStencil = gl.createRenderbuffer();
-    finalColorRT = gl.createTexture();
+    renderFBO = gl.createFramebuffer();
+    renderDepthStencil = gl.createRenderbuffer();
+    renderColorRT = gl.createTexture();
 
     debugFBO = gl.createFramebuffer();
     debugColorRT = gl.createTexture();
 
     constructor() {
-        // final FBO
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.finalFBO);
+        // render FBO
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderFBO);
 
-        gl.bindRenderbuffer(gl.RENDERBUFFER, this.finalDepthStencil);
-        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, this.finalDepthStencil);
+        gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderDepthStencil);
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderDepthStencil);
 
-        gl.bindTexture(gl.TEXTURE_2D, this.finalColorRT);
+        gl.bindTexture(gl.TEXTURE_2D, this.renderColorRT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.finalColorRT, 0);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.renderColorRT, 0);
         gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
         gl.readBuffer(gl.COLOR_ATTACHMENT0);
 
         // Debug FBO
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.debugFBO);
-        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_STENCIL_ATTACHMENT, gl.RENDERBUFFER, this.finalDepthStencil);
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderDepthStencil);
 
         gl.bindTexture(gl.TEXTURE_2D, this.debugColorRT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -60,9 +67,9 @@ class FrameBuffer {
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.debugColorRT, 0);
         gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
         gl.readBuffer(gl.COLOR_ATTACHMENT0);
+        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
 
         this.init(this.width, this.height);
     }
@@ -71,46 +78,57 @@ class FrameBuffer {
         this.width = w;
         this.height = h;
 
-        gl.bindRenderbuffer(gl.RENDERBUFFER, this.finalDepthStencil);
-        gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH24_STENCIL8, w, h);
+        gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderDepthStencil);
+        gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT32F, w, h);
         gl.bindRenderbuffer(gl.RENDERBUFFER, null);
 
-        gl.bindTexture(gl.TEXTURE_2D, this.finalColorRT);
-
+        gl.bindTexture(gl.TEXTURE_2D, this.renderColorRT);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
         gl.bindTexture(gl.TEXTURE_2D, this.debugColorRT);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
         gl.bindTexture(gl.TEXTURE_2D, null);
     }
 
-    bindFinal(target: number) {
-        gl.bindFramebuffer(target, this.finalFBO);
+    bindRenderFBO() {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderFBO);
     }
 
     bindDebug() {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.debugFBO);
     }
 
-    static blend(src: WebGLTexture | null, dest: FrameBuffer) {
-
-        gl.bindFramebuffer(gl.FRAMEBUFFER, dest.finalFBO);
+    /**
+     * This non transparent function blends the source image over the destination image using straight alpha blend over. 
+     * This method leaves with the state:
+     * `gl.bindTexture(gl.TEXTURE_2D, null); gl.useProgram(null); gl.bindVertexArray(null); gl.disable(gl.BLEND);`..
+     * @param src the source image
+     * @param dst the destination image
+     */
+    static blend(...T: { blend?: { src: number, dst: number; }, tex: (WebGLTexture | null)[] }[]) {
         gl.bindVertexArray(FrameBuffer.FSQ);
-        gl.useProgram(FrameBuffer.blendShader.program);
-
+        gl.useProgram(FrameBuffer.FSQShader.program);
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, src);
 
-        gl.viewport(0, 0, dest.width, dest.height);
-        gl.enable(gl.BLEND);
-        // gl.blendFuncSeparate()
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        for (const te of T) {
+            if (te.blend) {
+                gl.enable(gl.BLEND);
+                gl.blendFunc(te.blend.src, te.blend.dst);
+                gl.blendEquation(gl.FUNC_ADD);
+            } else
+                gl.disable(gl.BLEND);
+
+            for (const texture of te.tex) {
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+            }
+        }
+
         gl.disable(gl.BLEND);
-
         gl.bindTexture(gl.TEXTURE_2D, null);
         gl.useProgram(null);
         gl.bindVertexArray(null);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
     deleteTeturesAndRenderBuffers() {

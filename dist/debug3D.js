@@ -92,7 +92,11 @@ class Grid3D {
         gl.useProgram(this.renderShader.program);
         this.renderShader.loadf(0, (this.lineWidth * window.devicePixelRatio + 1) / 2);
         gl.bindVertexArray(this.VAO);
+        gl.enable(gl.BLEND);
+        gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ONE, gl.ONE);
+        gl.blendEquationSeparate(gl.MAX, gl.MAX);
         gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
+        gl.disable(gl.BLEND);
         gl.bindVertexArray(null);
         gl.useProgram(null);
         gl.depthMask(true);
@@ -149,7 +153,7 @@ Grid3D.vertexShaderCode = `#version 300 es
     }
 
     #define ${debudHint}
-    #define AXIS_COLOR vec4(0.2, 0.2, 0.2, 1.0)
+    #define AXIS_COLOR vec4(0.4, 0.4, 0.4, 1.0)
     #define RED vec4(1.0, 0.0, 0.0, 1.0)
     #define GREEN vec4(0.0, 1.0, 0.0, 1.0)
 
@@ -175,13 +179,13 @@ Grid3D.vertexShaderCode = `#version 300 es
         #else 
         bool isXAxis = isXAxis(worldPos), isYAxis = isYAxis(worldPos);
         color = isXAxis ? RED : isYAxis ? GREEN : AXIS_COLOR;
-        maxFade = (isLarge(worldPos) ? 1500.0 : isMedium(worldPos) ? ${(_a.majorRange * 1.5).toFixed(1)} :  ${(_a.minorRange * 1.6).toFixed(1)}) * sqrt(linearStep(0.0, 32.0, abs(cameraPosition.z))); 
+        maxFade = (isLarge(worldPos) ? 1500.0 : isMedium(worldPos) ? ${(_a.majorRange * 1.5).toFixed(1)} :  ${(_a.minorRange * 1.5).toFixed(1)}) * sqrt(linearStep(0.0, 16.0, abs(cameraPosition.z))); 
 
         #endif
 
         cPos = (viewMat * vec4(worldPos, 1)).xyz;
         gl_Position = projectionMat * vec4(cPos, 1);
-        gl_Position += vec4(inOff * sqrt(2.0) * gl_Position.w, 0,0);
+        gl_Position += vec4(inOff * gl_Position.w, 0,0);
 
         weight = inWeight * pxLineWidth * gl_Position.w;   
         z = gl_Position.w;  
@@ -209,6 +213,7 @@ Grid3D.fragmentShaderCode = `#version 300 es
         float ff2 = ff * ff;
         #ifndef DEBUG
         outColor.a *= min(wp, 1.0) * ff2 * ff2;
+        outColor.rgb *= outColor.a;
         #endif
     }`;
 Grid3D.TF = gl.createTransformFeedback();

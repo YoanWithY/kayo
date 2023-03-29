@@ -59,10 +59,9 @@ function renderloop(timestamp: number) {
         view.phi = val;
         Shader.updateView(view);
 
-        view.framebuffer.bindFinal(gl.FRAMEBUFFER);
-        gl.clearColor(1, 1, 1, 0);
+        view.framebuffer.bindRenderFBO();
+        gl.clearColor(0.2, 0.2, 0.2, 1);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
 
         gl.useProgram(shader.program);
         for (let i = 0; i < objs.length; i++) {
@@ -77,9 +76,8 @@ function renderloop(timestamp: number) {
         gl.clear(gl.COLOR_BUFFER_BIT);
         Grid3D.prep(view);
         Grid3D.render();
-        FrameBuffer.blend(view.framebuffer.debugColorRT, view.framebuffer);
 
-        view.blit();
+        view.applyToCanvas();
     }
 
     prevFPS[frameCounter % 16] = Math.round(1000 / (timestamp - prevTime));
