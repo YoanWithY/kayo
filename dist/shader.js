@@ -124,7 +124,9 @@ Shader.defaultVertexShaderCode = `#version 300 es
 Shader.defaultFragmentShaderCode = `#version 300 es
 
     precision highp float;
+    precision highp int;
     
+    uniform uint index;
     uniform sampler2D albedo;
     
     in vec3 localspace_vertex_normal;
@@ -136,7 +138,8 @@ Shader.defaultFragmentShaderCode = `#version 300 es
     in vec2 TC;
     in vec3 barycentric;
 
-    out vec4 outColor;
+    layout(location = 0) out vec4 outColor;
+    layout(location = 1) out uint objectIndex;
     vec3 ls_v_N, ws_v_N, cs_v_N;
     
     void main(){
@@ -145,7 +148,7 @@ Shader.defaultFragmentShaderCode = `#version 300 es
         cs_v_N = normalize(cameraspace_vertex_normal);
 
         outColor = vec4(texture(albedo, TC).rgb, 1);
-        
+        objectIndex = index; 
     }`;
 Shader.modelTransformationUB = gl.createBuffer();
 Shader.viewUB = gl.createBuffer();

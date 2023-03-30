@@ -55,7 +55,9 @@ class Shader {
     static defaultFragmentShaderCode = `#version 300 es
 
     precision highp float;
+    precision highp int;
     
+    uniform uint index;
     uniform sampler2D albedo;
     
     in vec3 localspace_vertex_normal;
@@ -67,7 +69,8 @@ class Shader {
     in vec2 TC;
     in vec3 barycentric;
 
-    out vec4 outColor;
+    layout(location = 0) out vec4 outColor;
+    layout(location = 1) out uint objectIndex;
     vec3 ls_v_N, ws_v_N, cs_v_N;
     
     void main(){
@@ -76,7 +79,7 @@ class Shader {
         cs_v_N = normalize(cameraspace_vertex_normal);
 
         outColor = vec4(texture(albedo, TC).rgb, 1);
-        
+        objectIndex = index; 
     }`
 
     static modelTransformationUB = gl.createBuffer();

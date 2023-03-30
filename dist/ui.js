@@ -62,7 +62,7 @@ class ViewPortPane extends HTMLElement {
         const dpr = window.devicePixelRatio;
         gl.viewport(rect.left * dpr, gl.canvas.height - rect.bottom * dpr, this.framebuffer.width, this.framebuffer.height);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        FrameBuffer.blend({ tex: [this.framebuffer.renderColorRT] }, { blend: { src: gl.ONE, dst: gl.ONE_MINUS_SRC_ALPHA }, tex: [this.framebuffer.debugColorRT] });
+        this.framebuffer.blitToActiveFramebuffer();
     }
 }
 ViewPortPane.viewports = [];

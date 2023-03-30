@@ -22,11 +22,11 @@ function init() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.modelTransformationUB);
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 10; i++) {
         objs.push(new Cube(i));
         const ts = objs[i].transformationStack;
         ts[1].setValues(Math.random(), Math.random(), Math.random());
-        ts[2].setValues(Math.random() * 100 - 50, Math.random() * 100 - 50, Math.random() * 100 - 50);
+        ts[2].setValues(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 20 - 10);
         Shader.loadModelMatrix(i, ts.getTransformationMatrix());
     }
 
@@ -59,9 +59,8 @@ function renderloop(timestamp: number) {
         view.phi = val;
         Shader.updateView(view);
 
+        view.framebuffer.clear();
         view.framebuffer.bindRenderFBO();
-        gl.clearColor(0.2, 0.2, 0.2, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         gl.useProgram(shader.program);
         for (let i = 0; i < objs.length; i++) {

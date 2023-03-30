@@ -41,9 +41,12 @@ class ViewPortPane extends HTMLElement implements Camera {
     far = 1000;
     FOV = 1.0;
 
+
+
     constructor() {
         super();
         this.resizeObserver.observe(this, { box: "device-pixel-content-box" });
+
     }
 
     static createViewportPane(data: any) {
@@ -75,7 +78,7 @@ class ViewPortPane extends HTMLElement implements Camera {
 
         gl.viewport(rect.left * dpr, gl.canvas.height - rect.bottom * dpr, this.framebuffer.width, this.framebuffer.height);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        FrameBuffer.blend({ tex: [this.framebuffer.renderColorRT] }, { blend: { src: gl.ONE, dst: gl.ONE_MINUS_SRC_ALPHA }, tex: [this.framebuffer.debugColorRT] });
+        this.framebuffer.blitToActiveFramebuffer();
     }
 }
 
