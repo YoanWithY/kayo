@@ -30,7 +30,7 @@ class SharedEdge {
     }
 }
 class Face {
-    constructor(edge1, edge2, edge3, ...edges) {
-        this.edges = [edge1, edge2, edge3].concat(edges);
+    constructor(vertex0, vertex1, vertex2, ...vertices) {
+        this.vertices = [vertex0, vertex1, vertex2].concat(vertices);
     }
 }

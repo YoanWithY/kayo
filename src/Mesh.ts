@@ -55,9 +55,9 @@ class SharedEdge {
 }
 
 class Face {
-    edges: Edge[];
-    constructor(edge1: Edge, edge2: Edge, edge3: Edge, ...edges: Edge[]) {
-        this.edges = [edge1, edge2, edge3].concat(edges);
+    vertices: Vertex[]
+    constructor(vertex0: Vertex, vertex1: Vertex, vertex2: Vertex, ...vertices: Vertex[]) {
+        this.vertices = [vertex0, vertex1, vertex2].concat(vertices);
     }
 }
 
