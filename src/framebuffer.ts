@@ -74,7 +74,7 @@ class FrameBuffer {
     `
 
     static FSQShader = new Shader(FrameBuffer.FSQVertexShaderCode, FrameBuffer.FSQFragmentShader);
-    static BlitOutlineShader = new Shader(FrameBuffer.FSQVertexShaderCode, FrameBuffer.blitOutlineFragmentShaderCode, ["selected"]);
+    static BlitOutlineShader = new Shader(FrameBuffer.FSQVertexShaderCode, FrameBuffer.blitOutlineFragmentShaderCode, ["acti"]);
 
 
     static FSQ = gl.createVertexArray();
@@ -109,12 +109,14 @@ class FrameBuffer {
     debugFBO = gl.createFramebuffer();
     debugColorRT = gl.createTexture();
 
+    selectionFBO = gl.createFramebuffer();
+    selectionRT = gl.createTexture();
+
     constructor() {
         this.init(this.width, this.height);
         // render FBO
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderFBO);
 
-        gl.bindRenderbuffer(gl.RENDERBUFFER, this.renderDepthRB);
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderDepthRB);
 
         gl.bindTexture(gl.TEXTURE_2D, this.renderColorRT);
@@ -137,23 +139,43 @@ class FrameBuffer {
 
         // Debug FBO
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.debugFBO);
+
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.renderDepthRB);
 
         gl.bindTexture(gl.TEXTURE_2D, this.debugColorRT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.debugColorRT, 0);
 
         gl.readBuffer(gl.COLOR_ATTACHMENT0);
         gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
 
-        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.selectionFBO);
+
+        gl.bindTexture(gl.TEXTURE_2D, this.selectionRT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.selectionRT, 0);
+
+        gl.readBuffer(gl.COLOR_ATTACHMENT0);
+        gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
 
     }
 
+    /**
+     * Initializes all attachments of all FBOs of this Framebuffer.
+     * 
+     * Non transparent: `gl.bindRenderBuffer(gl.renderbuffer, null); gl.bindTexture(gl.TEXUTRE_2D, null);`
+     * @param w the width
+     * @param h the height
+     */
     init(w: number, h: number) {
         this.width = w;
         this.height = h;
@@ -168,12 +190,13 @@ class FrameBuffer {
         gl.bindTexture(gl.TEXTURE_2D, this.renderPickerRT);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32UI, w, h, 0, gl.RED_INTEGER, gl.UNSIGNED_INT, null);
 
+        gl.bindTexture(gl.TEXTURE_2D, this.selectionRT);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32UI, w, h, 0, gl.RED_INTEGER, gl.UNSIGNED_INT, null);
+
         gl.bindTexture(gl.TEXTURE_2D, this.debugColorRT);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
         gl.bindTexture(gl.TEXTURE_2D, null);
-
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.renderFBO);
     }
 
     bindRenderFBO() {
@@ -184,6 +207,15 @@ class FrameBuffer {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.debugFBO);
     }
 
+    bindSelection() {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.selectionFBO);
+    }
+
+    /**
+     * Clears all attachments of all FBOs of this frambuffer.
+     * 
+     * Non Transparent: `gl.bindFramebuffer(gl.FRAMEBUFFER, null);`
+     */
     clear() {
         this.bindRenderFBO();
         gl.clearBufferfv(gl.COLOR, 0, [0.2, 0.2, 0.2, 1]);
@@ -192,8 +224,11 @@ class FrameBuffer {
 
         this.bindDebug();
         gl.clearBufferfv(gl.COLOR, 0, [0.0, 0.0, 0.0, 0.0]);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
+        this.bindSelection();
+        gl.clearBufferuiv(gl.COLOR, 0, [0, 0, 0, 0]);
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
 
     /**
@@ -217,9 +252,10 @@ class FrameBuffer {
         gl.useProgram(FrameBuffer.BlitOutlineShader.program);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.debugColorRT);
+        FrameBuffer.BlitOutlineShader.loadui(0, active.index || 0);
 
         gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, this.renderPickerRT);
+        gl.bindTexture(gl.TEXTURE_2D, this.selectionRT);
 
         gl.enable(gl.BLEND);
         gl.blendEquation(gl.FUNC_ADD);

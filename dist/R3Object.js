@@ -7,3 +7,11 @@ class R3Objekt {
         return mat4.getTranslation(this.transformationStack.getTransformationMatrix());
     }
 }
+class MeshObject extends R3Objekt {
+    constructor() {
+        super();
+        this.a = new SharedVertex();
+    }
+    render() {
+    }
+}

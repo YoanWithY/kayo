@@ -1,10 +1,12 @@
 "use strict";
 let shader: Shader;
-let shader2d: Shader;
+let selectionShader: Shader;
 let mat = new material();
 mat.setTexture(0, "TexturesCom_Tiles_Decorative_1K_albedo.png");
-// mat.setTexture(0, "birch_log.png");
 let objs: glObject[] = [];
+let selected: glObject[] = [];
+let active: glObject;
+
 function init() {
     if (!gl)
         return;
@@ -15,6 +17,7 @@ function init() {
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
 
     // transformfeedback for dynamic grid generation
+    selectionShader = new Shader(Shader.geometryOnlyVertexShaderCode, Shader.indexOutputFragmentShaderCode, ["index"]);
 
     gl.disable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
@@ -29,6 +32,9 @@ function init() {
         ts[2].setValues(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 20 - 10);
         Shader.loadModelMatrix(i, ts.getTransformationMatrix());
     }
+
+    active = objs[3];
+    selected = [objs[1], objs[2]];
 
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     setupCanvas();
@@ -71,10 +77,16 @@ function renderloop(timestamp: number) {
         }
 
         view.framebuffer.bindDebug();
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
         Grid3D.prep(view);
         Grid3D.render();
+
+        gl.useProgram(selectionShader.program);
+        view.framebuffer.bindSelection();
+        for (const o of selected.concat([active])) {
+            selectionShader.loadui(0, o.index);
+            o.bind();
+            o.render();
+        }
 
         view.applyToCanvas();
     }

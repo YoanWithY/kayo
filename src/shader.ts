@@ -5,11 +5,14 @@ const ubView = `layout(std140) uniform view {
     mat4 viewMat;
     vec4 cameraPosition;
 };`
+const maxModelMats = 1024;
+const ubTransform = `layout(std140) uniform model{
+    mat4 modelMat[${maxModelMats}];
+  };
+`
 class Shader {
     program: WebGLProgram;
     uniformLocations: WebGLUniformLocation[] = [];
-
-    static numModelMats = 1024;
     static defaultVertexShaderCode = `#version 300 es
 
     in vec3 inPos;
@@ -25,11 +28,8 @@ class Shader {
     out vec2 TC;
     out vec3 barycentric;
     
-   ${ubView}
-
-    layout(std140) uniform model{
-      mat4 modelMat[${Shader.numModelMats}];
-    };
+    ${ubView}
+    ${ubTransform}
 
     uniform uint index;
 
@@ -82,6 +82,33 @@ class Shader {
         objectIndex = index; 
     }`
 
+    static geometryOnlyVertexShaderCode = `#version 300 es
+
+    in vec3 inPos;
+    
+    ${ubView}
+    ${ubTransform}
+
+    uniform uint index;
+    
+    void main(){
+        gl_Position = projectionMat * viewMat * modelMat[index] * vec4(inPos, 1);
+    }`;
+
+    static indexOutputFragmentShaderCode = `#version 300 es
+
+    precision highp float;
+    precision highp int;
+    
+    uniform uint index;
+
+    layout(location = 0) out uint outIndex;
+    
+    void main(){
+        outIndex = index; 
+    }
+    `
+
     static modelTransformationUB = gl.createBuffer();
     static viewUB = gl.createBuffer();
     static gridDataBuffer = gl.createBuffer();
@@ -91,7 +118,7 @@ class Shader {
         gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(2 * 16 + 4), gl.DYNAMIC_DRAW);
 
         gl.bindBufferBase(gl.UNIFORM_BUFFER, 1, Shader.modelTransformationUB);
-        gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(Shader.numModelMats * 16), gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(maxModelMats * 16), gl.DYNAMIC_DRAW);
 
         gl.bindBufferBase(gl.UNIFORM_BUFFER, 2, Shader.gridDataBuffer);
         gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(2 * 2 * 64 * 16), gl.DYNAMIC_DRAW);

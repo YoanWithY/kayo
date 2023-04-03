@@ -1,9 +1,11 @@
 "use strict";
 let shader;
-let shader2d;
+let selectionShader;
 let mat = new material();
 mat.setTexture(0, "TexturesCom_Tiles_Decorative_1K_albedo.png");
 let objs = [];
+let selected = [];
+let active;
 function init() {
     if (!gl)
         return;
@@ -11,6 +13,7 @@ function init() {
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
     gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array(projection.concat(mat4.identity())));
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+    selectionShader = new Shader(Shader.geometryOnlyVertexShaderCode, Shader.indexOutputFragmentShaderCode, ["index"]);
     gl.disable(gl.CULL_FACE);
     gl.cullFace(gl.BACK);
     gl.enable(gl.DEPTH_TEST);
@@ -23,6 +26,8 @@ function init() {
         ts[2].setValues(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 20 - 10);
         Shader.loadModelMatrix(i, ts.getTransformationMatrix());
     }
+    active = objs[3];
+    selected = [objs[1], objs[2]];
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     setupCanvas();
     window.requestAnimationFrame(renderloop);
@@ -56,10 +61,15 @@ function renderloop(timestamp) {
             o.render();
         }
         view.framebuffer.bindDebug();
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
         Grid3D.prep(view);
         Grid3D.render();
+        gl.useProgram(selectionShader.program);
+        view.framebuffer.bindSelection();
+        for (const o of selected.concat([active])) {
+            selectionShader.loadui(0, o.index);
+            o.bind();
+            o.render();
+        }
         view.applyToCanvas();
     }
     prevFPS[frameCounter % 16] = Math.round(1000 / (timestamp - prevTime));
