@@ -37,9 +37,12 @@ class SharedVertex {
     sharedVertexAttribs: number[][] = [];
     sharedEdges: SharedEdge[];
 
-    constructor(sharedEdges: SharedEdge[] = []) {
+    constructor(x: number, y: number, z: number, sharedEdges: SharedEdge[] = []) {
         this.sharedEdges = sharedEdges;
+        this.sharedVertexAttribs[0] = [x, y, z];
     }
+
+
 }
 
 class SharedEdge {
@@ -51,6 +54,10 @@ class SharedEdge {
         this.sharedVertex1 = sharedVertex1;
         this.sharedVertex2 = sharedVertex2;
         this.children = children;
+    }
+
+    equals(v1: SharedVertex, v2: SharedVertex) {
+        return this.sharedVertex1 === v1 && this.sharedVertex2 === v2 || this.sharedVertex1 === v2 && this.sharedVertex2 === v1;
     }
 }
 
