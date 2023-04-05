@@ -16,6 +16,8 @@ function init() {
     gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array(projection.concat(mat4.identity())));
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
 
+    BasicMesh.appendCube(new MeshObject());
+
     // transformfeedback for dynamic grid generation
     selectionShader = new Shader(Shader.geometryOnlyVertexShaderCode, Shader.indexOutputFragmentShaderCode, ["index"]);
 

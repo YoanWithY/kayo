@@ -31,27 +31,50 @@ class MeshObject extends R3Objekt {
         return se;
     }
     fill(...indices) {
-        if (indices.length < 3)
+        if (indices.length < 2)
             return;
-        for (let i = 0; i < indices.length - 1; i++) {
+        if (indices.length == 2) {
+            const sv1 = this.vertices[indices[0]];
+            const sv2 = this.vertices[indices[1]];
+            this.getOrCreateSharedEdge(sv1, sv2);
+            return;
+        }
+        const arr = [];
+        for (let i = 0; i < indices.length; i++) {
             const sv1 = this.vertices[indices[i]];
-            const sv2 = this.vertices[indices[i + 1]];
+            const sv2 = this.vertices[indices[(i + 1) % indices.length]];
             const se = this.getOrCreateSharedEdge(sv1, sv2);
-            const v1 = new Vertex(sv1);
-            const v2 = new Vertex(sv2);
-            const e1 = new Edge(se, v1, v2);
+            arr.push(new Vertex(sv1));
+        }
+        this.faces.push(new Face(...arr));
+    }
+    append(vertices, edges, faces) {
+        const ci = this.vertices.length;
+        for (const v of vertices)
+            this.vertices.push(v);
+        for (const arr of faces) {
+            this.fill(...VecX.scalarAdd(arr, ci));
         }
     }
 }
 class BasicMesh {
     static appendCube(mo) {
-        const ci = mo.vertices.length;
-        mo.vertices.push(new SharedVertex(1, 1, 1), new SharedVertex(-1, 1, 1), new SharedVertex(-1, -1, 1), new SharedVertex(1, -1, 1), new SharedVertex(1, 1, -1), new SharedVertex(-1, 1, -1), new SharedVertex(-1, -1, -1), new SharedVertex(1, -1, -1));
-        mo.fill(ci + 0, ci + 1, ci + 2, ci + 3);
-        mo.fill(ci + 4, ci + 5, ci + 1, ci + 0);
-        mo.fill(ci + 7, ci + 6, ci + 5, ci + 4);
-        mo.fill(ci + 3, ci + 2, ci + 6, ci + 7);
-        mo.fill(ci + 4, ci + 0, ci + 3, ci + 7);
-        mo.fill(ci + 1, ci + 5, ci + 6, ci + 2);
+        mo.append([
+            new SharedVertex(1, 1, 1),
+            new SharedVertex(-1, 1, 1),
+            new SharedVertex(-1, -1, 1),
+            new SharedVertex(1, -1, 1),
+            new SharedVertex(1, 1, -1),
+            new SharedVertex(-1, 1, -1),
+            new SharedVertex(-1, -1, -1),
+            new SharedVertex(1, -1, -1)
+        ], [], [
+            [0, 1, 2, 3],
+            [4, 5, 1, 0],
+            [7, 6, 5, 4],
+            [3, 2, 6, 7],
+            [4, 0, 3, 7],
+            [1, 5, 6, 2]
+        ]);
     }
 }

@@ -1,30 +1,27 @@
 class Vertex {
     sharedVertex: SharedVertex;
-    edge1: Edge | null;
-    edge2: Edge | null;
+    face: Face | null;
 
     /**
      * Array of all vector-values for vertex attributes that this Verex holds.
+     * 
+     * [0] = Face Normal
+     * 
+     * [1] = Vertex Normal
+     * 
+     * [2] = generated UV
      */
     vertexAttribs: number[][] = [];
 
-    constructor(sharedVertex: SharedVertex, edge1: Edge | null = null, edge2: Edge | null = null) {
+    /**
+     * Constructs a `Vertex` and establishes the required assoziations.
+     * @param sharedVertex the parent
+     * @param face the face the vertex holds data for
+     */
+    constructor(sharedVertex: SharedVertex, face: Face | null = null) {
+        sharedVertex.children.push(this);
         this.sharedVertex = sharedVertex;
-        this.vertexAttribs[0] = [0, 0, 0];
-        this.edge1 = edge1;
-        this.edge2 = edge2;
-    }
-}
-
-class Edge {
-    vertex1: Vertex;
-    vertex2: Vertex;
-    sharedEdge: SharedEdge;
-
-    constructor(sharedEdge: SharedEdge, vertex1: Vertex, vertex2: Vertex) {
-        this.sharedEdge = sharedEdge;
-        this.vertex1 = vertex1;
-        this.vertex2 = vertex2;
+        this.face = face;
     }
 }
 
@@ -42,18 +39,25 @@ class SharedVertex {
         this.sharedVertexAttribs[0] = [x, y, z];
     }
 
+    getAdjecentFaces() {
+        const faces: Set<Face> = new Set();
+        for (const vert of this.children)
+            if (vert.face)
+                faces.add(vert.face);
+
+        return Array.from(faces);
+    }
+
 
 }
 
 class SharedEdge {
-    children: Edge[];
     sharedVertex1: SharedVertex;
     sharedVertex2: SharedVertex;
 
-    constructor(sharedVertex1: SharedVertex, sharedVertex2: SharedVertex, children: Edge[] = []) {
+    constructor(sharedVertex1: SharedVertex, sharedVertex2: SharedVertex) {
         this.sharedVertex1 = sharedVertex1;
         this.sharedVertex2 = sharedVertex2;
-        this.children = children;
     }
 
     equals(v1: SharedVertex, v2: SharedVertex) {
@@ -63,8 +67,19 @@ class SharedEdge {
 
 class Face {
     vertices: Vertex[]
-    constructor(vertex0: Vertex, vertex1: Vertex, vertex2: Vertex, ...vertices: Vertex[]) {
-        this.vertices = [vertex0, vertex1, vertex2].concat(vertices);
+
+    /**
+     * Constructs a `Face` from `Vertices`
+     * @param vertices should contain at least 3 elemets (we trust the user and do not check against this constraint).
+     */
+    constructor(...vertices: Vertex[]) {
+        this.vertices = vertices;
+    }
+
+    getNormal() {
+        const T = vec3.sub(this.vertices[1].sharedVertex.sharedVertexAttribs[0], this.vertices[0].sharedVertex.sharedVertexAttribs[0]);
+        const B = vec3.sub(this.vertices[2].sharedVertex.sharedVertexAttribs[0], this.vertices[0].sharedVertex.sharedVertexAttribs[0]);
+        return vec3.normalize(vec3.cross(T, B));
     }
 }
 

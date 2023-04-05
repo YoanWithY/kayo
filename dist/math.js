@@ -5,6 +5,14 @@ function toDEG(RAD) {
 function toRAD(DEG) {
     return DEG * 0.01745329251994329576923690768489;
 }
+class VecX {
+    static scalarAdd(a, s) {
+        const arr = [];
+        for (const i in a)
+            arr[i] = a[i] + s;
+        return arr;
+    }
+}
 class vec2 {
     static add(a, b) {
         return [a[0] + b[0], a[1] + b[1]];

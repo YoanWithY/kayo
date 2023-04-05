@@ -6,6 +6,15 @@ function toRAD(DEG: number) {
     return DEG * 0.01745329251994329576923690768489;
 }
 
+class VecX {
+    static scalarAdd(a: number[], s: number) {
+        const arr: number[] = [];
+        for (const i in a)
+            arr[i] = a[i] + s;
+        return arr;
+    }
+}
+
 /**
  * @class Providing static to typical vector 2 functionalities.
  * @author YoGames Studios */
