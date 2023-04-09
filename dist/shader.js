@@ -66,7 +66,8 @@ class Shader {
         gl.compileShader(shader);
         if (gl.getShaderParameter(shader, gl.COMPILE_STATUS))
             return shader;
-        console.log(gl.getShaderInfoLog(shader));
+        console.error("Could not compile " + source);
+        console.error(gl.getShaderInfoLog(shader));
         gl.deleteShader(shader);
         throw undefined;
     }
@@ -86,16 +87,23 @@ class Shader {
 }
 Shader.defaultVertexShaderCode = `#version 300 es
 
-    in vec3 inPos;
-    in vec3 inNor;
-    in vec2 inTc;   
+    layout(location = 0) in vec3 inPos;
+    layout(location = 1) in vec3 inFaceNor;
+    layout(location = 2) in vec3 inVertNor;
+    layout(location = 3) in vec2 inTc;   
     
+    out vec3 localspace_face_normal;
+    out vec3 worldspace_face_normal;
+    out vec3 cameraspace_face_normal;
+
     out vec3 localspace_vertex_normal;
     out vec3 worldspace_vertex_normal;
     out vec3 cameraspace_vertex_normal;
+
     out vec3 localspace_position;
     out vec3 worldspace_position;
     out vec3 cameraspace_position;
+
     out vec2 TC;
     out vec3 barycentric;
     
@@ -107,16 +115,23 @@ Shader.defaultVertexShaderCode = `#version 300 es
     const vec3 barycentrics[3] = vec3[](vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1));
     
     void main(){
+        mat4 mMat = modelMat[index]; 
+
         localspace_position = inPos;
-        worldspace_position = (modelMat[index] * vec4(localspace_position, 1)).xyz;
+        worldspace_position = (mMat * vec4(localspace_position, 1)).xyz;
         cameraspace_position = (viewMat * vec4(worldspace_position, 1)).xyz;
         gl_Position = projectionMat * vec4(cameraspace_position, 1);
         
-        localspace_vertex_normal = inNor;
-        mat3 nmMat = mat3(transpose(inverse(modelMat[index])));
+        mat3 nmMat = mat3(transpose(inverse(mMat))); 
+        mat3 nvMat = mat3(transpose(inverse(viewMat * mMat)));
+
+        localspace_face_normal = inFaceNor;
+        worldspace_face_normal = normalize(nmMat * localspace_face_normal);
+        cameraspace_face_normal = normalize(nvMat * inFaceNor);
+
+        localspace_vertex_normal = inVertNor;
         worldspace_vertex_normal = normalize(nmMat * localspace_vertex_normal);
-        mat3 nvMat = mat3(transpose(inverse(viewMat * modelMat[index])));
-        cameraspace_vertex_normal = normalize(nvMat * inNor);
+        cameraspace_vertex_normal = normalize(nvMat * inVertNor);
 
         TC = inTc;
         barycentric = barycentrics[gl_VertexID % 3];
@@ -129,26 +144,37 @@ Shader.defaultFragmentShaderCode = `#version 300 es
     
     uniform uint index;
     uniform sampler2D albedo;
+
+    in vec3 localspace_face_normal;
+    in vec3 worldspace_face_normal;
+    in vec3 cameraspace_face_normal;
     
     in vec3 localspace_vertex_normal;
     in vec3 worldspace_vertex_normal;
     in vec3 cameraspace_vertex_normal;
+
     in vec3 localspace_position;
     in vec3 worldspace_position;
     in vec3 cameraspace_position;
+
     in vec2 TC;
     in vec3 barycentric;
 
     layout(location = 0) out vec4 outColor;
     layout(location = 1) out uint objectIndex;
-    vec3 ls_v_N, ws_v_N, cs_v_N;
+    vec3 ls_v_N, ws_v_N, cs_v_N, ls_f_N, ws_f_N, cs_f_N;
     
     void main(){
+        ls_f_N = normalize(localspace_face_normal);
+        ws_f_N = normalize(worldspace_face_normal);
+        cs_f_N = normalize(cameraspace_face_normal);
+
         ls_v_N = normalize(localspace_vertex_normal);
         ws_v_N = normalize(worldspace_vertex_normal);
         cs_v_N = normalize(cameraspace_vertex_normal);
 
         outColor = vec4(texture(albedo, TC).rgb, 1);
+        outColor = vec4(ls_v_N, 1);
         objectIndex = index; 
     }`;
 Shader.geometryOnlyVertexShaderCode = `#version 300 es

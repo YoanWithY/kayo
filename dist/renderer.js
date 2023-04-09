@@ -3,7 +3,7 @@ let shader;
 let selectionShader;
 let mat = new material();
 mat.setTexture(0, "TexturesCom_Tiles_Decorative_1K_albedo.png");
-let objs = [];
+let objs = [new MeshObject(0)];
 let selected = [];
 let active;
 function init() {
@@ -19,14 +19,30 @@ function init() {
     gl.enable(gl.DEPTH_TEST);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.modelTransformationUB);
-    for (let i = 0; i < 10; i++) {
-        objs.push(new Cube(i));
+    const generateRandom = 5;
+    for (let i = 1; i <= generateRandom; i++) {
+        const o = BasicMesh.appendUVSphere(new MeshObject(i));
+        o.createAndBuildVAO();
+        objs.push(o);
         const ts = objs[i].transformationStack;
         ts[1].setValues(Math.random(), Math.random(), Math.random());
-        ts[2].setValues(Math.random() * 20 - 10, Math.random() * 20 - 10, Math.random() * 20 - 10);
+        ts[2].setValues(Math.random() * 50 - 25, Math.random() * 50 - 25, Math.random() * 50 - 25);
         Shader.loadModelMatrix(i, ts.getTransformationMatrix());
     }
-    active = objs[3];
+    let o = BasicMesh.appendCube(new MeshObject(generateRandom + 1));
+    o.mesh.subdivideEdges(1);
+    o.mesh.castToSphere();
+    o.createAndBuildVAO();
+    objs.push(o);
+    Shader.loadModelMatrix(generateRandom + 1, o.transformationStack.getTransformationMatrix());
+    o = BasicMesh.appendZFunktion(new MeshObject(generateRandom + 2), (u, v) => {
+        return Math.sin(u) * Math.sin(v);
+    }, -12, 12, -12, 12);
+    o.transformationStack[2].setValues(2, 0, 0);
+    o.createAndBuildVAO();
+    objs.push(o);
+    Shader.loadModelMatrix(generateRandom + 2, o.transformationStack.getTransformationMatrix());
+    active = objs[1];
     selected = [objs[1], objs[2]];
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     setupCanvas();
@@ -42,7 +58,7 @@ function avg(arr) {
     return sum / arr.length;
 }
 function renderloop(timestamp) {
-    let val = timestamp / 10000;
+    let val = timestamp / 5000;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     const color = SplitPaneDivider.color;
     gl.clearColor(color[0] / 255, color[1] / 255, color[2] / 255, 1.0);
@@ -57,8 +73,7 @@ function renderloop(timestamp) {
         for (let i = 0; i < objs.length; i++) {
             let o = objs[i];
             shader.loadui(0, o.index);
-            o.bind();
-            o.render();
+            o.bindAndRender();
         }
         view.framebuffer.bindDebug();
         Grid3D.prep(view);
@@ -67,8 +82,7 @@ function renderloop(timestamp) {
         view.framebuffer.bindSelection();
         for (const o of selected.concat([active])) {
             selectionShader.loadui(0, o.index);
-            o.bind();
-            o.render();
+            o.bindAndRender();
         }
         view.applyToCanvas();
     }

@@ -36,7 +36,7 @@ class ViewPortPane extends HTMLElement implements Camera {
     lookAtPos = [0, 0, 0];
     theta = 1.1;
     phi = 0.5;
-    r = 32;
+    r = 4;
     near = 0.1;
     far = 1000;
     FOV = 1.0;

@@ -33,7 +33,7 @@ class ViewPortPane extends HTMLElement {
         this.lookAtPos = [0, 0, 0];
         this.theta = 1.1;
         this.phi = 0.5;
-        this.r = 32;
+        this.r = 4;
         this.near = 0.1;
         this.far = 1000;
         this.FOV = 1.0;

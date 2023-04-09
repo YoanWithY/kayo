@@ -5,6 +5,9 @@ function toDEG(RAD) {
 function toRAD(DEG) {
     return DEG * 0.01745329251994329576923690768489;
 }
+function modulo(a, b) {
+    return (a & b + b) & b;
+}
 class VecX {
     static scalarAdd(a, s) {
         const arr = [];
