@@ -23,6 +23,15 @@ class Vertex {
         this.sharedVertex = sharedVertex;
         this.face = face;
     }
+
+    interpolateTo(v: Vertex, svs: SharedVertex[], inOrder: boolean) {
+        const num = svs.length;
+        const np1 = num + 1;
+        for (let i = 1; i <= num; i++) {
+            const nv = new Vertex(svs[inOrder ? i - 1 : num - i], this.face);
+            nv.vertexAttribs = VecX.mixArrays(this.vertexAttribs, v.vertexAttribs, i / np1);
+        }
+    }
 }
 
 class SharedVertex {
@@ -53,54 +62,81 @@ class SharedVertex {
         return null;
     }
 
-
+    interpolate(sv: SharedVertex, num: number) {
+        const verts: SharedVertex[] = [];
+        const np1 = num + 1;
+        for (let i = 1; i <= num; i++) {
+            const nsv = new SharedVertex();
+            nsv.sharedVertexAttribs = VecX.mixArrays(this.sharedVertexAttribs, sv.sharedVertexAttribs, i / np1);
+            verts.push(nsv);
+        }
+        return verts;
+    }
 }
 
 class Edge {
     v1;
     v2;
-    constructor(v1: Vertex, v2: Vertex) {
+    isSharedOrder;
+
+    constructor(v1: Vertex, v2: Vertex, isSharedOrder: boolean) {
         this.v1 = v1;
         this.v2 = v2;
+        this.isSharedOrder = isSharedOrder;
     }
 
     get face() {
         return this.v1.face;
     }
 
+    interpolateAndAssigne(nsv: SharedVertex[]) {
+        this.v1.interpolateTo(this.v2, nsv, this.isSharedOrder);
+    }
+
 }
 
 class SharedEdge {
-    sharedVertex1: SharedVertex;
-    sharedVertex2: SharedVertex;
+    sv1: SharedVertex;
+    sv2: SharedVertex;
 
     constructor(sharedVertex1: SharedVertex, sharedVertex2: SharedVertex) {
-        this.sharedVertex1 = sharedVertex1;
-        this.sharedVertex2 = sharedVertex2;
+        this.sv1 = sharedVertex1;
+        this.sv2 = sharedVertex2;
         sharedVertex1.sharedEdges.add(this);
         sharedVertex2.sharedEdges.add(this);
     }
 
+    static connect(...svs: SharedVertex[]) {
+        const SEs: SharedEdge[] = [];
+        for (let i = 1; i < svs.length; i++)
+            SEs.push(new SharedEdge(svs[i - 1], svs[i]));
+        return SEs;
+    }
+
     subdivide(cuts: number) {
         const edges = this.getEdges();
+
+        const newSVs = this.sv1.interpolate(this.sv2, cuts);
+        const newSEs = SharedEdge.connect(this.sv1, ...newSVs, this.sv2);
         for (const e of edges) {
-            // TODO: shared edge subdivision.
+            e.interpolateAndAssigne(newSVs);
         }
+
+        return { newSVs, newSEs };
     }
 
     getEdges() {
         const edges: Edge[] = [];
-        for (const v of this.sharedVertex1.children) {
-            const e = v.face.findEdge(v, this.sharedVertex2);
+        for (const v of this.sv1.children) {
+            const e = v.face.findEdge(v, this.sv2);
             if (e)
                 edges.push(e);
-
         }
         return edges;
     }
 
     equals(v1: SharedVertex, v2: SharedVertex) {
-        return this.sharedVertex1 === v1 && this.sharedVertex2 === v2 || this.sharedVertex1 === v2 && this.sharedVertex2 === v1;
+        return this.sv1 === v1 && this.sv2 === v2 || this.sv1 === v2 && this.sv2 === v1;
     }
 }
 
@@ -128,11 +164,11 @@ class Face {
 
         let other = this.vertices[(v1i + 1) % this.vertices.length]; // get the next vertex in the face
         if (sv.children.indexOf(other) != -1) // if other is in the shared vertex we found the edge
-            return new Edge(v1, other);
+            return new Edge(v1, other, true);
 
         other = this.vertices[modulo(v1i - 1, this.vertices.length)]; // get the previous vertex in the face
         if (sv.children.indexOf(other) != -1) // if other is in the shared vertex we found the edge, but in 
-            return new Edge(other, v1);
+            return new Edge(other, v1, false);
 
         return undefined;
     }
@@ -169,9 +205,14 @@ class Mesh {
     }
 
     subdivideEdges(cuts: number) {
+        const newSE: SharedEdge[] = [];
         for (const se of this.edges) {
-            se.subdivide(cuts);
+            const data = se.subdivide(cuts);
+            this.vertices.push(...data.newSVs);
+            newSE.push(...data.newSEs);
         }
+        this.edges = newSE;
+        console.log(this.edges);
     }
 
     castToSphere(r: number = 1) {

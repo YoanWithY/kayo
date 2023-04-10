@@ -13,8 +13,23 @@ function modulo(a: number, b: number) {
 class VecX {
     static scalarAdd(a: number[], s: number) {
         const arr: number[] = [];
-        for (const i in a)
+        for (let i = 0; i < a.length; i++)
             arr[i] = a[i] + s;
+        return arr;
+    }
+
+    static mixArrays(a1: number[][], a2: number[][], t: number) {
+        const a: number[][] = [];
+        for (let i = 0; i < a1.length; i++)
+            a[i] = VecX.mix(a1[i], a2[i], t);
+        return a;
+    }
+
+    static mix(a: number[], b: number[], t: number) {
+        const arr: number[] = [];
+        const omt = 1 - t;
+        for (let i = 0; i < a.length; i++)
+            arr[i] = omt * a[i] + t * b[i];
         return arr;
     }
 }

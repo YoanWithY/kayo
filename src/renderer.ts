@@ -42,14 +42,6 @@ function init() {
     o.createAndBuildVAO();
     objs.push(o); Shader.loadModelMatrix(generateRandom + 1, o.transformationStack.getTransformationMatrix());
 
-    o = BasicMesh.appendZFunktion(new MeshObject(generateRandom + 2), (u, v) => {
-        return Math.sin(u) * Math.sin(v);
-    }, -12, 12, -12, 12);
-    o.transformationStack[2].setValues(2, 0, 0);
-
-    o.createAndBuildVAO();
-    objs.push(o); Shader.loadModelMatrix(generateRandom + 2, o.transformationStack.getTransformationMatrix());
-
     active = objs[1];
     selected = [objs[1], objs[2]];
 
