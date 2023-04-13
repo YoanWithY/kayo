@@ -6,13 +6,26 @@ function toRAD(DEG) {
     return DEG * 0.01745329251994329576923690768489;
 }
 function modulo(a, b) {
-    return (a & b + b) & b;
+    return (a % b + b) % b;
 }
 class VecX {
     static scalarAdd(a, s) {
         const arr = [];
-        for (const i in a)
+        for (let i = 0; i < a.length; i++)
             arr[i] = a[i] + s;
+        return arr;
+    }
+    static mixArrays(a1, a2, t) {
+        const a = [];
+        for (let i = 0; i < a1.length; i++)
+            a[i] = VecX.mix(a1[i], a2[i], t);
+        return a;
+    }
+    static mix(a, b, t) {
+        const arr = [];
+        const omt = 1 - t;
+        for (let i = 0; i < a.length; i++)
+            arr[i] = omt * a[i] + t * b[i];
         return arr;
     }
 }
@@ -46,13 +59,25 @@ class vec2 {
     }
     static normalize(a) {
         const l = 1.0 / vec2.norm(a);
-        return [a[0] * l, a[1] * l, a[2] * l];
+        return [a[0] * l, a[1] * l];
     }
-    static xy(a) {
-        return [a[0], a[1]];
+    static distance(ax, ay, bx, by) {
+        const x = bx - ax;
+        const y = by - ay;
+        return Math.sqrt(x * x + y * y);
     }
 }
-class vec3 extends vec2 {
+class vec3 {
+    static get X() {
+        return [1, 0, 0];
+    }
+    ;
+    static get Y() {
+        return [0, 1, 0];
+    }
+    static get Z() {
+        return [0, 0, 1];
+    }
     static add(a, b) {
         return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
     }
@@ -87,7 +112,7 @@ class vec3 extends vec2 {
         const st = Math.sin(theta);
         return [r * st * Math.cos(phi), r * st * Math.sin(phi), r * Math.cos(theta)];
     }
-    static longtitudeTangent(theta, phi) {
+    static longitudeTangent(theta, phi) {
         const ct = Math.cos(theta);
         return [ct * Math.cos(phi), ct * Math.sin(phi), -Math.sin(theta)];
     }
@@ -98,14 +123,8 @@ class vec3 extends vec2 {
         const l = 1.0 / vec3.norm(a);
         return [a[0] * l, a[1] * l, a[2] * l];
     }
-    static xyz(a) {
-        return [a[0], a[1], a[2]];
-    }
 }
-vec3.X = [1, 0, 0];
-vec3.Y = [0, 1, 0];
-vec3.Z = [0, 0, 1];
-class vec4 extends vec3 {
+class vec4 {
     static add(a, b) {
         return [a[0] + b[0], a[1] + b[1], a[2] + b[2], a[3] + b[3]];
     }

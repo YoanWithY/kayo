@@ -4,15 +4,36 @@ class Vertex {
         this.vertexAttribs = [];
         sharedVertex.children.push(this);
         this.sharedVertex = sharedVertex;
-        this.face = face;
+        this._face = face;
+    }
+    interpolateTo(v, svs, inOrder) {
+        const num = svs.length;
+        const np1 = num + 1;
+        const inof = this.face.vertices.indexOf(this);
+        if (inOrder) {
+            for (let i = 1; i <= num; i++) {
+                const nv = new Vertex(svs[i - 1], this.face);
+                nv.vertexAttribs = VecX.mixArrays(this.vertexAttribs, v.vertexAttribs, i / np1);
+                this.face.vertices.splice(inof + i, 0, nv);
+            }
+        }
+        else {
+            for (let i = 1; i <= num; i++) {
+                const nv = new Vertex(svs[num - i], this.face);
+                nv.vertexAttribs = VecX.mixArrays(this.vertexAttribs, v.vertexAttribs, i / np1);
+                this.face.vertices.splice(inof + i, 0, nv);
+            }
+        }
+    }
+    get face() {
+        return this._face;
     }
 }
 class SharedVertex {
     constructor(...pos) {
         this.children = [];
-        this.sharedVertexAttribs = [];
         this.sharedEdges = new Set;
-        this.sharedVertexAttribs[0] = pos;
+        this.sharedVertexAttribs = [pos];
     }
     getAdjecentFaces() {
         const faces = new Set();
@@ -27,39 +48,69 @@ class SharedVertex {
                 return se;
         return null;
     }
+    interpolateTo(sv, num) {
+        const verts = [];
+        const np1 = num + 1;
+        for (let i = 1; i <= num; i++) {
+            const nsv = new SharedVertex(0, 0, 0);
+            nsv.sharedVertexAttribs = VecX.mixArrays(this.sharedVertexAttribs, sv.sharedVertexAttribs, i / np1);
+            verts.push(nsv);
+        }
+        return verts;
+    }
+    associateToSharedEdge(se) {
+        this.sharedEdges.add(se);
+    }
+    disconnectFromSharedEdge(se) {
+        this.sharedEdges.delete(se);
+    }
 }
 class Edge {
-    constructor(v1, v2) {
+    constructor(v1, v2, isSharedOrder) {
         this.v1 = v1;
         this.v2 = v2;
+        this.isSharedOrder = isSharedOrder;
     }
     get face() {
         return this.v1.face;
     }
+    interpolateAndAssigne(nsv) {
+        this.v1.interpolateTo(this.v2, nsv, this.isSharedOrder);
+    }
 }
 class SharedEdge {
     constructor(sharedVertex1, sharedVertex2) {
-        this.sharedVertex1 = sharedVertex1;
-        this.sharedVertex2 = sharedVertex2;
-        sharedVertex1.sharedEdges.add(this);
-        sharedVertex2.sharedEdges.add(this);
+        this.sv1 = sharedVertex1;
+        this.sv2 = sharedVertex2;
+        sharedVertex1.associateToSharedEdge(this);
+        sharedVertex2.associateToSharedEdge(this);
     }
-    subdivide(cuts) {
-        const edges = this.getEdges();
-        for (const e of edges) {
-        }
+    static connect(...svs) {
+        const SEs = [];
+        for (let i = 1; i < svs.length; i++)
+            SEs.push(new SharedEdge(svs[i - 1], svs[i]));
+        return SEs;
     }
     getEdges() {
         const edges = [];
-        for (const v of this.sharedVertex1.children) {
-            const e = v.face.findEdge(v, this.sharedVertex2);
+        for (const v of this.sv1.children) {
+            const e = v.face.findEdge(v, this.sv2);
             if (e)
                 edges.push(e);
         }
         return edges;
     }
+    subdivide(cuts) {
+        const newSVs = this.sv1.interpolateTo(this.sv2, cuts);
+        const newSEs = SharedEdge.connect(this.sv1, ...newSVs, this.sv2);
+        for (const e of this.getEdges())
+            e.interpolateAndAssigne(newSVs);
+        this.sv1.disconnectFromSharedEdge(this);
+        this.sv2.disconnectFromSharedEdge(this);
+        return { newSVs, newSEs };
+    }
     equals(v1, v2) {
-        return this.sharedVertex1 === v1 && this.sharedVertex2 === v2 || this.sharedVertex1 === v2 && this.sharedVertex2 === v1;
+        return this.sv1 === v1 && this.sv2 === v2 || this.sv1 === v2 && this.sv2 === v1;
     }
 }
 class Face {
@@ -69,13 +120,13 @@ class Face {
     findEdge(v1, sv) {
         const v1i = this.vertices.indexOf(v1);
         if (v1i == -1)
-            return undefined;
+            throw new Error("FATAL: could not find vertex");
         let other = this.vertices[(v1i + 1) % this.vertices.length];
         if (sv.children.indexOf(other) != -1)
-            return new Edge(v1, other);
+            return new Edge(v1, other, true);
         other = this.vertices[modulo(v1i - 1, this.vertices.length)];
         if (sv.children.indexOf(other) != -1)
-            return new Edge(other, v1);
+            return new Edge(other, v1, false);
         return undefined;
     }
     getNormal() {
@@ -102,9 +153,13 @@ class Mesh {
         return se;
     }
     subdivideEdges(cuts) {
+        const newSE = [];
         for (const se of this.edges) {
-            se.subdivide(cuts);
+            const data = se.subdivide(cuts);
+            this.vertices.push(...data.newSVs);
+            newSE.push(...data.newSEs);
         }
+        this.edges = newSE;
     }
     castToSphere(r = 1) {
         for (const v of this.vertices)

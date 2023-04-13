@@ -4,6 +4,7 @@ const ubView = `layout(std140) uniform view {
     mat4 projectionMat;
     mat4 viewMat;
     vec4 cameraPosition;
+    ivec4 viewport;
 };`;
 const maxModelMats = 1024;
 const ubTransform = `layout(std140) uniform model{
@@ -32,7 +33,9 @@ class Shader {
     }
     static updateView(view) {
         gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.viewUB);
-        gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array(view.getProjectionMatrix().concat(view.getViewMatrix()).concat(view.getWorldLocation())));
+        const fl = new Float32Array([...view.getProjectionMatrix(), ...view.getViewMatrix(), ...view.getWorldLocation(), 0]);
+        gl.bufferSubData(gl.UNIFORM_BUFFER, 0, fl);
+        gl.bufferSubData(gl.UNIFORM_BUFFER, fl.byteLength, new Int32Array(view.getGLViewport()));
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
         gl.viewport(0, 0, view.framebuffer.width, view.framebuffer.height);
     }
@@ -174,7 +177,7 @@ Shader.defaultFragmentShaderCode = `#version 300 es
         cs_v_N = normalize(cameraspace_vertex_normal);
 
         outColor = vec4(texture(albedo, TC).rgb, 1);
-        outColor = vec4(ls_v_N, 1);
+        outColor = vec4(ws_v_N, 1);
         objectIndex = index; 
     }`;
 Shader.geometryOnlyVertexShaderCode = `#version 300 es
@@ -207,7 +210,7 @@ Shader.viewUB = gl.createBuffer();
 Shader.gridDataBuffer = gl.createBuffer();
 (() => {
     gl.bindBufferBase(gl.UNIFORM_BUFFER, 0, Shader.viewUB);
-    gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(2 * 16 + 4), gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(2 * 16 + 8), gl.DYNAMIC_DRAW);
     gl.bindBufferBase(gl.UNIFORM_BUFFER, 1, Shader.modelTransformationUB);
     gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(maxModelMats * 16), gl.DYNAMIC_DRAW);
     gl.bindBufferBase(gl.UNIFORM_BUFFER, 2, Shader.gridDataBuffer);

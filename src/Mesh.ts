@@ -1,15 +1,19 @@
 class Vertex {
+    /**
+     * The SharedVertex this Vertex is assoziated to.
+     */
     sharedVertex: SharedVertex;
-    face: Face;
+
+    /**
+     * The {@link Face} this Vertex is assoziated to.
+     */
+    private _face: Face;
 
     /**
      * Array of all vector-values for vertex attributes that this Verex holds.
-     * 
-     * [0] = Face Normal
-     * 
-     * [1] = Vertex Normal
-     * 
-     * [2] = generated UV
+     * 1. Face Normal
+     * 2. Vertex Normal
+     * 3. generated UV
      */
     vertexAttribs: number[][] = [];
 
@@ -21,30 +25,62 @@ class Vertex {
     constructor(sharedVertex: SharedVertex, face: Face) {
         sharedVertex.children.push(this);
         this.sharedVertex = sharedVertex;
-        this.face = face;
+        this._face = face;
     }
 
+    /**
+     * Generates ``svs.length`` Vertices with interpolated vertex attribs by interpolating from this Vertex to v
+     * @param v the vertex to interpolate to
+     * @param svs the SharedVertices to assigne the vertices to
+     * @param inOrder whether the SharedVertices are in the order of the interpolation
+     */
     interpolateTo(v: Vertex, svs: SharedVertex[], inOrder: boolean) {
         const num = svs.length;
         const np1 = num + 1;
-        for (let i = 1; i <= num; i++) {
-            const nv = new Vertex(svs[inOrder ? i - 1 : num - i], this.face);
-            nv.vertexAttribs = VecX.mixArrays(this.vertexAttribs, v.vertexAttribs, i / np1);
+        const inof = this.face.vertices.indexOf(this);
+        if (inOrder) {
+            for (let i = 1; i <= num; i++) {
+                const nv = new Vertex(svs[i - 1], this.face);
+                nv.vertexAttribs = VecX.mixArrays(this.vertexAttribs, v.vertexAttribs, i / np1);
+                this.face.vertices.splice(inof + i, 0, nv);
+            }
+        } else {
+            for (let i = 1; i <= num; i++) {
+                const nv = new Vertex(svs[num - i], this.face);
+                nv.vertexAttribs = VecX.mixArrays(this.vertexAttribs, v.vertexAttribs, i / np1);
+                this.face.vertices.splice(inof + i, 0, nv);
+            }
         }
     }
+
+    /**
+     * Getter for the Face of this Vertex.
+     */
+    get face() {
+        return this._face;
+    }
+
 }
 
+/**
+ * A SharedVertex represents a set of Vertices and stores shared vertex attribs for those vertices that are assoziated
+ * with this 
+ */
 class SharedVertex {
     children: Vertex[] = [];
 
     /**
-     * Array of all vector-values for shared vertex attributes that this SharedVertex holds. 
+     * Array of all vector-values for SharedVertex attributes that this SharedVertex holds. 
      */
-    sharedVertexAttribs: number[][] = [];
-    sharedEdges: Set<SharedEdge> = new Set;
+    sharedVertexAttribs: [VEC3, ...number[][]];
 
-    constructor(...pos: number[]) {
-        this.sharedVertexAttribs[0] = pos;
+    /**
+     * The {@link SharedEdges} this {@link SharedVertex} is assoziated to.
+     */
+    private sharedEdges: Set<SharedEdge> = new Set;
+
+    constructor(...pos: VEC3) {
+        this.sharedVertexAttribs = [pos];
     }
 
     getAdjecentFaces() {
@@ -62,18 +98,30 @@ class SharedVertex {
         return null;
     }
 
-    interpolate(sv: SharedVertex, num: number) {
+    interpolateTo(sv: SharedVertex, num: number) {
         const verts: SharedVertex[] = [];
         const np1 = num + 1;
         for (let i = 1; i <= num; i++) {
-            const nsv = new SharedVertex();
-            nsv.sharedVertexAttribs = VecX.mixArrays(this.sharedVertexAttribs, sv.sharedVertexAttribs, i / np1);
+            const nsv = new SharedVertex(0, 0, 0);
+            nsv.sharedVertexAttribs = VecX.mixArrays(this.sharedVertexAttribs, sv.sharedVertexAttribs, i / np1) as [VEC3, ...number[][]];
             verts.push(nsv);
         }
         return verts;
     }
+
+    associateToSharedEdge(se: SharedEdge) {
+        this.sharedEdges.add(se);
+    }
+
+    disconnectFromSharedEdge(se: SharedEdge) {
+        this.sharedEdges.delete(se);
+    }
 }
 
+/**
+ * An Edge represents a connection between two Vertices. Edges are not part of the {@link Mesh} data structure.
+ * Edges are used as a temporary data container that simplify algorithms that operate on edges.
+ */
 class Edge {
     v1;
     v2;
@@ -85,6 +133,9 @@ class Edge {
         this.isSharedOrder = isSharedOrder;
     }
 
+    /**
+     * Getter for the {@link Face} that this {@link Edge} is conceptually part of.
+     */
     get face() {
         return this.v1.face;
     }
@@ -102,8 +153,8 @@ class SharedEdge {
     constructor(sharedVertex1: SharedVertex, sharedVertex2: SharedVertex) {
         this.sv1 = sharedVertex1;
         this.sv2 = sharedVertex2;
-        sharedVertex1.sharedEdges.add(this);
-        sharedVertex2.sharedEdges.add(this);
+        sharedVertex1.associateToSharedEdge(this);
+        sharedVertex2.associateToSharedEdge(this);
     }
 
     static connect(...svs: SharedVertex[]) {
@@ -113,18 +164,10 @@ class SharedEdge {
         return SEs;
     }
 
-    subdivide(cuts: number) {
-        const edges = this.getEdges();
-
-        const newSVs = this.sv1.interpolate(this.sv2, cuts);
-        const newSEs = SharedEdge.connect(this.sv1, ...newSVs, this.sv2);
-        for (const e of edges) {
-            e.interpolateAndAssigne(newSVs);
-        }
-
-        return { newSVs, newSEs };
-    }
-
+    /**
+     * Finds all edges that are wrapped implicitly by this SharedEdge.
+     * @returns the found edges
+     */
     getEdges() {
         const edges: Edge[] = [];
         for (const v of this.sv1.children) {
@@ -135,24 +178,58 @@ class SharedEdge {
         return edges;
     }
 
+    /**
+     * Subdivdes the SharedEdge by:
+     * 1. generate `cuts` SharedVertices by interpolation
+     * 2. generate the SharedEdges by connecting from sv1 over the new svs to sv2
+     * 3. find all edges that are wrapped implcitly by this SharedEdge
+     * 4. for each found Edge generate `cuts` vertices and associate them the the respective
+     * SharedVertex generated bevor
+     * 5. delete the assosiation of sv1 and sv2 with this Edge
+     * 
+     * @param cuts the number of vertices to generate between sv1 and sv2
+     * @returns the new shared verices and SharedEdges
+     */
+    subdivide(cuts: number) {
+        const newSVs = this.sv1.interpolateTo(this.sv2, cuts);
+        const newSEs = SharedEdge.connect(this.sv1, ...newSVs, this.sv2);
+        for (const e of this.getEdges())
+            e.interpolateAndAssigne(newSVs);
+        this.sv1.disconnectFromSharedEdge(this);
+        this.sv2.disconnectFromSharedEdge(this);
+        return { newSVs, newSEs };
+    }
+
+    /**
+     * Returns if this SharedEdge equals a connection between ``sv1`` and ``sv2``.
+     * This evaluation is order independent.
+     * @param v1 the first SharedVertex
+     * @param v2 tge second SharedVertex
+     * @returns the result of the evaluation
+     */
     equals(v1: SharedVertex, v2: SharedVertex) {
         return this.sv1 === v1 && this.sv2 === v2 || this.sv1 === v2 && this.sv2 === v1;
     }
 }
 
+/**
+ * A Face represents a tuple of {@link Vertex}s.
+ * It provides functionalies realated to the geometrical idea of a Face as well as functionalities to traverse the
+ * Mesh data structure.
+ */
 class Face {
     vertices: Vertex[] = [];
 
     /**
-     * Constructs a `Face` from `Vertices`
-     * @param vertices should contain at least 3 elemets (we trust the user and do not check against this constraint).
+     * Constructs an empty {@link Face}. Bevor used in the {@link Mesh} it should contain at leas 3 {@link Vertex}s.
      */
     constructor() {
     }
 
     /**
-     * Findes the edge that contains v1 and a respective vertex sv. If no edge was found undefined is returned.
-     * The edge is returned with vertices in order with respect to the face's winding.
+     * Findes the {@link Edge} that contains v1 and a respective {@link Vertex} sv.
+     * If no Edge was found undefined is returned.
+     * The Edge is returned with vertices in order with respect to the face's winding.
      * @param v1 
      * @param sv 
      * @returns 
@@ -160,22 +237,26 @@ class Face {
     findEdge(v1: Vertex, sv: SharedVertex) {
         const v1i = this.vertices.indexOf(v1);
         if (v1i == -1) // FATAl: could not find v1 in this face
-            return undefined;
+            throw new Error("FATAL: could not find vertex");
 
         let other = this.vertices[(v1i + 1) % this.vertices.length]; // get the next vertex in the face
-        if (sv.children.indexOf(other) != -1) // if other is in the shared vertex we found the edge
+        if (sv.children.indexOf(other) != -1) // if other is in the SharedVertex we found the Edge
             return new Edge(v1, other, true);
 
         other = this.vertices[modulo(v1i - 1, this.vertices.length)]; // get the previous vertex in the face
-        if (sv.children.indexOf(other) != -1) // if other is in the shared vertex we found the edge, but in 
+        if (sv.children.indexOf(other) != -1) // if other is in the SharedVertex we found the Edge, but in 
             return new Edge(other, v1, false);
 
         return undefined;
     }
 
     getNormal() {
-        const T = vec3.sub(this.vertices[1].sharedVertex.sharedVertexAttribs[0], this.vertices[0].sharedVertex.sharedVertexAttribs[0]);
-        const B = vec3.sub(this.vertices[2].sharedVertex.sharedVertexAttribs[0], this.vertices[0].sharedVertex.sharedVertexAttribs[0]);
+        const T = vec3.sub(
+            this.vertices[1].sharedVertex.sharedVertexAttribs[0],
+            this.vertices[0].sharedVertex.sharedVertexAttribs[0]);
+        const B = vec3.sub(
+            this.vertices[2].sharedVertex.sharedVertexAttribs[0],
+            this.vertices[0].sharedVertex.sharedVertexAttribs[0]);
         return vec3.normalize(vec3.cross(T, B));
     }
 }
@@ -185,15 +266,14 @@ class Mesh {
     edges: SharedEdge[] = [];
     vertices: SharedVertex[] = [];
 
-    pushSharedVertex(...pos: number[]) {
+    pushSharedVertex(...pos: VEC3) {
         this.vertices.push(new SharedVertex(...pos));
     }
 
     /**
-     * Returns either the SharedEdge that matches the arguments or a new SharedEdeg constructed by the arguments and appends it to the mesh.
      * @param v1 
      * @param v2 
-     * @returns either the SharedEdge that matches the arguments or a new SharedEdeg constructed by the arguments
+     * @returns either the SharedEdge that matches the arguments or a new SharedEdge constructed by the arguments
      */
     getOrCreateSharedEdge(v1: SharedVertex, v2: SharedVertex) {
         let se = v1.findSharedEdgeTo(v2);
@@ -206,13 +286,13 @@ class Mesh {
 
     subdivideEdges(cuts: number) {
         const newSE: SharedEdge[] = [];
+
         for (const se of this.edges) {
             const data = se.subdivide(cuts);
             this.vertices.push(...data.newSVs);
             newSE.push(...data.newSEs);
         }
         this.edges = newSE;
-        console.log(this.edges);
     }
 
     castToSphere(r: number = 1) {
@@ -257,7 +337,7 @@ class Mesh {
     calculateVertexNormals() {
         for (const vert of this.vertices) {
             const faces = vert.getAdjecentFaces();
-            let normal: number[] = [0, 0, 0];
+            let normal: VEC3 = [0, 0, 0];
             for (const face of faces) {
                 normal = vec3.add(normal, face.getNormal());
             }
@@ -273,4 +353,3 @@ class Mesh {
         this.faces = this.faces.concat(mesh.faces);
     }
 }
-

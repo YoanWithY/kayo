@@ -75,7 +75,7 @@ class FrameBuffer {
     bindSelection() {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.selectionFBO);
     }
-    clear() {
+    reset() {
         this.bindRenderFBO();
         gl.clearBufferfv(gl.COLOR, 0, [0.2, 0.2, 0.2, 1]);
         gl.clearBufferuiv(gl.COLOR, 1, [0, 0, 0, 0]);
@@ -85,6 +85,7 @@ class FrameBuffer {
         this.bindSelection();
         gl.clearBufferuiv(gl.COLOR, 0, [0, 0, 0, 0]);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, this.width, this.height);
     }
     blitToActiveFramebuffer() {
         gl.bindVertexArray(FrameBuffer.FSQ);
@@ -120,8 +121,9 @@ FrameBuffer.FSQFragmentShader = `#version 300 es
     precision highp float;
     out vec4 outColor;
     uniform sampler2D src;
+    ${ubView} 
     void main(){
-        outColor = texelFetch(src, ivec2(gl_FragCoord.xy), 0);
+        outColor = texelFetch(src, ivec2(gl_FragCoord.xy) - viewport.xy, 0);
     }
     `;
 FrameBuffer.blitOutlineFragmentShaderCode = `#version 300 es
@@ -132,51 +134,32 @@ FrameBuffer.blitOutlineFragmentShaderCode = `#version 300 es
     uniform sampler2D src;
     uniform highp usampler2D obj;
 
+    ${ubView}
     uniform uint acti;
     #define ACTIVE vec4(1.0, 0.627451, 0.156863, 1.0)
     #define SELECTED vec4(0.929412, 0.341176, 0.0, 1.0)
 
+    uint fetchValue(int x, int y){
+        return texelFetch(obj, clamp(ivec2(x, y), ivec2(0), viewport.zw - 1), 0).x;
+    }
+
     vec4 getColor(){
-        ivec2 tc = ivec2(gl_FragCoord.xy);
-        uint comp = texelFetch(obj, tc, 0).x;
-        uint val1 = texelFetch(obj, ivec2(tc.x + 1, tc.y + 1), 0).x;
-        uint val2 = texelFetch(obj, ivec2(tc.x - 1, tc.y + 1), 0).x;
-        uint val3 = texelFetch(obj, ivec2(tc.x - 1, tc.y - 1), 0).x;
-        uint val4 = texelFetch(obj, ivec2(tc.x + 1, tc.y - 1), 0).x;
+        ivec2 tc = ivec2(gl_FragCoord.xy) - viewport.xy;
+        uint comp = fetchValue(tc.x, tc.y);
+        uint val1 = fetchValue(tc.x + 1, tc.y + 1);
+        uint val2 = fetchValue(tc.x - 1, tc.y + 1);
+        uint val3 = fetchValue(tc.x - 1, tc.y - 1);
+        uint val4 = fetchValue(tc.x + 1, tc.y - 1);
+        bool touchOther = val1 != comp || val2 != comp || val3 != comp || val4 != comp;
         
-        if(comp != 0u)
-            return
-                val1 != comp ||
-                val2 != comp ||
-                val3 != comp ||
-                val4 != comp ? (comp == acti ? ACTIVE : SELECTED) : texelFetch(src, tc, 0);
+        if(comp != 0u) // if this pixel lies on a selected object
+            return touchOther ? (comp == acti ? ACTIVE : SELECTED) : texelFetch(src, tc, 0);
         
-        if(acti == 0u) 
-            return
-                val1 != comp ||
-                val2 != comp ||
-                val3 != comp ||
-                val4 != comp ? SELECTED : texelFetch(src, tc, 0);
-        
-        bool touchSelected = false;
+        // this pixel lies not a selected object
+        if(acti == 0u)  // if there is no active object
+            return touchOther ? SELECTED : texelFetch(src, tc, 0);
 
-        touchSelected = touchSelected || val1 != comp;
-        if(touchSelected && val1 == acti)
-            return ACTIVE;
-
-        touchSelected = touchSelected || val2 != comp;
-        if(touchSelected && val2 == acti)
-            return ACTIVE;
-
-        touchSelected = touchSelected || val3 != comp;
-        if(touchSelected && val3 == acti)
-            return ACTIVE;
-
-        touchSelected = touchSelected || val4 != comp;
-        if(touchSelected && val4 == acti)
-            return ACTIVE;
-
-        return touchSelected ? SELECTED : texelFetch(src, tc, 0);
+        return touchOther ? (val1 == acti || val2 == acti ||val3 == acti || val1 == acti ? ACTIVE : SELECTED) : texelFetch(src, tc, 0);
     }
 
     void main(){

@@ -19,31 +19,25 @@ function init() {
     gl.enable(gl.DEPTH_TEST);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.bindBuffer(gl.UNIFORM_BUFFER, Shader.modelTransformationUB);
-    const generateRandom = 5;
+    const generateRandom = 100;
+    const generator = [BasicMesh.appendCone, BasicMesh.appendCube, BasicMesh.appendTorus, BasicMesh.appendUVSphere];
     for (let i = 1; i <= generateRandom; i++) {
-        const o = BasicMesh.appendUVSphere(new MeshObject(i));
+        const o = generator[i % generator.length].call(BasicMesh, new MeshObject(i));
         o.createAndBuildVAO();
         objs.push(o);
         const ts = objs[i].transformationStack;
-        ts[1].setValues(Math.random(), Math.random(), Math.random());
+        ts[1].setValues(Math.random() * 3, Math.random() * 3, 0);
         ts[2].setValues(Math.random() * 50 - 25, Math.random() * 50 - 25, Math.random() * 50 - 25);
         Shader.loadModelMatrix(i, ts.getTransformationMatrix());
     }
-    let o = BasicMesh.appendCube(new MeshObject(generateRandom + 1));
-    o.mesh.subdivideEdges(1);
-    o.mesh.castToSphere();
+    let o = BasicMesh.appendZFunktion(new MeshObject(generateRandom + 1), (u, v) => {
+        return Math.sin(u) * Math.sin(v);
+    });
     o.createAndBuildVAO();
     objs.push(o);
     Shader.loadModelMatrix(generateRandom + 1, o.transformationStack.getTransformationMatrix());
-    o = BasicMesh.appendZFunktion(new MeshObject(generateRandom + 2), (u, v) => {
-        return Math.sin(u) * Math.sin(v);
-    }, -12, 12, -12, 12);
-    o.transformationStack[2].setValues(2, 0, 0);
-    o.createAndBuildVAO();
-    objs.push(o);
-    Shader.loadModelMatrix(generateRandom + 2, o.transformationStack.getTransformationMatrix());
-    active = objs[1];
-    selected = [objs[1], objs[2]];
+    active = objs[generateRandom + 1];
+    selected = [objs[1], objs[2], objs[3], objs[4], objs[5]];
     gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     setupCanvas();
     window.requestAnimationFrame(renderloop);
@@ -65,9 +59,8 @@ function renderloop(timestamp) {
     gl.clear(gl.COLOR_BUFFER_BIT);
     mat.bindTextures();
     for (const view of ViewPortPane.viewports) {
-        view.phi = val;
         Shader.updateView(view);
-        view.framebuffer.clear();
+        view.framebuffer.reset();
         view.framebuffer.bindRenderFBO();
         gl.useProgram(shader.program);
         for (let i = 0; i < objs.length; i++) {

@@ -47,6 +47,8 @@ splitable-pane {
     position: relative;
     width: 100%;
     height: 100%;
+    display: flex;
+    flex-direction: column;
     min-width: calc(var(--pane-stripe-hight) * 2);
     min-height: calc(var(--pane-stripe-hight) * 2);
     overflow: hidden;
@@ -59,8 +61,6 @@ splitable-pane:hover>pane-stripe {
 
 selection-pane {
     display: block;
-    width: 100%;
-    height: 100%;
     background-color: var(--selection-pane-color);
 }
 

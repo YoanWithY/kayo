@@ -7,7 +7,7 @@ function toRAD(DEG: number) {
 }
 
 function modulo(a: number, b: number) {
-    return (a & b + b) & b;
+    return (a % b + b) % b;
 }
 
 class VecX {
@@ -37,36 +37,37 @@ class VecX {
 /**
  * @class Providing static to typical vector 2 functionalities.
  * @author YoGames Studios */
+type VEC2 = [number, number];
 class vec2 {
-    static add(a: number[], b: number[]) {
+    static add(a: number[], b: number[]): VEC2 {
         return [a[0] + b[0], a[1] + b[1]];
     }
 
-    static sub(a: number[], b: number[]) {
+    static sub(a: number[], b: number[]): VEC2 {
         return [a[0] - b[0], a[1] - b[1]];
     }
 
-    static mul(a: number[], b: number[]) {
+    static mul(a: number[], b: number[]): VEC2 {
         return [a[0] * b[0], a[1] * b[1]];
     }
 
-    static div(a: number[], b: number[]) {
+    static div(a: number[], b: number[]): VEC2 {
         return [a[0] / b[0], a[1] / b[1]];
     }
 
-    static scalarAdd(v: number[], s: number) {
+    static scalarAdd(v: number[], s: number): VEC2 {
         return [v[0] + s, v[1] + s];
     }
 
-    static scalarSub(v: number[], s: number) {
+    static scalarSub(v: number[], s: number): VEC2 {
         return [v[0] - s, v[1] - s];
     }
 
-    static scalarMul(v: number[], s: number) {
+    static scalarMul(v: number[], s: number): VEC2 {
         return [v[0] * s, v[1] * s];
     }
 
-    static scalarDiv(v: number[], s: number) {
+    static scalarDiv(v: number[], s: number): VEC2 {
         return [v[0] / s, v[1] / s];
     }
 
@@ -74,61 +75,74 @@ class vec2 {
         return Math.sqrt(a[0] * a[0] + a[1] * a[1]);
     }
 
-    static normalize(a: number[]) {
+    static normalize(a: number[]): VEC2 {
         const l = 1.0 / vec2.norm(a);
-        return [a[0] * l, a[1] * l, a[2] * l];
+        return [a[0] * l, a[1] * l];
     }
 
-    static xy(a: number[]) {
-        return [a[0], a[1]];
+    static distance(ax: number, ay: number, bx: number, by: number) {
+        const x = bx - ax;
+        const y = by - ay;
+        return Math.sqrt(x * x + y * y);
     }
+
+
 }
 
 /**
  * @class Providing static to typical vector 3 functionalities.
  * @author YoGames Studios */
-class vec3 extends vec2 {
-    static readonly X = [1, 0, 0];
-    static readonly Y = [0, 1, 0];
-    static readonly Z = [0, 0, 1];
+type VEC3 = [number, number, number];
+class vec3 {
+    static get X(): VEC3 {
+        return [1, 0, 0];
+    };
 
-    static add(a: number[], b: number[]) {
+    static get Y(): VEC3 {
+        return [0, 1, 0];
+    }
+
+    static get Z(): VEC3 {
+        return [0, 0, 1];
+    }
+
+    static add(a: VEC3, b: VEC3): VEC3 {
         return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
     }
 
-    static sub(a: number[], b: number[]) {
+    static sub(a: VEC3, b: VEC3): VEC3 {
         return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
     }
 
-    static mul(a: number[], b: number[]) {
+    static mul(a: VEC3, b: VEC3): VEC3 {
         return [a[0] * b[0], a[1] * b[1], a[2] * b[2]];
     }
 
-    static div(a: number[], b: number[]) {
+    static div(a: VEC3, b: VEC3): VEC3 {
         return [a[0] / b[0], a[1] / b[1], a[2] / b[2]];
     }
 
-    static scalarAdd(v: number[], s: number) {
+    static scalarAdd(v: VEC3, s: number): VEC3 {
         return [v[0] + s, v[1] + s, v[2] + s];
     }
 
-    static scalarSub(v: number[], s: number) {
+    static scalarSub(v: VEC3, s: number): VEC3 {
         return [v[0] - s, v[1] - s, v[2] - s];
     }
 
-    static scalarMul(v: number[], s: number) {
+    static scalarMul(v: VEC3, s: number): VEC3 {
         return [v[0] * s, v[1] * s, v[2] * s];
     }
 
-    static scalarDiv(v: number[], s: number) {
+    static scalarDiv(v: VEC3, s: number): VEC3 {
         return [v[0] / s, v[1] / s, v[2] / s];
     }
 
-    static cross(a: number[], b: number[]) {
+    static cross(a: VEC3, b: VEC3): VEC3 {
         return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
     }
 
-    static norm(a: number[]) {
+    static norm(a: VEC3) {
         return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
     }
 
@@ -141,7 +155,7 @@ class vec3 extends vec2 {
      * @param r the radial distance from the origin (optional, defaults to 1)
      * @returns the euclidean point from the spherical coordinates
      */
-    static sphericalToEuclidian(theta: number, phi: number, r: number = 1) {
+    static sphericalToEuclidian(theta: number, phi: number, r: number = 1): VEC3 {
         const st = Math.sin(theta);
         return [r * st * Math.cos(phi), r * st * Math.sin(phi), r * Math.cos(theta)];
     }
@@ -154,7 +168,7 @@ class vec3 extends vec2 {
      * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
      * @returns the euclidian unit tangent on the point on the longitude circle from the spherical coordinates pointing towards the increasing polar angle direction
      */
-    static longtitudeTangent(theta: number, phi: number) {
+    static longitudeTangent(theta: number, phi: number): VEC3 {
         const ct = Math.cos(theta);
         return [ct * Math.cos(phi), ct * Math.sin(phi), -Math.sin(theta)];
     }
@@ -164,56 +178,53 @@ class vec3 extends vec2 {
      * 
      * φ ↦ (-sin(φ), cos(φ), 0)
      * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
-     * @returns the euclidian unit tangent on the latitude circle from the azimuthal angle towards the increasing polar angle direction
+     * @returns the euclidian unit tangent on the latitude circle from the azimuthal angle towards the increasing azimuthal angle direction
      */
-    static latitudeTangent(phi: number) {
+    static latitudeTangent(phi: number): VEC3 {
         return [-Math.sin(phi), Math.cos(phi), 0];
     }
 
-    static normalize(a: number[]) {
+    static normalize(a: VEC3): VEC3 {
         const l = 1.0 / vec3.norm(a);
         return [a[0] * l, a[1] * l, a[2] * l];
-    }
-
-    static xyz(a: number[]) {
-        return [a[0], a[1], a[2]];
     }
 }
 
 /**
  * @class Providing static to typical vector 4 functionalities.
  * @author YoGames Studios */
-class vec4 extends vec3 {
+type VEC4 = [number, number, number, number];
+class vec4 {
 
-    static add(a: number[], b: number[]) {
+    static add(a: number[], b: number[]): VEC4 {
         return [a[0] + b[0], a[1] + b[1], a[2] + b[2], a[3] + b[3]];
     }
 
-    static sub(a: number[], b: number[]) {
+    static sub(a: number[], b: number[]): VEC4 {
         return [a[0] - b[0], a[1] - b[1], a[2] - b[2], a[3] - b[3]];
     }
 
-    static mul(a: number[], b: number[]) {
+    static mul(a: number[], b: number[]): VEC4 {
         return [a[0] * b[0], a[1] * b[1], a[2] * b[2], a[3] * b[3]];
     }
 
-    static div(a: number[], b: number[]) {
+    static div(a: number[], b: number[]): VEC4 {
         return [a[0] / b[0], a[1] / b[1], a[2] / b[2], a[3] / b[3]];
     }
 
-    static scalarAdd(v: number[], s: number) {
+    static scalarAdd(v: number[], s: number): VEC4 {
         return [v[0] + s, v[1] + s, v[2] + s, v[3] + s];
     }
 
-    static scalarSub(v: number[], s: number) {
+    static scalarSub(v: number[], s: number): VEC4 {
         return [v[0] - s, v[1] - s, v[2] - s, v[3] - s];
     }
 
-    static scalarMul(v: number[], s: number) {
+    static scalarMul(v: number[], s: number): VEC4 {
         return [v[0] * s, v[1] * s, v[2] * s, v[3] * s];
     }
 
-    static scalarDiv(v: number[], s: number) {
+    static scalarDiv(v: number[], s: number): VEC4 {
         return [v[0] / s, v[1] / s, v[2] / s, v[3] / s];
     }
 
@@ -221,7 +232,7 @@ class vec4 extends vec3 {
         return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2] * a[3] * a[3]);
     }
 
-    static normalize(a: number[]) {
+    static normalize(a: number[]): VEC4 {
         const l = 1.0 / vec4.norm(a);
         return [a[0] * l, a[1] * l, a[2] * l, a[3] * l];
     }
@@ -240,7 +251,7 @@ class mat4 {
      * @param t translation
      * @returns the new matrix
      */
-    static fromVec3s(x: number[] = [1, 0, 0], y: number[] = [0, 1, 0], z: number[] = [0, 0, 1], t: number[] = [0, 0, 0]) {
+    static fromVec3s(x: VEC3 = [1, 0, 0], y: VEC3 = [0, 1, 0], z: VEC3 = [0, 0, 1], t: VEC3 = [0, 0, 0]) {
         return [x[0], x[1], x[2], 0, y[0], y[1], y[2], 0, z[0], z[1], z[2], 0, t[0], t[1], t[2], 1];
     }
 

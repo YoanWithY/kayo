@@ -231,7 +231,7 @@ class BasicMesh {
         return mo;
     }
 
-    static appendXYZFunktion(mo: MeshObject, fun: (u: number, v: number) => number[],
+    static appendXYZFunktion(mo: MeshObject, fun: (u: number, v: number) => VEC3,
         uStart: number = -8, uEnd: number = 8, vStart: number = -8, vEnd: number = 8, uRes: number = 64, vRes: number = 64, uClosing: boolean = false, vClosing: boolean = false) {
         const mesh = new Mesh();
         const uRange = uEnd - uStart;

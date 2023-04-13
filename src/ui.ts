@@ -24,7 +24,8 @@ class SelectionPane extends HTMLElement {
 }
 
 class ViewPortPane extends HTMLElement implements Camera {
-    static viewports: ViewPortPane[] = [];
+
+    static viewports = new Set<ViewPortPane>;
 
     framebuffer = new FrameBuffer();
     resizeObserver = new ResizeObserver((entries, obersver) => {
@@ -33,25 +34,107 @@ class ViewPortPane extends HTMLElement implements Camera {
     });
     sceneCamera: SceneCamera | null = null;
 
-    lookAtPos = [0, 0, 0];
+    lookAtPos: VEC3 = [0, 0, 0];
     theta = 1.1;
     phi = 0.5;
-    r = 4;
+    private _r = 4;
     near = 0.1;
     far = 1000;
     FOV = 1.0;
 
+    set r(r: number) {
+        this._r = Math.max(r, this.near);
+    }
 
+    get r() {
+        return this._r;
+    }
 
     constructor() {
         super();
+
+        const rotateView = (dx: number, dy: number) => {
+            this.phi -= dx / 256;
+            this.theta -= dy / 256;
+        }
+
+        const shiftView = (dx: number, dy: number) => {
+            const lat = vec3.latitudeTangent(this.phi);
+            const lon = vec3.longitudeTangent(this.theta, this.phi);
+            this.lookAtPos = vec3.add(this.lookAtPos, vec3.add(vec3.scalarMul(lat, -dx / 1024 * this.r), vec3.scalarMul(lon, -dy / 1024 * this.r)));
+        }
+
+        const move = (e: MouseEvent) => {
+            if (e.shiftKey)
+                shiftView(e.movementX, e.movementY)
+            else
+                rotateView(e.movementX, e.movementY);
+        }
+
+        const mm = (e: MouseEvent) => {
+            if (e.buttons === 1 && !document.pointerLockElement) {
+                this.requestPointerLock();
+                this.addEventListener("mousemove", move);
+                move(e);
+            }
+        }
+
+        this.onmousedown = e => {
+            this.addEventListener("mousemove", mm);
+        }
+
+        this.onmouseup = e => {
+            this.removeEventListener("mousemove", move);
+            this.removeEventListener("mousemove", mm);
+            document.exitPointerLock();
+        }
+
+        this.addEventListener("wheel", e => {
+            e.preventDefault();
+            const val = e.deltaY / window.devicePixelRatio;
+            this.r += this.r * val / 1024;
+        });
+
+        const touches: Touch[] = [];
+        this.addEventListener("touchstart", e => {
+            for (const t of e.touches)
+                touches[t.identifier] = t;
+        });
+        this.addEventListener("touchmove", e => {
+            if (e.touches.length === 1) {
+                const thisT = e.touches[0];
+                const lastT = touches[thisT.identifier];
+                rotateView(thisT.clientX - lastT.clientX, thisT.clientY - lastT.clientY);
+                touches[thisT.identifier] = thisT;
+            } else if (e.touches.length === 2) {
+                const thisT1 = e.touches[0];
+                const lastT1 = touches[thisT1.identifier];
+                const thisT2 = e.touches[1];
+                const lastT2 = touches[thisT2.identifier];
+                const dx1 = thisT1.clientX - lastT1.clientX;
+                const dy1 = thisT1.clientY - lastT1.clientY;
+                const dx2 = thisT2.clientX - lastT2.clientX;
+                const dy2 = thisT2.clientY - lastT2.clientY;
+                const lastD = vec2.distance(lastT1.clientX, lastT1.clientY, lastT2.clientX, lastT2.clientY);
+                const thisD = vec2.distance(thisT1.clientX, thisT1.clientY, thisT2.clientX, thisT2.clientY);
+                const zoom = lastD / thisD;
+                touches[thisT1.identifier] = thisT1;
+                touches[thisT2.identifier] = thisT2;
+                this.r *= zoom;
+                shiftView((dx1 + dx2) / 2, (dy1 + dy2) / 2);
+            }
+        });
+        this.addEventListener("touchend", e => {
+            for (const t of e.changedTouches)
+                delete touches[t.identifier];
+        })
+
         this.resizeObserver.observe(this, { box: "device-pixel-content-box" });
 
     }
 
     static createViewportPane(data: any) {
         const p = document.createElement("viewport-pane") as ViewPortPane;
-        ViewPortPane.viewports.push(p);
         return p;
     }
 
@@ -62,23 +145,37 @@ class ViewPortPane extends HTMLElement implements Camera {
 
     getViewMatrix() {
         const z = vec3.sphericalToEuclidian(this.theta, this.phi);
-        const p = vec3.add(this.lookAtPos, vec3.scalarMul(z, this.r));
+        const p = vec3.add(this.lookAtPos, vec3.scalarMul(z, this._r));
 
         const m = mat4.translation(-p[0], -p[1], -p[2]);
-        return mat4.mult(mat4.transpose(mat4.fromVec3s(vec3.latitudeTangent(this.phi), vec3.scalarMul(vec3.longtitudeTangent(this.theta, this.phi), -1), z)), m);
+        return mat4.mult(mat4.transpose(mat4.fromVec3s(vec3.latitudeTangent(this.phi), vec3.scalarMul(vec3.longitudeTangent(this.theta, this.phi), -1), z)), m);
     };
 
     getWorldLocation() {
-        return vec3.add(this.lookAtPos, vec3.sphericalToEuclidian(this.theta, this.phi, this.r));
+        return vec3.add(this.lookAtPos, vec3.sphericalToEuclidian(this.theta, this.phi, this._r));
+    }
+
+    getGLViewport(): [number, number, number, number] {
+        const rect = this.getBoundingClientRect();
+        const dpr = window.devicePixelRatio;
+        return [rect.left * dpr, gl.canvas.height - rect.bottom * dpr, this.framebuffer.width, this.framebuffer.height];
     }
 
     applyToCanvas() {
-        const rect = this.getBoundingClientRect();
-        const dpr = window.devicePixelRatio;
-
-        gl.viewport(rect.left * dpr, gl.canvas.height - rect.bottom * dpr, this.framebuffer.width, this.framebuffer.height);
+        const bb = this.getGLViewport();
+        gl.viewport(...bb);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         this.framebuffer.blitToActiveFramebuffer();
+    }
+
+    disconnectedCallback() {
+        ViewPortPane.viewports.delete(this);
+    }
+
+    connectedCallback() {
+        if (this.isConnected) {
+            ViewPortPane.viewports.add(this);
+        }
     }
 }
 
@@ -172,6 +269,7 @@ class SplitPaneDivider extends HTMLElement {
         }
 
         const mV = (e: MouseEvent) => {
+            e.preventDefault();
             if (this.isMouseDown === 1) {
                 const parent = this.parentElement;
                 if (!(parent instanceof SplitPaneContainer))
@@ -401,7 +499,7 @@ class SplitButtonUL extends SplitButton {
             const orientation = dx >= dy ? "vertical" : "horizontal";
 
             const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-            const newSplitablePane = SplitablePane.createSplitablePane(SelectionPane.createSelectionPane, null, orientation, splitablePane.getBoundingClientRect());
+            const newSplitablePane = SplitablePane.createSplitablePane(ViewPortPane.createViewportPane, null, orientation, splitablePane.getBoundingClientRect());
             const bb = splitablePane.getBoundingClientRect();
             SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
