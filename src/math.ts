@@ -106,6 +106,10 @@ class vec3 {
         return [0, 0, 1];
     }
 
+    static get NULL(): VEC3 {
+        return [0, 0, 0];
+    }
+
     static add(a: VEC3, b: VEC3): VEC3 {
         return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
     }
@@ -241,6 +245,7 @@ class vec4 {
 /**
  * @class Providing static to typical matrix 4x4 functionalities.
  * @author YoGames Studios */
+type MAT4 = [number, number, number, number, number, number, number, number, number, number, number, number, number, number, number, number]
 class mat4 {
 
     /**
@@ -251,7 +256,7 @@ class mat4 {
      * @param t translation
      * @returns the new matrix
      */
-    static fromVec3s(x: VEC3 = [1, 0, 0], y: VEC3 = [0, 1, 0], z: VEC3 = [0, 0, 1], t: VEC3 = [0, 0, 0]) {
+    static fromVec3s(x: VEC3 = vec3.X, y: VEC3 = vec3.Y, z: VEC3 = vec3.Z, t: VEC3 = vec3.NULL): MAT4 {
         return [x[0], x[1], x[2], 0, y[0], y[1], y[2], 0, z[0], z[1], z[2], 0, t[0], t[1], t[2], 1];
     }
 
@@ -263,7 +268,7 @@ class mat4 {
      * @param z the z translation.
      * @returns the new matrix.
      */
-    static translate(mat: number[], x: number, y: number, z: number) {
+    static translate(mat: MAT4, x: number, y: number, z: number): MAT4 {
         return mat4.mult(mat, mat4.translation(x, y, z));
     }
 
@@ -273,7 +278,7 @@ class mat4 {
      * @param a the angle to rotate in radians.
      * @returns the new matrix.
      */
-    static rotateX(mat: number[], a: number) {
+    static rotateX(mat: MAT4, a: number): MAT4 {
         return mat4.mult(mat, mat4.rotationX(a));
     }
 
@@ -283,7 +288,7 @@ class mat4 {
      * @param a the angle to rotate in radians.
      * @returns the new matrix.
      */
-    static rotateY(mat: number[], a: number) {
+    static rotateY(mat: MAT4, a: number): MAT4 {
         return mat4.mult(mat, mat4.rotationY(a));
     }
 
@@ -293,38 +298,38 @@ class mat4 {
      * @param a the angle to rotate in radians.
      * @returns the new matrix.
      */
-    static rotateZ(mat: number[], a: number) {
+    static rotateZ(mat: MAT4, a: number): MAT4 {
         return mat4.mult(mat, mat4.rotationZ(a));
     }
 
     /**Applies a scale transformation to the given matrix by the specified x, y and z coordinates.
      * The effect of the transformation will occure befor the effect of the original matrix.
-     * @param {number[]} mat the matrix to apply the transformatio onto.
-     * @param {number} x the x translation.
-     * @param {number} y the y translation.
-     * @param {number} z the z translation.
+     * @param mat the matrix to apply the transformatio onto.
+     * @param x the x translation.
+     * @param y the y translation.
+     * @param z the z translation.
      * @returns the new matrix.
      */
-    static scale(mat: number[], x: number, y: number, z: number) {
+    static scale(mat: MAT4, x: number, y: number, z: number): MAT4 {
         return mat4.mult(mat, mat4.scaleation(x, y, z));
     }
 
-    /** Multiplies the 4x4 matrices a and b and returnes the result in a new matrix. 
+    /**Multiplies the 4x4 matrices a and b and returnes the result in a new matrix. 
      * @param a matrix 1
      * @param b matrix 2
      * @returns the result
      */
-    static mult(a: number[], b: number[]) {
+    static mult(a: MAT4, b: MAT4): MAT4 {
         return [b[0] * a[0] + b[1] * a[4] + b[2] * a[8] + b[3] * a[12], b[0] * a[1] + b[1] * a[5] + b[2] * a[9] + b[3] * a[13], b[0] * a[2] + b[1] * a[6] + b[2] * a[10] + b[3] * a[14], b[0] * a[3] + b[1] * a[7] + b[2] * a[11] + b[3] * a[15], b[4] * a[0] + b[5] * a[4] + b[6] * a[8] + b[7] * a[12], b[4] * a[1] + b[5] * a[5] + b[6] * a[9] + b[7] * a[13], b[4] * a[2] + b[5] * a[6] + b[6] * a[10] + b[7] * a[14], b[4] * a[3] + b[5] * a[7] + b[6] * a[11] + b[7] * a[15], b[8] * a[0] + b[9] * a[4] + b[10] * a[8] + b[11] * a[12], b[8] * a[1] + b[9] * a[5] + b[10] * a[9] + b[11] * a[13], b[8] * a[2] + b[9] * a[6] + b[10] * a[10] + b[11] * a[14], b[8] * a[3] + b[9] * a[7] + b[10] * a[11] + b[11] * a[15], b[12] * a[0] + b[13] * a[4] + b[14] * a[8] + b[15] * a[12], b[12] * a[1] + b[13] * a[5] + b[14] * a[9] + b[15] * a[13], b[12] * a[2] + b[13] * a[6] + b[14] * a[10] + b[15] * a[14], b[12] * a[3] + b[13] * a[7] + b[14] * a[11] + b[15] * a[15]];
     }
 
-    /** Multiplies the 4x4 matrices m with the vec4 v and returnes the result in a new vec4. 
+    /**Multiplies the 4x4 matrices m with the vec4 v and returnes the result in a new vec4. 
      * @param m mat4
      * @param v vec4
      * @returns the result
      */
-    static multVec(m: number[], v: number[]) {
-        const vec = [v[0] * m[0] + v[1] * m[4] + v[2] * m[8] + v[3] * m[12], v[0] * m[1] + v[1] * m[5] + v[2] * m[9] + v[3] * m[13], v[0] * m[2] + v[1] * m[6] + v[2] * m[10] + v[3] * m[14], v[0] * m[3] + v[1] * m[7] + v[2] * m[11] + v[3] * m[15]];
+    static multVec(m: MAT4, v: MAT4): VEC4 {
+        const vec: VEC4 = [v[0] * m[0] + v[1] * m[4] + v[2] * m[8] + v[3] * m[12], v[0] * m[1] + v[1] * m[5] + v[2] * m[9] + v[3] * m[13], v[0] * m[2] + v[1] * m[6] + v[2] * m[10] + v[3] * m[14], v[0] * m[3] + v[1] * m[7] + v[2] * m[11] + v[3] * m[15]];
         const w = vec[3];
         if (w !== 1 && w !== 0) {
             vec[0] /= w;
@@ -339,11 +344,11 @@ class mat4 {
      * @param m matrix
      * @returns the transpose of m
      */
-    static transpose(m: number[]) {
+    static transpose(m: MAT4): MAT4 {
         return [m[0], m[4], m[8], m[12], m[1], m[5], m[9], m[13], m[2], m[6], m[10], m[14], m[3], m[7], m[11], m[15]];
     }
 
-    static getTranslation(m: number[]) {
+    static getTranslation(m: MAT4): VEC3 {
         return [m[12], m[13], m[14]];
     }
 
@@ -353,7 +358,7 @@ class mat4 {
      * @param {number} z translation on the z-axis.
      * @returns the matrix
      */
-    static translation(x: number, y: number, z: number) {
+    static translation(x: number, y: number, z: number): MAT4 {
         return [
             1, 0, 0, 0,
             0, 1, 0, 0,
@@ -365,7 +370,7 @@ class mat4 {
      * @param a the angle to rotate in radians.
      * @returns the matrix
      */
-    static rotationX(a: number) {
+    static rotationX(a: number): MAT4 {
         const cosa = Math.cos(a);
         const sina = Math.sin(a);
         return [
@@ -379,7 +384,7 @@ class mat4 {
      * @param a the angle to rotate in radians.
      * @return the matrix
      */
-    static rotationY(a: number) {
+    static rotationY(a: number): MAT4 {
         const cosa = Math.cos(a);
         const sina = Math.sin(a);
         return [
@@ -393,7 +398,7 @@ class mat4 {
      * @param a the angle to rotate in radians.
      * @returns the matrix
      */
-    static rotationZ(a: number) {
+    static rotationZ(a: number): MAT4 {
         const cosa = Math.cos(a);
         const sina = Math.sin(a);
         return [
@@ -409,11 +414,11 @@ class mat4 {
      * @param z scale along the z-axis.
      * @returns the matrix
      */
-    static scaleation(x: number, y: number, z: number) {
+    static scaleation(x: number, y: number, z: number): MAT4 {
         return [x, 0, 0, 0, 0, y, 0, 0, 0, 0, z, 0, 0, 0, 0, 1];
     }
 
-    static identity() {
+    static identity(): MAT4 {
         return [
             1, 0, 0, 0,
             0, 1, 0, 0,
@@ -422,7 +427,7 @@ class mat4 {
         ];
     }
 
-    static perspective(vFOV: number, AR: number, n: number, f: number) {
+    static perspective(vFOV: number, AR: number, n: number, f: number): MAT4 {
         const t = Math.tan(vFOV / 2) * n;
         const t2 = t * 2;
         const r = t * AR;
