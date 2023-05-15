@@ -131,7 +131,7 @@ class TransformationStack extends Array {
         this.push(new Scale(), new RotationXYZ(), new Translation());
     }
 
-    getTransformationMatrix(): number[] {
+    getTransformationMatrix(): MAT4 {
         let ret = this[this.length - 1].getTransformationMatrix();
         for (let i = this.length - 2; i >= 0; i--)
             ret = mat4.mult(ret, this[i].getTransformationMatrix());
