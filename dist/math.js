@@ -78,6 +78,9 @@ class vec3 {
     static get Z() {
         return [0, 0, 1];
     }
+    static get NULL() {
+        return [0, 0, 0];
+    }
     static add(a, b) {
         return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
     }
@@ -158,7 +161,7 @@ class vec4 {
     }
 }
 class mat4 {
-    static fromVec3s(x = [1, 0, 0], y = [0, 1, 0], z = [0, 0, 1], t = [0, 0, 0]) {
+    static fromVec3s(x = vec3.X, y = vec3.Y, z = vec3.Z, t = vec3.NULL) {
         return [x[0], x[1], x[2], 0, y[0], y[1], y[2], 0, z[0], z[1], z[2], 0, t[0], t[1], t[2], 1];
     }
     static translate(mat, x, y, z) {
