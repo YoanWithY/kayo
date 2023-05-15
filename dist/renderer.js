@@ -2,7 +2,6 @@
 let shader;
 let selectionShader;
 let mat = new material();
-mat.setTexture(0, "TexturesCom_Tiles_Decorative_1K_albedo.png");
 let objs = [new MeshObject(0)];
 let selected = [];
 let active;

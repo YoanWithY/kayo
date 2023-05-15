@@ -123,13 +123,13 @@ class ViewPortPane extends HTMLElement {
     }
     getViewMatrix() {
         const z = vec3.sphericalToEuclidian(this.theta, this.phi);
-        const p = vec3.add(this.lookAtPos, vec3.scalarMul(z, this._r));
-        const m = mat4.translation(-p[0], -p[1], -p[2]);
+        const p = vec3.add(this.lookAtPos, vec3.scalarMul(z, this.r));
+        const m = mat4.translation(...vec3.scalarMul(p, -1));
         return mat4.mult(mat4.transpose(mat4.fromVec3s(vec3.latitudeTangent(this.phi), vec3.scalarMul(vec3.longitudeTangent(this.theta, this.phi), -1), z)), m);
     }
     ;
     getWorldLocation() {
-        return vec3.add(this.lookAtPos, vec3.sphericalToEuclidian(this.theta, this.phi, this._r));
+        return vec3.add(this.lookAtPos, vec3.sphericalToEuclidian(this.theta, this.phi, this.r));
     }
     getGLViewport() {
         const rect = this.getBoundingClientRect();

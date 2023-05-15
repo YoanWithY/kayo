@@ -1,4 +1,3 @@
-"use strict";
 let shader: Shader;
 let selectionShader: Shader;
 let mat = new material();
