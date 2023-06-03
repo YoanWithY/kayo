@@ -2,13 +2,20 @@
 \usepackage{graphicx, tikz, xcolor}
 \usepackage{fontspec}
 \usetikzlibrary {arrows.meta}
+\usetikzlibrary{angles}
 \tikzset{>={Stealth[inset=0, angle=30:4pt]}} % globaly set latex arrow type
 \definecolor{myGray}{RGB}{80,80,80}
 \tikzset{
-    vertex/.style={circle, minimum size=4pt, draw=gray, fill=myGray, inner sep=0, outer sep=0pt, text width=0}
+    vertex/.style={circle, minimum size=4pt, draw=gray, fill=myGray, fill opacity = 1, inner sep=0, outer sep=0pt, text width=0}
 }
 \tikzset{
 vector/.style={->={-Stealth[inset=0, angle=30:4pt]}, thick}
+}
+\tikzset{
+    concaveAngle/.style={draw=red, fill=red, fill opacity=0.5, angle radius=5pt}
+}
+\tikzset{
+    convexAngle/.style={draw=green, fill=green, fill opacity=0.5, angle radius=15pt}
 }
 \tikzset{
     directedMeshGraph/.style={

@@ -1,0 +1,30 @@
+\documentclass{standalone}
+\usepackage{tikzsetup}
+\begin{document}
+\begin{tikzpicture}[color=myGray]
+    \coordinate (c0) at (0.5, 0);
+    \coordinate (c1) at (-2, 1);
+    \coordinate (c2) at (2.25, -3);
+    \coordinate (c3) at (3, 4);
+    \coordinate (c4) at (0, 0.5);
+    \coordinate (c5) at (2, 1.5);
+
+    \begin{pgfonlayer}{z1}
+        \node[vertex] (V0) at (c0) [label = below:V\textsubscript{0}] {};
+        \node[vertex] (V1) at (c1) [label = above:V\textsubscript{1}] {};
+        \node[vertex] (V2) at (c2) [label = right:V\textsubscript{2}] {};
+        \node[vertex] (V3) at (c3) [label = right:V\textsubscript{3}] {};
+        \node[vertex] (V4) at (c4) [label = above:V\textsubscript{4}] {};
+        \node[vertex] (V5) at (c5) [label = right:V\textsubscript{5}] {};
+    \end{pgfonlayer}
+    \filldraw pic [concaveAngle] {angle = c1--c0--c5};
+    \filldraw pic [convexAngle] {angle = c2--c1--c0};
+    \filldraw pic [convexAngle] {angle = c3--c2--c1};
+    \filldraw pic [convexAngle] {angle = c4--c3--c2};
+    \filldraw pic [convexAngle] {angle = c5--c4--c3};
+    \filldraw pic [concaveAngle] {angle = c0--c5--c4};
+    \draw[thin, densely dotted] (c1) -- (c3) (c2) -- (c0) (c2) -- (c5) (c3) -- (c5);
+    \draw[vector] (V0) edge (V1) (V1) edge (V2) (V2) edge (V3) (V3) edge (V4) (V4) edge (V5) (V5) edge(V0);
+\end{tikzpicture}
+
+\end{document}
