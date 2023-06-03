@@ -1,0 +1,28 @@
+\documentclass{standalone}
+\usepackage{tikzsetup}
+\begin{document}
+\begin{tikzpicture}[color=myGray]
+    \coordinate (c0) at (0, 0);
+    \coordinate (c1) at (2, 0);
+    \coordinate (c2) at (-1, 1);
+    \coordinate (c3) at (2, 2);
+    \coordinate (c4) at (0.5, 1);
+    \coordinate (c5) at (0, 2);
+
+    \begin{pgfonlayer}{z1}
+        \node[vertex] (V0) at (c0) [label = left:V\textsubscript{0}] {};
+        \node[vertex] (V1) at (c1) [label = right:V\textsubscript{1}] {};
+        \node[vertex] (V2) at (c2) [label = left:V\textsubscript{2}] {};
+        \node[vertex] (V3) at (c3) [label = right:V\textsubscript{3}] {};
+        \node[vertex] (V4) at (c4) [label = below:V\textsubscript{4}] {};
+        \node[vertex] (V5) at (c5) [label = left:V\textsubscript{5}] {};
+    \end{pgfonlayer}
+    \filldraw pic [convexAngle] {angle = c1--c0--c5};
+    \filldraw pic [convexAngle] {angle = c2--c1--c0};
+    \filldraw pic [concaveAngle] {angle = c3--c2--c1};
+    \filldraw pic [concaveAngle] {angle = c4--c3--c2};
+    \filldraw pic [concaveAngle] {angle = c5--c4--c3};
+    \filldraw pic [convexAngle] {angle = c0--c5--c4};
+    \draw[vector] (V0) edge (V1) (V1) edge (V2) (V2) edge (V3) (V3) edge (V4) (V4) edge (V5) (V5) edge(V0);
+\end{tikzpicture}
+\end{document}
