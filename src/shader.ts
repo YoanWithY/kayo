@@ -95,16 +95,28 @@ class Shader {
     vec3 ls_v_N, ws_v_N, cs_v_N, ls_f_N, ws_f_N, cs_f_N;
     
     void main(){
-        ls_f_N = normalize(localspace_face_normal);
-        ws_f_N = normalize(worldspace_face_normal);
-        cs_f_N = normalize(cameraspace_face_normal);
-
-        ls_v_N = normalize(localspace_vertex_normal);
-        ws_v_N = normalize(worldspace_vertex_normal);
-        cs_v_N = normalize(cameraspace_vertex_normal);
+        if(gl_FrontFacing){
+            ls_f_N = normalize(localspace_face_normal);
+            ws_f_N = normalize(worldspace_face_normal);
+            cs_f_N = normalize(cameraspace_face_normal);
+    
+            ls_v_N = normalize(localspace_vertex_normal);
+            ws_v_N = normalize(worldspace_vertex_normal);
+            cs_v_N = normalize(cameraspace_vertex_normal);
+        } else {
+            ls_f_N = normalize(-localspace_face_normal);
+            ws_f_N = normalize(-worldspace_face_normal);
+            cs_f_N = normalize(-cameraspace_face_normal);
+    
+            ls_v_N = normalize(-localspace_vertex_normal);
+            ws_v_N = normalize(-worldspace_vertex_normal);
+            cs_v_N = normalize(-cameraspace_vertex_normal);
+        }
+       
 
         outColor = vec4(texture(albedo, TC).rgb, 1);
-        outColor = vec4(ws_v_N, 1);
+        float x = max(dot(ws_v_N, normalize(vec3(1,1,1))),0.0);
+        outColor = vec4(x, x, x, 1);
         objectIndex = index; 
     }`
 
