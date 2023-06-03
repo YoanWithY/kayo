@@ -13,8 +13,8 @@
         \node[vertex] (V2) at (2) [label = right:V\textsubscript{2}] {};
         \node[vertex] (V3) at (3) [label = above right:V\textsubscript{3}] {};
     \end{pgfonlayer}
-    \draw[->] (V0) edge (V1) (V1) edge (V2) (V2) edge (V3) (V3) edge (V0);
-    \draw[densely dotted] (V0) edge (V2) (V1) edge (V3);
+    \draw[vector] (V0) edge (V1) (V1) edge (V2) (V2) edge (V3) (V3) edge (V0);
+    \draw[densely dotted, thick] (V0) edge (V2) (V1) edge (V3);
 \end{tikzpicture}
 
 \end{document}
