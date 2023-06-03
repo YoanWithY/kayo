@@ -7,10 +7,12 @@
     \coordinate (2) at (0, 0);
     \coordinate (3) at (1, 1);
 
-    \node[vertex] (V0) at (0) [label = left:V\textsubscript{0}] {};
-    \node[vertex] (V1) at (1) [label = below right:V\textsubscript{1}] {};
-    \node[vertex] (V2) at (2) [label = right:V\textsubscript{2}] {};
-    \node[vertex] (V3) at (3) [label = above right:V\textsubscript{3}] {};
+    \begin{pgfonlayer}{z1}
+        \node[vertex] (V0) at (0) [label = left:V\textsubscript{0}] {};
+        \node[vertex] (V1) at (1) [label = below right:V\textsubscript{1}] {};
+        \node[vertex] (V2) at (2) [label = right:V\textsubscript{2}] {};
+        \node[vertex] (V3) at (3) [label = above right:V\textsubscript{3}] {};
+    \end{pgfonlayer}
     \draw[->] (V0) edge (V1) (V1) edge (V2) (V2) edge (V3) (V3) edge (V0);
 \end{tikzpicture}
 

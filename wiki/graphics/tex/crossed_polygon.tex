@@ -3,16 +3,20 @@
 
 \begin{document}
 
-\begin{tikzpicture}[color=myGray]
+\begin{tikzpicture}[directedMeshGraph]
     \coordinate (0) at (-1, 1);
     \coordinate (1) at (-1, -1);
     \coordinate (2) at (1, 1);
     \coordinate (3) at (1, -1);
-    \node[vertex] (V0) at (0) [label = above left:V\textsubscript{0}] {};
-    \node[vertex] (V1) at (1) [label = below left:V\textsubscript{1}] {};
-    \node[vertex] (V2) at (2) [label = above right:V\textsubscript{2}] {};
-    \node[vertex] (V3) at (3) [label = below right:V\textsubscript{3}] {};
-    \draw[->] (V0) edge (V1) (V1) edge (V2) (V2) edge (V3) (V3) edge (V0);
+
+    \begin{pgfonlayer}{z1}
+        \node[vertex] (V0) at (0) [label = above left:V\textsubscript{0}] {};
+        \node[vertex] (V1) at (1) [label = below left:V\textsubscript{1}] {};
+        \node[vertex] (V2) at (2) [label = above right:V\textsubscript{2}] {};
+        \node[vertex] (V3) at (3) [label = below right:V\textsubscript{3}] {};
+    \end{pgfonlayer}
+
+    \draw[vector] (V0) edge (V1) (V1) edge (V2) (V2) edge (V3) (V3) edge (V0);
 \end{tikzpicture}
 
 \end{document}
