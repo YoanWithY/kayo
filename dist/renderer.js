@@ -22,7 +22,7 @@ function init() {
     const generator = [BasicMesh.appendCone, BasicMesh.appendCube, BasicMesh.appendTorus, BasicMesh.appendUVSphere];
     for (let i = 1; i <= generateRandom; i++) {
         const o = generator[i % generator.length].call(BasicMesh, new MeshObject(i));
-        o.createAndBuildVAO();
+        o.updateGPU();
         objs.push(o);
         const ts = objs[i].transformationStack;
         ts[1].setValues(Math.random() * 3, Math.random() * 3, 0);
@@ -32,7 +32,7 @@ function init() {
     let o = BasicMesh.appendZFunktion(new MeshObject(generateRandom + 1), (u, v) => {
         return Math.sin(u) * Math.sin(v);
     });
-    o.createAndBuildVAO();
+    o.updateGPU();
     objs.push(o);
     Shader.loadModelMatrix(generateRandom + 1, o.transformationStack.getTransformationMatrix());
     active = objs[generateRandom + 1];
@@ -50,6 +50,7 @@ function avg(arr) {
     arr.forEach(v => sum += v);
     return sum / arr.length;
 }
+let meshObjectRenderer = MeshObject.getRenderer(new RenderConfig());
 function renderloop(timestamp) {
     let val = timestamp / 5000;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -65,7 +66,7 @@ function renderloop(timestamp) {
         for (let i = 0; i < objs.length; i++) {
             let o = objs[i];
             shader.loadui(0, o.index);
-            o.bindAndRender();
+            meshObjectRenderer(o);
         }
         view.framebuffer.bindDebug();
         Grid3D.prep(view);
@@ -74,7 +75,7 @@ function renderloop(timestamp) {
         view.framebuffer.bindSelection();
         for (const o of selected.concat([active])) {
             selectionShader.loadui(0, o.index);
-            o.bindAndRender();
+            meshObjectRenderer(o);
         }
         view.applyToCanvas();
     }

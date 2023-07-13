@@ -31,11 +31,13 @@ class MeshObject extends R3Objekt {
         gl.enableVertexAttribArray(3);
         gl.bindVertexArray(null);
     }
-    bindAndRender() {
-        gl.bindVertexArray(this.VAO);
-        gl.drawArrays(gl.TRIANGLES, 0, this.numVertices);
+    static getRenderer(rc) {
+        return (o) => {
+            gl.bindVertexArray(o.VAO);
+            gl.drawArrays(gl.TRIANGLES, 0, o.numVertices);
+        };
     }
-    createAndBuildVAO() {
+    updateGPU() {
         const pos = [];
         const vn = [];
         const fn = [];

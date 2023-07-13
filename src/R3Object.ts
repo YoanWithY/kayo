@@ -1,5 +1,5 @@
 class RenderConfig {
-
+    name = "config";
 }
 
 
