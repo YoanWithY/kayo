@@ -152,7 +152,7 @@ class vec3 {
 
     /**
      * (θ, φ, r) → (x, y, z) following ISO/IEC 80000:
-     * 
+     *
      * (θ, φ, r) ↦ (r · sin(θ) · cos(φ), r · sin(θ) · cos(φ), r · cos(θ))
      * @param theta θ the polar angle from +Z in radiance
      * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
@@ -166,7 +166,7 @@ class vec3 {
 
     /**
      * (θ, φ) → (x, y, z) following ISO/IEC 80000:
-     * 
+     *
      * (θ, φ) ↦ (cos(θ) · sin(φ), cos(θ) · cos(φ), sin(θ))
      * @param theta θ the polar angle from +Z in radiance
      * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
@@ -179,7 +179,7 @@ class vec3 {
 
     /**
      * φ → (x, y, z) following ISO/IEC 80000:
-     * 
+     *
      * φ ↦ (-sin(φ), cos(φ), 0)
      * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
      * @returns the euclidian unit tangent on the latitude circle from the azimuthal angle towards the increasing azimuthal angle direction
@@ -314,7 +314,7 @@ class mat4 {
         return mat4.mult(mat, mat4.scaleation(x, y, z));
     }
 
-    /**Multiplies the 4x4 matrices a and b and returnes the result in a new matrix. 
+    /**Multiplies the 4x4 matrices a and b and returnes the result in a new matrix.
      * @param a matrix 1
      * @param b matrix 2
      * @returns the result
@@ -323,7 +323,7 @@ class mat4 {
         return [b[0] * a[0] + b[1] * a[4] + b[2] * a[8] + b[3] * a[12], b[0] * a[1] + b[1] * a[5] + b[2] * a[9] + b[3] * a[13], b[0] * a[2] + b[1] * a[6] + b[2] * a[10] + b[3] * a[14], b[0] * a[3] + b[1] * a[7] + b[2] * a[11] + b[3] * a[15], b[4] * a[0] + b[5] * a[4] + b[6] * a[8] + b[7] * a[12], b[4] * a[1] + b[5] * a[5] + b[6] * a[9] + b[7] * a[13], b[4] * a[2] + b[5] * a[6] + b[6] * a[10] + b[7] * a[14], b[4] * a[3] + b[5] * a[7] + b[6] * a[11] + b[7] * a[15], b[8] * a[0] + b[9] * a[4] + b[10] * a[8] + b[11] * a[12], b[8] * a[1] + b[9] * a[5] + b[10] * a[9] + b[11] * a[13], b[8] * a[2] + b[9] * a[6] + b[10] * a[10] + b[11] * a[14], b[8] * a[3] + b[9] * a[7] + b[10] * a[11] + b[11] * a[15], b[12] * a[0] + b[13] * a[4] + b[14] * a[8] + b[15] * a[12], b[12] * a[1] + b[13] * a[5] + b[14] * a[9] + b[15] * a[13], b[12] * a[2] + b[13] * a[6] + b[14] * a[10] + b[15] * a[14], b[12] * a[3] + b[13] * a[7] + b[14] * a[11] + b[15] * a[15]];
     }
 
-    /**Multiplies the 4x4 matrices m with the vec4 v and returnes the result in a new vec4. 
+    /**Multiplies the 4x4 matrices m with the vec4 v and returnes the result in a new vec4.
      * @param m mat4
      * @param v vec4
      * @returns the result

@@ -1,9 +1,6 @@
+"use strict";
 class EnvironmentLight extends R3Object {
-
-
-
-    updateGPU(): void {
+    updateGPU() {
         throw new Error("Method not implemented.");
     }
-
 }

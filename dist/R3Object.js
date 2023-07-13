@@ -1,5 +1,10 @@
 "use strict";
-class R3Objekt {
+class RenderConfig {
+    constructor() {
+        this.name = "config";
+    }
+}
+class R3Object {
     constructor(index) {
         this.transformationStack = new TransformationStack();
         this.index = index;

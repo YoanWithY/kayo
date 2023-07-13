@@ -1,50 +1,55 @@
-class MeshObject extends R3Objekt {
+class VAO {
 
-    mesh = new Mesh();
     VAO = gl.createVertexArray();
-    VBOs: WebGLBuffer[] = [];
-    numVertices = 0;
+    pbo = gl.createBuffer();
+    fnbo = gl.createBuffer();
+    vnbo = gl.createBuffer();
+    guvbo = gl.createBuffer();
 
-    constructor(index: number) {
-        super(index);
-
-        const pbo = gl.createBuffer();
-        const fnbo = gl.createBuffer();
-        const vnbo = gl.createBuffer();
-        const guvbo = gl.createBuffer();
-
-        if (!pbo || !fnbo || !vnbo || !guvbo)
+    constructor() {
+        if (!this.pbo || !this.fnbo || !this.vnbo || !this.guvbo)
             throw new Error("Could not create Buffer in Mesh Object");
-
-        this.VBOs[0] = pbo;
-        this.VBOs[1] = fnbo;
-        this.VBOs[2] = vnbo;
-        this.VBOs[3] = guvbo;
 
         gl.bindVertexArray(this.VAO);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, pbo);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.pbo);
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(0);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, fnbo);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.fnbo);
         gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(1);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, vnbo);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.vnbo);
         gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(2);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, guvbo);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.guvbo);
         gl.vertexAttribPointer(3, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(3);
 
         gl.bindVertexArray(null);
     }
 
+}
+
+/**
+ * MeshObject wrapps CPU side data ({@link Mesh}) and GPU side binding points ({@link VAO}) together.
+ */
+class MeshObject extends R3Object {
+
+    mesh = new Mesh();
+
+    VAO = new VAO();
+    numVertices = 0;
+
+    constructor(index: number) {
+        super(index);
+    }
+
     static getRenderer(rc: RenderConfig): (o: MeshObject) => void {
         return (o: MeshObject) => {
-            gl.bindVertexArray(o.VAO);
+            gl.bindVertexArray(o.VAO.VAO);
             gl.drawArrays(gl.TRIANGLES, 0, o.numVertices);
         }
     }
@@ -66,16 +71,16 @@ class MeshObject extends R3Objekt {
         }
         this.numVertices = pos.length / 3;
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.VBOs[0]);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.VAO.pbo);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.STATIC_DRAW);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.VBOs[1]);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.VAO.fnbo);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fn), gl.STATIC_DRAW);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.VBOs[2]);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.VAO.vnbo);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vn), gl.STATIC_DRAW);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.VBOs[3]);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.VAO.guvbo);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(guv), gl.STATIC_DRAW);
     }
 
@@ -85,14 +90,14 @@ class BasicMesh {
     static appendCube(mo: MeshObject) {
         const mesh = new Mesh();
         mesh.vertices.push(
-            new SharedVertex(1, 1, 1),
-            new SharedVertex(-1, 1, 1),
-            new SharedVertex(-1, -1, 1),
-            new SharedVertex(1, -1, 1),
-            new SharedVertex(1, 1, -1),
-            new SharedVertex(-1, 1, -1),
-            new SharedVertex(-1, -1, -1),
-            new SharedVertex(1, -1, -1));
+            new SharedVertex(new vec3(1, 1, 1)),
+            new SharedVertex(new vec3(-1, 1, 1)),
+            new SharedVertex(new vec3(-1, -1, 1)),
+            new SharedVertex(new vec3(1, -1, 1)),
+            new SharedVertex(new vec3(1, 1, -1)),
+            new SharedVertex(new vec3(-1, 1, -1)),
+            new SharedVertex(new vec3(-1, -1, -1)),
+            new SharedVertex(new vec3(1, -1, -1)));
         mesh.fill(
             [0, 1, 2, 3],
             [4, 5, 1, 0],

@@ -1,9 +1,9 @@
 class RenderConfig {
-
+    name = "config";
 }
 
 
-abstract class R3Objekt {
+abstract class R3Object {
     index: number;
     transformationStack;
 

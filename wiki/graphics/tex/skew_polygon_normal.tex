@@ -1,0 +1,32 @@
+\documentclass{standalone}
+\usepackage{tikzsetup}
+\begin{document}
+\tdplotsetmaincoords{60}{65} % Set the viewing angles
+
+\begin{tikzpicture}[scale = 2, color=myGray, tdplot_main_coords, grid/.style={ultra thin, black, draw opacity = 0.5}]
+    \foreach \x in {0,1,...,4}
+    \foreach \y in {0,1,...,4}
+        {
+            \draw[grid] (\x, 0, 0) -- (\x, 4, 0);
+            \draw[grid] (0, \y, 0) -- (4, \y, 0);
+        }
+
+    \coordinate (ca) at (1,1,1);
+    \coordinate (cb) at (3,1,0);
+    \coordinate (cc) at (2,2,1);
+    \coordinate (cd) at (2,3,0);
+    \coordinate (ce) at (1,2,1);
+    \begin{pgfonlayer}{z1}
+        \node[vertex] (VA) at (ca) [label = above:V\textsubscript{0}] {};
+        \node[vertex] (VB) at (cb) [label = left:V\textsubscript{1}] {};
+        \node[vertex] (VC) at (cc) [label = left:V\textsubscript{2}] {};
+        \node[vertex] (VD) at (cd) [label = right:V\textsubscript{3}] {};
+        \node[vertex] (VE) at (ce) [label = above:V\textsubscript{4}] {};
+        \node[vertex] (C) at ($ 0.166*(ca) + 0.166*(cb) + 0.166*(cc)  + 0.166*(cd) +  0.166*(ce) $) [label = above:C] {};
+
+    \end{pgfonlayer}
+    \draw[densely dotted, gray, thin] (VA) -- ++(0,0,-1) (VE) -- ++(0,0,-1) (VC) -- ++(0,0,-1) (C) -- ++(0, 0, -0.6);
+    \draw[vector] (VA) edge (VB) (VB) edge (VC) (VC) edge (VD) (VD) edge (VE) (VE) edge (VA);
+    \draw[vector, thin, black] (C) edge (VA) (C) edge (VB) (C) edge (VC) (C) edge (VD) (C) edge (VE);
+\end{tikzpicture}
+\end{document}

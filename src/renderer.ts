@@ -68,7 +68,7 @@ function renderloop(timestamp: number) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     const color = SplitPaneDivider.color;
     gl.clearColor(color[0] / 255, color[1] / 255, color[2] / 255, 1.0);
-    // gl.clearColor(1, 0, 1, 1.0);
+    gl.clearColor(1, 0, 1, 1.0);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
