@@ -241,7 +241,7 @@ export default class FrameBuffer {
         gl.useProgram(FrameBuffer.BlitOutlineShader.program);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.debugColorRT);
-        FrameBuffer.BlitOutlineShader.loadui(0, 0);
+        FrameBuffer.BlitOutlineShader.loadui("src", 0);
 
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.selectionRT);

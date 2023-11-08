@@ -1,6 +1,7 @@
+import vec from "./vec"
 import vec2 from "./vec2"
 import vec3 from "./vec3"
-export default class vec4 {
+export default class vec4 implements vec<vec4> {
 	[n: number]: number;
 	0: number;
 	1: number;

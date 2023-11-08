@@ -1,4 +1,4 @@
-import vec from "./vec";
+import vec from "./vec"
 import vec3 from "./vec3"
 import vec4 from "./vec4"
 export default class vec2 implements vec<vec2> {

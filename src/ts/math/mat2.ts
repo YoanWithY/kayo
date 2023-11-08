@@ -54,9 +54,9 @@ export default class mat2 {
 		let ai = a * 2;
 		let bi = b * 2;
 		for (let c = 0; c < 2; c++) {
-		   t = this[ai];
-		   this[ai++] = this[bi]
-		   this[bi++] = t
+			t = this[ai];
+			this[ai++] = this[bi]
+			this[bi++] = t
 		}
 	}
 
@@ -68,52 +68,52 @@ export default class mat2 {
 		const inve: mat2 = mat2.identity();
 		// 1. Swap rows if pivot is 0.
 		for (let col = 0; col < 2; col++) {
-		   if (this[col * 2 + col] !== 0) continue;
-		   let candidate = -1;
-		   for (let row = 0; row < 2; row++){
-		       if (this[row * 2 + col] !== 0 && this[col * 4 + row] !== 0) {
-		           candidate = row;
-		           break;
-		       }
-		   }
-		   if (candidate === -1) return undefined;
-		   this.swapRows(col, candidate);
-		   inve.swapRows(col, candidate);
+			if (this[col * 2 + col] !== 0) continue;
+			let candidate = -1;
+			for (let row = 0; row < 2; row++) {
+				if (this[row * 2 + col] !== 0 && this[col * 4 + row] !== 0) {
+					candidate = row;
+					break;
+				}
+			}
+			if (candidate === -1) return undefined;
+			this.swapRows(col, candidate);
+			inve.swapRows(col, candidate);
 		}
 		// 2. forward substitution
 		for (let col = 0; col < 2; col++) {
-		   const coli = col * 2;
-		   for (let row = col + 1; row < 2; row++) {
-		       const rowi = row * 2;
-		       const k = this[rowi + col] / this[coli + col];
-		       for (let j = 0; j < 2; j++) {
-		           this[rowi + j] -= k * this[coli + j];
-		           inve[rowi + j] -= k * this[coli + j];
-		       }
-		       this[rowi + col] = 0;
-		   }
+			const coli = col * 2;
+			for (let row = col + 1; row < 2; row++) {
+				const rowi = row * 2;
+				const k = this[rowi + col] / this[coli + col];
+				for (let j = 0; j < 2; j++) {
+					this[rowi + j] -= k * this[coli + j];
+					inve[rowi + j] -= k * this[coli + j];
+				}
+				this[rowi + col] = 0;
+			}
 		}
 		// 3. scale pivot to 1
 		for (let row = 0; row < 2; row++) {
-		   const rowi = row * 2;
-		   const div = this[rowi + row];
-		   for (let col = 0; col < 2; col++) {
-		       this[rowi + col] /= div;
-		       inve[rowi + col] /= div;
-		   }
+			const rowi = row * 2;
+			const div = this[rowi + row];
+			for (let col = 0; col < 2; col++) {
+				this[rowi + col] /= div;
+				inve[rowi + col] /= div;
+			}
 		}
 		// backward substitution
 		for (let row = 0; row < 2; row++) {
-		   const rowi = row * 2;
-		   for (let col = row + 1; row < 2; row++) {
-		       const coli = col * 2;
-		       const k = this[rowi + col]
-		       for (let j = 0; j < 2; j++) {
-		           this[rowi + j] -= k * this[coli + j];
-		           inve[rowi + j] -= k * this[coli + j];
-		       }
-		       this[rowi + col] = 0;
-		   }
+			const rowi = row * 2;
+			for (let col = row + 1; row < 2; row++) {
+				const coli = col * 2;
+				const k = this[rowi + col]
+				for (let j = 0; j < 2; j++) {
+					this[rowi + j] -= k * this[coli + j];
+					inve[rowi + j] -= k * this[coli + j];
+				}
+				this[rowi + col] = 0;
+			}
 		}
 		return inve;
 	}

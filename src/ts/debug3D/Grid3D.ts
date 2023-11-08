@@ -284,8 +284,8 @@ export default class Grid3D {
 
         gl.useProgram(this.lineGenShader.program);
         const wl = cam.getWorldLocation();
-        this.lineGenShader.loadVec3(0, wl[0], wl[1], wl[2])
-        this.lineGenShader.loadVec2(1, (this.lineWidth * window.devicePixelRatio + 1) / cam.width, (this.lineWidth * window.devicePixelRatio + 1) / cam.height);
+        this.lineGenShader.loadVec3("posOff", wl[0], wl[1], wl[2])
+        this.lineGenShader.loadVec2("fac", (this.lineWidth * window.devicePixelRatio + 1) / cam.width, (this.lineWidth * window.devicePixelRatio + 1) / cam.height);
         gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this.TF);
 
         gl.beginTransformFeedback(gl.POINTS);
@@ -310,7 +310,7 @@ export default class Grid3D {
     static render() {
         gl.depthMask(false);
         gl.useProgram(this.renderShader.program);
-        this.renderShader.loadf(0, (this.lineWidth * window.devicePixelRatio + 1) / 2);
+        this.renderShader.loadf("pxLineWidth", (this.lineWidth * window.devicePixelRatio + 1) / 2);
         gl.bindVertexArray(this.VAO);
         gl.enable(gl.BLEND);
         gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ONE, gl.ONE);

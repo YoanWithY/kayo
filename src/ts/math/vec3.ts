@@ -1,6 +1,7 @@
+import vec from "./vec"
 import vec2 from "./vec2"
 import vec4 from "./vec4"
-export default class vec3 {
+export default class vec3 implements vec<vec3> {
 	[n: number]: number;
 	0: number;
 	1: number;
@@ -156,8 +157,8 @@ export default class vec3 {
 	 */
 	public pushInFloat32Array(arr: Float32Array, startIndex: number = 0): void {
 		arr[startIndex] = this[0];
-		arr[startIndex + 1] = this[1];
-		arr[startIndex + 2] = this[2];
+		arr[++startIndex] = this[1];
+		arr[++startIndex] = this[2];
 	}
 
 	public cross(v: vec3): vec3 {

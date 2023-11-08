@@ -49,13 +49,13 @@ export namespace Shader3D {
 
     export let projection = mat4.perspective(60, gl.canvas.width / gl.canvas.height, 0.1, 1000);
     export const ubView = /*glsl*/`
-    layout(std140) uniform view {
-        mat4 projectionMat;
-        mat4 viewMat;
-        vec4 cameraPosition;
-        ivec4 viewport;
-        ivec4 frame;
-    };
+layout(std140) uniform view {
+    mat4 projectionMat;
+    mat4 viewMat;
+    vec4 cameraPosition;
+    ivec4 viewport;
+    ivec4 frame;
+};
     `;
     export const maxModelMats = 1024;
     export const ubTransform = /*glsl*/`layout(std140) uniform model{

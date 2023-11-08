@@ -7,7 +7,7 @@ import TransformationStack from "../transformation/TransformationStack";
  */
 export default interface Camera {
     transformationStack: TransformationStack;
-    getProjectionMatrix(): mat4;
+    getProjectionMatrix(width: number, height: number): mat4;
     getViewMatrix(): mat4;
     getWorldLocation(): vec3;
 }

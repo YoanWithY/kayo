@@ -6,8 +6,7 @@ import { Shader3D } from "./Shader3D"
 export default class ShaderProgram {
 
     program: WebGLProgram;
-    uniformLocations: WebGLUniformLocation[] = [];
-
+    uniformLocations: { [key: string]: WebGLUniformLocation } = {};
 
     static modelTransformationUB = gl.createBuffer();
     static viewUB = gl.createBuffer();
@@ -42,7 +41,7 @@ export default class ShaderProgram {
 
         if (uniforms !== undefined) {
             for (let i = 0; i < uniforms.length; i++) {
-                this.uniformLocations.push(gl.getUniformLocation(this.program, uniforms[i]) as WebGLUniformLocation);
+                this.uniformLocations[uniforms[i]] = gl.getUniformLocation(this.program, uniforms[i]) as WebGLUniformLocation;
             }
         }
     }
@@ -77,23 +76,23 @@ export default class ShaderProgram {
         gl.bufferSubData(gl.UNIFORM_BUFFER, i * 64, new Float32Array(mat));
     }
 
-    loadf(loc: number, f: number) {
+    loadf(loc: string, f: number) {
         gl.uniform1f(this.uniformLocations[loc], f);
     }
 
-    loadVec2(loc: number, x: number, y: number) {
+    loadVec2(loc: string, x: number, y: number) {
         gl.uniform2f(this.uniformLocations[loc], x, y);
     }
 
-    loadVec3(loc: number, x: number, y: number, z: number) {
+    loadVec3(loc: string, x: number, y: number, z: number) {
         gl.uniform3f(this.uniformLocations[loc], x, y, z);
     }
 
-    loadui(loc: number, i: number) {
+    loadui(loc: string, i: number) {
         gl.uniform1ui(this.uniformLocations[loc], i);
     }
 
-    loadMat4(loc: number, mat4: number[]) {
+    loadMat4(loc: string, mat4: number[]) {
         gl.uniformMatrix4fv(this.uniformLocations[loc], false, new Float32Array(mat4));
     }
 

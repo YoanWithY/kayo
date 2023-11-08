@@ -22,7 +22,7 @@ export default class LookAtTransform implements Transformation {
     /**
      * The distance to the point (radius on the sphere).
      */
-    r = 5;
+    r = 15;
 
     getTransformationMatrix() {
         const dir = vec3.sphericalToEuclidean(this.theta, this.phi, this.r);
