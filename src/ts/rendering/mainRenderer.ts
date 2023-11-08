@@ -34,7 +34,8 @@ in vec3 inPos;
 uniform float radius;
 
 float heightOffset(vec3 p){
-    return 0.01 * sin(p.x * 10.0) * sin(p.y * 10.0) * sin(p.z * 10.0) + 0.1 * sin(p.x) * sin(p.x) * sin(p.x);
+    float f = float(frame.x);
+    return 0.05 * sin(p.x * 10.0) * sin(p.y * 10.0 + f / 10.0) * sin(p.z * 20.0) + 0.3 * sin(p.x + f / 50.0);
 }
 
 void main() {
@@ -45,10 +46,10 @@ void main() {
     vec3 T = cross(iPosN, vec3(0,0,1));
     vec3 B = cross(iPosN, T);
 
-    vec3 p1N = normalize(iPosN + 0.0001 * T);
+    vec3 p1N = normalize(iPosN + 0.0001 * radius * T);
     vec3 p1 = p1N * (radius + heightOffset(p1N * radius));
 
-    vec3 p2N = normalize(iPosN + 0.0001 * B);
+    vec3 p2N = normalize(iPosN + 0.0001 * radius * B);
     vec3 p2 = p2N * (radius + heightOffset(p2N * radius));
 
     mat3 nvMat = mat3(transpose(inverse(viewMat)));
@@ -66,6 +67,7 @@ void main() {
 const fragmentShaderCode = /*glsl*/`${Shader3D.v300_es__highp_decl}
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out uint objectIndex;
+${Shader3D.ubView}
 in vec3 localspace_position;
 in vec3 worldspace_position;
 in vec3 cameraspace_position;
@@ -75,14 +77,23 @@ in vec3 cameraspace_vertex_normal;
 flat in vec3 barycentric;
 void main() {
     objectIndex = 1u;
-    vec3 N  = normalize(localspace_vertex_normal);
-    outColor = vec4(dot(N, vec3(0,0,1)) * vec3(1), 1);
+    vec3 N  = normalize(worldspace_vertex_normal);
+    vec3 V = normalize(cameraPosition.xyz - worldspace_position);
+    vec3 L = normalize(vec3(1,1,1));
+    vec3 H = normalize(V + L);
+    vec3 lightColor = vec3(1) * 1.0;
+    vec3 diffuse = lightColor * clamp(dot(N, L), 0.0, 1.0);
+    vec3 specular = lightColor * pow(clamp(dot(N, H), 0.0, 1.0), 30.0);
+    vec3 ambient = vec3(0.1);
+
+    vec3 albedo = vec3(1);
+    outColor = vec4(mix((diffuse + ambient) * albedo, specular, 0.25), 1);
 }
 `;
 
 const scene = new Scene();
 const radius = 10;
-const dynmaicObject = DynamicObject.QuadSphere(1, vertexShaderCode, fragmentShaderCode, radius, 355);
+const dynmaicObject = DynamicObject.QuadSphere(1, vertexShaderCode, fragmentShaderCode, radius, 356);
 gl.useProgram(dynmaicObject.shader.program);
 dynmaicObject.shader.loadf("radius", radius);
 gl.useProgram(null);
