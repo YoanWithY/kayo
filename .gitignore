@@ -1,2 +1,4 @@
 makefile
 wiki/graphics/tex/auxiliary
+node_modules
+dist
