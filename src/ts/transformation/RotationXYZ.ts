@@ -7,7 +7,7 @@ export default class RotationXYZ implements Transformation {
         return mat4.rotationX(this.x).rotateY(this.y).rotateZ(this.z);
     }
 
-    getInverseEffectTransformationMatrix() {
+    getInverseTransformationMatrix() {
         return mat4.rotationZ(-this.z).rotateY(-this.y).rotateX(-this.x);
     }
 

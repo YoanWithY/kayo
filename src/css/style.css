@@ -3,14 +3,3 @@ body {
     font-family: Arial, Helvetica, sans-serif;
     color: dimgrey;
 }
-
-#glCanvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 0;
-    width: 100vw;
-    height: 100vh;
-    touch-action: none;
-    pointer-events: none;
-}

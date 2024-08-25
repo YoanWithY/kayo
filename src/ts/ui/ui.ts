@@ -1,6 +1,8 @@
 import { ViewportPane } from "./ViewportPane";
 import OutlinerPane, { OutlinerElement } from "./Outliner";
 import { scene } from "../projection/Projection";
+import RessourcePane from "./RessourcePane";
+import PaneSelectorPane from "./PaneSelectorPane";
 
 function commaSeperatedStringToNumberArray(s: string) {
     const sa = s.replace(/[^\d|,]/ig, "").split(",");
@@ -16,14 +18,6 @@ class PaneStripe extends HTMLElement {
 
     static createPaneStripe() {
         return document.createElement("pane-stripe");
-    }
-}
-
-class SelectionPane extends HTMLElement {
-
-    static createSelectionPane(data: any) {
-        const p = document.createElement("selection-pane");
-        return p;
     }
 }
 
@@ -100,15 +94,12 @@ class SplitablePane extends HTMLElement {
 
 class SplitPaneDivider extends HTMLElement {
     static color = commaSeperatedStringToNumberArray(getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-color"));
-
-
     static size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-size").replace("px", ""));
     isMouseDown = 0;
     constructor() {
         super();
-        this.ondragstart = e => { return false; };
 
-        const mD = (event: MouseEvent) => {
+        const mD = () => {
             this.isMouseDown = 1;
             document.body.addEventListener('mousemove', mV);
             document.body.addEventListener('mouseup', end);
@@ -216,7 +207,7 @@ class SplitPaneContainer extends HTMLElement {
         } else if (orientation == "vertical") {
             let minWidth = 0;
             let minHeight = 0;
-            this.childNodes.forEach((sp, key, parent) => {
+            this.childNodes.forEach((sp) => {
                 if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
                     sp.style.height = "";
                     if (sp.nextElementSibling) {
@@ -241,7 +232,7 @@ class SplitPaneContainer extends HTMLElement {
         } else {
             let minWidth = 0;
             let minHeight = 0;
-            this.childNodes.forEach((sp, key, parent) => {
+            this.childNodes.forEach((sp) => {
                 if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
                     sp.style.width = "";
 
@@ -275,7 +266,7 @@ abstract class SplitButton extends HTMLElement {
     clickY = NaN;
     constructor() {
         super();
-        this.ondragstart = e => { return false; };
+        this.ondragstart = () => { return false; };
         this.onmousedown = e => {
             this.clickX = e.screenX;
             this.clickY = e.screenY;
@@ -343,7 +334,7 @@ class SplitButtonUL extends SplitButton {
             const orientation = dx >= dy ? "vertical" : "horizontal";
 
             const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-            const newSplitablePane = SplitablePane.createSplitablePane(OutlinerPane.createOutlinerPane, { scene }, orientation, splitablePane.getBoundingClientRect());
+            const newSplitablePane = SplitablePane.createSplitablePane(PaneSelectorPane.createPaneSelectorPane, { scene }, orientation, splitablePane.getBoundingClientRect());
             const bb = splitablePane.getBoundingClientRect();
             SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -398,7 +389,7 @@ class SplitButtonUR extends SplitButton {
             const orientation = Math.abs(dx) >= dy ? "vertical" : "horizontal";
 
             const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-            const newSplitablePane = SplitablePane.createSplitablePane(SelectionPane.createSelectionPane, null, orientation, splitablePane.getBoundingClientRect());
+            const newSplitablePane = SplitablePane.createSplitablePane(PaneSelectorPane.createPaneSelectorPane, null, orientation, splitablePane.getBoundingClientRect());
             const bb = splitablePane.getBoundingClientRect();
             SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -465,7 +456,7 @@ class SplitButtonLL extends SplitButton {
             const orientation = Math.abs(dx) >= Math.abs(dy) ? "vertical" : "horizontal";
 
             const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-            const newSplitablePane = SplitablePane.createSplitablePane(SelectionPane.createSelectionPane, null, orientation, splitablePane.getBoundingClientRect());
+            const newSplitablePane = SplitablePane.createSplitablePane(PaneSelectorPane.createPaneSelectorPane, null, orientation, splitablePane.getBoundingClientRect());
             const bb = splitablePane.getBoundingClientRect();
             SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -532,7 +523,7 @@ class SplitButtonLR extends SplitButton {
             const orientation = Math.abs(dx) >= Math.abs(dy) ? "vertical" : "horizontal";
 
             const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-            const newSplitablePane = SplitablePane.createSplitablePane(SelectionPane.createSelectionPane, null, orientation, splitablePane.getBoundingClientRect());
+            const newSplitablePane = SplitablePane.createSplitablePane(PaneSelectorPane.createPaneSelectorPane, null, orientation, splitablePane.getBoundingClientRect());
             const bb = splitablePane.getBoundingClientRect();
             SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -563,9 +554,10 @@ class SplitButtonLR extends SplitButton {
 
 window.customElements.define("pane-stripe", PaneStripe);
 window.customElements.define("viewport-pane", ViewportPane);
+window.customElements.define("ressource-pane", RessourcePane);
+window.customElements.define("pane-selector-pane", PaneSelectorPane);
 window.customElements.define("outliner-element", OutlinerElement)
 window.customElements.define("outliner-pane", OutlinerPane);
-window.customElements.define("selection-pane", SelectionPane);
 window.customElements.define("split-button-ul", SplitButtonUL);
 window.customElements.define("split-button-ur", SplitButtonUR);
 window.customElements.define("split-button-ll", SplitButtonLL);

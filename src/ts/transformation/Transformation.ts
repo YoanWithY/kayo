@@ -4,8 +4,7 @@ export default interface Transformation {
 
     getTransformationMatrix(): mat4
 
-    getInverseEffectTransformationMatrix(): mat4
-
+    getInverseTransformationMatrix(): mat4
     /**
      * Sets values for this transformation.
      * @param nums the number to set

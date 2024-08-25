@@ -1,5 +1,4 @@
 import mat4 from "../math/mat4";
-import { toRAD } from "../math/math";
 import Projection from "./Projection";
 
 export default class PerspectiveProjection implements Projection {
@@ -14,5 +13,4 @@ export default class PerspectiveProjection implements Projection {
         const l = -r;
         return mat4.perspective(r, l, t, b, this.near, this.far);
     }
-
 }

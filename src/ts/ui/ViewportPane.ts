@@ -1,27 +1,33 @@
-import Camera from "../Viewport/Camera";
-import SceneCamera from "../Viewport/SceneCamera";
 import ViewportCamera from "../Viewport/ViewportCamera";
-import mat3 from "../math/mat3";
-import mat4 from "../math/mat4";
 import vec2 from "../math/vec2";
 import vec3 from "../math/vec3";
-import FrameBuffer from "../rendering/framebuffer";
+import Config from "../rendering/Config";
+import { gpuDevice } from "../rendering/gpuInit";
 import LookAtTransform from "../transformation/LookAt";
 
 export class ViewportPane extends HTMLElement {
 
     static viewports = new Set<ViewportPane>;
 
-    camera = new ViewportCamera();
+    public camera = new ViewportCamera();
+    public renderAttachment!: GPUTexture;
+    private previousRectangle = {
+        left: -1, rigth: - 1, width: -1, height: -1
+    };
 
-    resizeObserver: ResizeObserver = new ResizeObserver((entries, obersver) => {
-        const b = entries[0].devicePixelContentBoxSize[0];
-        this.camera.framebuffer.init(b.inlineSize, b.blockSize);
-        this.camera.x = this.getBoundingClientRect().left
-    });
+
+    resizeObserver: ResizeObserver = new ResizeObserver(() => { });
 
     constructor() {
         super();
+
+        this.renderAttachment = gpuDevice.createTexture({
+            format: Config.swapChainFormat,
+            size: [4, 4, 1],
+            usage: GPUTextureUsage.RENDER_ATTACHMENT
+        });
+
+        this.resizeObserver.observe(this);
 
         const lookAt = new LookAtTransform();
         this.camera.transformationStack.push(lookAt);
@@ -52,11 +58,11 @@ export class ViewportPane extends HTMLElement {
             }
         }
 
-        this.onmousedown = e => {
+        this.onmousedown = () => {
             this.addEventListener("mousemove", mm);
         }
 
-        this.onmouseup = e => {
+        this.onmouseup = () => {
             this.removeEventListener("mousemove", move);
             this.removeEventListener("mousemove", mm);
             document.exitPointerLock();
@@ -101,12 +107,9 @@ export class ViewportPane extends HTMLElement {
             for (const t of e.changedTouches)
                 delete touches[t.identifier];
         })
-
-        this.resizeObserver.observe(this, { box: "device-pixel-content-box" });
-
     }
 
-    static createViewportPane(data: any) {
+    static createViewportPane() {
         const p = document.createElement("viewport-pane") as ViewportPane;
         return p;
     }
@@ -119,5 +122,30 @@ export class ViewportPane extends HTMLElement {
         if (this.isConnected) {
             ViewportPane.viewports.add(this);
         }
+    }
+
+    public getViewportAndUpdateAttachmentsIfNecessary(): { left: number, top: number, width: number, height: number } {
+        const rect = this.getViewport();
+        if (this.previousRectangle.width === rect.width && this.previousRectangle.height === rect.height)
+            return rect;
+
+        this.renderAttachment.destroy();
+        this.renderAttachment = gpuDevice.createTexture({
+            format: Config.swapChainFormat,
+            size: [rect.width, rect.height, 1],
+            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+            label: "Viewport render attachment and copy source"
+        });
+        return rect;
+    }
+
+    /**
+     * With +x → and +y ↓ in px. Left and right are floored, width and height are ceiled.
+     * @returns left 
+     */
+    getViewport(): { left: number, top: number, width: number, height: number } {
+        const rect = this.getBoundingClientRect();
+        const dpr = window.devicePixelRatio;
+        return { left: Math.floor(rect.left * dpr), top: Math.floor(rect.top * dpr), width: Math.ceil(rect.width * dpr), height: Math.ceil(rect.height * dpr) };
     }
 }

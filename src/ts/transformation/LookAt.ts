@@ -33,7 +33,7 @@ export default class LookAtTransform implements Transformation {
         return mat4.fromColumnMajor(...X, 0, ...Y, 0, ...Z, 0, ...loc, 1);
     }
 
-    getInverseEffectTransformationMatrix() {
+    getInverseTransformationMatrix() {
         const dir = vec3.sphericalToEuclidean(this.theta, this.phi, this.r);
         const loc = this.p.add(dir);
         const Z = dir.normalize();

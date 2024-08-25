@@ -1,8 +1,6 @@
 import mat4 from "../math/mat4";
-import { toRAD } from "../math/math";
 import R3Object from "../project/R3Object";
 import PerspectiveProjection from "../projection/PerspectiveProjection";
-import { glCanvas } from "../rendering/glInit";
 import Camera from "./Camera";
 
 export default class SceneCamera extends R3Object implements Camera {
@@ -16,6 +14,6 @@ export default class SceneCamera extends R3Object implements Camera {
     }
 
     getViewMatrix() {
-        return this.transformationStack.getInverseEffectTransformationMatrix();
+        return this.transformationStack.getInverseTransformationMatrix();
     }
 }

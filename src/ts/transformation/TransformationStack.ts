@@ -28,8 +28,8 @@ export default class TransformationStack extends Array implements Transformation
         return ret;
     }
 
-    getInverseEffectTransformationMatrix(): mat4 {
-        let ret = this.scale.getInverseEffectTransformationMatrix().mult(this.rotate.getInverseEffectTransformationMatrix()).mult(this.translate.getInverseEffectTransformationMatrix());
+    getInverseTransformationMatrix(): mat4 {
+        let ret = this.scale.getInverseTransformationMatrix().mult(this.rotate.getInverseTransformationMatrix()).mult(this.translate.getInverseTransformationMatrix());
         for (let i = 0; i < this.length; i++)
             ret = ret.mult(this[i].getInverseEffectTransformationMatrix());
         return ret;

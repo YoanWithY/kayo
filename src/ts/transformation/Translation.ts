@@ -7,7 +7,7 @@ export default class Translation implements Transformation {
         return mat4.translation(this.x, this.y, this.z);
     }
 
-    getInverseEffectTransformationMatrix() {
+    getInverseTransformationMatrix() {
         return mat4.translation(-this.x, -this.y, -this.z);
     }
 

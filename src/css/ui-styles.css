@@ -9,11 +9,25 @@
     --pane-stripe-color: rgb(48, 48, 48);
     --pane-stripe-hover-color: rgb(56, 56, 56);
     --selection-pane-color: rgb(32, 32, 32);
+    /* scrollbar-color: rgba(255, 255, 255, 0.1) rgba(255, 255, 255, 0.1);
+    scrollbar-width: thin; */
 }
 
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
+    user-select: none;
+}
+
+#gpuCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    width: 100vw;
+    height: 100vh;
+    touch-action: none;
+    pointer-events: none;
 }
 
 #wrapper {
@@ -60,17 +74,6 @@ splitable-pane:hover>pane-stripe {
     background-color: var(--pane-stripe-hover-color);
 }
 
-selection-pane {
-    display: block;
-    background-color: var(--selection-pane-color);
-}
-
-viewport-pane {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
 split-pane-divider {
     background-color: var(--split-pane-divider-color);
 }
@@ -91,8 +94,12 @@ split-pane-divider[split-pane-divider-orientation="horizontal"] {
 
 pane-stripe {
     display: block;
+    z-index: 1;
     height: var(--pane-stripe-hight);
     background-color: var(--pane-stripe-color);
+    box-shadow: 0px 0px 2px black;
+    height: 24px;
+    flex: none;
 }
 
 split-button-ul,
@@ -106,6 +113,7 @@ split-button-lr {
     opacity: 0;
     cursor: cell;
     transition: var(--transition-duration);
+    z-index: 2;
 }
 
 split-button-ul {
@@ -135,7 +143,6 @@ split-button-lr {
     right: 0;
     bottom: 0;
     border-radius: var(--radius) 0 0 0;
-
 }
 
 split-button-ul:hover,
@@ -150,4 +157,66 @@ outliner-pane {
     width: 100%;
     height: 100%;
     background-color: var(--pane-background-color);
+}
+
+ressource-pane {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: var(--pane-background-color);
+}
+
+viewport-pane {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+pane-selector-pane {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: var(--pane-background-color);
+}
+
+.selectorButton {
+    padding: 16px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 4px;
+    margin: 4px;
+    font-family: inherit;
+    font-size: 1rem;
+    box-shadow: 0px 0px 2px black;
+}
+
+.selectorButton:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+::-webkit-scrollbar-corner {
+    background-color: rgba(255, 255, 255, 0.1);
 }

@@ -7,7 +7,7 @@ export default class Scale implements Transformation {
         return mat4.scaleation(this.x, this.y, this.z);
     }
 
-    getInverseEffectTransformationMatrix() {
+    getInverseTransformationMatrix() {
         return mat4.scaleation(1 / this.x, 1 / this.y, 1 / this.z);
     }
 
