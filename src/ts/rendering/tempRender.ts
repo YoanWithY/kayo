@@ -1,9 +1,9 @@
-import { ViewportPane } from "../ui/ViewportPane";
+import { ViewportPane } from "../ui/panes/ViewportPane";
 import { gpuContext } from "./canvasInit";
-import Config from "./Config";
 import { gpuDevice } from "./gpuInit";
 import { getElement } from "./RenderUtil";
 import shaderCode from "../../wgsl/shader.wgsl?raw";
+import { projectConfig } from "./Config";
 
 const shaderModule = gpuDevice.createShaderModule({
 	code: shaderCode
@@ -60,7 +60,7 @@ const renderPipelineDescriptor: GPURenderPipelineDescriptor = {
 		entryPoint: "fragment_main",
 		targets: [
 			{
-				format: Config.swapChainFormat
+				format: projectConfig.outputConfig.swapChainFormat
 			}
 		]
 	},

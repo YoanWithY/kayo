@@ -1,9 +1,13 @@
+import OutlinerPane from "./OutlinerPane";
+import OutputPane from "./OutputPane";
 import RessourcePane from "./RessourcePane";
 import { ViewportPane } from "./ViewportPane";
 
 const panes: { [key: string]: () => HTMLElement } = {
 	"3D Viewport": ViewportPane.createViewportPane,
 	"Ressources": RessourcePane.createRessourcePane,
+	"Output": OutputPane.createOutputPane,
+	"Outliner": OutlinerPane.createOutlinerPane,
 }
 
 export default class PaneSelectorPane extends HTMLElement {

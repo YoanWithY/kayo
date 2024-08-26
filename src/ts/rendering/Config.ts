@@ -2,8 +2,14 @@ import { gpu } from "./gpuInit";
 
 export type SwapChainFormat = "rgba16float" | "bgra8unorm" | "rgba8unorm";
 
-export default class {
-	public static swapChainFormat: SwapChainFormat = gpu.getPreferredCanvasFormat() as SwapChainFormat;
-	public static swapChainColorSpace: PredefinedColorSpace = "srgb";
-	public static swapChainToneMappingMode: GPUCanvasToneMappingMode = "standard";
+export class ProjectConfig {
+	outputConfig: OutputConfig = new OutputConfig();
 }
+
+export class OutputConfig {
+	public swapChainFormat: SwapChainFormat = gpu.getPreferredCanvasFormat() as SwapChainFormat;
+	public swapChainColorSpace: PredefinedColorSpace = "srgb";
+	public swapChainToneMappingMode: GPUCanvasToneMappingMode = "standard";
+}
+
+export const projectConfig = new ProjectConfig();

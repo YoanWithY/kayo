@@ -1,4 +1,4 @@
-import { gpu, gpuAdapter, gpuDevice } from "../rendering/gpuInit";
+import { gpu, gpuAdapter, gpuDevice } from "../../rendering/gpuInit";
 
 function objectToUl(obj: any): HTMLElement {
 	const ul = document.createElement('ul');

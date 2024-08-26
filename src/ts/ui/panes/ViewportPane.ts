@@ -1,9 +1,9 @@
-import ViewportCamera from "../Viewport/ViewportCamera";
-import vec2 from "../math/vec2";
-import vec3 from "../math/vec3";
-import Config from "../rendering/Config";
-import { gpuDevice } from "../rendering/gpuInit";
-import LookAtTransform from "../transformation/LookAt";
+import ViewportCamera from "../../Viewport/ViewportCamera";
+import vec2 from "../../math/vec2";
+import vec3 from "../../math/vec3";
+import { projectConfig } from "../../rendering/Config";
+import { gpuDevice } from "../../rendering/gpuInit";
+import LookAtTransform from "../../transformation/LookAt";
 
 export class ViewportPane extends HTMLElement {
 
@@ -22,7 +22,7 @@ export class ViewportPane extends HTMLElement {
         super();
 
         this.renderAttachment = gpuDevice.createTexture({
-            format: Config.swapChainFormat,
+            format: projectConfig.outputConfig.swapChainFormat,
             size: [4, 4, 1],
             usage: GPUTextureUsage.RENDER_ATTACHMENT
         });
@@ -131,7 +131,7 @@ export class ViewportPane extends HTMLElement {
 
         this.renderAttachment.destroy();
         this.renderAttachment = gpuDevice.createTexture({
-            format: Config.swapChainFormat,
+            format: projectConfig.outputConfig.swapChainFormat,
             size: [rect.width, rect.height, 1],
             usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
             label: "Viewport render attachment and copy source"

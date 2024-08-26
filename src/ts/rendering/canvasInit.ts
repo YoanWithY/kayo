@@ -1,4 +1,4 @@
-import Config from "./Config";
+import { OutputConfig, projectConfig } from "./Config";
 import { gpuDevice } from "./gpuInit";
 
 export let gpuCanvas: HTMLCanvasElement;
@@ -11,15 +11,19 @@ export const gpuContext = gpuCanvas.getContext("webgpu") as GPUCanvasContext;
 if (!gpuContext)
 	throw new Error("No GPU context.");
 
-gpuContext.configure({
-	device: gpuDevice,
-	format: Config.swapChainFormat,
-	alphaMode: "opaque",
-	colorSpace: Config.swapChainColorSpace,
-	toneMapping: { mode: Config.swapChainToneMappingMode },
-	usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_DST,
-});
+export function configureCanvas(outputConfig: OutputConfig) {
+	gpuContext.unconfigure();
+	gpuContext.configure({
+		device: gpuDevice,
+		format: outputConfig.swapChainFormat,
+		alphaMode: "opaque",
+		colorSpace: outputConfig.swapChainColorSpace,
+		toneMapping: { mode: outputConfig.swapChainToneMappingMode },
+		usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_DST,
+	});
+}
 
+configureCanvas(projectConfig.outputConfig);
 
 function setupCanvas() {
 	let dpr = window.devicePixelRatio || 1;

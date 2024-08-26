@@ -1,16 +1,14 @@
 :root {
-    --radius: 4px;
+    --radius: 2px;
     --transition-duration: 200ms;
     --split-pane-divider-color: rgb(20, 20, 20);
     /* Must be changed in static class */
-    --split-pane-divider-size: 4px;
+    --split-pane-divider-size: 2px;
     --pane-background-color: rgb(32, 32, 32);
     --pane-stripe-hight: 24px;
     --pane-stripe-color: rgb(48, 48, 48);
     --pane-stripe-hover-color: rgb(56, 56, 56);
     --selection-pane-color: rgb(32, 32, 32);
-    /* scrollbar-color: rgba(255, 255, 255, 0.1) rgba(255, 255, 255, 0.1);
-    scrollbar-width: thin; */
 }
 
 body {
@@ -76,6 +74,8 @@ splitable-pane:hover>pane-stripe {
 
 split-pane-divider {
     background-color: var(--split-pane-divider-color);
+    flex-shrink: 0;
+    flex-grow: 0;
 }
 
 split-pane-divider[split-pane-divider-orientation="vertical"] {
