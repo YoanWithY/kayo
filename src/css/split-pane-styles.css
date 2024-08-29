@@ -1,0 +1,134 @@
+:root {
+	--split-pane-grabber-size: 6px;
+}
+
+split-pane-container {
+	display: flex;
+	width: 100%;
+	height: 100%;
+}
+
+split-pane-container[split-pane-container-orientation="none"] {
+	flex-direction: unset;
+}
+
+split-pane-container[split-pane-container-orientation="vertical"] {
+	flex-direction: row;
+}
+
+split-pane-container[split-pane-container-orientation="horizontal"] {
+	flex-direction: column;
+}
+
+splitable-pane {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	min-width: calc(var(--pane-stripe-hight) * 2);
+	min-height: calc(var(--pane-stripe-hight) * 2);
+	overflow: hidden;
+	border-radius: var(--radius);
+}
+
+splitable-pane:hover>pane-stripe {
+	background-color: var(--pane-stripe-hover-color);
+}
+
+split-pane-divider {
+	background-color: var(--split-pane-divider-color);
+	flex-shrink: 0;
+	flex-grow: 0;
+}
+
+split-pane-divider[split-pane-divider-orientation="vertical"] {
+	width: var(--split-pane-divider-size);
+	min-width: var(--split-pane-divider-size);
+	height: 100%;
+}
+
+split-pane-divider[split-pane-divider-orientation="horizontal"] {
+	height: var(--split-pane-divider-size);
+	min-height: var(--split-pane-divider-size);
+	width: 100%;
+}
+
+split-pane-grabber {
+	display: flex;
+	position: relative;
+	z-index: 2;
+}
+
+split-pane-grabber[split-pane-divider-orientation="vertical"] {
+	left: calc(var(--split-pane-divider-size) / 2 - var(--split-pane-grabber-size) / 2);
+	min-width: var(--split-pane-grabber-size);
+	height: 100%;
+	cursor: ew-resize;
+}
+
+split-pane-grabber[split-pane-divider-orientation="horizontal"] {
+	top: calc(var(--split-pane-divider-size) / 2 - var(--split-pane-grabber-size) / 2);
+	min-height: var(--split-pane-grabber-size);
+	width: 100%;
+	cursor: ns-resize;
+}
+
+pane-stripe {
+	display: block;
+	z-index: 1;
+	height: var(--pane-stripe-hight);
+	background-color: var(--pane-stripe-color);
+	height: 24px;
+	flex: none;
+}
+
+split-button-ul,
+split-button-ur,
+split-button-ll,
+split-button-lr {
+	width: 16px;
+	height: 16px;
+	overflow: hidden;
+	background-color: gray;
+	opacity: 0;
+	cursor: cell;
+	transition: var(--transition-duration);
+	z-index: 3;
+}
+
+split-button-ul {
+	position: absolute;
+	top: 0;
+	left: 0;
+	border-radius: 0 0 var(--radius) 0;
+}
+
+split-button-ur {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border-radius: 0 0 0 var(--radius);
+}
+
+split-button-ll {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	border-radius: 0 var(--radius) 0 0;
+
+}
+
+split-button-lr {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	border-radius: var(--radius) 0 0 0;
+}
+
+split-button-ul:hover,
+split-button-ur:hover,
+split-button-ll:hover,
+split-button-lr:hover {
+	opacity: 0.5;
+}

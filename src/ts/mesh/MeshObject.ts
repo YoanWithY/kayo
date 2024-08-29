@@ -1,6 +1,6 @@
 import R3Object from "../project/R3Object";
 import RenderConfig from "../project/RenderConfig";
-import { gl } from "../rendering/gpuInit";
+import { gl } from "../GPUX";
 import Mesh from "./Mesh"
 
 class VAO {

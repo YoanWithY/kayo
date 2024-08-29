@@ -1,0 +1,40 @@
+:root {
+	--pane-gap: 4px;
+}
+
+outliner-pane {
+	display: block;
+	width: 100%;
+	height: 100%;
+	background-color: var(--pane-background-color);
+}
+
+ressource-pane {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: var(--pane-background-color);
+}
+
+viewport-pane {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+pane-selector-pane {
+	display: block;
+	width: 100%;
+	height: 100%;
+	background-color: var(--pane-background-color);
+}
+
+output-pane {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: var(--pane-gap);
+	background-color: var(--pane-background-color);
+	padding: 4px;
+}

@@ -1,5 +1,5 @@
+import { openProject } from "../../project/Project";
 import PaneSelectorPane from "../panes/PaneSelectorPane";
-import { rootSplitPaneContainer } from "../ui";
 import { SplitablePane } from "./SplitablePane";
 import { SplitPaneContainer } from "./SplitPaneContainer";
 import { SplitPaneDivider } from "./SplitPaneDivider";
@@ -98,7 +98,7 @@ export class SplitButtonUL extends SplitButton {
 			splitablePane.removePrevious(container, spo);
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		rootSplitPaneContainer.updateSizesRecursively();
+		openProject.uiRoot.updateSizesRecursively();
 	}
 
 	constructor() {
@@ -165,7 +165,7 @@ export class SplitButtonUR extends SplitButton {
 			}
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		rootSplitPaneContainer.updateSizesRecursively();
+		openProject.uiRoot.updateSizesRecursively();
 	}
 
 	constructor() {
@@ -232,7 +232,7 @@ export class SplitButtonLL extends SplitButton {
 			}
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		rootSplitPaneContainer.updateSizesRecursively();
+		openProject.uiRoot.updateSizesRecursively();
 	}
 
 	constructor() {
@@ -287,7 +287,7 @@ export class SplitButtonLR extends SplitButton {
 			splitablePane.removeNext(container, spo);
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		rootSplitPaneContainer.updateSizesRecursively();
+		openProject.uiRoot.updateSizesRecursively();
 	}
 
 	constructor() {

@@ -1,4 +1,7 @@
-import { loop } from "./rendering/tempRender";
-import { rootSplitPaneContainer } from "./ui/ui";
-document.body.appendChild(rootSplitPaneContainer);
-requestAnimationFrame(loop);
+import { gpuInit as initGPU } from "./GPUX";
+import { initUI as initUIClasses } from "./ui/ui";
+import { Project } from "./project/Project";
+
+initGPU();
+initUIClasses();
+new Project().installUI();

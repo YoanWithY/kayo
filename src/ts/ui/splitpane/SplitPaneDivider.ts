@@ -4,12 +4,32 @@ import { SplitablePane } from "./SplitablePane";
 import { SplitPaneContainer } from "./SplitPaneContainer";
 
 export class SplitPaneDivider extends HTMLElement {
-	static color = commaSeperatedStringToNumberArray(getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-color"));
 	static size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-size").replace("px", ""));
-	isMouseDown = 0;
 	constructor() {
 		super();
 
+	}
+
+	static createSplitPaneDivider(orientation: string) {
+		const spd = document.createElement("split-pane-divider");
+		spd.setAttribute("split-pane-divider-orientation", orientation);
+
+		const grabber = document.createElement("split-pane-grabber");
+		grabber.setAttribute("split-pane-divider-orientation", orientation);
+		spd.appendChild(grabber);
+
+		return spd;
+	}
+
+	static getColor() {
+		return commaSeperatedStringToNumberArray(getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-color"))
+	};
+}
+
+export class SplitPaneGrabber extends HTMLElement {
+	isMouseDown = 0;
+	constructor() {
+		super();
 		const mD = () => {
 			this.isMouseDown = 1;
 			document.body.addEventListener('mousemove', mV);
@@ -19,15 +39,19 @@ export class SplitPaneDivider extends HTMLElement {
 		const mV = (e: MouseEvent) => {
 			e.preventDefault();
 			if (this.isMouseDown === 1) {
-				const parent = this.parentElement;
+				const divider = this.parentElement;
+				if (!(divider instanceof SplitPaneDivider))
+					return;
+
+				const parent = divider.parentElement;
 				if (!(parent instanceof SplitPaneContainer))
 					return;
 
-				const prev = this.previousElementSibling;
+				const prev = divider.previousElementSibling;
 				if (!(prev instanceof SplitPaneContainer || prev instanceof SplitablePane))
 					return;
 
-				const next = this.nextElementSibling;
+				const next = divider.nextElementSibling;
 				if (!(next instanceof SplitPaneContainer || next instanceof SplitablePane))
 					return;
 
@@ -66,11 +90,5 @@ export class SplitPaneDivider extends HTMLElement {
 		}
 
 		this.addEventListener("mousedown", mD);
-	}
-
-	static createSplitPaneDivider(orientation: string) {
-		const spd = document.createElement("split-pane-divider");
-		spd.setAttribute("split-pane-divider-orientation", orientation);
-		return spd;
 	}
 }

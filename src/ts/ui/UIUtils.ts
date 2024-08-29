@@ -5,3 +5,15 @@ export function commaSeperatedStringToNumberArray(s: string) {
 		ar.push(parseFloat(s));
 	return ar;
 }
+
+export function createSpan(text: string): HTMLSpanElement {
+	const span = document.createElement("span");
+	span.textContent = text;
+	return span;
+}
+
+export function createPre(text: string): HTMLPreElement {
+	const pre = document.createElement("pre");
+	pre.textContent = text;
+	return pre;
+}
