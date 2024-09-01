@@ -1,11 +1,5 @@
-import ViewportCamera from "../Viewport/ViewportCamera";
-import dynamicObject from "../dynamicObject/dynamicObject";
+import HeightFieldR3 from "../dynamicObject/HeightFieldR3";
 
 export default class Scene {
-
-    dynamicObjects = new Set<dynamicObject>();
-
-    public render(viewport: ViewportCamera) {
-
-    }
+    heightFieldObjects = new Set<HeightFieldR3>;
 }

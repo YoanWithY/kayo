@@ -38,7 +38,10 @@ export default class Checkbox extends HTMLElement implements Tooltipabble<string
 	}
 
 	connectedCallback() {
-		this.variable?.addChangeListener(this.uiCallback, "immediate");
+		if (this.variable) {
+			this.variable.addChangeListener(this.uiCallback, "immediate");
+			this.uiCallback(this.variable.value);
+		}
 	}
 
 	disconnectedCallback() {

@@ -1,32 +1,18 @@
 import ViewportCamera from "../../Viewport/ViewportCamera";
 import vec2 from "../../math/vec2";
 import vec3 from "../../math/vec3";
-import { bitDepthToSwapChainFormat } from "../../project/Config";
-import { gpuDevice } from "../../GPUX";
 import LookAtTransform from "../../transformation/LookAt";
-import { openProject } from "../../project/Project";
 
 export class ViewportPane extends HTMLElement {
 
     static viewports = new Set<ViewportPane>;
 
     public camera = new ViewportCamera();
-    public renderAttachment!: GPUTexture;
-    private previousRectangle = {
-        left: -1, rigth: - 1, width: -1, height: -1
-    };
-
 
     resizeObserver: ResizeObserver = new ResizeObserver(() => { });
 
     constructor() {
         super();
-
-        this.renderAttachment = gpuDevice.createTexture({
-            format: bitDepthToSwapChainFormat(openProject.config.output.display.swapChainBitDepth),
-            size: [4, 4, 1],
-            usage: GPUTextureUsage.RENDER_ATTACHMENT
-        });
 
         this.resizeObserver.observe(this);
 
@@ -125,28 +111,23 @@ export class ViewportPane extends HTMLElement {
         }
     }
 
-    public getViewportAndUpdateAttachmentsIfNecessary(): { left: number, top: number, width: number, height: number } {
-        const rect = this.getViewport();
-        if (this.previousRectangle.width === rect.width && this.previousRectangle.height === rect.height)
-            return rect;
-
-        this.renderAttachment.destroy();
-        this.renderAttachment = gpuDevice.createTexture({
-            format: bitDepthToSwapChainFormat(openProject.config.output.display.swapChainBitDepth),
-            size: [rect.width, rect.height, 1],
-            usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-            label: "Viewport render attachment and copy source"
-        });
-        return rect;
-    }
-
     /**
      * With +x → and +y ↓ in px. Left and right are floored, width and height are ceiled.
      * @returns left 
      */
     getViewport(): { left: number, top: number, width: number, height: number } {
         const rect = this.getBoundingClientRect();
+
         const dpr = window.devicePixelRatio;
-        return { left: Math.floor(rect.left * dpr), top: Math.floor(rect.top * dpr), width: Math.ceil(rect.width * dpr), height: Math.ceil(rect.height * dpr) };
+        const l = Math.max(Math.floor(rect.left * dpr) - 1, 0);
+        const t = Math.max(Math.floor(rect.top * dpr) - 1, 0);
+        const r = Math.ceil(rect.right * dpr);
+        const b = Math.ceil(rect.bottom * dpr);
+        return {
+            left: l,
+            top: t,
+            width: r - l + 1,
+            height: b - t + 1
+        };
     }
 }

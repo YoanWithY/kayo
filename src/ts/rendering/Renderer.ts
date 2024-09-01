@@ -1,119 +1,56 @@
-import { gpuContext, gpuDevice } from "../GPUX";
-import { createBindGroup, createSampler, loadImageTexture, resolveIncludes } from "./Shader";
-import shaderCode from "../../wgsl/shader.wgsl?raw";
+import { gpu, gpuCanvas, gpuContext, gpuDevice } from "../GPUX";
 import { SplitPaneDivider } from "../ui/splitpane/SplitPaneDivider";
 import { StateVariableChangeCallback } from "../project/StateVariable";
 import { getElement } from "./RenderUtil";
 import { ViewportPane } from "../ui/panes/ViewportPane";
-import { bitDepthToSwapChainFormat } from "../project/Config";
+import { SwapChainBitDepth } from "../project/Config";
 import { openProject } from "../project/Project";
-
-const vertices = new Float32Array([
-	-1, 1, 0, 1,
-	1, 0, 0, 1,
-
-	-1, -1, 0, 1,
-	0, 1, 0, 1,
-
-	1, 1, 0, 1,
-	0, 0, 1, 1,
-
-	1, -1, 0, 1,
-	1, 1, 1, 1,
-]);
-
-const texture = await loadImageTexture(gpuDevice, 'untitled color.png');
-
-let lastFrame = 0;
 
 export default class Renderer {
 	preRenderFunctions = new Set<{ val: any, f: StateVariableChangeCallback<any> }>();
-
-	shaderModule = gpuDevice.createShaderModule({
-		code: resolveIncludes(shaderCode),
-		label: "Combined shader module"
-	});
-
-	vertexBuffer: GPUBuffer = gpuDevice.createBuffer({
-		size: vertices.byteLength,
-		usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-	});
-
-	vertexBufferLayouts: GPUVertexBufferLayout[] = [
-		{
-			attributes: [
-				{
-					shaderLocation: 0,
-					offset: 0,
-					format: "float32x4",
-				},
-				{
-					shaderLocation: 1,
-					offset: 16,
-					format: "float32x4",
-				}
-			],
-			arrayStride: 32,
-			stepMode: "vertex"
-		}
-	];
-
-	sampler = createSampler(gpuDevice);
-	bindGroup: GPUBindGroup;
-	bindGroupLayout: GPUBindGroupLayout;
-	renderPipelineDescriptor: GPURenderPipelineDescriptor;
 
 	clearColor = SplitPaneDivider.getColor();
 
 	clearRenderPassDescriptor: GPURenderPassDescriptor;
 	renderPassDescriptor: GPURenderPassDescriptor;
 
-	renderPipeline: GPURenderPipeline;
+	needsPipleineRebuild = true;
+	needsContextReconfiguration = false;
 
-	reconfigureContext() {
-		gpuContext.unconfigure();
-		gpuContext.configure({
-			device: gpuDevice,
-			format: bitDepthToSwapChainFormat(openProject.config.output.display.swapChainBitDepth),
-			alphaMode: "opaque",
-			colorSpace: openProject.config.output.display.swapChainColorSpace,
-			toneMapping: { mode: openProject.config.output.display.swapChainToneMappingMode },
-			usage: GPUTextureUsage.RENDER_ATTACHMENT,
-		})
-	}
+	depthTexture!: GPUTexture;
+	prevCanvasWidth = -1;
+	prevCanvasHeight = -1;
+	depthView: GPUTextureView;
 
 	constructor() {
 		this.reconfigureContext();
-		gpuDevice.queue.writeBuffer(this.vertexBuffer, 0, vertices, 0, vertices.length);
 
-		const { group: bindGroup, layout: bindGroupLayout } = createBindGroup(gpuDevice, texture, this.sampler);
-		this.bindGroup = bindGroup;
-		this.bindGroupLayout = bindGroupLayout;
 
-		this.renderPipelineDescriptor = {
-			vertex: {
-				module: this.shaderModule,
-				entryPoint: "vertex_main",
-				buffers: this.vertexBufferLayouts
-			},
-			fragment: {
-				module: this.shaderModule,
-				entryPoint: "fragment_main",
-				targets: [
-					{
-						format: bitDepthToSwapChainFormat(openProject.config.output.display.swapChainBitDepth)
-					}
-				],
-				constants: {
-					targetColorSpace: openProject.config.output.display.swapChainColorSpace == "srgb" ? 0 : 1,
-					componentTranfere: openProject.config.output.display.swapChainColorSpace == "srgb" ? 0 : 1,
+		this.renderPassDescriptor = {
+			colorAttachments: [
+				{
+					loadOp: "clear",
+					storeOp: "store",
+					view: gpuContext.getCurrentTexture().createView(),
 				}
+			],
+			depthStencilAttachment: {
+				depthClearValue: 1.0,
+				depthStoreOp: "store",
+				depthLoadOp: "clear",
+				view: gpuDevice.createTexture({
+					size: [4, 4, 1],
+					format: 'depth24plus',
+					usage: GPUTextureUsage.RENDER_ATTACHMENT,
+					label: "Render Depth Attachment",
+				}).createView(),
 			},
-			primitive: {
-				topology: "triangle-strip"
-			},
-			layout: gpuDevice.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] })
-		}
+			label: "Render Pass"
+		};
+
+		this.recreateDepthTexture();
+		this.depthView = this.depthTexture.createView();
+
 
 		this.clearRenderPassDescriptor = {
 			colorAttachments: [
@@ -126,57 +63,126 @@ export default class Renderer {
 			],
 			label: "Clear Render Pass"
 		};
-
-		this.renderPassDescriptor = {
-			colorAttachments: [
-				{
-					loadOp: "load",
-					storeOp: "store",
-					view: gpuContext.getCurrentTexture().createView(),
-				}
-			],
-			label: "Render Pass"
-		};
-
-		this.renderPipeline = gpuDevice.createRenderPipeline(this.renderPipelineDescriptor);
 	}
 
-	loop = (t: number) => {
-		for (const o of this.preRenderFunctions)
+	reconfigureContext() {
+		gpuContext.unconfigure();
+		gpuContext.configure({
+			device: gpuDevice,
+			format: bitDepthToSwapChainFormat(openProject.config.output.display.swapChainBitDepth),
+			alphaMode: "opaque",
+			colorSpace: openProject.config.output.display.swapChainColorSpace,
+			toneMapping: { mode: openProject.config.output.display.swapChainToneMappingMode },
+			usage: GPUTextureUsage.RENDER_ATTACHMENT,
+		});
+		this.needsContextReconfiguration = false;
+		console.log("reg context");
+	}
+
+	rebuildDisplayOutputPipelines() {
+		const outConsts = Renderer.getDisplayFragmentOutputConstantsCopy();
+		const format = bitDepthToSwapChainFormat(openProject.config.output.display.swapChainBitDepth);
+		for (const hf of openProject.scene.heightFieldObjects) {
+			hf.material.fragmentConstants["targetColorSpace"] = outConsts["targetColorSpace"];
+			hf.material.fragmentConstants["componentTranfere"] = outConsts["componentTranfere"];
+			hf.material.fragmentTargets[0].format = format;
+			hf.material.buildPipeline();
+		}
+		this.needsPipleineRebuild = false;
+		console.log("reb pipeline");
+
+	}
+
+	recreateDepthTexture() {
+		const w = gpuContext.getCurrentTexture().width;
+		const h = gpuContext.getCurrentTexture().height;
+		if (this.depthTexture)
+			this.depthTexture.destroy();
+
+		this.depthTexture = gpuDevice.createTexture({
+			size: [w, h, 1],
+			format: 'depth24plus',
+			usage: GPUTextureUsage.RENDER_ATTACHMENT,
+			label: "Render Depth Attachment",
+		});
+		this.prevCanvasWidth = w;
+		this.prevCanvasHeight = h;
+
+		const depthAttachment = this.renderPassDescriptor.depthStencilAttachment;
+		if (!depthAttachment) {
+			console.error("Could not get depth attachment.");
+			return;
+		}
+		this.depthView = this.depthTexture.createView();
+		depthAttachment.view = this.depthView;
+	}
+
+	static getDisplayFragmentOutputConstantsCopy(): Record<string, number> {
+		return {
+			targetColorSpace: openProject.config.output.display.swapChainColorSpace == "srgb" ? 0 : 1,
+			componentTranfere: openProject.config.output.render.mode === "deferred" ? 0 : 1,
+		};
+	}
+
+	static getFragmentTargets(): GPUColorTargetState[] {
+		return [
+			{
+				format: bitDepthToSwapChainFormat(openProject.config.output.display.swapChainBitDepth)
+			}];
+	}
+
+	static getDepthStencilFormat(): GPUTextureFormat {
+		return "depth24plus";
+	}
+
+	loop = () => {
+		for (const o of this.preRenderFunctions) {
 			o.f(o.val);
+		}
 		this.preRenderFunctions.clear();
 
-		requestAnimationFrame(this.loop);
+		if (this.needsContextReconfiguration)
+			this.reconfigureContext();
+
+		if (this.needsPipleineRebuild)
+			this.rebuildDisplayOutputPipelines();
+
+		if (gpuContext.getCurrentTexture().width !== this.prevCanvasWidth || gpuContext.getCurrentTexture().height !== this.prevCanvasHeight) {
+			this.recreateDepthTexture();
+		}
+
 		const gpuCommandEncoder = gpuDevice.createCommandEncoder();
 
+		const currentView = gpuContext.getCurrentTexture().createView();
 		const clearRenderAttachment = getElement(this.clearRenderPassDescriptor.colorAttachments, 0);
 		if (!clearRenderAttachment) {
 			console.error("Could not get attachment.");
 			return;
 		}
-		clearRenderAttachment.clearValue = { r: 1, g: 0, b: 0, a: 1 };
-		clearRenderAttachment.view = gpuContext.getCurrentTexture().createView();
+		clearRenderAttachment.clearValue = { r: 0, g: 0, b: 0, a: 1 };
+		clearRenderAttachment.view = currentView;
 
 		const gpuClearRenderPassEncode = gpuCommandEncoder.beginRenderPass(this.clearRenderPassDescriptor);
 		gpuClearRenderPassEncode.end();
 
-		for (const viewportPane of ViewportPane.viewports) {
-			viewportPane.getViewportAndUpdateAttachmentsIfNecessary();
-			const renderAttachment = getElement(this.renderPassDescriptor.colorAttachments, 0);
-			if (!renderAttachment) {
-				console.error("Could not get attachment.");
-				return;
-			}
-			renderAttachment.view = viewportPane.renderAttachment.createView();
+		const renderAttachment = getElement(this.renderPassDescriptor.colorAttachments, 0);
+		if (!renderAttachment) {
+			console.error("Could not get attachment.");
+			return;
+		}
+		renderAttachment.view = currentView;
 
+		for (const viewportPane of ViewportPane.viewports) {
 			const viewRect = viewportPane.getViewport();
 
+			const clippedRect = clippRect(viewRect, gpuCanvas.width, gpuCanvas.height);
+
 			const gpuRenderPassEncoder = gpuCommandEncoder.beginRenderPass(this.renderPassDescriptor);
-			gpuRenderPassEncoder.setViewport(0, 0, viewRect.width, viewRect.height, 0, 1);
-			gpuRenderPassEncoder.setPipeline(this.renderPipeline);
-			gpuRenderPassEncoder.setBindGroup(0, this.bindGroup);
-			gpuRenderPassEncoder.setVertexBuffer(0, this.vertexBuffer);
-			gpuRenderPassEncoder.draw(4);
+			gpuRenderPassEncoder.setViewport(viewRect.left, viewRect.top, clippedRect.w, clippedRect.h, 0, 1);
+			for (const hf of openProject.scene.heightFieldObjects) {
+				gpuRenderPassEncoder.setPipeline(hf.material.pipeline);
+				gpuRenderPassEncoder.draw(hf.getVerts());
+			}
 			gpuRenderPassEncoder.end();
 		}
 
@@ -184,6 +190,22 @@ export default class Renderer {
 
 		// const deltaT = t - lastFrame;
 		// p.textContent = `${deltaT}`;
-		lastFrame = t;
+		// lastFrame = t;
+
+		requestAnimationFrame(this.loop);
 	}
+}
+
+export function bitDepthToSwapChainFormat(bpc: SwapChainBitDepth): GPUTextureFormat {
+	if (bpc === "8bpc")
+		return gpu.getPreferredCanvasFormat();
+	return "rgba16float";
+}
+
+function clippRect(viewRect: { left: number, top: number, width: number, height: number }, targetWidth: number, targetHeight: number) {
+	const right = viewRect.left + viewRect.width;
+	const bottom = viewRect.top + viewRect.height;
+	const w = right > targetWidth ? targetWidth - viewRect.left : viewRect.width;
+	const h = bottom > targetHeight ? targetHeight - viewRect.top : viewRect.height;
+	return { w, h }
 }

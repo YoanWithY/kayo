@@ -21,18 +21,18 @@ if (!gpuContext) {
     throw new Error("No GPU context.");
 }
 
-function setupCanvas() {
-    let dpr = window.devicePixelRatio || 1;
-    let width = gpuCanvas.clientWidth;
-    let height = gpuCanvas.clientHeight;
-    if (gpuCanvas.width != width || gpuCanvas.height != height) {
-        gpuCanvas.width = width * dpr;
-        gpuCanvas.height = height * dpr;
+function handleResize(entries: ResizeObserverEntry[]) {
+    for (const entry of entries) {
+        if (entry.target === gpuCanvas) {
+            const devicePixelSize = entry.devicePixelContentBoxSize[0];
+            gpuCanvas.width = devicePixelSize.inlineSize;
+            gpuCanvas.height = devicePixelSize.blockSize;
+        }
     }
 }
 
-window.addEventListener('resize', setupCanvas);
-setupCanvas();
+const resizeObserver = new ResizeObserver(handleResize);
+resizeObserver.observe(gpuCanvas);
 
 export function gpuInit() {
     return { gpu, gpuAdapter, gpuCanvas, gpuContext };

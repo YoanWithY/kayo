@@ -1,13 +1,13 @@
 import linearRGBToLinearDisplayP3 from "../../wgsl/utility/linearRGBToLinearDisplayP3.wgsl?raw";
-import sRGB_gammaExpansion from "../../wgsl/utility/sRGB_gammaExpansion.wgsl?raw";
-import sRGB_gammaCompression from "../../wgsl/utility/sRGB_gammaCompression.wgsl?raw";
+import sRGB_EOTF from "../../wgsl/utility/sRGB_EOTF.wgsl?raw";
+import sRGB_OETF from "../../wgsl/utility/sRGB_OETF.wgsl?raw";
 import fragmentOutput from "../../wgsl/utility/fragmentOutput.wgsl?raw";
 
 const snippets: { [key: string]: string } = {
 	"utility/fragmentOutput": fragmentOutput,
 	"utility/linearRGBToLinearDisplayP3": linearRGBToLinearDisplayP3,
-	"utility/sRGB_gammaExpansion": sRGB_gammaExpansion,
-	"utility/sRGB_gammaCompression": sRGB_gammaCompression,
+	"utility/sRGB_EOTF": sRGB_EOTF,
+	"utility/sRGB_OETF": sRGB_OETF,
 };
 
 export function resolveIncludes(code: string): string {
@@ -39,48 +39,4 @@ export async function loadImageTexture(device: GPUDevice, imageUrl: string): Pro
 	);
 
 	return texture;
-}
-
-export function createSampler(device: GPUDevice): GPUSampler {
-	return device.createSampler({
-		minFilter: 'linear',
-		magFilter: 'linear',
-		addressModeU: 'repeat',
-		addressModeV: 'repeat'
-	});
-}
-
-export function createBindGroup(device: GPUDevice, texture: GPUTexture, sampler: GPUSampler): { group: GPUBindGroup, layout: GPUBindGroupLayout } {
-	const textureView = texture.createView();
-
-	const bindGroupLayout = device.createBindGroupLayout({
-		entries: [
-			{
-				binding: 0,
-				visibility: GPUShaderStage.FRAGMENT,
-				texture: { sampleType: 'float' }
-			},
-			{
-				binding: 1,
-				visibility: GPUShaderStage.FRAGMENT,
-				sampler: {}
-			}
-		]
-	});
-
-	const bindGroup = device.createBindGroup({
-		layout: bindGroupLayout,
-		entries: [
-			{
-				binding: 0,
-				resource: textureView
-			},
-			{
-				binding: 1,
-				resource: sampler
-			}
-		]
-	});
-
-	return { group: bindGroup, layout: bindGroupLayout };
 }

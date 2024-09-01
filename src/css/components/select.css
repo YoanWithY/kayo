@@ -1,0 +1,60 @@
+select-box {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	white-space: nowrap;
+	background-color: rgb(20, 20, 20);
+	border: 1px solid rgb(48, 48, 48);
+	border-radius: var(--radius);
+	padding: 3px 8px;
+}
+
+select-box::after {
+	display: inline;
+	margin-left: 10px;
+	content: '';
+	width: calc(var(--font-size) / 2);
+	height: calc(var(--font-size) / 2);
+	right: 0;
+	border: 1px solid var(--text-color);
+	border-width: 0 1px 1px 0;
+	transform: translateY(-40%) rotate(45deg);
+}
+
+select-box:hover {
+	background-color: rgb(28, 28, 28);
+}
+
+select-box:state(open-down) {
+	border-radius: var(--radius) var(--radius) 0 0;
+}
+
+select-option-wrapper {
+	display: inline-block;
+	position: absolute;
+	overflow: hidden;
+	box-sizing: border-box;
+	z-index: 5;
+	background-color: rgb(20, 20, 20);
+	border: 1px solid rgb(48, 48, 48);
+	border-radius: var(--radius);
+}
+
+select-option-wrapper:state(open-down) {
+	border-radius: 0 0 var(--radius) var(--radius);
+}
+
+select-option {
+	display: block;
+	z-index: 4;
+	padding: 5px;
+}
+
+select-option:hover {
+	background-color: rgb(28, 28, 28);
+}
+
+select-option:state(selected) {
+	background-color: rgb(28, 28, 28);
+}

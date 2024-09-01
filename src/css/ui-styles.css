@@ -12,7 +12,7 @@
     --pane-stripe-hover-color: rgb(56, 56, 56);
     --selection-pane-color: rgb(32, 32, 32);
     --text-color: rgb(200, 200, 200);
-    --font-size: 1rem;
+    --font-size: 0.8rem;
 
     --accent-color: rgb(0, 114, 220);
     --accent-color-hover: rgb(0, 130, 240);
@@ -20,7 +20,7 @@
 
 body {
     color: var(--text-color);
-    font-size: var(var(--font-size));
+    font-size: var(--font-size);
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
     user-select: none;

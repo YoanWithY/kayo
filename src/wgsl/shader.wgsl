@@ -28,5 +28,5 @@ fn vertex_main2(
 @fragment
 fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 	let inColor = textureLoad(myTexture, vec2i(vertexData.position.xy), 0);
-	return vec4f(createOutputFragment(sRGB_gammaExpand(inColor.rgb)), 1);
+	return vec4f(createOutputFragment(sRGB_EOTF(inColor.rgb)), 1);
 }

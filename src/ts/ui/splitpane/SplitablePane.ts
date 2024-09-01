@@ -19,9 +19,9 @@ export class SplitablePane extends HTMLElement {
 
 		if (orientation && rect) {
 			if (orientation == "vertical")
-				newSplitablePane.style.width = (rect.width - SplitPaneDivider.size) / 2 + "px";
+				newSplitablePane.style.width = Math.round((rect.width - SplitPaneDivider.size) / 2) + "px";
 			else
-				newSplitablePane.style.height = (rect.height - SplitPaneDivider.size) / 2 + "px";
+				newSplitablePane.style.height = Math.round((rect.height - SplitPaneDivider.size) / 2) + "px";
 		}
 
 		return newSplitablePane as SplitablePane;

@@ -1,13 +1,13 @@
-import { gpu } from "../GPUX";
-
 export type SwapChainBitDepth = "8bpc" | "16bpc";
+export type RenderMode = "forward" | "deferred";
 
 export class ProjectConfig {
 	output = new OutputConfig();
 }
 
 export class OutputConfig {
-	display = new OutputDisplayConfig();
+	display: OutputDisplayConfig = new OutputDisplayConfig();
+	render: OutputRenderConfig = new OutputForwardRenderConfig();
 }
 
 export class OutputDisplayConfig {
@@ -16,8 +16,15 @@ export class OutputDisplayConfig {
 	swapChainToneMappingMode: GPUCanvasToneMappingMode = "standard";
 }
 
-export function bitDepthToSwapChainFormat(bpc: SwapChainBitDepth): GPUTextureFormat {
-	if (bpc === "8bpc")
-		return gpu.getPreferredCanvasFormat();
-	return "rgba16float";
+export abstract class OutputRenderConfig {
+	abstract mode: RenderMode;
 }
+
+export class OutputForwardRenderConfig extends OutputRenderConfig {
+	mode: "forward" = "forward";
+}
+
+export class OutputDeferredRenderConfig extends OutputRenderConfig {
+	mode: "deferred" = "deferred";
+}
+

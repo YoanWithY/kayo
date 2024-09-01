@@ -12,12 +12,16 @@ import Collapsible, { CollapsibleButton, CollapsibleContentContainer } from "./c
 import Tooltip from "./components/Tooltip";
 import Grid2Col from "./components/Grid2Col";
 import Checkbox from "./components/Checkbox";
+import { SelectBox, SelectOption, SelectOptionWrapper } from "./components/Select";
 
 export function initUI() {
 	window.customElements.define("tool-tip", Tooltip);
 	window.customElements.define("grid-2col", Grid2Col);
 	window.customElements.define("pane-stripe", PaneStripe);
 	window.customElements.define("check-box", Checkbox);
+	window.customElements.define("select-box", SelectBox);
+	window.customElements.define("select-option-wrapper", SelectOptionWrapper);
+	window.customElements.define("select-option", SelectOption);
 
 	window.customElements.define("viewport-pane", ViewportPane);
 	window.customElements.define("ressource-pane", RessourcePane);
