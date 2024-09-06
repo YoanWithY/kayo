@@ -32,25 +32,24 @@ export class OutputDisplayState {
 			openProject.config.output.display.swapChainColorSpace = value;
 			openProject.renderer.needsPipleineRebuild = true;
 			openProject.renderer.needsContextReconfiguration = true;
-			console.log(value);
 		}, "deferred");
+		this.swapChainColorSpace.addChangeListener(() => openProject.fullRerender(), "immediate");
 
 		this.swapChainBitDepth = new StateVariable(display.swapChainBitDepth);
 		this.swapChainBitDepth.addChangeListener((value: SwapChainBitDepth) => {
 			openProject.config.output.display.swapChainBitDepth = value;
 			openProject.renderer.needsContextReconfiguration = true;
 			openProject.renderer.needsPipleineRebuild = true;
-			console.log(value);
-
 		}, "deferred");
+		this.swapChainBitDepth.addChangeListener(() => openProject.fullRerender(), "immediate");
+
 
 		this.swapChainToneMappingMode = new StateVariable(display.swapChainToneMappingMode);
 		this.swapChainToneMappingMode.addChangeListener((value: GPUCanvasToneMappingMode) => {
 			openProject.renderer.needsContextReconfiguration = true;
 			openProject.config.output.display.swapChainToneMappingMode = value;
-			console.log(value);
-
 		}, "deferred");
+		this.swapChainToneMappingMode.addChangeListener(() => openProject.fullRerender(), "immediate");
 	}
 }
 

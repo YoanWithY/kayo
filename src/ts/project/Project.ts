@@ -1,8 +1,9 @@
-import { SplitPaneContainer } from "../ui/splitpane/SplitPaneContainer";
 import { ProjectConfig } from "./Config";
 import { ProjectState } from "./State";
 import Renderer from "../rendering/Renderer";
 import Scene from "./Scene";
+import { WrappingPane } from "../ui/Wrapping/WrappingPane";
+import { ViewportPane } from "../ui/panes/ViewportPane";
 
 export let openProject: Project;
 export class Project {
@@ -11,7 +12,7 @@ export class Project {
 	state: ProjectState;
 	renderer!: Renderer;
 	scene!: Scene;
-	uiRoot!: SplitPaneContainer;
+	uiRoot!: WrappingPane;
 
 	constructor() {
 		this.config = new ProjectConfig();
@@ -24,14 +25,18 @@ export class Project {
 		openProject = this;
 		this.renderer = new Renderer();
 		this.scene = new Scene();
-		this.uiRoot = SplitPaneContainer.createRoot();
+		this.uiRoot = WrappingPane.createWrappingPane();
 		document.body.appendChild(this.uiRoot);
-		requestAnimationFrame(this.renderer.loop);
 	}
 
 	close() {
 		const wrapper = document.getElementById("wrapper")
 		if (wrapper)
 			document.body.removeChild(wrapper);
+	}
+
+	fullRerender() {
+		for (const vp of ViewportPane.viewportPanes)
+			this.renderer.requestAnimationFrameWith(vp);
 	}
 }

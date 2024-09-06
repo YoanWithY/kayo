@@ -4,7 +4,6 @@ import { SplitablePane } from "./SplitablePane";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 export class SplitPaneContainer extends HTMLElement {
-
 	static createSplitPaneContainer(orientation: string, rect: DOMRect) {
 		const c = document.createElement("split-pane-container");
 		c.setAttribute("split-pane-container-orientation", orientation);
@@ -50,10 +49,8 @@ export class SplitPaneContainer extends HTMLElement {
 				if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
 					sp.style.height = "";
 					if (sp.nextElementSibling) {
-						sp.style.flex = "";
 						sp.style.width = sp.getBoundingClientRect().width + "px";
 					} else {
-						sp.style.flex = "1";
 						sp.style.width = sp.getBoundingClientRect().width + "px";
 					}
 					if (sp instanceof SplitPaneContainer)
@@ -76,10 +73,8 @@ export class SplitPaneContainer extends HTMLElement {
 					sp.style.width = "";
 
 					if (sp.nextElementSibling) {
-						sp.style.flex = "";
 						sp.style.height = sp.getBoundingClientRect().height + "px";
 					} else {
-						sp.style.flex = "1";
 						sp.style.height = sp.getBoundingClientRect().height + "px";
 					}
 					if (sp instanceof SplitPaneContainer)

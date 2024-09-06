@@ -98,7 +98,7 @@ export class SplitButtonUL extends SplitButton {
 			splitablePane.removePrevious(container, spo);
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		openProject.uiRoot.updateSizesRecursively();
+		openProject.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
 	constructor() {
@@ -165,7 +165,7 @@ export class SplitButtonUR extends SplitButton {
 			}
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		openProject.uiRoot.updateSizesRecursively();
+		openProject.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
 	constructor() {
@@ -232,7 +232,7 @@ export class SplitButtonLL extends SplitButton {
 			}
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		openProject.uiRoot.updateSizesRecursively();
+		openProject.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
 	constructor() {
@@ -287,7 +287,7 @@ export class SplitButtonLR extends SplitButton {
 			splitablePane.removeNext(container, spo);
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		openProject.uiRoot.updateSizesRecursively();
+		openProject.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
 	constructor() {

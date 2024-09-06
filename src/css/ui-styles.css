@@ -22,28 +22,9 @@ body {
     color: var(--text-color);
     font-size: var(--font-size);
     margin: 0;
+    background-color: var(--split-pane-divider-color);
     font-family: Arial, Helvetica, sans-serif;
     user-select: none;
-}
-
-#gpuCanvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 0;
-    width: 100vw;
-    height: 100vh;
-    touch-action: none;
-    pointer-events: none;
-}
-
-#wrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 1;
-    width: 100vw;
-    height: 100vh;
     touch-action: none;
 }
 

@@ -1,0 +1,30 @@
+wrapping-pane {
+	display: flex;
+	position: relative;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	width: 100vw;
+	height: 100vh;
+	max-width: 100vw;
+	max-height: 100vh;
+	gap: var(--split-pane-divider-size);
+}
+
+wrapping-pane>div {
+	display: block;
+	flex-grow: 0;
+	flex-shrink: 0;
+	height: 20px;
+	width: 100%;
+	background-color: rgb(50, 50, 50);
+}
+
+footer-element {
+	display: flex;
+	z-index: 1;
+	flex-grow: 0;
+	flex-shrink: 0;
+	gap: 32px;
+	padding: 4px;
+	background-color: rgb(50, 50, 50);
+}

@@ -4,7 +4,8 @@ struct VertexIn {
 
 struct VertexOut {
 	@builtin(position) position: vec4f,
-	@location(0) normal: vec3f
+	@location(0) vertex_position: vec3f,
+	@location(1) normal: vec3f
 }
 
 const xVerts = 20u;
@@ -39,7 +40,7 @@ fn vertex_main(
 		var output: VertexOut;
 		let indexInRowWithNaN = input.index % vertsPerRowWithNaN;
 		if(indexInRowWithNaN == vertsPerRow) {
-			return VertexOut(vec4f(nanValue), vec3f(nanValue));
+			return VertexOut(vec4f(nanValue), vec3f(nanValue), vec3f(nanValue));
 		}
 		let nanVertices = input.index / vertsPerRowWithNaN;
 		let vIndex: u32 = input.index - nanVertices;
@@ -60,6 +61,7 @@ fn vertex_main(
 		output.position.y = p0.y;
 		output.position.z = 0;
 		output.position.w = 1.0;
+		output.vertex_position = vec3f(xNorm, yNorm, 0.0);
 		output.normal = normalize(cross(p1 - p0, p2 - p0));
 		return output;
 }
@@ -70,5 +72,5 @@ fn vertex_main(
 @group(0) @binding(1) var mySampler: sampler;
 @fragment
 fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
-	return vec4f(createOutputFragment(vec3f(2.0 * dot(normalize(vertexData.normal), vec3(0.0,0.0,1.0)))), 1);
+	return vec4f(createOutputFragment(vec3f(dot(vertexData.normal, vec3f(1,1,1)))), 1);
 }

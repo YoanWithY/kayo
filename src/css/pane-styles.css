@@ -18,15 +18,23 @@ ressource-pane {
 }
 
 viewport-pane {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 1px;
+}
+
+viewport-pane>canvas {
 	display: block;
 	width: 100%;
-	height: 100%;
+	height: 1px;
+	flex: 1 1 1px;
 }
 
 pane-selector-pane {
 	display: block;
 	width: 100%;
-	height: 100%;
+	height: 1px;
+	flex: 1 1 1px;
 	background-color: var(--pane-background-color);
 }
 

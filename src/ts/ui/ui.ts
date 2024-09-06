@@ -13,6 +13,9 @@ import Tooltip from "./components/Tooltip";
 import Grid2Col from "./components/Grid2Col";
 import Checkbox from "./components/Checkbox";
 import { SelectBox, SelectOption, SelectOptionWrapper } from "./components/Select";
+import { WrappingPane } from "./Wrapping/WrappingPane";
+import { Footer } from "./Wrapping/Footer";
+import { FullStretch } from "./components/FullStretch";
 
 export function initUI() {
 	window.customElements.define("tool-tip", Tooltip);
@@ -28,6 +31,10 @@ export function initUI() {
 	window.customElements.define("pane-selector-pane", PaneSelectorPane);
 	window.customElements.define("outliner-pane", OutlinerPane);
 	window.customElements.define("output-pane", OutputPane);
+
+	window.customElements.define("wrapping-pane", WrappingPane);
+	window.customElements.define("full-strech", FullStretch);
+	window.customElements.define("footer-element", Footer);
 
 	window.customElements.define("outliner-element", OutlinerElement)
 	window.customElements.define("split-button-ul", SplitButtonUL);

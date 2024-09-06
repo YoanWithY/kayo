@@ -2,10 +2,12 @@
 	--split-pane-grabber-size: 6px;
 }
 
+#wrapper {
+	flex: 1 1 0%;
+}
+
 split-pane-container {
 	display: flex;
-	width: 100%;
-	height: 100%;
 }
 
 split-pane-container[split-pane-container-orientation="none"] {
@@ -22,9 +24,8 @@ split-pane-container[split-pane-container-orientation="horizontal"] {
 
 splitable-pane {
 	position: relative;
-	width: 100%;
-	height: 100%;
 	display: flex;
+	flex: 1 1 auto;
 	flex-direction: column;
 	min-width: calc(var(--pane-stripe-hight) * 2);
 	min-height: calc(var(--pane-stripe-hight) * 2);
@@ -76,11 +77,10 @@ split-pane-grabber[split-pane-divider-orientation="horizontal"] {
 
 pane-stripe {
 	display: block;
-	z-index: 1;
-	height: var(--pane-stripe-hight);
+	min-height: var(--pane-stripe-hight);
+	flex: 0 0 0;
 	background-color: var(--pane-stripe-color);
-	height: 24px;
-	flex: none;
+	flex: 0 0 0;
 }
 
 split-button-ul,
