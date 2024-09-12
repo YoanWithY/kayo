@@ -18,7 +18,7 @@ fn vertex_main(@builtin(vertex_index) index: u32, @builtin(instance_index) insta
 	let x = index / 2;
 	let y = index % 2;
 
-	let far = view.projectionData[1];
+	let far = getFar();
 	let largePass = isLargePass(instance);
 	let ls_pos = (vec2f(f32(x), f32(y)) * 2.0 - 1.0) * select(smallSize, far * 4.0, largePass);
 
@@ -30,16 +30,15 @@ fn vertex_main(@builtin(vertex_index) index: u32, @builtin(instance_index) insta
 }
 
 const lineThickness = 1.0;
-fn getGrid(coord: vec2f) -> vec4f {
+fn getGrid(coord: vec2f, lineThickness: f32) -> vec4f {
 	let w = fwidthFine(coord);
 	let val = abs(fract(coord - 0.5) - 0.5) / w - (lineThickness - 1);
 	return vec4(clamp(1.0 - val, vec2f(0), vec2f(1)), w);
 }
 
-const falloffEnd = array<f32, 4>(0.1, 0.25, 0.5, 0.8);
-
+const falloffEnd = array<f32, 4>(0.25, 0.6, 0.8, 1.0);
 fn getAlpha(g_2D: vec4f, dist: f32, endFactor: f32, gridMode: i32, far: f32) -> f32 {
-	var converage = max(g_2D.x / max(g_2D.z * 2 + 1, 1.0), g_2D.y / max(g_2D.w * 2 + 1, 1.0));
+	var converage = max(g_2D.x / (g_2D.z * 8 + 1), g_2D.y / (g_2D.w * 8 + 1));
 	let isX = g_2D.x >= g_2D.y;
 	
 	let falloff = smoothstep(falloffEnd[gridMode] * far * endFactor, 0, dist);
@@ -56,12 +55,12 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 	if(largePass && isInsideSmall) {
 		discard;
 	}
-
+	let lt = lineThickness * sqrt(getDPR());
 	let ws_pos = vertexData.ws_position;
-	let g1_2D = getGrid(ws_pos);
-	let g10_2D = getGrid(ws_pos / 10.0);
-	let g100_2D = getGrid(ws_pos / 100.0);
-	let g1000_2D = getGrid(ws_pos / 1000.0);
+	let g1_2D = getGrid(ws_pos, lt);
+	let g10_2D = getGrid(ws_pos / 10.0, lt);
+	let g100_2D = getGrid(ws_pos / 100.0, lt);
+	let g1000_2D = getGrid(ws_pos / 1000.0, lt);
 	
 	let camPos = getCameraPosition();
 	let dist = -vertexData.cs_position.z;
@@ -75,7 +74,7 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 	if(a <= 0) {
 		discard;
 	}
-	var color = vec3f(0.2);
+	var color = vec3f(0.3);
 	
 	if(a1000 > 0) {
 		let abs_ws_pos = abs(ws_pos);
@@ -83,7 +82,7 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 		let isYAxis = abs_ws_pos.y < 500 && g1000_2D.y >= g1000_2D.x;
 	
 		if(isXAxis && isYAxis) {
-			color = vec3f(0.5);
+			color = vec3f(0.8);
 		} else if(isXAxis) {
 			color = vec3f(0.8, 0.1, 0.1);
 		} else if(isYAxis) {
