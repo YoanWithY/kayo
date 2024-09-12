@@ -1,0 +1,17 @@
+{
+  "name": "kayo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@webgpu/types": "^0.1.44",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.1",
+    "vite-svg-loader": "^5.1.0"
+  }
+}

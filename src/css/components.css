@@ -1,0 +1,110 @@
+collapsible-element {
+	display: block;
+	flex-grow: 0;
+	overflow: hidden;
+	background-color: rgb(40, 40, 40);
+	border: 1px solid rgb(45, 45, 45);
+	border-radius: var(--radius);
+}
+
+collapsible-button {
+	display: block;
+	white-space: nowrap;
+	padding: 6px;
+}
+
+collapsible-button:hover {
+	background-color: rgb(45, 45, 45);
+}
+
+collapsible-button::before {
+	display: inline-block;
+	margin-right: 10px;
+	content: '';
+	width: calc(var(--font-size) / 2);
+	height: calc(var(--font-size) / 2);
+	right: 0;
+	border: 1px solid var(--text-color);
+	border-width: 0 2px 2px 0;
+}
+
+collapsible-button[state=open]::before {
+	transform: translateY(-40%) rotate(45deg);
+}
+
+collapsible-button[state=closed]::before {
+	transform: translateY(-20%) rotate(-45deg);
+}
+
+collapsible-content-container {
+	display: block;
+	padding: 0px;
+	margin: 0px;
+	margin-left: 8px;
+	padding: 6px;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+tool-tip {
+	position: fixed;
+
+	opacity: 0;
+	left: 8px;
+	top: 8px;
+	background-color: rgba(0, 0, 0, 0.5);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	backdrop-filter: blur(8px);
+	box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.5);
+	border-radius: var(--radius);
+	padding: 4px;
+	z-index: 100;
+	animation: fadeIn 0.1s ease 0.5s;
+	animation-fill-mode: forwards;
+}
+
+grid-2col {
+	display: grid;
+	grid-auto-flow: row;
+	row-gap: 2px;
+	column-gap: 8px;
+	align-items: center;
+	grid-template-columns: max-content auto;
+}
+
+grid-2col> :nth-child(odd) {
+	justify-self: end;
+}
+
+grid-2col> :nth-child(even) {
+	justify-self: stretch;
+}
+
+check-box {
+	background-color: rgb(20, 20, 20);
+	min-width: 1rem;
+	min-height: 1rem;
+	border: 1px solid rgb(28, 28, 28);
+	border-radius: var(--radius);
+}
+
+check-box:hover {
+	background-color: rgb(28, 28, 28);
+}
+
+check-box:state(checked) {
+	background-color: var(--accent-color);
+	border-color: var(--accent-color-hover);
+}
+
+check-box:state(checked):hover {
+	background-color: var(--accent-color-hover);
+}

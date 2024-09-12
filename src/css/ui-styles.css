@@ -1,0 +1,102 @@
+:root {
+    --radius: 4px;
+    --transition-duration: 200ms;
+
+    /* Must be changed in static class */
+    --split-pane-divider-size: 2px;
+
+    --pane-stripe-hight: 24px;
+    --split-pane-divider-color: rgb(12, 12, 12);
+    --pane-background-color: rgb(32, 32, 32);
+    --pane-stripe-color: rgb(48, 48, 48);
+    --pane-stripe-hover-color: rgb(56, 56, 56);
+    --selection-pane-color: rgb(32, 32, 32);
+    --text-color: rgb(200, 200, 200);
+    --font-size: 0.8rem;
+
+    --accent-color: rgb(0, 114, 220);
+    --accent-color-hover: rgb(0, 130, 240);
+}
+
+body {
+    color: var(--text-color);
+    font-size: var(--font-size);
+    margin: 0;
+    background-color: var(--split-pane-divider-color);
+    font-family: Arial, Helvetica, sans-serif;
+    user-select: none;
+    touch-action: none;
+}
+
+.selectorButton {
+    color: var(--text-color);
+    font-size: var(--font-size);
+    font-family: inherit;
+
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    background-color: var(--button--color);
+    box-shadow: 0px 1px 0px black;
+    padding: 4px;
+
+    margin: 2px;
+}
+
+.selectorButton:hover {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.selectorButton:active {
+    box-shadow: none;
+}
+
+svg {
+    stroke: rgb(10, 10, 10);
+}
+
+select {
+    color: var(--text-color);
+    font-size: var(--font-size);
+    font-family: inherit;
+
+    border-radius: var(--radius);
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    background-color: rgb(20, 20, 20);
+    padding: 4px;
+}
+
+select:focus {
+    outline: none;
+}
+
+pre {
+    font-family: inherit;
+    margin: 0;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+::-webkit-scrollbar-corner {
+    background-color: rgba(255, 255, 255, 0.1);
+}

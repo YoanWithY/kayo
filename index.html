@@ -1,38 +1,26 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="ui-styles.css">
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/ico" href="/favicon.ico" />
 
-    <title>Kayo Engine</title>
+  <link rel="stylesheet" href="/src/css/ui-styles.css">
+  <link rel="stylesheet" href="/src/css/components.css">
+
+  <link rel="stylesheet" href="/src/css/components/select.css">
+  <link rel="stylesheet" href="/src/css/components/wrappingPane.css">
+  <link rel="stylesheet" href="/src/css/components/iconedToggleButton.css">
+
+  <link rel="stylesheet" href="/src/css/split-pane-styles.css">
+  <link rel="stylesheet" href="/src/css/pane-styles.css">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kayo</title>
 </head>
 
 <body>
-
-    <div style="position:absolute; z-index:2; pointer-events: none;">
-        <p>Kayo Engine Pre-Alpha 0.0.1</p>
-        <div>FPS: <span id="fps"></span></div>
-    </div>
-
-    <canvas id="glCanvas"></canvas>
-
-    <script src="dist/glInit.js"></script>
-    <script src="dist/math.js"></script>
-    <script src="dist/shader.js"></script>
-    <script src="dist/framebuffer.js"></script>
-    <script src="dist/transformation.js"></script>
-    <script src="dist/Mesh.js"></script>
-    <script src="dist/R3Object.js"></script>
-    <script src="dist/MeshObject.js"></script>
-    <script src="dist/scene.js"></script>
-    <script src="dist/project.js"></script>
-    <script src="dist/debug3D.js"></script>
-    <script src="dist/ui.js"></script>
-    <script src="dist/renderer.js"></script>
+  <script type="module" src="/src/ts/app.ts"></script>
 </body>
 
 </html>

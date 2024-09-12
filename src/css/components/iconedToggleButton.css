@@ -1,0 +1,10 @@
+iconed-toggle-button {
+	display: flex;
+	padding: 2px;
+	margin: 2px;
+	border-radius: var(--radius);
+}
+
+iconed-toggle-button:hover {
+	background-color: rgb(60, 60, 60);
+}
