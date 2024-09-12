@@ -1,4 +1,3 @@
-import { openProject } from "../../project/Project";
 import { PaneStripe } from "../panes/PaneStripe";
 import { commaSeperatedStringToNumberArray } from "../UIUtils";
 import { SplitablePane } from "./SplitablePane";

@@ -142,11 +142,10 @@ export default class mat2 {
 
 	/**
 	 * Appends a scaling operation to the matrix by a given scaling vector.
-	 * @param mat The matrix to scale.
 	 * @param x The x scaling factor.
 	 * @param y The y scaling factor.
 	 */
-	public scale(mat: mat2, x: number, y: number): mat2 {
+	public scale(x: number, y: number): mat2 {
 		return mat2.scaleation(x, y).mult(this);
 	}
 

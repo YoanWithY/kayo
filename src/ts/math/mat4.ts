@@ -83,9 +83,9 @@ export default class mat4 {
 		let ai = a * 4;
 		let bi = b * 4;
 		for (let c = 0; c < 4; c++) {
-		   t = this[ai];
-		   this[ai++] = this[bi]
-		   this[bi++] = t
+			t = this[ai];
+			this[ai++] = this[bi]
+			this[bi++] = t
 		}
 	}
 
@@ -97,52 +97,52 @@ export default class mat4 {
 		const inve: mat4 = mat4.identity();
 		// 1. Swap rows if pivot is 0.
 		for (let col = 0; col < 4; col++) {
-		   if (this[col * 4 + col] !== 0) continue;
-		   let candidate = -1;
-		   for (let row = 0; row < 4; row++){
-		       if (this[row * 4 + col] !== 0 && this[col * 4 + row] !== 0) {
-		           candidate = row;
-		           break;
-		       }
-		   }
-		   if (candidate === -1) return undefined;
-		   this.swapRows(col, candidate);
-		   inve.swapRows(col, candidate);
+			if (this[col * 4 + col] !== 0) continue;
+			let candidate = -1;
+			for (let row = 0; row < 4; row++) {
+				if (this[row * 4 + col] !== 0 && this[col * 4 + row] !== 0) {
+					candidate = row;
+					break;
+				}
+			}
+			if (candidate === -1) return undefined;
+			this.swapRows(col, candidate);
+			inve.swapRows(col, candidate);
 		}
 		// 2. forward substitution
 		for (let col = 0; col < 4; col++) {
-		   const coli = col * 4;
-		   for (let row = col + 1; row < 4; row++) {
-		       const rowi = row * 4;
-		       const k = this[rowi + col] / this[coli + col];
-		       for (let j = 0; j < 4; j++) {
-		           this[rowi + j] -= k * this[coli + j];
-		           inve[rowi + j] -= k * this[coli + j];
-		       }
-		       this[rowi + col] = 0;
-		   }
+			const coli = col * 4;
+			for (let row = col + 1; row < 4; row++) {
+				const rowi = row * 4;
+				const k = this[rowi + col] / this[coli + col];
+				for (let j = 0; j < 4; j++) {
+					this[rowi + j] -= k * this[coli + j];
+					inve[rowi + j] -= k * this[coli + j];
+				}
+				this[rowi + col] = 0;
+			}
 		}
 		// 3. scale pivot to 1
 		for (let row = 0; row < 4; row++) {
-		   const rowi = row * 4;
-		   const div = this[rowi + row];
-		   for (let col = 0; col < 4; col++) {
-		       this[rowi + col] /= div;
-		       inve[rowi + col] /= div;
-		   }
+			const rowi = row * 4;
+			const div = this[rowi + row];
+			for (let col = 0; col < 4; col++) {
+				this[rowi + col] /= div;
+				inve[rowi + col] /= div;
+			}
 		}
 		// backward substitution
 		for (let row = 0; row < 4; row++) {
-		   const rowi = row * 4;
-		   for (let col = row + 1; row < 4; row++) {
-		       const coli = col * 4;
-		       const k = this[rowi + col]
-		       for (let j = 0; j < 4; j++) {
-		           this[rowi + j] -= k * this[coli + j];
-		           inve[rowi + j] -= k * this[coli + j];
-		       }
-		       this[rowi + col] = 0;
-		   }
+			const rowi = row * 4;
+			for (let col = row + 1; row < 4; row++) {
+				const coli = col * 4;
+				const k = this[rowi + col]
+				for (let j = 0; j < 4; j++) {
+					this[rowi + j] -= k * this[coli + j];
+					inve[rowi + j] -= k * this[coli + j];
+				}
+				this[rowi + col] = 0;
+			}
 		}
 		return inve;
 	}
@@ -173,13 +173,12 @@ export default class mat4 {
 
 	/**
 	 * Appends a scaling operation to the matrix by a given scaling vector.
-	 * @param mat The matrix to scale.
 	 * @param x The x scaling factor.
 	 * @param y The y scaling factor.
 	 * @param z The z scaling factor.
 	 * @param w The w scaling factor.
 	 */
-	public scale(mat: mat4, x: number, y: number, z: number, w: number): mat4 {
+	public scale(x: number, y: number, z: number, w: number): mat4 {
 		return mat4.scaleation(x, y, z, w).mult(this);
 	}
 
@@ -294,7 +293,7 @@ export default class mat4 {
 		const rml = r - l;
 		const tmb = t - b;
 		const fmn = f - n;
-		return new mat4(n2 / rml, 0, (r + l) / rml, 0, 0, n2 / tmb, (t + b) / tmb, 0 , 0, 0, -(f + n) / fmn, -n2 * f / fmn, 0, 0, -1, 0);
+		return new mat4(n2 / rml, 0, (r + l) / rml, 0, 0, n2 / tmb, (t + b) / tmb, 0, 0, 0, -(f + n) / fmn, -n2 * f / fmn, 0, 0, -1, 0);
 	}
 
 	/**

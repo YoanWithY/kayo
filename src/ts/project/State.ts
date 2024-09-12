@@ -1,6 +1,5 @@
 import { OutputConfig, OutputDeferredRenderConfig, OutputDisplayConfig, OutputForwardRenderConfig, OutputRenderConfig, ProjectConfig, RenderMode, SwapChainBitDepth } from "./Config";
 import { openProject } from "./Project";
-import RenderConfig from "./RenderConfig";
 import StateVariable from "./StateVariable";
 
 export class ProjectState {

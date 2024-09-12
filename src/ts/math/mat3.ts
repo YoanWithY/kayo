@@ -67,9 +67,9 @@ export default class mat3 {
 		let ai = a * 3;
 		let bi = b * 3;
 		for (let c = 0; c < 3; c++) {
-		   t = this[ai];
-		   this[ai++] = this[bi]
-		   this[bi++] = t
+			t = this[ai];
+			this[ai++] = this[bi]
+			this[bi++] = t
 		}
 	}
 
@@ -81,52 +81,52 @@ export default class mat3 {
 		const inve: mat3 = mat3.identity();
 		// 1. Swap rows if pivot is 0.
 		for (let col = 0; col < 3; col++) {
-		   if (this[col * 3 + col] !== 0) continue;
-		   let candidate = -1;
-		   for (let row = 0; row < 3; row++){
-		       if (this[row * 3 + col] !== 0 && this[col * 4 + row] !== 0) {
-		           candidate = row;
-		           break;
-		       }
-		   }
-		   if (candidate === -1) return undefined;
-		   this.swapRows(col, candidate);
-		   inve.swapRows(col, candidate);
+			if (this[col * 3 + col] !== 0) continue;
+			let candidate = -1;
+			for (let row = 0; row < 3; row++) {
+				if (this[row * 3 + col] !== 0 && this[col * 4 + row] !== 0) {
+					candidate = row;
+					break;
+				}
+			}
+			if (candidate === -1) return undefined;
+			this.swapRows(col, candidate);
+			inve.swapRows(col, candidate);
 		}
 		// 2. forward substitution
 		for (let col = 0; col < 3; col++) {
-		   const coli = col * 3;
-		   for (let row = col + 1; row < 3; row++) {
-		       const rowi = row * 3;
-		       const k = this[rowi + col] / this[coli + col];
-		       for (let j = 0; j < 3; j++) {
-		           this[rowi + j] -= k * this[coli + j];
-		           inve[rowi + j] -= k * this[coli + j];
-		       }
-		       this[rowi + col] = 0;
-		   }
+			const coli = col * 3;
+			for (let row = col + 1; row < 3; row++) {
+				const rowi = row * 3;
+				const k = this[rowi + col] / this[coli + col];
+				for (let j = 0; j < 3; j++) {
+					this[rowi + j] -= k * this[coli + j];
+					inve[rowi + j] -= k * this[coli + j];
+				}
+				this[rowi + col] = 0;
+			}
 		}
 		// 3. scale pivot to 1
 		for (let row = 0; row < 3; row++) {
-		   const rowi = row * 3;
-		   const div = this[rowi + row];
-		   for (let col = 0; col < 3; col++) {
-		       this[rowi + col] /= div;
-		       inve[rowi + col] /= div;
-		   }
+			const rowi = row * 3;
+			const div = this[rowi + row];
+			for (let col = 0; col < 3; col++) {
+				this[rowi + col] /= div;
+				inve[rowi + col] /= div;
+			}
 		}
 		// backward substitution
 		for (let row = 0; row < 3; row++) {
-		   const rowi = row * 3;
-		   for (let col = row + 1; row < 3; row++) {
-		       const coli = col * 3;
-		       const k = this[rowi + col]
-		       for (let j = 0; j < 3; j++) {
-		           this[rowi + j] -= k * this[coli + j];
-		           inve[rowi + j] -= k * this[coli + j];
-		       }
-		       this[rowi + col] = 0;
-		   }
+			const rowi = row * 3;
+			for (let col = row + 1; row < 3; row++) {
+				const coli = col * 3;
+				const k = this[rowi + col]
+				for (let j = 0; j < 3; j++) {
+					this[rowi + j] -= k * this[coli + j];
+					inve[rowi + j] -= k * this[coli + j];
+				}
+				this[rowi + col] = 0;
+			}
 		}
 		return inve;
 	}
@@ -156,12 +156,11 @@ export default class mat3 {
 
 	/**
 	 * Appends a scaling operation to the matrix by a given scaling vector.
-	 * @param mat The matrix to scale.
 	 * @param x The x scaling factor.
 	 * @param y The y scaling factor.
 	 * @param z The z scaling factor.
 	 */
-	public scale(mat: mat3, x: number, y: number, z: number): mat3 {
+	public scale(x: number, y: number, z: number): mat3 {
 		return mat3.scaleation(x, y, z).mult(this);
 	}
 
