@@ -5,5 +5,6 @@ export default defineConfig({
 	plugins: [svgLoader()],
 	build: {
 		target: 'ES2022'
-	}
+	},
+	base: '/kayo/'
 });
