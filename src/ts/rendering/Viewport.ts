@@ -17,4 +17,9 @@ export interface Viewport {
 	 * @param time The time spend in nanoseconds.
 	 */
 	setGPUTime(time: number): void;
+	/**
+	 * @param viewUBO The buffer to write to.
+	 * @param frame The current frame time to upload.
+	 */
+	updateView(viewUBO: GPUBuffer, frame: number): void;
 }

@@ -37,7 +37,6 @@ export class ViewportCache {
 	public conditionFrambebufferUpdate() {
 		const w = this.viewport.getCurrentTexture().width;
 		const h = this.viewport.getCurrentTexture().height;
-
 		if (w === this.prevWidth && h === this.prevHeight)
 			return;
 

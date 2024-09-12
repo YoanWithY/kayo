@@ -1,6 +1,5 @@
 wrapping-pane {
 	display: flex;
-	position: relative;
 	flex-direction: column;
 	flex-wrap: nowrap;
 	width: 100vw;
@@ -11,10 +10,7 @@ wrapping-pane {
 }
 
 wrapping-pane>div {
-	display: block;
-	flex-grow: 0;
-	flex-shrink: 0;
-	height: 20px;
+	display: flex;
 	width: 100%;
 	background-color: rgb(50, 50, 50);
 }

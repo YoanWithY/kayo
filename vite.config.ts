@@ -1,5 +1,6 @@
-import glsl from 'vite-plugin-glsl';
+import { defineConfig } from 'vite';
+import svgLoader from 'vite-svg-loader';
 
-export default {
-	plugins: [glsl()],
-};
+export default defineConfig({
+	plugins: [svgLoader()],
+});

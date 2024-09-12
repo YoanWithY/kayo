@@ -50,6 +50,10 @@ body {
     box-shadow: none;
 }
 
+svg {
+    stroke: rgb(10, 10, 10);
+}
+
 select {
     color: var(--text-color);
     font-size: var(--font-size);

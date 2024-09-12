@@ -40,6 +40,7 @@ export class SplitablePane extends HTMLElement {
 					openProject.uiRoot.baseSplitPaneContainer.replaceWith(this);
 					this.uninstallSplitButtons();
 				}
+				openProject.fullRerender();
 			}
 		};
 		this.addEventListener("mouseenter", () => {

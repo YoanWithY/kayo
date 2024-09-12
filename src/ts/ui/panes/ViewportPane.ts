@@ -1,3 +1,4 @@
+import { gpuDevice } from "../../GPUX";
 import ViewportCamera from "../../Viewport/ViewportCamera";
 import vec2 from "../../math/vec2";
 import vec3 from "../../math/vec3";
@@ -42,7 +43,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 		const shiftView = (dx: number, dy: number) => {
 			const lat = vec3.latitudeTangent(lookAt.phi);
 			const lon = vec3.longitudeTangent(lookAt.theta, lookAt.phi);
-			lookAt.p = lookAt.p.add(lat.mulS(-dx / 1024 * lookAt.r).add(lon.mulS(-dy / 1024 * lookAt.r)));
+			lookAt.p = lookAt.p.add(lat.mulS(-dx / 256 * lookAt.r).add(lon.mulS(-dy / 256 * lookAt.r)));
 		}
 
 		const move = (e: MouseEvent) => {
@@ -50,6 +51,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 				shiftView(e.movementX, e.movementY)
 			else
 				rotateView(e.movementX, e.movementY);
+			openProject.renderer.requestAnimationFrameWith(this);
 		}
 
 		const mm = (e: MouseEvent) => {
@@ -74,14 +76,16 @@ export class ViewportPane extends HTMLElement implements Viewport {
 			e.preventDefault();
 			const val = e.deltaY / window.devicePixelRatio;
 			lookAt.r += lookAt.r * val / 1024;
-		});
+			openProject.renderer.requestAnimationFrameWith(this);
+		}, { passive: false });
 
 		const touches: Touch[] = [];
 		this.addEventListener("touchstart", e => {
 			for (const t of e.touches)
 				touches[t.identifier] = t;
-		});
+		}, { passive: false });
 		this.addEventListener("touchmove", e => {
+			openProject.renderer.requestAnimationFrameWith(this);
 			if (e.touches.length === 1) {
 				const thisT = e.touches[0];
 				const lastT = touches[thisT.identifier];
@@ -104,11 +108,26 @@ export class ViewportPane extends HTMLElement implements Viewport {
 				lookAt.r *= zoom;
 				shiftView((dx1 + dx2) / 2, (dy1 + dy2) / 2);
 			}
-		});
+		}, { passive: false });
 		this.addEventListener("touchend", e => {
 			for (const t of e.changedTouches)
 				delete touches[t.identifier];
 		})
+	}
+
+	private viewBuffer = new Float32Array(3 * 16 + 4);
+	private viewTimeBuffer = new Uint32Array(8);
+	updateView(viewUBO: GPUBuffer, frame: number): void {
+		const near = this.camera.projection.near;
+		const far = this.camera.projection.far;
+		this.camera.getViewMatrix().pushInFloat32ArrayColumnMajor(this.viewBuffer);
+		this.camera.getProjectionMatrix(this.canvas.width, this.canvas.height).pushInFloat32ArrayColumnMajor(this.viewBuffer, 16);
+		this.camera.transformationStack.getTransformationMatrix().pushInFloat32ArrayColumnMajor(this.viewBuffer, 2 * 16);
+		this.viewBuffer.set([near, far, 0, 0], 3 * 16);
+		gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);
+
+		this.viewTimeBuffer.set([0, 0, this.canvas.width, this.canvas.height, frame, 0, 0, 0], 0);
+		gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
 	}
 
 	getCurrentTexture(): GPUTexture {
@@ -121,14 +140,11 @@ export class ViewportPane extends HTMLElement implements Viewport {
 
 	connectedCallback() {
 		ViewportPane.viewportPanes.add(this);
-		console.log("con");
 		openProject.renderer.registerViewport(this);
 	}
 
 	disconnectedCallback() {
 		ViewportPane.viewportPanes.delete(this);
-		console.log("dis");
-
 		openProject.renderer.unregisterViewport(this);
 	}
 

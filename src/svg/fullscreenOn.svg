@@ -1,0 +1,6 @@
+<svg width="18" height="18" stroke="black">
+   <path fill="none" stroke-width="2" d="m 18,12 h -6 v 6" />
+   <path fill="none" stroke-width="2" d="M 6,18 V 12 H 0" />
+   <path fill="none" stroke-width="2" d="M 0,6 H 6 V 0" />
+   <path fill="none" stroke-width="2" d="m 12,0 v 6 h 6" />
+</svg>

@@ -2,12 +2,14 @@ import linearRGBToLinearDisplayP3 from "../../wgsl/utility/linearRGBToLinearDisp
 import sRGB_EOTF from "../../wgsl/utility/sRGB_EOTF.wgsl?raw";
 import sRGB_OETF from "../../wgsl/utility/sRGB_OETF.wgsl?raw";
 import fragmentOutput from "../../wgsl/utility/fragmentOutput.wgsl?raw";
+import frame from "../../wgsl/utility/frame.wgsl?raw";
 
 const snippets: { [key: string]: string } = {
 	"utility/fragmentOutput": fragmentOutput,
 	"utility/linearRGBToLinearDisplayP3": linearRGBToLinearDisplayP3,
 	"utility/sRGB_EOTF": sRGB_EOTF,
 	"utility/sRGB_OETF": sRGB_OETF,
+	"utility/frame": frame,
 };
 
 export function resolveIncludes(code: string): string {

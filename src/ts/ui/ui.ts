@@ -16,6 +16,7 @@ import { SelectBox, SelectOption, SelectOptionWrapper } from "./components/Selec
 import { WrappingPane } from "./Wrapping/WrappingPane";
 import { Footer } from "./Wrapping/Footer";
 import { FullStretch } from "./components/FullStretch";
+import { IconedToggleButton } from "./components/IconedToggleButton";
 
 export function initUI() {
 	window.customElements.define("tool-tip", Tooltip);
@@ -25,6 +26,7 @@ export function initUI() {
 	window.customElements.define("select-box", SelectBox);
 	window.customElements.define("select-option-wrapper", SelectOptionWrapper);
 	window.customElements.define("select-option", SelectOption);
+	window.customElements.define("iconed-toggle-button", IconedToggleButton);
 
 	window.customElements.define("viewport-pane", ViewportPane);
 	window.customElements.define("ressource-pane", RessourcePane);

@@ -8,11 +8,12 @@ struct VertexOut {
 	@location(1) normal: vec3f
 }
 
-const xVerts = 20u;
-const yVerts = 20u;
+#include <utility/frame>
+
+const xVerts = 100u;
+const yVerts = 100u;
 const vertsPerRow = xVerts * 2u;
-const vertsPerRowWithNaN = vertsPerRow + 1u;
-const nanValue: f32 = f32(bitcast<u32>(0x7fc00000));
+const vertsPerRowWithNaN = vertsPerRow + 2u;
 
 const x_min = -1.0;
 const x_max = 1.0;
@@ -23,7 +24,7 @@ const height = (y_max - y_min);
 const epsilon = 0.0001;
 
 fn hf(p: vec2f) -> f32 {
-	return sin(p.x * 4.0) * sin(p.y * 4.0);
+	return sin(p.x * 8.0 + 0.0 * f32(view.frame.x)) * sin(p.y * 8.0);
 }
 
 fn pos(p: vec2f) -> vec3f {
@@ -35,15 +36,16 @@ fn map(x: f32, y: f32) -> vec2f {
 }
 
 @vertex
-fn vertex_main(
-	input: VertexIn) -> VertexOut {
+fn vertex_main(input: VertexIn) -> VertexOut {
 		var output: VertexOut;
+		
+		let nanVertices = 2 * (input.index / vertsPerRowWithNaN);
+		var vIndex: u32 = input.index - nanVertices;
+
 		let indexInRowWithNaN = input.index % vertsPerRowWithNaN;
-		if(indexInRowWithNaN == vertsPerRow) {
-			return VertexOut(vec4f(nanValue), vec3f(nanValue), vec3f(nanValue));
+		if(indexInRowWithNaN >= vertsPerRow) {
+			vIndex -= 1;
 		}
-		let nanVertices = input.index / vertsPerRowWithNaN;
-		let vIndex: u32 = input.index - nanVertices;
 
 		let row: u32 = vIndex / vertsPerRow;
 		let indexInRow: u32 = vIndex % vertsPerRow;
@@ -57,20 +59,25 @@ fn vertex_main(
 		let p1 = pos(map(xNorm + epsilon, yNorm));
 		let p2 = pos(map(xNorm, yNorm + epsilon));
 		
-		output.position.x = p0.x;
-		output.position.y = p0.y;
-		output.position.z = 0;
-		output.position.w = 1.0;
+		output.position = view.projectionMat * view.viewMat * vec4(p0, 1);
 		output.vertex_position = vec3f(xNorm, yNorm, 0.0);
-		output.normal = normalize(cross(p1 - p0, p2 - p0));
+		output.normal = normalize(cross(p2 - p0, p1 - p0));
 		return output;
 }
 
 #include <utility/fragmentOutput>
 
-@group(0) @binding(0) var myTexture: texture_2d<f32>;
-@group(0) @binding(1) var mySampler: sampler;
+fn steps(v: vec3f, stepSize: f32) -> vec3f {
+	return floor(v / stepSize) * stepSize;
+}
+
 @fragment
-fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
-	return vec4f(createOutputFragment(vec3f(dot(vertexData.normal, vec3f(1,1,1)))), 1);
+fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOut) -> @location(0) vec4f {
+	let color = 1.5 * vertexData.vertex_position * dot(vec3f(0,0,2), normalize(vertexData.normal * select(-1.0, 1.0, front_facing)));
+	return
+	vec4f (
+		createOutputFragment(
+			color
+		),
+		1);
 }

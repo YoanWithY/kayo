@@ -23,10 +23,8 @@ fn vertex_main2(
 
 #include <utility/fragmentOutput>
 
-@group(0) @binding(0) var myTexture: texture_2d<f32>;
-@group(0) @binding(1) var mySampler: sampler;
 @fragment
 fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
-	let inColor = textureLoad(myTexture, vec2i(vertexData.position.xy), 0);
+	
 	return vec4f(createOutputFragment(sRGB_EOTF(inColor.rgb)), 1);
 }

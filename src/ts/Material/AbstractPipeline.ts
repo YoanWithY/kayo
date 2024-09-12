@@ -3,8 +3,8 @@ import { gpuDevice } from "../GPUX";
 export const vertexEntryPoint = "vertex_main";
 export const fragmentEntryPoint = "fragment_main";
 
-export abstract class Material {
-	abstract pipeline: GPURenderPipeline;
+export abstract class AbstractPipeline {
+	abstract gpuPipeline: GPURenderPipeline;
 	readonly label: string;
 
 	abstract readonly shaderModule: GPUShaderModule;
@@ -106,7 +106,7 @@ export abstract class Material {
 			layout: this.createPipelineLayout(),
 			primitive: this.createPrimitiveState(),
 		};
-		this.pipeline = gpuDevice.createRenderPipeline(renderPipelineDescritor);
-		return this.pipeline;
+		this.gpuPipeline = gpuDevice.createRenderPipeline(renderPipelineDescritor);
+		return this.gpuPipeline;
 	}
 }
