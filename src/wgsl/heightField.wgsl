@@ -9,6 +9,7 @@ struct VertexOut {
 }
 
 #include <utility/frame>
+#include <utility/r3>
 
 const xVerts = 1000u;
 const yVerts = 1000u;
@@ -61,8 +62,9 @@ fn vertex_main(input: VertexIn) -> VertexOut {
 		let domP1 = pos(mapToDomain(xNorm + epsilon, yNorm));
 		let domP2 = pos(mapToDomain(xNorm, yNorm + epsilon));
 		let ls_pos = vec3f(mapToLocal(xNorm, yNorm), domP0.z);
+		let ws_pos = (vertexUniform.transformation * vec4f(ls_pos, 1)).xyz;
 
-		output.position = view.projectionMat * view.viewMat * vec4(ls_pos, 1);
+		output.position = view.projectionMat * view.viewMat * vec4f(ws_pos, 1);
 		output.ls_pos = ls_pos;
 		output.normal = normalize(cross(domP2 - domP0, domP1 - domP0));
 		return output;

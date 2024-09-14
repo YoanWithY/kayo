@@ -21,11 +21,11 @@ export class HeightFieldPipeline extends AbstractPipeline {
 	depthStencilFormat: GPUTextureFormat;
 	depthCompare: GPUCompareFunction;
 	depthWriteEnabled: boolean;
-	bindGroup0Layout: GPUBindGroupLayout;
+	project: Project;
 
 	constructor(project: Project, label: string) {
 		super(label);
-		this.bindGroup0Layout = project.renderer.bindGroup0Layout;
+		this.project = project;
 		this.shaderCode = staticShaderCode;
 		this.preProzessedShaderCoder = resolveIncludes(this.shaderCode);
 		this.vertexConstants = {};
@@ -47,9 +47,10 @@ export class HeightFieldPipeline extends AbstractPipeline {
 	}
 
 	createPipelineLayout(): GPUPipelineLayout | "auto" {
+		const renderer = this.project.renderer;
 		return gpuDevice.createPipelineLayout({
 			label: "Height field pipeline layout",
-			bindGroupLayouts: [this.bindGroup0Layout],
+			bindGroupLayouts: [renderer.bindGroup0Layout, renderer.bindGroupR3Layout],
 		});
 	}
 

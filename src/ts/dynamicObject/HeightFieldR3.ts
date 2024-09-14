@@ -7,7 +7,7 @@ export default class HeightFieldR3 extends R3Object {
 	xVerts: number;
 	yVerts: number;
 	constructor(project: Project, xVerts: number = 1000, yVerts: number = 1000) {
-		super();
+		super(project);
 		this.xVerts = xVerts;
 		this.yVerts = yVerts;
 		this.pipeline = new HeightFieldPipeline(project, "Height Field Material");

@@ -3,7 +3,7 @@ import Projection from "./Projection";
 
 export default class PerspectiveProjection implements Projection {
     vFOV = 90;
-    near = 0.1;
+    near = 0.01;
     far = 1000;
     getProjectionMatrix(width: number, height: number): mat4 {
         const AR = width / height;

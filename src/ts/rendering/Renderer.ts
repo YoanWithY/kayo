@@ -21,6 +21,7 @@ export default class Renderer {
 	private viewUBO: GPUBuffer;
 	private bindGroup0: GPUBindGroup;
 	bindGroup0Layout: GPUBindGroupLayout;
+	bindGroupR3Layout: GPUBindGroupLayout;
 
 	constructor(project: Project) {
 		this.project = project;
@@ -36,6 +37,26 @@ export default class Renderer {
 				{
 					binding: 0,
 					visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+					buffer: {
+						type: "uniform",
+					}
+				},
+			]
+		});
+
+		this.bindGroupR3Layout = gpuDevice.createBindGroupLayout({
+			label: "Default R3 bind group layout",
+			entries: [
+				{
+					binding: 0,
+					visibility: GPUShaderStage.VERTEX,
+					buffer: {
+						type: "uniform",
+					}
+				},
+				{
+					binding: 1,
+					visibility: GPUShaderStage.FRAGMENT,
 					buffer: {
 						type: "uniform",
 					}
@@ -135,6 +156,9 @@ export default class Renderer {
 			renderPassEncoder.setViewport(0, 0, viewport.getCurrentTexture().width, viewport.getCurrentTexture().height, 0, 1);
 			for (const hf of this.project.scene.heightFieldObjects) {
 				renderPassEncoder.setPipeline(hf.pipeline.gpuPipeline);
+				hf.transformationStack.rotate.x += 0.01;
+				hf.updateUniforms();
+				renderPassEncoder.setBindGroup(1, hf.defaultBindGroup);
 				renderPassEncoder.draw(hf.getVerts());
 			}
 			if (this.project.scene.gridPipeline) {
@@ -186,6 +210,42 @@ export default class Renderer {
 		if (cache)
 			cache.destroy();
 		this.viewportCache.delete(viewport);
+	}
+
+	getNew3RData(): { vertexUniformBuffer: GPUBuffer, fragmentUniformBuffer: GPUBuffer, bindGroup: GPUBindGroup } {
+		const vertexUniformBuffer = gpuDevice.createBuffer({
+			label: "R3 default vertex uniforms buffer",
+			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+			size: 16 * 4
+		});
+		const fragmentUniformBuffer = gpuDevice.createBuffer({
+			label: "R3 default fragment uniforms buffer",
+			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+			size: 1 * 4
+		});
+		const bindGroup = gpuDevice.createBindGroup({
+			label: "R3 Bind Group",
+			entries: [
+				{
+					binding: 0,
+					resource:
+					{
+						label: "R3 bind group vertex uniform resource",
+						buffer: vertexUniformBuffer
+					}
+				},
+				{
+					binding: 1,
+					resource:
+					{
+						label: "R3 bind group fragment uniform resource",
+						buffer: fragmentUniformBuffer
+					}
+				}
+			],
+			layout: this.bindGroupR3Layout,
+		});
+		return { vertexUniformBuffer, fragmentUniformBuffer, bindGroup };
 	}
 
 	static getDepthStencilFormat(): GPUTextureFormat {

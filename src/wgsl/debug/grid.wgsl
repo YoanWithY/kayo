@@ -20,7 +20,7 @@ fn vertex_main(@builtin(vertex_index) index: u32, @builtin(instance_index) insta
 
 	let far = getFar();
 	let largePass = isLargePass(instance);
-	let ls_pos = (vec2f(f32(x), f32(y)) * 2.0 - 1.0) * select(smallSize, far * 4.0, largePass);
+	let ls_pos = (vec2f(f32(x), f32(y)) * 2.0 - 1.0) * select(smallSize + 0.125, far * 4.0, largePass);
 
 	let cameraGridOffset = floor(getCameraPosition().xy);
 	let ws_pos = ls_pos + cameraGridOffset;
@@ -36,12 +36,11 @@ fn getGrid(coord: vec2f, lineThickness: f32) -> vec4f {
 	return vec4(clamp(1.0 - val, vec2f(0), vec2f(1)), w);
 }
 
-const falloffEnd = array<f32, 4>(0.25, 0.6, 0.8, 1.0);
 fn getAlpha(g_2D: vec4f, dist: f32, endFactor: f32, gridMode: i32, far: f32) -> f32 {
-	var converage = max(g_2D.x / (g_2D.z * 8 + 1), g_2D.y / (g_2D.w * 8 + 1));
+	var converage = max(g_2D.x / (g_2D.z * 80 + 1), g_2D.y / (g_2D.w * 80 + 1));
 	let isX = g_2D.x >= g_2D.y;
 	
-	let falloff = smoothstep(falloffEnd[gridMode] * far * endFactor, 0, dist);
+	let falloff = smoothstep(far * endFactor, 0, dist);
 	return converage * falloff;
 }
 
@@ -52,7 +51,7 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 	let abs_ls_pos = abs(vertexData.ls_position);
 	let isInsideSmall = abs_ls_pos.x <= smallSize && abs_ls_pos.y <= smallSize;
 
-	if(largePass && isInsideSmall) {
+	if((largePass && isInsideSmall) || (!largePass && !isInsideSmall)) {
 		discard;
 	}
 	let lt = lineThickness * sqrt(getDPR());
@@ -63,7 +62,7 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 	let g1000_2D = getGrid(ws_pos / 1000.0, lt);
 	
 	let camPos = getCameraPosition();
-	let dist = -vertexData.cs_position.z;
+	let dist = length(vertexData.cs_position);
 	let endFactor = smoothstep(0.0, 50.0, abs(camPos.z)) * 0.6 + 0.4;
 	let far = view.projectionData[1];
 	let a1 = getAlpha(g1_2D, dist, endFactor, 0, far);
