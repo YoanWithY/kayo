@@ -3,6 +3,7 @@ import { fragmentEntryPoint, AbstractPipeline, vertexEntryPoint } from "../Mater
 import staticShaderCode from "../../wgsl/heightField.wgsl?raw";
 import { resolveIncludes } from "../rendering/Shader";
 import Renderer from "../rendering/Renderer";
+import { Project } from "../project/Project";
 
 export class HeightFieldPipeline extends AbstractPipeline {
 	gpuPipeline: GPURenderPipeline;
@@ -22,20 +23,20 @@ export class HeightFieldPipeline extends AbstractPipeline {
 	depthWriteEnabled: boolean;
 	bindGroup0Layout: GPUBindGroupLayout;
 
-	constructor(label: string, bindGroup0Layout: GPUBindGroupLayout) {
+	constructor(project: Project, label: string) {
 		super(label);
-		this.bindGroup0Layout = bindGroup0Layout;
+		this.bindGroup0Layout = project.renderer.bindGroup0Layout;
 		this.shaderCode = staticShaderCode;
 		this.preProzessedShaderCoder = resolveIncludes(this.shaderCode);
 		this.vertexConstants = {};
 		this.vertexBufferLayout = [];
-		this.fragmentConstants = Renderer.getDisplayFragmentOutputConstantsCopy();
+		this.fragmentConstants = project.getDisplayFragmentOutputConstantsCopy();
 		this.topology = "triangle-strip";
 		this.cullMode = "none";
 		this.depthCompare = "less";
 		this.depthWriteEnabled = true;
 		this.depthStencilFormat = Renderer.getDepthStencilFormat();
-		this.fragmentTargets = Renderer.getFragmentTargets();
+		this.fragmentTargets = project.getFragmentTargets();
 
 		this.shaderModule = gpuDevice.createShaderModule(
 			{

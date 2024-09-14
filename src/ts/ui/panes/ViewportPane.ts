@@ -2,7 +2,7 @@ import { gpuDevice } from "../../GPUX";
 import ViewportCamera from "../../Viewport/ViewportCamera";
 import vec2 from "../../math/vec2";
 import vec3 from "../../math/vec3";
-import { openProject } from "../../project/Project";
+import { Project } from "../../project/Project";
 import { Viewport } from "../../rendering/Viewport";
 import LookAtTransform from "../../transformation/LookAt";
 
@@ -13,13 +13,14 @@ export class ViewportPane extends HTMLElement implements Viewport {
 	public canvasContext: GPUCanvasContext;
 	public canvas: HTMLCanvasElement;
 	public lable = "My Viewport";
+	public project!: Project;
 
 	resizeObserver: ResizeObserver = new ResizeObserver((e) => {
 		const size = e[0].devicePixelContentBoxSize[0];
 		this.canvas.width = size.inlineSize;
 		this.canvas.height = size.blockSize;
 		if (this.isConnected)
-			openProject.renderer.requestAnimationFrameWith(this);
+			this.project.renderer.requestAnimationFrameWith(this);
 	});
 
 	constructor() {
@@ -51,7 +52,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 				shiftView(e.movementX, e.movementY)
 			else
 				rotateView(e.movementX, e.movementY);
-			openProject.renderer.requestAnimationFrameWith(this);
+			this.project.renderer.requestAnimationFrameWith(this);
 		}
 
 		const mm = (e: MouseEvent) => {
@@ -76,7 +77,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 			e.preventDefault();
 			const val = e.deltaY / window.devicePixelRatio;
 			lookAt.r += lookAt.r * val / 1024;
-			openProject.renderer.requestAnimationFrameWith(this);
+			this.project.renderer.requestAnimationFrameWith(this);
 		}, { passive: false });
 
 		const touches: Touch[] = [];
@@ -85,7 +86,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 				touches[t.identifier] = t;
 		}, { passive: false });
 		this.addEventListener("touchmove", e => {
-			openProject.renderer.requestAnimationFrameWith(this);
+			this.project.renderer.requestAnimationFrameWith(this);
 			if (e.touches.length === 1) {
 				const thisT = e.touches[0];
 				const lastT = touches[thisT.identifier];
@@ -140,16 +141,17 @@ export class ViewportPane extends HTMLElement implements Viewport {
 
 	connectedCallback() {
 		ViewportPane.viewportPanes.add(this);
-		openProject.renderer.registerViewport(this);
+		this.project.renderer.registerViewport(this);
 	}
 
 	disconnectedCallback() {
 		ViewportPane.viewportPanes.delete(this);
-		openProject.renderer.unregisterViewport(this);
+		this.project.renderer.unregisterViewport(this);
 	}
 
-	static createViewportPane() {
+	static createViewportPane(project: Project) {
 		const p = document.createElement("viewport-pane") as ViewportPane;
+		p.project = project;
 		p.appendChild(p.canvas);
 		return p;
 	}

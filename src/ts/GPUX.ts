@@ -7,7 +7,7 @@ if (!gpu) {
 export const gpuAdapter: GPUAdapter = await gpu.requestAdapter({ powerPreference: undefined }) as GPUAdapter;
 if (!gpuAdapter) {
     alert("Could not create GPU adapter.");
-    throw new Error("Could not get GPU adapter.");
+    throw new Error("Could not create GPU adapter.");
 }
 
 export const gpuDevice = await gpuAdapter.requestDevice({

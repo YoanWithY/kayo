@@ -1,15 +1,15 @@
-import { openProject } from "../../project/Project";
+import { Project } from "../../project/Project";
 import { PaneStripe } from "../panes/PaneStripe";
-import { SplitButton } from "./SplitButton";
+import { SplitButton, SplitButtonLL, SplitButtonLR, SplitButtonUL, SplitButtonUR } from "./SplitButton";
 import { SplitPaneContainer } from "./SplitPaneContainer";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 export class SplitablePane extends HTMLElement {
-
 	private cachedBase?: HTMLElement;
 	private dummy: HTMLDivElement;
 	private cachedWidth?: string;
 	private cachedHeight?: string;
+	project!: Project;
 	sp_ul!: SplitButton;
 	sp_ur!: SplitButton;
 	sp_ll!: SplitButton;
@@ -31,16 +31,16 @@ export class SplitablePane extends HTMLElement {
 					this.dummy.replaceWith(this);
 					this.installSplitButtons();
 				} else {
-					this.cachedBase = openProject.uiRoot.baseSplitPaneContainer;
+					this.cachedBase = this.project.uiRoot.baseSplitPaneContainer;
 					this.replaceWith(this.dummy);
 					this.cachedWidth = this.style.width;
 					this.cachedHeight = this.style.height;
 					this.style.width = "";
 					this.style.height = "";
-					openProject.uiRoot.baseSplitPaneContainer.replaceWith(this);
+					this.project.uiRoot.baseSplitPaneContainer.replaceWith(this);
 					this.uninstallSplitButtons();
 				}
-				openProject.fullRerender();
+				this.project.fullRerender();
 			}
 		};
 		this.addEventListener("mouseenter", () => {
@@ -62,17 +62,18 @@ export class SplitablePane extends HTMLElement {
 		this.removeChild(this.sp_lr);
 	}
 
-	static createSplitablePane(paneConstructor: () => HTMLElement, orientation?: string, rect?: DOMRect): SplitablePane {
+	static createSplitablePane(project: Project, paneConstructor: (project: Project) => HTMLElement, orientation?: string, rect?: DOMRect): SplitablePane {
 		const newSplitablePane = document.createElement("splitable-pane") as SplitablePane;
+		newSplitablePane.project = project;
 		const strip = PaneStripe.createPaneStripe();
 		newSplitablePane.appendChild(strip);
-		const pane = paneConstructor();
+		const pane = paneConstructor(project);
 		newSplitablePane.appendChild(pane);
 
-		newSplitablePane.sp_ul = document.createElement("split-button-ul") as SplitButton;
-		newSplitablePane.sp_ur = document.createElement("split-button-ur") as SplitButton;
-		newSplitablePane.sp_ll = document.createElement("split-button-ll") as SplitButton;
-		newSplitablePane.sp_lr = document.createElement("split-button-lr") as SplitButton;
+		newSplitablePane.sp_ul = SplitButtonUL.create(project);
+		newSplitablePane.sp_ur = SplitButtonUR.create(project);
+		newSplitablePane.sp_ll = SplitButtonLL.create(project);
+		newSplitablePane.sp_lr = SplitButtonLR.create(project);
 		newSplitablePane.installSplitButtons();
 
 		if (orientation && rect) {

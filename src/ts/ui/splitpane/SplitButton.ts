@@ -1,11 +1,11 @@
-import { openProject } from "../../project/Project";
+import { Project } from "../../project/Project";
 import PaneSelectorPane from "../panes/PaneSelectorPane";
 import { SplitablePane } from "./SplitablePane";
 import { SplitPaneContainer } from "./SplitPaneContainer";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 export abstract class SplitButton extends HTMLElement {
-
+	project!: Project;
 	clickX = NaN;
 	clickY = NaN;
 	constructor() {
@@ -78,7 +78,7 @@ export class SplitButtonUL extends SplitButton {
 			const orientation = dx >= dy ? "vertical" : "horizontal";
 
 			const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-			const newSplitablePane = SplitablePane.createSplitablePane(PaneSelectorPane.createPaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
+			const newSplitablePane = SplitablePane.createSplitablePane(this.project, PaneSelectorPane.createPaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
 			const bb = splitablePane.getBoundingClientRect();
 			SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -98,12 +98,18 @@ export class SplitButtonUL extends SplitButton {
 			splitablePane.removePrevious(container, spo);
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		openProject.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
+		this.project.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
 	constructor() {
 		super();
 		this.onmouseleave = this.left;
+	}
+
+	static create(project: Project): SplitButtonUL {
+		const p = document.createElement("split-button-UL") as SplitButtonUL;
+		p.project = project;
+		return p;
 	}
 }
 
@@ -133,7 +139,7 @@ export class SplitButtonUR extends SplitButton {
 			const orientation = Math.abs(dx) >= dy ? "vertical" : "horizontal";
 
 			const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-			const newSplitablePane = SplitablePane.createSplitablePane(PaneSelectorPane.createPaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
+			const newSplitablePane = SplitablePane.createSplitablePane(this.project, PaneSelectorPane.createPaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
 			const bb = splitablePane.getBoundingClientRect();
 			SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -165,12 +171,18 @@ export class SplitButtonUR extends SplitButton {
 			}
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		openProject.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
+		this.project.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
 	constructor() {
 		super();
 		this.onmouseleave = this.left;
+	}
+
+	static create(project: Project): SplitButtonUR {
+		const p = document.createElement("split-button-ur") as SplitButtonUR;
+		p.project = project;
+		return p;
 	}
 }
 
@@ -200,7 +212,7 @@ export class SplitButtonLL extends SplitButton {
 			const orientation = Math.abs(dx) >= Math.abs(dy) ? "vertical" : "horizontal";
 
 			const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-			const newSplitablePane = SplitablePane.createSplitablePane(PaneSelectorPane.createPaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
+			const newSplitablePane = SplitablePane.createSplitablePane(this.project, PaneSelectorPane.createPaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
 			const bb = splitablePane.getBoundingClientRect();
 			SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -232,12 +244,18 @@ export class SplitButtonLL extends SplitButton {
 			}
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		openProject.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
+		this.project.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
 	constructor() {
 		super();
 		this.onmouseleave = this.left;
+	}
+
+	static create(project: Project): SplitButtonLL {
+		const p = document.createElement("split-button-ll") as SplitButtonLL;
+		p.project = project;
+		return p;
 	}
 }
 
@@ -267,7 +285,7 @@ export class SplitButtonLR extends SplitButton {
 			const orientation = Math.abs(dx) >= Math.abs(dy) ? "vertical" : "horizontal";
 
 			const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-			const newSplitablePane = SplitablePane.createSplitablePane(PaneSelectorPane.createPaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
+			const newSplitablePane = SplitablePane.createSplitablePane(this.project, PaneSelectorPane.createPaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
 			const bb = splitablePane.getBoundingClientRect();
 			SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -287,11 +305,17 @@ export class SplitButtonLR extends SplitButton {
 			splitablePane.removeNext(container, spo);
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
-		openProject.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
+		this.project.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
 	constructor() {
 		super();
 		this.onmouseleave = this.left;
+	}
+
+	static create(project: Project): SplitButtonLR {
+		const p = document.createElement("split-button-lr") as SplitButtonLR;
+		p.project = project;
+		return p;
 	}
 }

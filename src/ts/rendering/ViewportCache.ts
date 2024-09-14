@@ -1,6 +1,6 @@
-import { gpu, gpuDevice } from "../GPUX";
-import { SwapChainBitDepth } from "../project/Config";
-import { openProject } from "../project/Project";
+import { gpuDevice } from "../GPUX";
+import { MSAAOptions } from "../project/Config";
+import { Project } from "../project/Project";
 import { getElement } from "./RenderUtil";
 import { Viewport } from "./Viewport";
 
@@ -8,11 +8,16 @@ export class ViewportCache {
 	public viewport;
 	prevWidth = -1;
 	prevHeight = -1;
+	prevMSAA = -1;
+	prevTargetFormat: GPUTextureFormat = "stencil8";
 	depthTexture?: GPUTexture;
+	colorTexture?: GPUTexture;
 	querySet: GPUQuerySet;
 	timeStempBufferResolve: GPUBuffer;
 	timeStempMapBuffer: GPUBuffer;
-	constructor(viewport: Viewport) {
+	project: Project;
+	constructor(project: Project, viewport: Viewport) {
+		this.project = project;
 		this.viewport = viewport;
 
 		this.querySet = gpuDevice.createQuerySet({
@@ -34,10 +39,11 @@ export class ViewportCache {
 		this.reconfigureContext();
 	}
 
-	public conditionFrambebufferUpdate() {
+	public conditionFrambebufferUpdate(msaa: MSAAOptions) {
 		const w = this.viewport.getCurrentTexture().width;
 		const h = this.viewport.getCurrentTexture().height;
-		if (w === this.prevWidth && h === this.prevHeight)
+		this.conditionColorAttachmentUpdate(w, h, msaa);
+		if (w === this.prevWidth && h === this.prevHeight && msaa === this.prevMSAA)
 			return;
 
 		if (this.depthTexture)
@@ -48,21 +54,48 @@ export class ViewportCache {
 			format: 'depth24plus',
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
 			label: "Render Depth Attachment",
+			sampleCount: msaa
 		});
 
 		this.prevWidth = w;
 		this.prevHeight = h;
+		this.prevMSAA = msaa;
+	}
+
+	private conditionColorAttachmentUpdate(w: number, h: number, msaa: MSAAOptions) {
+		const currentFormat = this.project.bitDepthToSwapChainFormat();
+		if (w === this.prevWidth && h === this.prevHeight && msaa === this.prevMSAA && currentFormat === this.prevTargetFormat)
+			return;
+
+		if (msaa === 1) { // No MSAA
+			if (this.colorTexture) {
+				this.colorTexture.destroy();
+				this.colorTexture = undefined;
+			}
+			return;
+		}
+
+		if (this.colorTexture)
+			this.colorTexture.destroy();
+
+		this.colorTexture = gpuDevice.createTexture({
+			size: [w, h, 1],
+			format: currentFormat,
+			usage: GPUTextureUsage.RENDER_ATTACHMENT,
+			label: "Render Color Attachment",
+			sampleCount: msaa
+		});
 	}
 
 	public reconfigureContext() {
 		const context = this.viewport.canvasContext;
 		if (!context)
 			return;
-		const displayConfig = openProject.config.output.display;
+		const displayConfig = this.project.config.output.display;
 		context.unconfigure();
 		context.configure({
 			device: gpuDevice,
-			format: bitDepthToSwapChainFormat(displayConfig.swapChainBitDepth),
+			format: this.project.bitDepthToSwapChainFormat(),
 			colorSpace: displayConfig.swapChainColorSpace,
 			toneMapping: { mode: displayConfig.swapChainToneMappingMode },
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
@@ -70,14 +103,28 @@ export class ViewportCache {
 		});
 	}
 
-	public setupRenderPass(renderPassDescriptor: GPURenderPassDescriptor) {
+	public setupRenderPass(renderPassDescriptor: GPURenderPassDescriptor, msaa: MSAAOptions) {
 		const colorAttachment = getElement(renderPassDescriptor.colorAttachments, 0);
 		if (!colorAttachment) {
 			console.error("Could not find color attachment.");
 			return;
 		}
-		colorAttachment.view = this.viewport.getCurrentTexture().createView();
-		this.conditionFrambebufferUpdate();
+
+		this.conditionFrambebufferUpdate(msaa);
+
+		if (msaa === 1) {
+			colorAttachment.view = this.viewport.getCurrentTexture().createView();
+			colorAttachment.resolveTarget = undefined;
+		} else {
+			if (this.colorTexture) {
+				colorAttachment.view = this.colorTexture.createView();
+				colorAttachment.resolveTarget = this.viewport.getCurrentTexture().createView();
+			} else {
+				console.error("Color attachment does not exist but is needed for MSAA.");
+				return;
+			}
+		}
+
 		const depthAttachment = renderPassDescriptor.depthStencilAttachment;
 		if (depthAttachment && this.depthTexture) {
 			depthAttachment.view = this.depthTexture.createView();
@@ -113,10 +160,4 @@ export class ViewportCache {
 	public destroy() {
 
 	}
-}
-
-export function bitDepthToSwapChainFormat(bpc: SwapChainBitDepth): GPUTextureFormat {
-	if (bpc === "8bpc")
-		return gpu.getPreferredCanvasFormat();
-	return "rgba16float";
 }

@@ -1,5 +1,6 @@
 export type SwapChainBitDepth = "8bpc" | "16bpc";
 export type RenderMode = "forward" | "deferred";
+export type MSAAOptions = 1 | 4;
 
 export class ProjectConfig {
 	output = new OutputConfig();
@@ -22,6 +23,7 @@ export abstract class OutputRenderConfig {
 
 export class OutputForwardRenderConfig extends OutputRenderConfig {
 	mode: "forward" = "forward";
+	msaa: MSAAOptions = 4;
 }
 
 export class OutputDeferredRenderConfig extends OutputRenderConfig {

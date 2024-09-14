@@ -3,14 +3,17 @@ import { Footer } from "./Footer";
 import fullScreenOnIcon from "../../../svg/fullscreenOn.svg?raw";
 import fullScreenOffIcon from "../../../svg/fullscreenOff.svg?raw";
 import { IconedToggleButton } from "../components/IconedToggleButton";
+import { Project } from "../../project/Project";
 
 export class WrappingPane extends HTMLElement {
+	project!: Project;
 	baseSplitPaneContainer!: SplitPaneContainer;
 	header!: HTMLDivElement;
 	footer!: Footer;
-	static createWrappingPane(): WrappingPane {
+	static createWrappingPane(project: Project): WrappingPane {
 		const p = document.createElement("wrapping-pane") as WrappingPane;
-		p.baseSplitPaneContainer = SplitPaneContainer.createRoot();
+		p.project = project;
+		p.baseSplitPaneContainer = SplitPaneContainer.createRoot(project);
 		p.header = document.createElement("div");
 
 		const fullScreenButton = IconedToggleButton.createIconedToggleButton(

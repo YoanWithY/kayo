@@ -5,6 +5,7 @@ export const fragmentEntryPoint = "fragment_main";
 
 export abstract class AbstractPipeline {
 	abstract gpuPipeline: GPURenderPipeline;
+	abstract readonly isDisplayOutputPipeline: boolean;
 	readonly label: string;
 
 	abstract readonly shaderModule: GPUShaderModule;
@@ -52,7 +53,6 @@ export abstract class AbstractPipeline {
 	}
 
 	abstract createPipelineLayout(): GPUPipelineLayout | "auto";
-	abstract readonly isDisplayOutputPipeline: boolean;
 
 	protected createVertexState(): GPUVertexState {
 		return {

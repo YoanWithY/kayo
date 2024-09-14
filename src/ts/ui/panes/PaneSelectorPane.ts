@@ -1,9 +1,10 @@
+import { Project } from "../../project/Project";
 import OutlinerPane from "./OutlinerPane";
 import OutputPane from "./OutputPane";
 import RessourcePane from "./RessourcePane";
 import { ViewportPane } from "./ViewportPane";
 
-const panes: { [key: string]: () => HTMLElement } = {
+const panes: { [key: string]: (project: Project) => HTMLElement } = {
 	"3D Viewport": ViewportPane.createViewportPane,
 	"Ressources": RessourcePane.createRessourcePane,
 	"Output": OutputPane.createOutputPane,
@@ -11,7 +12,7 @@ const panes: { [key: string]: () => HTMLElement } = {
 }
 
 export default class PaneSelectorPane extends HTMLElement {
-	public static createPaneSelectorPane(): PaneSelectorPane {
+	public static createPaneSelectorPane(project: Project): PaneSelectorPane {
 		const p = document.createElement("pane-selector-pane") as PaneSelectorPane;
 
 		for (const key in panes) {
@@ -22,7 +23,7 @@ export default class PaneSelectorPane extends HTMLElement {
 				const parent = p.parentElement;
 				if (!parent)
 					return;
-				parent.replaceChild(panes[key](), p);
+				parent.replaceChild(panes[key](project), p);
 			}
 			p.appendChild(button);
 		}

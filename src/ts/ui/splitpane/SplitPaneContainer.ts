@@ -1,3 +1,4 @@
+import { Project } from "../../project/Project";
 import { PaneStripe } from "../panes/PaneStripe";
 import { ViewportPane } from "../panes/ViewportPane";
 import { SplitablePane } from "./SplitablePane";
@@ -16,11 +17,11 @@ export class SplitPaneContainer extends HTMLElement {
 		return c;
 	}
 
-	static createRoot() {
+	static createRoot(project: Project) {
 		const c = document.createElement("split-pane-container");
 		c.setAttribute("split-pane-container-orientation", "none");
 		c.setAttribute("id", "wrapper");
-		c.appendChild(SplitablePane.createSplitablePane(ViewportPane.createViewportPane));
+		c.appendChild(SplitablePane.createSplitablePane(project, ViewportPane.createViewportPane));
 		return c as SplitPaneContainer;
 	}
 

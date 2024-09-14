@@ -1,16 +1,16 @@
 import { HeightFieldPipeline } from "./HeightFieldPipeline";
-import { openProject } from "../project/Project";
+import { Project } from "../project/Project";
 import R3Object from "../project/R3Object";
 
 export default class HeightFieldR3 extends R3Object {
 	pipeline: HeightFieldPipeline;
 	xVerts: number;
 	yVerts: number;
-	constructor(xVerts: number = 100, yVerts: number = 100) {
+	constructor(project: Project, xVerts: number = 1000, yVerts: number = 1000) {
 		super();
 		this.xVerts = xVerts;
 		this.yVerts = yVerts;
-		this.pipeline = new HeightFieldPipeline("Height Field Material", openProject.renderer.bindGroup0Layout);
+		this.pipeline = new HeightFieldPipeline(project, "Height Field Material");
 	}
 
 	getVerts(): number {

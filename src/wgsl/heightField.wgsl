@@ -4,35 +4,37 @@ struct VertexIn {
 
 struct VertexOut {
 	@builtin(position) position: vec4f,
-	@location(0) vertex_position: vec3f,
+	@location(0) ls_pos: vec3f,
 	@location(1) normal: vec3f
 }
 
 #include <utility/frame>
 
-const xVerts = 100u;
-const yVerts = 100u;
+const xVerts = 1000u;
+const yVerts = 1000u;
 const vertsPerRow = xVerts * 2u;
 const vertsPerRowWithNaN = vertsPerRow + 2u;
 
-const x_min = -1.0;
-const x_max = 1.0;
-const y_min = -1.0;
-const y_max = 1.0;
-const width = (x_max - x_min);
-const height = (y_max - y_min);
+const geometryMin = vec2f(-10);
+const geometrySize = vec2f(20);
+const domainMin = vec2f(-10);
+const domainSize = vec2f(20);
 const epsilon = 0.0001;
 
 fn hf(p: vec2f) -> f32 {
-	return sin(p.x * 8.0 + 0.0 * f32(view.frame.x)) * sin(p.y * 8.0);
+	return sin(p.x + 0.1 * f32(view.frame.x)) * sin(p.y);
 }
 
 fn pos(p: vec2f) -> vec3f {
 	return vec3f(p, hf(p));
 }
 
-fn map(x: f32, y: f32) -> vec2f {
-	return vec2f(x * width + x_min, y * height + y_min);
+fn mapToDomain(x: f32, y: f32) -> vec2f {
+	return vec2f(x, y) * domainSize + domainMin;
+}
+
+fn mapToLocal(x: f32, y: f32) -> vec2f {
+	return vec2f(x, y) * geometrySize + geometryMin;
 }
 
 @vertex
@@ -55,13 +57,14 @@ fn vertex_main(input: VertexIn) -> VertexOut {
 		let xNorm = f32(xInRow) / f32(xVerts - 1);
 		let yNorm = f32(row + upper) / f32(yVerts - 1);
 
-		let p0 = pos(map(xNorm, yNorm));
-		let p1 = pos(map(xNorm + epsilon, yNorm));
-		let p2 = pos(map(xNorm, yNorm + epsilon));
-		
-		output.position = view.projectionMat * view.viewMat * vec4(p0, 1);
-		output.vertex_position = vec3f(xNorm, yNorm, 0.0);
-		output.normal = normalize(cross(p2 - p0, p1 - p0));
+		let domP0 = pos(mapToDomain(xNorm, yNorm));
+		let domP1 = pos(mapToDomain(xNorm + epsilon, yNorm));
+		let domP2 = pos(mapToDomain(xNorm, yNorm + epsilon));
+		let ls_pos = vec3f(mapToLocal(xNorm, yNorm), domP0.z);
+
+		output.position = view.projectionMat * view.viewMat * vec4(ls_pos, 1);
+		output.ls_pos = ls_pos;
+		output.normal = normalize(cross(domP2 - domP0, domP1 - domP0));
 		return output;
 }
 
@@ -73,7 +76,7 @@ fn steps(v: vec3f, stepSize: f32) -> vec3f {
 
 @fragment
 fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOut) -> @location(0) vec4f {
-	let color = 1.5 * vertexData.vertex_position * dot(vec3f(0,0,2), normalize(vertexData.normal * select(-1.0, 1.0, front_facing)));
+	let color = 2 * normalize(vertexData.normal) * select(-1.0, 1.0, front_facing);
 	return
 	vec4f (
 		createOutputFragment(

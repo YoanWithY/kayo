@@ -1,4 +1,4 @@
-import { openProject } from "./Project";
+import { Project } from "./Project";
 
 export type StateVariableChangeCallback<T> = (value: T) => void;
 export type StateChangeExecutionMode = "immediate" | "deferred";
@@ -10,7 +10,9 @@ export default class StateVariable<T> {
 	private _value: T;
 	private _immediateObserverFunctions: Set<StateVariableChangeCallback<T>> = new Set();
 	private _deferredObserverFunctions: Set<StateVariableChangeCallback<T>> = new Set();
-	constructor(value: T) {
+	project: Project;
+	constructor(project: Project, value: T) {
+		this.project = project;
 		this._value = value;
 	}
 
@@ -58,6 +60,6 @@ export default class StateVariable<T> {
 		for (const f of this._immediateObserverFunctions)
 			f(this._value);
 		for (const f of this._deferredObserverFunctions)
-			openProject.renderer.preRenderFunctions.add({ val: this.value, f });
+			this.project.renderer.preRenderFunctions.add({ val: this.value, f });
 	}
 }

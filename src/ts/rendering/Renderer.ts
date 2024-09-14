@@ -1,10 +1,12 @@
 import { gpuDevice } from "../GPUX";
 import { StateVariableChangeCallback } from "../project/StateVariable";
-import { openProject } from "../project/Project";
+import { Project } from "../project/Project";
 import { Viewport } from "./Viewport";
-import { bitDepthToSwapChainFormat, ViewportCache } from "./ViewportCache";
+import { ViewportCache } from "./ViewportCache";
+import { OutputForwardRenderConfig } from "../project/Config";
 
 export default class Renderer {
+	project: Project;
 	preRenderFunctions = new Set<{ val: any, f: StateVariableChangeCallback<any> }>();
 
 	private renderPassDescriptor: GPURenderPassDescriptor;
@@ -20,7 +22,8 @@ export default class Renderer {
 	private bindGroup0: GPUBindGroup;
 	bindGroup0Layout: GPUBindGroupLayout;
 
-	constructor() {
+	constructor(project: Project) {
+		this.project = project;
 		this.reconfigureContext();
 		this.viewUBO = gpuDevice.createBuffer({
 			label: "View UBO",
@@ -78,19 +81,22 @@ export default class Renderer {
 	}
 
 	rebuildDisplayOutputPipelines() {
-		const outConsts = Renderer.getDisplayFragmentOutputConstantsCopy();
-		const format = bitDepthToSwapChainFormat(openProject.config.output.display.swapChainBitDepth);
-		for (const hf of openProject.scene.heightFieldObjects) {
+		const outConsts = this.project.getDisplayFragmentOutputConstantsCopy();
+		const format = this.project.bitDepthToSwapChainFormat();
+		const msaa = (this.project.config.output.render as OutputForwardRenderConfig).msaa;
+		for (const hf of this.project.scene.heightFieldObjects) {
 			hf.pipeline.fragmentConstants["targetColorSpace"] = outConsts["targetColorSpace"];
 			hf.pipeline.fragmentConstants["componentTranfere"] = outConsts["componentTranfere"];
 			hf.pipeline.fragmentTargets[0].format = format;
+			hf.pipeline.multisample.count = msaa;
 			hf.pipeline.buildPipeline();
 		}
-		const gp = openProject.scene.gridPipeline
+		const gp = this.project.scene.gridPipeline
 		if (gp) {
 			gp.fragmentConstants["targetColorSpace"] = outConsts["targetColorSpace"];
 			gp.fragmentConstants["componentTranfere"] = outConsts["componentTranfere"];
 			gp.fragmentTargets[0].format = format;
+			gp.multisample.count = msaa;
 			gp.buildPipeline();
 		}
 		this.needsPipleineRebuild = false;
@@ -123,16 +129,16 @@ export default class Renderer {
 				continue;
 			}
 			const commandEncoder = gpuDevice.createCommandEncoder();
-			viewportCache.setupRenderPass(this.renderPassDescriptor);
+			viewportCache.setupRenderPass(this.renderPassDescriptor, (this.project.config.output.render as OutputForwardRenderConfig).msaa);
 			const renderPassEncoder = commandEncoder.beginRenderPass(this.renderPassDescriptor);
 			renderPassEncoder.setBindGroup(0, this.bindGroup0);
 			renderPassEncoder.setViewport(0, 0, viewport.getCurrentTexture().width, viewport.getCurrentTexture().height, 0, 1);
-			for (const hf of openProject.scene.heightFieldObjects) {
+			for (const hf of this.project.scene.heightFieldObjects) {
 				renderPassEncoder.setPipeline(hf.pipeline.gpuPipeline);
 				renderPassEncoder.draw(hf.getVerts());
 			}
-			if (openProject.scene.gridPipeline) {
-				renderPassEncoder.setPipeline(openProject.scene.gridPipeline.gpuPipeline);
+			if (this.project.scene.gridPipeline) {
+				renderPassEncoder.setPipeline(this.project.scene.gridPipeline.gpuPipeline);
 				renderPassEncoder.draw(4, 2);
 			}
 			renderPassEncoder.end();
@@ -147,7 +153,7 @@ export default class Renderer {
 	}
 
 	setPerf() {
-		openProject.uiRoot.footer.perf.textContent = `Performance: JS: ${this.jsTime}`;
+		this.project.uiRoot.footer.perf.textContent = `Performance: JS: ${this.jsTime}`;
 	}
 
 	requestAnimationFrameWith(viewport: Viewport) {
@@ -168,7 +174,7 @@ export default class Renderer {
 			return;
 
 		this.registeredViewports.add(viewport);
-		this.viewportCache.set(viewport, new ViewportCache(viewport));
+		this.viewportCache.set(viewport, new ViewportCache(this.project, viewport));
 	}
 
 	unregisterViewport(viewport: Viewport) {
@@ -180,20 +186,6 @@ export default class Renderer {
 		if (cache)
 			cache.destroy();
 		this.viewportCache.delete(viewport);
-	}
-
-	static getDisplayFragmentOutputConstantsCopy(): Record<string, number> {
-		return {
-			targetColorSpace: openProject.config.output.display.swapChainColorSpace == "srgb" ? 0 : 1,
-			componentTranfere: openProject.config.output.render.mode === "deferred" ? 0 : 1,
-		};
-	}
-
-	static getFragmentTargets(): GPUColorTargetState[] {
-		return [
-			{
-				format: bitDepthToSwapChainFormat(openProject.config.output.display.swapChainBitDepth)
-			}];
 	}
 
 	static getDepthStencilFormat(): GPUTextureFormat {

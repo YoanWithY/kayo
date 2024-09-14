@@ -1,82 +1,99 @@
-import { OutputConfig, OutputDeferredRenderConfig, OutputDisplayConfig, OutputForwardRenderConfig, OutputRenderConfig, ProjectConfig, RenderMode, SwapChainBitDepth } from "./Config";
-import { openProject } from "./Project";
+import { MSAAOptions as MSAAOption, OutputConfig, OutputDeferredRenderConfig, OutputDisplayConfig, OutputForwardRenderConfig, OutputRenderConfig, ProjectConfig, RenderMode, SwapChainBitDepth } from "./Config";
+import { Project } from "./Project";
 import StateVariable from "./StateVariable";
 
 export class ProjectState {
+	project: Project;
 	output: OutputState;
 
-	constructor(config: ProjectConfig) {
-		this.output = new OutputState(config.output);
+	constructor(project: Project, config: ProjectConfig) {
+		this.project = project;
+		this.output = new OutputState(project, config.output);
 	}
 }
 
 export class OutputState {
+	project: Project;
+	render: OutputRenderState;
 	display: OutputDisplayState;
-	render: OutputRenderConfig;
 
-	constructor(output: OutputConfig) {
-		this.display = new OutputDisplayState(output.display);
-		this.render = OutputRenderState.create(output.render);
+	constructor(project: Project, output: OutputConfig) {
+		this.project = project;
+		this.display = new OutputDisplayState(project, output.display);
+		this.render = OutputRenderState.create(project, output.render);
 	}
 }
 
 export class OutputDisplayState {
+	project: Project
 	swapChainColorSpace: StateVariable<PredefinedColorSpace>;
 	swapChainBitDepth: StateVariable<SwapChainBitDepth>;
 	swapChainToneMappingMode: StateVariable<GPUCanvasToneMappingMode>;
 
-	constructor(display: OutputDisplayConfig) {
-		this.swapChainColorSpace = new StateVariable(display.swapChainColorSpace);
+	constructor(project: Project, display: OutputDisplayConfig) {
+		this.project = project;
+		this.swapChainColorSpace = new StateVariable(project, display.swapChainColorSpace);
 		this.swapChainColorSpace.addChangeListener((value: PredefinedColorSpace) => {
-			openProject.config.output.display.swapChainColorSpace = value;
-			openProject.renderer.needsPipleineRebuild = true;
-			openProject.renderer.needsContextReconfiguration = true;
+			this.project.config.output.display.swapChainColorSpace = value;
+			this.project.renderer.needsPipleineRebuild = true;
+			this.project.renderer.needsContextReconfiguration = true;
 		}, "deferred");
-		this.swapChainColorSpace.addChangeListener(() => openProject.fullRerender(), "immediate");
+		this.swapChainColorSpace.addChangeListener(() => this.project.fullRerender(), "immediate");
 
-		this.swapChainBitDepth = new StateVariable(display.swapChainBitDepth);
+		this.swapChainBitDepth = new StateVariable(project, display.swapChainBitDepth);
 		this.swapChainBitDepth.addChangeListener((value: SwapChainBitDepth) => {
-			openProject.config.output.display.swapChainBitDepth = value;
-			openProject.renderer.needsContextReconfiguration = true;
-			openProject.renderer.needsPipleineRebuild = true;
+			this.project.config.output.display.swapChainBitDepth = value;
+			this.project.renderer.needsContextReconfiguration = true;
+			this.project.renderer.needsPipleineRebuild = true;
 		}, "deferred");
-		this.swapChainBitDepth.addChangeListener(() => openProject.fullRerender(), "immediate");
+		this.swapChainBitDepth.addChangeListener(() => this.project.fullRerender(), "immediate");
 
 
-		this.swapChainToneMappingMode = new StateVariable(display.swapChainToneMappingMode);
+		this.swapChainToneMappingMode = new StateVariable(project, display.swapChainToneMappingMode);
 		this.swapChainToneMappingMode.addChangeListener((value: GPUCanvasToneMappingMode) => {
-			openProject.renderer.needsContextReconfiguration = true;
-			openProject.config.output.display.swapChainToneMappingMode = value;
+			this.project.renderer.needsContextReconfiguration = true;
+			this.project.config.output.display.swapChainToneMappingMode = value;
 		}, "deferred");
-		this.swapChainToneMappingMode.addChangeListener(() => openProject.fullRerender(), "immediate");
+		this.swapChainToneMappingMode.addChangeListener(() => this.project.fullRerender(), "immediate");
 	}
 }
 
 export abstract class OutputRenderState {
-	abstract mode: RenderMode;
-	static create(renderConfig: OutputRenderConfig) {
+	project: Project;
+	abstract mode: StateVariable<RenderMode>;
+	constructor(project: Project) {
+		this.project = project;
+	}
+	static create(project: Project, renderConfig: OutputRenderConfig) {
 		if (renderConfig.mode === "forward") {
-			return new OutputForwardRenderState(renderConfig as OutputForwardRenderConfig);
+			return new OutputForwardRenderState(project, renderConfig as OutputForwardRenderConfig);
 		} else {
-			return new OutputDeferredRenderState(renderConfig as OutputDeferredRenderConfig);
+			return new OutputDeferredRenderState(project, renderConfig as OutputDeferredRenderConfig);
 		}
 	}
 }
 
 export class OutputForwardRenderState extends OutputRenderState {
-	mode: RenderMode;
+	mode: StateVariable<RenderMode>;
+	msaa: StateVariable<MSAAOption>;
 
-	constructor(forwardRenderConfig: OutputForwardRenderConfig) {
-		super();
-		this.mode = forwardRenderConfig.mode;
+	constructor(project: Project, forwardRenderConfig: OutputForwardRenderConfig) {
+		super(project);
+		this.mode = new StateVariable<RenderMode>(project, forwardRenderConfig.mode);
+
+		this.msaa = new StateVariable<MSAAOption>(project, forwardRenderConfig.msaa);
+		this.msaa.addChangeListener((value: MSAAOption) => {
+			(this.project.config.output.render as OutputForwardRenderConfig).msaa = value;
+			this.project.renderer.needsPipleineRebuild = true;
+		}, "deferred");
+		this.msaa.addChangeListener(() => this.project.fullRerender(), "immediate");
 	}
 }
 
 export class OutputDeferredRenderState extends OutputRenderState {
-	mode: RenderMode;
-	constructor(deferredRenderConfig: OutputDeferredRenderConfig) {
-		super();
-		this.mode = deferredRenderConfig.mode;
+	mode: StateVariable<RenderMode>;
+	constructor(project: Project, deferredRenderConfig: OutputDeferredRenderConfig) {
+		super(project);
+		this.mode = new StateVariable<RenderMode>(project, deferredRenderConfig.mode);
 	}
 }
-
