@@ -44,7 +44,6 @@ fn getAlpha(g_2D: vec4f, dist: f32, endFactor: f32, gridMode: i32, far: f32) -> 
 	return converage * falloff;
 }
 
-#include <utility/fragmentOutput>
 @fragment
 fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 	let largePass = isLargePass(vertexData.instance);
@@ -89,5 +88,5 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 		}
 	}
 
-	return vec4f (createOutputFragment(color), a * 0.5);
+	return vec4f (color, a * 0.5);
 }

@@ -7,6 +7,7 @@ import { ViewportPane } from "../ui/panes/ViewportPane";
 import { gpu } from "../GPUX";
 import { GridPipeline } from "../debug/GridPipeline";
 import HeightFieldR3 from "../dynamicObject/HeightFieldR3";
+import { CompositingPipeline } from "../rendering/CompositingPipeline";
 export class Project {
 
 	config: ProjectConfig;
@@ -19,6 +20,7 @@ export class Project {
 		this.config = new ProjectConfig();
 		this.state = new ProjectState(this, this.config);
 		this.renderer = new Renderer(this);
+		this.renderer.compositingPipeline = new CompositingPipeline(this, "Compositing Pipeline");
 		this.scene = new Scene();
 		this.uiRoot = WrappingPane.createWrappingPane(this);
 		document.body.appendChild(this.uiRoot);
@@ -39,7 +41,7 @@ export class Project {
 		};
 	}
 
-	bitDepthToSwapChainFormat(): GPUTextureFormat {
+	getSwapChainFormat(): GPUTextureFormat {
 		if (this.config.output.display.swapChainBitDepth === "8bpc")
 			return gpu.getPreferredCanvasFormat();
 		return "rgba16float";
@@ -47,8 +49,7 @@ export class Project {
 
 	getFragmentTargets(): GPUColorTargetState[] {
 		return [
-			{
-				format: this.bitDepthToSwapChainFormat()
-			}];
+			{ format: this.getSwapChainFormat() },
+			{ format: "rg8unorm" }];
 	}
 }

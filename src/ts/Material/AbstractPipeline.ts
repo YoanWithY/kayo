@@ -72,7 +72,7 @@ export abstract class AbstractPipeline {
 		};
 	}
 
-	protected createDepthStencilState(): GPUDepthStencilState {
+	protected createDepthStencilState(): GPUDepthStencilState | undefined {
 		return {
 			format: this.depthStencilFormat,
 			depthBias: this.depthBias,

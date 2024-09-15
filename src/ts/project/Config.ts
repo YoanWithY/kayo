@@ -17,8 +17,15 @@ export class OutputDisplayConfig {
 	swapChainToneMappingMode: GPUCanvasToneMappingMode = "standard";
 }
 
+export class OverlayRenderConfig {
+	enabled = true;
+	selection = true;
+	grid = true;
+}
+
 export abstract class OutputRenderConfig {
 	abstract mode: RenderMode;
+	overlay: OverlayRenderConfig = new OverlayRenderConfig();
 }
 
 export class OutputForwardRenderConfig extends OutputRenderConfig {

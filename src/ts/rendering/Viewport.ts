@@ -13,10 +13,10 @@ export interface Viewport {
 	getCurrentTexture(): GPUTexture;
 
 	/**
-	 * This method recieves the GPU time spend of the render pass on this viewport.
+	 * This method recieves the GPU time spend the render passes on this viewport in nanoseconds.
 	 * @param time The time spend in nanoseconds.
 	 */
-	setGPUTime(time: number): void;
+	setGPUTime(r3Time: number, overlayTime: number, compositingTime: number): void;
 	/**
 	 * @param viewUBO The buffer to write to.
 	 * @param frame The current frame time to upload.

@@ -1,14 +1,13 @@
 import { AbstractPipeline, fragmentEntryPoint, vertexEntryPoint } from "../Material/AbstractPipeline";
-import staticShaderCode from "../../wgsl/debug/grid.wgsl?raw"
-import Renderer from "../rendering/Renderer";
-import { resolveIncludes } from "../rendering/Shader";
-import { gpuDevice } from "../GPUX";
 import { Project } from "../project/Project";
+import shaderCode from "../../wgsl/compositing.wgsl?raw";
+import { resolveIncludes } from "./Shader";
+import { gpuDevice } from "../GPUX";
 
-export class GridPipeline extends AbstractPipeline {
+export class CompositingPipeline extends AbstractPipeline {
 	gpuPipeline: GPURenderPipeline;
+	readonly isDisplayOutputPipeline = false;
 	readonly shaderCode: string;
-	readonly isDisplayOutputPipeline: boolean = true;
 	readonly preProzessedShaderCoder;
 	readonly shaderModule: GPUShaderModule;
 	vertexConstants: Record<string, number>;
@@ -17,28 +16,37 @@ export class GridPipeline extends AbstractPipeline {
 	fragmentTargets: GPUColorTargetState[];
 	topology: GPUPrimitiveTopology;
 	cullMode: GPUCullMode;
-	stripIndexFormat?: GPUIndexFormat | undefined;
-	depthStencilFormat: GPUTextureFormat;
+	stripIndexFormat?: GPUIndexFormat;
+	depthStencilFormat: GPUTextureFormat = "depth16unorm";
 	depthCompare: GPUCompareFunction;
 	depthWriteEnabled: boolean;
-	bindGroup0Layout: GPUBindGroupLayout;
+	project: Project;
 
-	constructor(project: Project) {
-		super("Grid Pipeline");
-		this.bindGroup0Layout = project.renderer.bindGroup0Layout;
-		this.shaderCode = staticShaderCode;
+	constructor(project: Project, label: string) {
+		super(label);
+		this.project = project;
+		this.shaderCode = shaderCode;
 		this.preProzessedShaderCoder = resolveIncludes(this.shaderCode);
 		this.vertexConstants = {};
 		this.vertexBufferLayout = [];
-		this.fragmentConstants = {};
+		this.fragmentConstants = project.getDisplayFragmentOutputConstantsCopy();
 		this.topology = "triangle-strip";
 		this.cullMode = "none";
-		this.depthCompare = "less";
+		this.depthCompare = "always";
 		this.depthWriteEnabled = false;
-		this.depthStencilFormat = Renderer.getDepthStencilFormat();
-		this.fragmentTargets = [{
-			format: "rgba8unorm",
-		}];
+		this.fragmentTargets = [{ format: project.getSwapChainFormat() }];
+		this.fragmentTargets[0].blend = {
+			color: {
+				srcFactor: "src-alpha",
+				dstFactor: "one-minus-src-alpha",
+				operation: "add"
+			},
+			alpha: {
+				srcFactor: "zero",
+				dstFactor: "one",
+				operation: "add"
+			}
+		}
 
 		this.shaderModule = gpuDevice.createShaderModule(
 			{
@@ -50,9 +58,12 @@ export class GridPipeline extends AbstractPipeline {
 
 	createPipelineLayout(): GPUPipelineLayout | "auto" {
 		return gpuDevice.createPipelineLayout({
-			label: "Debug Grid Pipeline Layout",
-			bindGroupLayouts: [this.bindGroup0Layout],
+			label: "Composing Pipeline Layout",
+			bindGroupLayouts: [this.project.renderer.compositingBindGroupLayout],
 		});
 	}
 
+	protected createDepthStencilState(): GPUDepthStencilState | undefined {
+		return undefined;
+	}
 }

@@ -77,12 +77,9 @@ fn steps(v: vec3f, stepSize: f32) -> vec3f {
 }
 
 @fragment
-fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOut) -> @location(0) vec4f {
+fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOut) -> R3FragmentOutput {
 	let color = 2 * normalize(vertexData.normal) * select(-1.0, 1.0, front_facing);
-	return
-	vec4f (
-		createOutputFragment(
-			color
-		),
-		1);
+	let outColor = vec4f(createOutputFragment(color), 1);
+	let selection = createSelection(fragmentUniform.state);
+	return R3FragmentOutput(outColor, vec2f(1, 0));
 }

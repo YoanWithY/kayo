@@ -1,4 +1,4 @@
-import { MSAAOptions as MSAAOption, OutputConfig, OutputDeferredRenderConfig, OutputDisplayConfig, OutputForwardRenderConfig, OutputRenderConfig, ProjectConfig, RenderMode, SwapChainBitDepth } from "./Config";
+import { MSAAOptions as MSAAOption, OutputConfig, OutputDeferredRenderConfig, OutputDisplayConfig, OutputForwardRenderConfig, OutputRenderConfig, OverlayRenderConfig, ProjectConfig, RenderMode, SwapChainBitDepth } from "./Config";
 import { Project } from "./Project";
 import StateVariable from "./StateVariable";
 
@@ -11,7 +11,6 @@ export class ProjectState {
 		this.output = new OutputState(project, config.output);
 	}
 }
-
 export class OutputState {
 	project: Project;
 	render: OutputRenderState;
@@ -23,7 +22,6 @@ export class OutputState {
 		this.render = OutputRenderState.create(project, output.render);
 	}
 }
-
 export class OutputDisplayState {
 	project: Project
 	swapChainColorSpace: StateVariable<PredefinedColorSpace>;
@@ -57,11 +55,23 @@ export class OutputDisplayState {
 		this.swapChainToneMappingMode.addChangeListener(() => this.project.fullRerender(), "immediate");
 	}
 }
+export class OverlayRenderState {
+	enabled: StateVariable<boolean>;
+	grid: StateVariable<boolean>;
+	selection: StateVariable<boolean>;
 
+	constructor(project: Project, overlayConfig: OverlayRenderConfig) {
+		this.enabled = new StateVariable(project, overlayConfig.enabled);
+		this.grid = new StateVariable(project, overlayConfig.grid);
+		this.selection = new StateVariable(project, overlayConfig.selection);
+	}
+}
 export abstract class OutputRenderState {
 	project: Project;
 	abstract mode: StateVariable<RenderMode>;
-	constructor(project: Project) {
+	overlay: OverlayRenderState;
+	constructor(project: Project, outputRenderConfig: OutputRenderConfig) {
+		this.overlay = new OverlayRenderState(project, outputRenderConfig.overlay);
 		this.project = project;
 	}
 	static create(project: Project, renderConfig: OutputRenderConfig) {
@@ -72,13 +82,12 @@ export abstract class OutputRenderState {
 		}
 	}
 }
-
 export class OutputForwardRenderState extends OutputRenderState {
 	mode: StateVariable<RenderMode>;
 	msaa: StateVariable<MSAAOption>;
 
 	constructor(project: Project, forwardRenderConfig: OutputForwardRenderConfig) {
-		super(project);
+		super(project, forwardRenderConfig);
 		this.mode = new StateVariable<RenderMode>(project, forwardRenderConfig.mode);
 
 		this.msaa = new StateVariable<MSAAOption>(project, forwardRenderConfig.msaa);
@@ -89,11 +98,10 @@ export class OutputForwardRenderState extends OutputRenderState {
 		this.msaa.addChangeListener(() => this.project.fullRerender(), "immediate");
 	}
 }
-
 export class OutputDeferredRenderState extends OutputRenderState {
 	mode: StateVariable<RenderMode>;
 	constructor(project: Project, deferredRenderConfig: OutputDeferredRenderConfig) {
-		super(project);
+		super(project, deferredRenderConfig);
 		this.mode = new StateVariable<RenderMode>(project, deferredRenderConfig.mode);
 	}
 }

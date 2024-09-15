@@ -19,3 +19,20 @@ fn createOutputFragment(linearRGB: vec3f) -> vec3f {
 	}
 	return color;
 }
+
+fn createSelection(state: u32) -> vec2f {
+	return
+	select(
+		vec2f(1,0),
+		vec2f(0),
+		(state & 1u) > 0u) +
+	select(
+		vec2f(0, 1),
+		vec2f(0),
+		(state & 2u) > 0u);
+}
+
+struct R3FragmentOutput {
+	@location(0) color: vec4f,
+	@location(1) selection: vec2f
+}

@@ -4,12 +4,15 @@ import { Project } from "../project/Project";
 import { Viewport } from "./Viewport";
 import { ViewportCache } from "./ViewportCache";
 import { OutputForwardRenderConfig } from "../project/Config";
+import { CompositingPipeline } from "./CompositingPipeline";
 
 export default class Renderer {
 	project: Project;
 	preRenderFunctions = new Set<{ val: any, f: StateVariableChangeCallback<any> }>();
 
-	private renderPassDescriptor: GPURenderPassDescriptor;
+	private r3renderPassDescriptor: GPURenderPassDescriptor;
+	private overlayRenderPassDescriptor: GPURenderPassDescriptor;
+	private compositingRenderPassDescriptor: GPURenderPassDescriptor;
 
 	public needsPipleineRebuild = true;
 	public needsContextReconfiguration = true;
@@ -22,6 +25,8 @@ export default class Renderer {
 	private bindGroup0: GPUBindGroup;
 	bindGroup0Layout: GPUBindGroupLayout;
 	bindGroupR3Layout: GPUBindGroupLayout;
+	compositingPipeline?: CompositingPipeline;
+	compositingBindGroupLayout: GPUBindGroupLayout;
 
 	constructor(project: Project) {
 		this.project = project;
@@ -63,6 +68,31 @@ export default class Renderer {
 				},
 			]
 		});
+
+		this.compositingBindGroupLayout = gpuDevice.createBindGroupLayout({
+			label: "Compositing bind group layout",
+			entries: [
+				{
+					binding: 0,
+					visibility: GPUShaderStage.FRAGMENT,
+					texture: {
+						sampleType: "unfilterable-float",
+						multisampled: false,
+						viewDimension: "2d"
+					}
+				},
+				{
+					binding: 1,
+					visibility: GPUShaderStage.FRAGMENT,
+					texture: {
+						sampleType: "unfilterable-float",
+						multisampled: false,
+						viewDimension: "2d"
+					}
+				},
+			]
+		});
+
 		this.bindGroup0 = gpuDevice.createBindGroup({
 			label: "Global default bind group 0",
 			entries: [
@@ -70,13 +100,19 @@ export default class Renderer {
 			],
 			layout: this.bindGroup0Layout,
 		});
-		this.renderPassDescriptor = {
+		this.r3renderPassDescriptor = {
 			label: "Render Pass",
 			colorAttachments: [
 				{
 					loadOp: "clear",
 					storeOp: "store",
 					clearValue: [0.1, 0.1, 0.1, 1],
+					view: null as unknown as GPUTextureView,
+				},
+				{
+					loadOp: "clear",
+					storeOp: "store",
+					clearValue: [0.0, 0.0, 0.0, 0.0],
 					view: null as unknown as GPUTextureView,
 				}
 			],
@@ -92,6 +128,42 @@ export default class Renderer {
 				endOfPassWriteIndex: 1
 			},
 		};
+		this.overlayRenderPassDescriptor = {
+			label: "Overlay Render Pass",
+			colorAttachments: [
+				{
+					loadOp: "clear",
+					storeOp: "store",
+					clearValue: [0, 0, 0, 0],
+					view: null as unknown as GPUTextureView,
+				}
+			],
+			depthStencilAttachment: {
+				depthLoadOp: "load",
+				depthStoreOp: "discard",
+				view: null as unknown as GPUTextureView,
+			},
+			timestampWrites: {
+				querySet: null as unknown as GPUQuerySet,
+				beginningOfPassWriteIndex: 2,
+				endOfPassWriteIndex: 3
+			},
+		}
+		this.compositingRenderPassDescriptor = {
+			label: "Overlay Render Pass",
+			colorAttachments: [
+				{
+					loadOp: "load",
+					storeOp: "store",
+					view: null as unknown as GPUTextureView,
+				}
+			],
+			timestampWrites: {
+				querySet: null as unknown as GPUQuerySet,
+				beginningOfPassWriteIndex: 4,
+				endOfPassWriteIndex: 5
+			},
+		}
 	}
 
 	reconfigureContext() {
@@ -103,7 +175,7 @@ export default class Renderer {
 
 	rebuildDisplayOutputPipelines() {
 		const outConsts = this.project.getDisplayFragmentOutputConstantsCopy();
-		const format = this.project.bitDepthToSwapChainFormat();
+		const format = this.project.getSwapChainFormat();
 		const msaa = (this.project.config.output.render as OutputForwardRenderConfig).msaa;
 		for (const hf of this.project.scene.heightFieldObjects) {
 			hf.pipeline.fragmentConstants["targetColorSpace"] = outConsts["targetColorSpace"];
@@ -114,9 +186,6 @@ export default class Renderer {
 		}
 		const gp = this.project.scene.gridPipeline
 		if (gp) {
-			gp.fragmentConstants["targetColorSpace"] = outConsts["targetColorSpace"];
-			gp.fragmentConstants["componentTranfere"] = outConsts["componentTranfere"];
-			gp.fragmentTargets[0].format = format;
 			gp.multisample.count = msaa;
 			gp.buildPipeline();
 		}
@@ -150,24 +219,48 @@ export default class Renderer {
 				continue;
 			}
 			const commandEncoder = gpuDevice.createCommandEncoder();
-			viewportCache.setupRenderPass(this.renderPassDescriptor, (this.project.config.output.render as OutputForwardRenderConfig).msaa);
-			const renderPassEncoder = commandEncoder.beginRenderPass(this.renderPassDescriptor);
-			renderPassEncoder.setBindGroup(0, this.bindGroup0);
-			renderPassEncoder.setViewport(0, 0, viewport.getCurrentTexture().width, viewport.getCurrentTexture().height, 0, 1);
+			viewportCache.setupRenderPasses(
+				this.r3renderPassDescriptor,
+				this.overlayRenderPassDescriptor,
+				this.compositingRenderPassDescriptor,
+				this.project.config.output.render as OutputForwardRenderConfig);
+
+			const w = viewport.getCurrentTexture().width;
+			const h = viewport.getCurrentTexture().height;
+
+			const r3renderPassEncoder = commandEncoder.beginRenderPass(this.r3renderPassDescriptor);
+			r3renderPassEncoder.setViewport(0, 0, w, h, 0, 1);
+			r3renderPassEncoder.setBindGroup(0, this.bindGroup0);
 			for (const hf of this.project.scene.heightFieldObjects) {
-				renderPassEncoder.setPipeline(hf.pipeline.gpuPipeline);
+				r3renderPassEncoder.setPipeline(hf.pipeline.gpuPipeline);
 				hf.transformationStack.rotate.x += 0.01;
 				hf.updateUniforms();
-				renderPassEncoder.setBindGroup(1, hf.defaultBindGroup);
-				renderPassEncoder.draw(hf.getVerts());
+				r3renderPassEncoder.setBindGroup(1, hf.defaultBindGroup);
+				r3renderPassEncoder.draw(hf.getVerts());
 			}
+			r3renderPassEncoder.end();
+
+			const overlayRenderPassEncoder = commandEncoder.beginRenderPass(this.overlayRenderPassDescriptor);
+			overlayRenderPassEncoder.setViewport(0, 0, w, h, 0, 1);
+			overlayRenderPassEncoder.setBindGroup(0, this.bindGroup0);
 			if (this.project.scene.gridPipeline) {
-				renderPassEncoder.setPipeline(this.project.scene.gridPipeline.gpuPipeline);
-				renderPassEncoder.draw(4, 2);
+				overlayRenderPassEncoder.setPipeline(this.project.scene.gridPipeline.gpuPipeline);
+				overlayRenderPassEncoder.draw(4, 2);
 			}
-			renderPassEncoder.end();
+			overlayRenderPassEncoder.end();
+
+			if (this.compositingPipeline) {
+				const compositingRenderPassEncoder = commandEncoder.beginRenderPass(this.compositingRenderPassDescriptor);
+				compositingRenderPassEncoder.setViewport(0, 0, w, h, 0, 1);
+				compositingRenderPassEncoder.setBindGroup(0, viewportCache.compositingBindGroup0);
+				compositingRenderPassEncoder.setPipeline(this.compositingPipeline.gpuPipeline);
+				compositingRenderPassEncoder.draw(4);
+				compositingRenderPassEncoder.end();
+			}
+
 			viewportCache.resolvePerformanceQueryCommand(commandEncoder);
 			gpuDevice.queue.submit([commandEncoder.finish()]);
+			viewportCache.asyncGPUPerformanceUpdate();
 		}
 
 		this.jsTime = `${(performance.now() - start).toFixed(3)}ms`;
