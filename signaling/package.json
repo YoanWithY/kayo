@@ -1,0 +1,22 @@
+{
+	"name": "http_server",
+	"version": "1.0.0",
+	"description": "",
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"start": "node ./dist/signaling_server.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"ws": "^8.18.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20.14.11",
+		"@types/ws": "^8.5.12",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.5.3"
+	}
+}
