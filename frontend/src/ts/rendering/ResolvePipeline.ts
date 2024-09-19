@@ -5,6 +5,8 @@ import { resolveShader } from "./Shader";
 import { gpuDevice } from "../GPUX";
 
 export class ResolvePipeline extends AbstractPipeline {
+	vertexEntryPoint = vertexEntryPoint;
+	fragmentEntryPoint = fragmentEntryPoint;
 	gpuPipeline: GPURenderPipeline;
 	readonly isDisplayOutputPipeline = false;
 	readonly shaderCode: string;
@@ -26,7 +28,7 @@ export class ResolvePipeline extends AbstractPipeline {
 		super(label);
 		this.project = project;
 		this.shaderCode = shaderCode;
-		this.preProzessedShaderCoder = resolveShader(this.shaderCode, {vectorFormat, vectorSelector});
+		this.preProzessedShaderCoder = resolveShader(this.shaderCode, { vectorFormat, vectorSelector });
 		this.vertexConstants = {};
 		this.vertexBufferLayout = [];
 		this.fragmentConstants = {};

@@ -4,6 +4,14 @@ import PerspectiveProjection from "../projection/PerspectiveProjection";
 import Camera from "./Camera";
 
 export default class SceneCamera extends R3Object implements Camera {
+    render(renderPassEncoder: GPURenderPassEncoder): void {
+        renderPassEncoder;
+        throw new Error("Method not implemented.");
+    }
+    renderSelection(renderPassEncoder: GPURenderPassEncoder): void {
+        renderPassEncoder;
+        throw new Error("Method not implemented.");
+    }
     projection = new PerspectiveProjection();
     updateGPU(): void {
         throw new Error("Method not implemented.");

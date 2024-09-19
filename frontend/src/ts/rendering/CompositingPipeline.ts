@@ -5,6 +5,8 @@ import { resolveShader } from "./Shader";
 import { gpuDevice } from "../GPUX";
 
 export class CompositingPipeline extends AbstractPipeline {
+	vertexEntryPoint = vertexEntryPoint;
+	fragmentEntryPoint = fragmentEntryPoint;
 	gpuPipeline: GPURenderPipeline;
 	readonly isDisplayOutputPipeline = false;
 	readonly shaderCode: string;
