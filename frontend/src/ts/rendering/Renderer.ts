@@ -56,7 +56,6 @@ export default class Renderer {
 				},
 			]
 		});
-
 		this.bindGroupR3Layout = gpuDevice.createBindGroupLayout({
 			label: "Default R3 bind group layout",
 			entries: [
@@ -76,7 +75,6 @@ export default class Renderer {
 				},
 			]
 		});
-
 		this.compositingBindGroupLayout = gpuDevice.createBindGroupLayout({
 			label: "Compositing bind group layout",
 			entries: [
@@ -123,7 +121,6 @@ export default class Renderer {
 				},
 			]
 		});
-
 		this.bindGroup0 = gpuDevice.createBindGroup({
 			label: "Global default bind group 0",
 			entries: [
@@ -159,6 +156,44 @@ export default class Renderer {
 				endOfPassWriteIndex: 1
 			},
 		};
+		this.r16ResolveRenderPassDescriptor = {
+			label: "r16 Resolve Render Pass",
+			colorAttachments: [
+				{
+					loadOp: "clear",
+					clearValue: [0, 0, 0, 0],
+					storeOp: "store",
+					view: null as unknown as GPUTextureView,
+				}
+			],
+			timestampWrites: {
+				querySet: null as unknown as GPUQuerySet,
+				beginningOfPassWriteIndex: 2,
+				endOfPassWriteIndex: 3
+			},
+		};
+		this.selectionRenderPassDescriptor = {
+			label: "Selection Render Pass",
+			colorAttachments: [
+				{
+					loadOp: "clear",
+					storeOp: "store",
+					clearValue: [0, 0, 0, 0],
+					view: null as unknown as GPUTextureView,
+				}
+			],
+			depthStencilAttachment: {
+				depthLoadOp: "clear",
+				depthClearValue: 1.0,
+				depthStoreOp: "store",
+				view: null as unknown as GPUTextureView,
+			},
+			timestampWrites: {
+				querySet: null as unknown as GPUQuerySet,
+				beginningOfPassWriteIndex: 4,
+				endOfPassWriteIndex: 5
+			},
+		};
 		this.overlayRenderPassDescriptor = {
 			label: "Overlay Render Pass",
 			colorAttachments: [
@@ -176,8 +211,8 @@ export default class Renderer {
 			},
 			timestampWrites: {
 				querySet: null as unknown as GPUQuerySet,
-				beginningOfPassWriteIndex: 2,
-				endOfPassWriteIndex: 3
+				beginningOfPassWriteIndex: 6,
+				endOfPassWriteIndex: 7
 			},
 		}
 		this.compositingRenderPassDescriptor = {
@@ -191,39 +226,10 @@ export default class Renderer {
 			],
 			timestampWrites: {
 				querySet: null as unknown as GPUQuerySet,
-				beginningOfPassWriteIndex: 4,
-				endOfPassWriteIndex: 5
+				beginningOfPassWriteIndex: 8,
+				endOfPassWriteIndex: 9
 			},
-		}
-		this.r16ResolveRenderPassDescriptor = {
-			label: "r16 Resolve Render Pass",
-			colorAttachments: [
-				{
-					loadOp: "clear",
-					clearValue: [0, 0, 0, 0],
-					storeOp: "store",
-					view: null as unknown as GPUTextureView,
-				}
-			],
-		}
-		this.selectionRenderPassDescriptor = {
-			label: "Selection Render Pass",
-			colorAttachments: [
-				{
-					loadOp: "clear",
-					storeOp: "store",
-					clearValue: [0, 0, 0, 0],
-					view: null as unknown as GPUTextureView,
-				}
-			],
-			depthStencilAttachment: {
-				depthLoadOp: "clear",
-				depthClearValue: 1.0,
-				depthStoreOp: "store",
-				view: null as unknown as GPUTextureView,
-			}
-		}
-
+		};
 	}
 
 	reconfigureContext() {
@@ -234,7 +240,7 @@ export default class Renderer {
 	}
 
 	rebuildDisplayOutputPipelines() {
-		const outConsts = this.project.getDisplayFragmentOutputConstantsCopy();
+		const outConsts = this.project.getDisplayFragmentOutputConstants();
 		const format = this.project.getSwapChainFormat();
 		const msaa = (this.project.config.output.render as OutputForwardRenderConfig).msaa;
 		for (const hf of this.project.scene.heightFieldObjects) {
@@ -289,9 +295,9 @@ export default class Renderer {
 			const config = this.project.config.output.render as OutputForwardRenderConfig;
 			viewportCache.setupRenderPasses(
 				this.r3renderPassDescriptor,
-				this.overlayRenderPassDescriptor,
 				this.r16ResolveRenderPassDescriptor,
 				this.selectionRenderPassDescriptor,
+				this.overlayRenderPassDescriptor,
 				this.compositingRenderPassDescriptor,
 				config);
 

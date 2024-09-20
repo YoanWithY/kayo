@@ -154,9 +154,12 @@ export class ViewportPane extends HTMLElement implements Viewport {
 		return this.canvasContext.getCurrentTexture();
 	}
 
-	setGPUTime(r3Time: number, overlayTime: number): void {
+	setGPUTime(r3Time: number, r16ResolveTime: number, selectionTime: number, overlayTime: number, compositingTime: number): void {
 		r3Time;
+		r16ResolveTime;
+		selectionTime;
 		overlayTime;
+		compositingTime;
 	}
 
 	connectedCallback() {

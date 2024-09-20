@@ -33,12 +33,12 @@ export class ViewportCache {
 		this.querySet = gpuDevice.createQuerySet({
 			label: `time stamp query set for ${viewport.lable}`,
 			type: 'timestamp',
-			count: 6,
+			count: 10,
 		});
 		this.timeStempBufferResolve = gpuDevice.createBuffer({
 			label: `time stemp querey resolve buffer for ${viewport.lable}`,
 			size: this.querySet.count * 8,
-			usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.QUERY_RESOLVE,
+			usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST | GPUBufferUsage.QUERY_RESOLVE,
 		});
 
 		this.timeStempMapBuffer = gpuDevice.createBuffer({
@@ -237,9 +237,9 @@ export class ViewportCache {
 
 	public setupRenderPasses(
 		r3renderPassDescriptor: GPURenderPassDescriptor,
-		overlayRenderPassDescriptor: GPURenderPassDescriptor,
 		r16ResolveRenderPassDescriptor: GPURenderPassDescriptor,
 		selectionRenderPassDescriptor: GPURenderPassDescriptor,
+		overlayRenderPassDescriptor: GPURenderPassDescriptor,
 		compositingRenderPassDescriptor: GPURenderPassDescriptor,
 		config: OutputForwardRenderConfig) {
 		const colorAttachment = getElement(r3renderPassDescriptor.colorAttachments, 0);
@@ -334,12 +334,16 @@ export class ViewportCache {
 		}
 
 		const r3TimestampWrites = r3renderPassDescriptor.timestampWrites;
+		const r16ResolveTimestampWrites = r16ResolveRenderPassDescriptor.timestampWrites;
+		const selectionTimestampWrites = selectionRenderPassDescriptor.timestampWrites;
 		const overlayTimestampWrites = overlayRenderPassDescriptor.timestampWrites;
 		const compositingTimestampWrites = compositingRenderPassDescriptor.timestampWrites;
-		if (r3TimestampWrites && overlayTimestampWrites && compositingTimestampWrites) {
+		if (r3TimestampWrites && overlayTimestampWrites && compositingTimestampWrites && r16ResolveTimestampWrites && selectionTimestampWrites) {
 			r3TimestampWrites.querySet = this.querySet;
+			r16ResolveTimestampWrites.querySet = this.querySet;
 			overlayTimestampWrites.querySet = this.querySet;
 			compositingTimestampWrites.querySet = this.querySet;
+			selectionTimestampWrites.querySet = this.querySet;
 		}
 	}
 
@@ -352,17 +356,27 @@ export class ViewportCache {
 				this.timeStempBufferResolve.size);
 		}
 	}
-
+	private resetBuffer = new BigInt64Array(10);
 	public asyncGPUPerformanceUpdate() {
 		if (this.timeStempMapBuffer.mapState === "unmapped") {
 			this.timeStempMapBuffer.mapAsync(GPUMapMode.READ).then(() => {
 				const times = new BigInt64Array(this.timeStempMapBuffer.getMappedRange());
 				const r3Time = Number(times[1] - times[0]);
-				const overlayTime = Number(times[3] - times[2]);
-				const compositingTime = Number(times[5] - times[4]);
-				// console.log(r3Time / 1000000, overlayTime / 1000000, compositingTime / 1000000);
+				const r16Time = Number(times[3] - times[2]);
+				const selectionTime = Number(times[5] - times[4]);
+				const overlayTime = Number(times[7] - times[6]);
+				const compositingTime = Number(times[9] - times[8]);
+				// console.log(
+				// 	"R3:", r3Time / 1000000,
+				// 	"R16 Resolve:", r16Time / 1000000,
+				// 	"Selection", selectionTime / 1000000,
+				// 	"Overlay", overlayTime / 1000000,
+				// 	"Compositing", compositingTime / 1000000,
+				// 	"total:", (r3Time + r16Time + selectionTime + overlayTime + compositingTime) / 1000000);
+
 				this.timeStempMapBuffer.unmap();
-				this.viewport.setGPUTime(r3Time, overlayTime, compositingTime);
+				gpuDevice.queue.writeBuffer(this.timeStempBufferResolve, 0, this.resetBuffer, 0, this.resetBuffer.length)
+				this.viewport.setGPUTime(r3Time, r16Time, selectionTime, overlayTime, compositingTime);
 			});
 		}
 	}

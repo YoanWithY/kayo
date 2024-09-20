@@ -4,6 +4,7 @@ import sRGB_OETF from "../../wgsl/utility/sRGB_OETF.wgsl?raw";
 import fragmentOutput from "../../wgsl/utility/fragmentOutput.wgsl?raw";
 import frame from "../../wgsl/utility/frame.wgsl?raw";
 import fullScreenQuad from "../../wgsl/utility/fullScreenQuadVertex.wgsl?raw";
+import targetColorSpace from "../../wgsl/utility/targetColorSpace.wgsl?raw";
 import r3 from "../../wgsl/utility/r3.wgsl?raw";
 
 const snippets: { [key: string]: string } = {
@@ -14,6 +15,7 @@ const snippets: { [key: string]: string } = {
 	"utility/frame": frame,
 	"utility/fullScreenQuadVertex": fullScreenQuad,
 	"utility/r3": r3,
+	"utility/targetColorSpace": targetColorSpace,
 };
 
 export function resolveIncludes(code: string): string {
@@ -27,13 +29,13 @@ export function resolveIncludes(code: string): string {
 	});
 }
 
-export function resolveVariables(code: string, map: {[key: string]: string}): string {
-	for(const key in map)
+export function resolveVariables(code: string, map: { [key: string]: string }): string {
+	for (const key in map)
 		code = code.replaceAll(`#${key}`, map[key]);
 	return code;
 }
 
-export function resolveShader(code: string, map: {[key: string]: string} = {}): string {
+export function resolveShader(code: string, map: { [key: string]: string } = {}): string {
 	return resolveVariables(resolveIncludes(code), map);
 }
 

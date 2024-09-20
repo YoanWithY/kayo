@@ -32,7 +32,7 @@ export class HeightFieldPipeline extends AbstractPipeline {
 		this.preProzessedShaderCoder = resolveShader(this.shaderCode);
 		this.vertexConstants = {};
 		this.vertexBufferLayout = [];
-		this.fragmentConstants = project.getDisplayFragmentOutputConstantsCopy();
+		this.fragmentConstants = project.getDisplayFragmentOutputConstants();
 		this.topology = "triangle-strip";
 		this.cullMode = "none";
 		this.depthCompare = "less";

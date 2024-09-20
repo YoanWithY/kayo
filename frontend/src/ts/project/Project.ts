@@ -44,7 +44,13 @@ export class Project {
 			this.renderer.requestAnimationFrameWith(vp);
 	}
 
-	getDisplayFragmentOutputConstantsCopy(): Record<string, number> {
+	getTargetColorspaceConstants(): Record<string, number> {
+		return {
+			targetColorSpace: this.config.output.display.swapChainColorSpace == "srgb" ? 0 : 1,
+		};
+	}
+
+	getDisplayFragmentOutputConstants(): Record<string, number> {
 		return {
 			targetColorSpace: this.config.output.display.swapChainColorSpace == "srgb" ? 0 : 1,
 			componentTranfere: this.config.output.render.mode === "deferred" ? 0 : 1,

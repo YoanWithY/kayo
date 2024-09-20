@@ -31,7 +31,7 @@ export class CompositingPipeline extends AbstractPipeline {
 		this.preProzessedShaderCoder = resolveShader(this.shaderCode);
 		this.vertexConstants = {};
 		this.vertexBufferLayout = [];
-		this.fragmentConstants = project.getDisplayFragmentOutputConstantsCopy();
+		this.fragmentConstants = project.getTargetColorspaceConstants();
 		this.topology = "triangle-strip";
 		this.cullMode = "none";
 		this.depthCompare = "always";

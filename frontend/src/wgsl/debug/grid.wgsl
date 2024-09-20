@@ -72,7 +72,7 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 	if(a <= 0) {
 		discard;
 	}
-	var color = vec3f(0.2);
+	var color = vec3f(0.3);
 	
 	if(a1000 > 0) {
 		let abs_ws_pos = abs(ws_pos);
@@ -80,7 +80,7 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 		let isYAxis = abs_ws_pos.y < 500 && g1000_2D.y >= g1000_2D.x;
 	
 		if(isXAxis && isYAxis) {
-			color = vec3f(0.1);
+			color = vec3f(0.5);
 		} else if(isXAxis) {
 			color = vec3f(1.0, 0.2, 0.2);
 		} else if(isYAxis) {
