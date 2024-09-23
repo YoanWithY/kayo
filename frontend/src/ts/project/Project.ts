@@ -24,14 +24,14 @@ export class Project {
 		this.uiRoot = WrappingPane.createWrappingPane(this);
 		document.body.appendChild(this.uiRoot);
 
-		this.scene.heightFieldObjects.add(new HeightFieldR3(this));
+		this.scene.heightFieldObjects.add(new HeightFieldR3(this, "return sin(arg.x * 8.0)  * f32(view.frame.x) / 100.0 * sin(arg.y * 8.0);"));
 
-		const h2 = new HeightFieldR3(this);
+		const h2 = new HeightFieldR3(this, "return sin(arg.x * 8.0) * sin(arg.y * 8.0);");
 		h2.transformationStack.rotate.setValues(0.5, 0.5, 0.5);
 		h2.isSelected = true;
 		this.scene.heightFieldObjects.add(h2);
 
-		const h3 = new HeightFieldR3(this);
+		const h3 = new HeightFieldR3(this, "return sin(arg.x * 8.0) * sin(arg.y * 8.0);");
 		h3.transformationStack.rotate.setValues(1.5, 1.5, 1.5);
 		this.scene.heightFieldObjects.add(h3);
 		h3.isActive = true;

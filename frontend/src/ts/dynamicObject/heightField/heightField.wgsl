@@ -1,7 +1,3 @@
-struct VertexIn {
-	@builtin(vertex_index) index: u32,
-}
-
 struct VertexOut {
 	@builtin(position) position: vec4f,
 	@location(0) ls_pos: vec3f,
@@ -11,38 +7,34 @@ struct VertexOut {
 #include <utility/frame>
 #include <utility/r3>
 
-const xVerts = 1000u;
-const yVerts = 1000u;
-const vertsPerRow = xVerts * 2u;
-const vertsPerRowWithNaN = vertsPerRow + 2u;
+struct HeightField {
+	geometryMin: vec2f,
+	geometrySize: vec2f,
+	domainMin: vec2f,
+	domainSize: vec2f,
+	xVerts: u32,
+	yVerts: u32,
+}
+@group(2) @binding(0) var<uniform> heightField: HeightField;
+@group(2) @binding(1) var heightCache: texture_2d<f32>;
 
-const geometryMin = vec2f(-10);
-const geometrySize = vec2f(20);
-const domainMin = vec2f(-10);
-const domainSize = vec2f(20);
-const epsilon = 0.0001;
-
-fn hf(p: vec2f) -> f32 {
-	return sin(p.x + 0.1 * f32(view.frame.x)) * sin(p.y);
+fn mapToLocal(p: vec2f) -> vec2f {
+	return p * heightField.geometrySize + heightField.geometryMin;
 }
 
-fn pos(p: vec2f) -> vec3f {
-	return vec3f(p, hf(p));
+struct Coords {
+	norm: vec2f,
+	id: vec2u
 }
 
-fn mapToDomain(x: f32, y: f32) -> vec2f {
-	return vec2f(x, y) * domainSize + domainMin;
-}
+fn getNormalized(index: u32) -> Coords {
+	let vertsPerRow = heightField.xVerts * 2u;
+	let vertsPerRowWithNaN = vertsPerRow + 2u;
 
-fn mapToLocal(x: f32, y: f32) -> vec2f {
-	return vec2f(x, y) * geometrySize + geometryMin;
-}
+	let nanVertices: u32 = 2 * (index / vertsPerRowWithNaN);
+	var vIndex: u32 = index - nanVertices;
 
-fn getNormalized(input: VertexIn) -> vec2f {
-	let nanVertices = 2 * (input.index / vertsPerRowWithNaN);
-	var vIndex: u32 = input.index - nanVertices;
-
-	let indexInRowWithNaN = input.index % vertsPerRowWithNaN;
+	let indexInRowWithNaN: u32 = index % vertsPerRowWithNaN;
 	if(indexInRowWithNaN >= vertsPerRow) {
 		vIndex -= 1;
 	}
@@ -50,44 +42,44 @@ fn getNormalized(input: VertexIn) -> vec2f {
 	let row: u32 = vIndex / vertsPerRow;
 	let indexInRow: u32 = vIndex % vertsPerRow;
 	let xInRow: u32 = indexInRow / 2u;
-	let upper: u32 = indexInRow % 2u;
+	let upper: u32 = 1u - indexInRow % 2u;
+	let yInColumn = row + upper;
 
-	let xNorm = f32(xInRow) / f32(xVerts - 1);
-	let yNorm = f32(row + upper) / f32(yVerts - 1);
-	return vec2f(xNorm, yNorm);
+	let xNorm = f32(xInRow) / f32(heightField.xVerts - 1);
+	let yNorm = f32(yInColumn) / f32(heightField.yVerts - 1);
+	return Coords(vec2f(xNorm, yNorm), vec2u(xInRow, yInColumn));
 }
 
 @vertex
-fn vertex_main(input: VertexIn) -> VertexOut {
+fn vertex_main(@builtin(vertex_index) index: u32) -> VertexOut {
 	var output: VertexOut;
-	
-	let norm = getNormalized(input);
 
-	let domP0 = pos(mapToDomain(norm.x, norm.y));
-	let domP1 = pos(mapToDomain(norm.x + epsilon, norm.y));
-	let domP2 = pos(mapToDomain(norm.x, norm.y + epsilon));
-	let ls_pos = vec3f(mapToLocal(norm.x, norm.y), domP0.z);
+	let coords = getNormalized(index);
+	let data = textureLoad(heightCache, coords.id, 0);
+	 
+	let ls_pos = vec3f(mapToLocal(coords.norm), data.w);
 	let ws_pos = (vertexUniform.transformation * vec4f(ls_pos, 1)).xyz;
 
 	output.position = view.projectionMat * view.viewMat * vec4f(ws_pos, 1);
 	output.ls_pos = ls_pos;
-	output.normal = normalize(cross(domP2 - domP0, domP1 - domP0));
 
 	let normMat: mat3x3<f32> = mat3x3<f32>(
 		vertexUniform.transformation[0].xyz,
 		vertexUniform.transformation[1].xyz,
 		vertexUniform.transformation[2].xyz
 	);
-	output.normal = normMat * output.normal;
+	output.normal = normMat * data.xyz;
 	return output;
 }
 
 @vertex
-fn vertex_geometry(input: VertexIn) -> @builtin(position) vec4f {
-	let norm = getNormalized(input);
-	let domP0 = pos(mapToDomain(norm.x, norm.y));
-	let ls_pos = vec3f(mapToLocal(norm.x, norm.y), domP0.z);
+fn vertex_geometry(@builtin(vertex_index) index: u32) -> @builtin(position) vec4f {
+	let coords = getNormalized(index);
+	let data = textureLoad(heightCache, coords.id, 0);
+
+	let ls_pos = vec3f(mapToLocal(coords.norm), data.w);
 	let ws_pos = (vertexUniform.transformation * vec4f(ls_pos, 1)).xyz;
+
 	return view.projectionMat * view.viewMat * vec4f(ws_pos, 1);;
 }
 
@@ -100,7 +92,7 @@ fn steps(v: vec3f, stepSize: f32) -> vec3f {
 @fragment
 fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOut) -> R3FragmentOutput {
 	let n = normalize(vertexData.normal) * select(-1.0, 1.0, front_facing);
-	let color = vec3(clamp(dot(n, vec3(1,0,0)), 0.0, 1.0));
+	let color = vec3(clamp(dot(n, normalize(vec3(1,0,0))), 0.0, 1.0));
 	let outColor = vec4f(createOutputFragment(color), 1);
 	return R3FragmentOutput(outColor, fragmentUniform.id);
 }

@@ -42,7 +42,7 @@ fn selectionOverlay(tc: vec2i) -> vec4f {
 
 	var factor = vec4f(1);
 	if(!idChange && selectionChange) {
-		factor.a = 0.5;
+		factor.a = 0.3;
 	}
 
 	if(thisSelection == 0) {

@@ -4,6 +4,7 @@ import staticShaderCode from "./heightField.wgsl?raw";
 import { resolveShader } from "../../rendering/Shader";
 import Renderer from "../../rendering/Renderer";
 import { Project } from "../../project/Project";
+import { heightFieldDataLayout } from "./HeightFieldPipeline";
 
 export class HeightFieldSelectionPipeline extends AbstractPipeline {
 	vertexEntryPoint = vertexGeometryEntryPoint;
@@ -55,8 +56,8 @@ export class HeightFieldSelectionPipeline extends AbstractPipeline {
 	createPipelineLayout(): GPUPipelineLayout | "auto" {
 		const renderer = this.project.renderer;
 		return gpuDevice.createPipelineLayout({
-			label: "Height field pipeline layout",
-			bindGroupLayouts: [renderer.bindGroup0Layout, renderer.bindGroupR3Layout],
+			label: "Height field geometry pipeline layout",
+			bindGroupLayouts: [renderer.bindGroup0Layout, renderer.bindGroupR3Layout, heightFieldDataLayout],
 		});
 	}
 

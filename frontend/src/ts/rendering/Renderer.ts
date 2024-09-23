@@ -34,6 +34,7 @@ export default class Renderer {
 
 	r16ResolvePipeline!: ResolvePipeline;
 	r16ResolveBindGroupLayout: GPUBindGroupLayout;
+	heightFieldComputePassDescriptor: GPUComputePassDescriptor;
 
 
 	constructor(project: Project) {
@@ -49,7 +50,7 @@ export default class Renderer {
 			entries: [
 				{
 					binding: 0,
-					visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+					visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
 					buffer: {
 						type: "uniform",
 					}
@@ -230,6 +231,9 @@ export default class Renderer {
 				endOfPassWriteIndex: 9
 			},
 		};
+		this.heightFieldComputePassDescriptor = {
+			label: "height field compute pass"
+		}
 	}
 
 	reconfigureContext() {
@@ -303,6 +307,13 @@ export default class Renderer {
 
 			const w = viewport.getCurrentTexture().width;
 			const h = viewport.getCurrentTexture().height;
+
+			const heightFieldComputeEncoder = commandEncoder.beginComputePass(this.heightFieldComputePassDescriptor);
+			heightFieldComputeEncoder.setBindGroup(0, this.bindGroup0);
+			for (const hf of this.project.scene.heightFieldObjects) {
+				hf.compute(heightFieldComputeEncoder);
+			}
+			heightFieldComputeEncoder.end();
 
 			const r3renderPassEncoder = commandEncoder.beginRenderPass(this.r3renderPassDescriptor);
 			r3renderPassEncoder.setViewport(0, 0, w, h, 0, 1);

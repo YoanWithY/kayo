@@ -82,9 +82,9 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 		if(isXAxis && isYAxis) {
 			color = vec3f(0.5);
 		} else if(isXAxis) {
-			color = vec3f(1.0, 0.2, 0.2);
-		} else if(isYAxis) {
 			color = vec3f(0.2, 1.0, 0.2);
+		} else if(isYAxis) {
+			color = vec3f(1.0, 0.2, 0.2);
 		}
 	}
 
