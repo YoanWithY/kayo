@@ -51,7 +51,7 @@ export abstract class AbstractPipeline {
 	};
 
 	abstract readonly vertexEntryPoint: string;
-	abstract readonly fragmentEntryPoint: string;
+	abstract readonly fragmentEntryPoint?: string;
 
 	constructor(label: string) {
 		this.label = label;
@@ -68,7 +68,9 @@ export abstract class AbstractPipeline {
 		};
 	}
 
-	protected createFragmentState(): GPUFragmentState {
+	protected createFragmentState(): GPUFragmentState | undefined {
+		if (!this.fragmentEntryPoint)
+			return undefined;
 		return {
 			module: this.shaderModule,
 			entryPoint: this.fragmentEntryPoint,

@@ -7,6 +7,7 @@ import { ViewportPane } from "../ui/panes/ViewportPane";
 import { gpu } from "../GPUX";
 import { GridPipeline } from "../debug/GridPipeline";
 import HeightFieldR3 from "../dynamicObject/heightField/HeightFieldR3";
+import { SunLight } from "../lights/SunLight";
 export class Project {
 
 	config: ProjectConfig;
@@ -48,7 +49,11 @@ export class Project {
 				this.scene.heightFieldObjects.add(h);
 			}
 		}
-
+		HeightFieldR3.init(this);
+		const s = new SunLight(this);
+		s.transformationStack.translate.setValues(500, 0, 500);
+		s.transformationStack.rotate.setValues(1.2, 0, 1);
+		this.scene.sunlights.add(s);
 		this.scene.gridPipeline = new GridPipeline(this);
 	}
 

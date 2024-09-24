@@ -141,7 +141,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 		const near = this.camera.projection.near;
 		const far = this.camera.projection.far;
 		this.camera.getViewMatrix().pushInFloat32ArrayColumnMajor(this.viewBuffer);
-		this.camera.getProjectionMatrix(this.canvas.width, this.canvas.height).pushInFloat32ArrayColumnMajor(this.viewBuffer, 16);
+		this.camera.getProjection().getProjectionMatrix(this.canvas.width, this.canvas.height).pushInFloat32ArrayColumnMajor(this.viewBuffer, 16);
 		this.camera.transformationStack.getTransformationMatrix().pushInFloat32ArrayColumnMajor(this.viewBuffer, 2 * 16);
 		this.viewBuffer.set([near, far, window.devicePixelRatio, 0], 3 * 16);
 		gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);

@@ -4,6 +4,7 @@ import staticShaderCode from "./heightField.wgsl?raw";
 import { resolveShader } from "../../rendering/Shader";
 import Renderer from "../../rendering/Renderer";
 import { Project } from "../../project/Project";
+import { sunBindGroupLayout } from "../../lights/SunLight";
 
 export const heightFieldDataLayout = gpuDevice.createBindGroupLayout(
 	{
@@ -108,7 +109,7 @@ export class HeightFieldPipeline extends AbstractPipeline {
 		const renderer = this.project.renderer;
 		return gpuDevice.createPipelineLayout({
 			label: "Height field pipeline layout",
-			bindGroupLayouts: [renderer.bindGroup0Layout, renderer.bindGroupR3Layout, heightFieldDataLayout],
+			bindGroupLayouts: [renderer.bindGroup0Layout, renderer.bindGroupR3Layout, heightFieldDataLayout, sunBindGroupLayout],
 		});
 	}
 

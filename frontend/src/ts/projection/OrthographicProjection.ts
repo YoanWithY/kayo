@@ -2,9 +2,14 @@ import mat4 from "../math/mat4";
 import Projection from "./Projection";
 
 export default class OrthographicProjection implements Projection {
-    height = 100;
-    near = 0.0;
-    far = 10000;
+    height: number;
+    near: number;
+    far: number;
+    constructor(height: number = 100, near: number = 0.0, far: number = 1000) {
+        this.height = height;
+        this.near = near;
+        this.far = far;
+    }
     getProjectionMatrix(width: number, height: number): mat4 {
         const AR = width / height;
         const t = this.height / 2;

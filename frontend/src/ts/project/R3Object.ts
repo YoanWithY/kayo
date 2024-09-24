@@ -31,9 +31,9 @@ export default abstract class R3Object {
     fragmentUniformData = new Uint32Array(2);
     updateUniforms() {
         this.transformationStack.getTransformationMatrix().pushInFloat32ArrayColumnMajor(this.vertexUniformData);
-   
+
         this.fragmentUniformData[0] = this._id;
-        this.fragmentUniformData[1] =  this.isActive ? 2 : (this.isSelected ? 1 : 0);
+        this.fragmentUniformData[1] = this.isActive ? 2 : (this.isSelected ? 1 : 0);
         gpuDevice.queue.writeBuffer(this.vertexUniformBuffer, 0, this.vertexUniformData);
         gpuDevice.queue.writeBuffer(this.fragmentUniformBuffer, 0, this.fragmentUniformData);
     }
@@ -44,4 +44,5 @@ export default abstract class R3Object {
 
     abstract render(renderPassEncoder: GPURenderPassEncoder): void;
     abstract renderSelection(renderPassEncoder: GPURenderPassEncoder): void;
+    abstract renderDepth(renderPassEncoder: GPURenderPassEncoder): void;
 }

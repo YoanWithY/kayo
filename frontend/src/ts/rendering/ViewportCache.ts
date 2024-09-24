@@ -372,13 +372,13 @@ export class ViewportCache {
 				const selectionTime = Number(times[5] - times[4]);
 				const overlayTime = Number(times[7] - times[6]);
 				const compositingTime = Number(times[9] - times[8]);
-				console.log(
-					"R3:", r3Time / 1000000,
-					"R16 Resolve:", r16Time / 1000000,
-					"Selection", selectionTime / 1000000,
-					"Overlay", overlayTime / 1000000,
-					"Compositing", compositingTime / 1000000,
-					"total:", (r3Time + r16Time + selectionTime + overlayTime + compositingTime) / 1000000);
+				// console.log(
+				// 	"R3:", r3Time / 1000000,
+				// 	"R16 Resolve:", r16Time / 1000000,
+				// 	"Selection", selectionTime / 1000000,
+				// 	"Overlay", overlayTime / 1000000,
+				// 	"Compositing", compositingTime / 1000000,
+				// 	"total:", (r3Time + r16Time + selectionTime + overlayTime + compositingTime) / 1000000);
 
 				this.timeStempMapBuffer.unmap();
 				gpuDevice.queue.writeBuffer(this.timeStempBufferResolve, 0, this.resetBuffer, 0, this.resetBuffer.length)

@@ -1,14 +1,13 @@
 import { gpuDevice } from "../../GPUX";
-import { AbstractPipeline, vertexGeometryEntryPoint, fragmentSelectionEntryPoint } from "../../Material/AbstractPipeline";
+import { AbstractPipeline, vertexGeometryEntryPoint } from "../../Material/AbstractPipeline";
 import staticShaderCode from "./heightField.wgsl?raw";
 import { resolveShader } from "../../rendering/Shader";
-import Renderer from "../../rendering/Renderer";
 import { Project } from "../../project/Project";
 import { heightFieldDataLayout } from "./HeightFieldPipeline";
 
-export class HeightFieldSelectionPipeline extends AbstractPipeline {
+export class HeightFieldShadowPipeline extends AbstractPipeline {
 	vertexEntryPoint = vertexGeometryEntryPoint;
-	fragmentEntryPoint = fragmentSelectionEntryPoint;
+	fragmentEntryPoint = undefined;
 	gpuPipeline: GPURenderPipeline;
 	readonly isDisplayOutputPipeline = false;
 	readonly shaderCode: string;
@@ -38,8 +37,8 @@ export class HeightFieldSelectionPipeline extends AbstractPipeline {
 		this.cullMode = "none";
 		this.depthCompare = "less";
 		this.depthWriteEnabled = true;
-		this.depthStencilFormat = Renderer.getDepthStencilFormat();
-		this.fragmentTargets = [{ format: "r8uint" }];
+		this.depthStencilFormat = "depth24plus";
+		this.fragmentTargets = [];
 
 		this.shaderModule = gpuDevice.createShaderModule(
 			{
@@ -47,7 +46,6 @@ export class HeightFieldSelectionPipeline extends AbstractPipeline {
 				code: this.preProzessedShaderCoder,
 				compilationHints: [
 					{ entryPoint: vertexGeometryEntryPoint },
-					{ entryPoint: fragmentSelectionEntryPoint },
 				]
 			});
 		this.gpuPipeline = this.buildPipeline();
@@ -56,9 +54,8 @@ export class HeightFieldSelectionPipeline extends AbstractPipeline {
 	createPipelineLayout(): GPUPipelineLayout | "auto" {
 		const renderer = this.project.renderer;
 		return gpuDevice.createPipelineLayout({
-			label: "Height field selection pipeline layout",
+			label: "Height field shadow pipeline layout",
 			bindGroupLayouts: [renderer.bindGroup0Layout, renderer.bindGroupR3Layout, heightFieldDataLayout],
 		});
 	}
-
 }

@@ -5,10 +5,10 @@ import { HeightFieldSelectionPipeline } from "./HeightFieldSelectionPipeline";
 import { gpuDevice } from "../../GPUX";
 import { resolveShader } from "../../rendering/Shader";
 import heightFieldComputeCode from "./heightFieldCompute.wgsl?raw";
+import { HeightFieldShadowPipeline as HeightFieldDepthPipeline } from "./HeightFieldShadowPipeline";
 
 export default class HeightFieldR3 extends R3Object {
 	pipeline: HeightFieldPipeline;
-	selectionPipeline: HeightFieldSelectionPipeline;
 	computePipeline: GPUComputePipeline;
 	private _xVerts: number;
 	private _yVerts: number;
@@ -29,7 +29,6 @@ export default class HeightFieldR3 extends R3Object {
 			usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING
 		});
 		this.pipeline = new HeightFieldPipeline(project, "Height Field Pipeline");
-		this.selectionPipeline = new HeightFieldSelectionPipeline(project, "Height Field Selection Pieline");
 		this.dataBuffer = gpuDevice.createBuffer({
 			label: "height field data buffer",
 			size: 10 * 4,
@@ -87,15 +86,17 @@ export default class HeightFieldR3 extends R3Object {
 						}
 					]
 			});
-		const computeModule = gpuDevice.createShaderModule({
-			label: "height field compute shader module",
-			code: resolveShader(heightFieldComputeCode, { heightCode: heightFunction }),
-			compilationHints: [{ entryPoint: "computeHeight" }],
-		})
-		const computePipelineLayout = gpuDevice.createPipelineLayout({
-			label: "height field compute pipeline layout",
-			bindGroupLayouts: [project.renderer.bindGroup0Layout, heightFieldComputeBindGroupLayout],
-		})
+		const computeModule = gpuDevice.createShaderModule(
+			{
+				label: "height field compute shader module",
+				code: resolveShader(heightFieldComputeCode, { heightCode: heightFunction }),
+				compilationHints: [{ entryPoint: "computeHeight" }],
+			})
+		const computePipelineLayout = gpuDevice.createPipelineLayout(
+			{
+				label: "height field compute pipeline layout",
+				bindGroupLayouts: [project.renderer.bindGroup0Layout, heightFieldComputeBindGroupLayout],
+			})
 		this.computePipeline = gpuDevice.createComputePipeline(
 			{
 				label: "Height field compute pipeline",
@@ -106,20 +107,31 @@ export default class HeightFieldR3 extends R3Object {
 			});
 	}
 
+	static selectionPipeline: HeightFieldSelectionPipeline;
+	static depthPipeline: HeightFieldDepthPipeline;
+	static init(project: Project) {
+		this.selectionPipeline = new HeightFieldSelectionPipeline(project, "height field selection pipeline");
+		this.depthPipeline = new HeightFieldDepthPipeline(project, "height field depth pipeline");
+	}
+
 	getVerts(): number {
 		return this._xVerts * this._yVerts + this._xVerts * (this._yVerts - 2) + 2 * this._yVerts - 2;
 	}
 
 	render(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder.setPipeline(this.pipeline.gpuPipeline);
-		this.updateUniforms();
-		renderPassEncoder.setBindGroup(1, this.defaultBindGroup);
-		renderPassEncoder.setBindGroup(2, this.dataBindGroup);
-		renderPassEncoder.draw(this.getVerts());
+		this.renderWithPipeline(renderPassEncoder, this.pipeline.gpuPipeline);
 	}
 
 	renderSelection(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder.setPipeline(this.selectionPipeline.gpuPipeline);
+		this.renderWithPipeline(renderPassEncoder, HeightFieldR3.selectionPipeline.gpuPipeline);
+	}
+
+	renderDepth(renderPassEncoder: GPURenderPassEncoder): void {
+		this.renderWithPipeline(renderPassEncoder, HeightFieldR3.depthPipeline.gpuPipeline);
+	}
+
+	private renderWithPipeline(renderPassEncoder: GPURenderPassEncoder, pipeline: GPURenderPipeline) {
+		renderPassEncoder.setPipeline(pipeline);
 		this.updateUniforms();
 		renderPassEncoder.setBindGroup(1, this.defaultBindGroup);
 		renderPassEncoder.setBindGroup(2, this.dataBindGroup);

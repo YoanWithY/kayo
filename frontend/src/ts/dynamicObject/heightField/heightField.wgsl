@@ -1,7 +1,8 @@
 struct VertexOut {
 	@builtin(position) position: vec4f,
 	@location(0) ls_pos: vec3f,
-	@location(1) normal: vec3f
+	@location(1) normal: vec3f,
+	@location(2) ws_pos: vec3f,
 }
 
 #include <utility/frame>
@@ -69,6 +70,7 @@ fn vertex_main(@builtin(vertex_index) index: u32) -> VertexOut {
 		vertexUniform.transformation[2].xyz
 	);
 	output.normal = normMat * data.xyz;
+	output.ws_pos = ws_pos;
 	return output;
 }
 
@@ -89,11 +91,38 @@ fn steps(v: vec3f, stepSize: f32) -> vec3f {
 	return floor(v / stepSize) * stepSize;
 }
 
+struct Sun {
+	matrix: mat4x4f,
+	light: vec4f
+}
+ @group(3) @binding(0) var<uniform> sun: Sun;
+ @group(3) @binding(1) var shadowMap: texture_depth_2d;
+ @group(3) @binding(2) var shadowSampler: sampler_comparison;
+fn getShadow(ws_pos: vec3f) -> f32 {
+	var shadowNDC = (sun.matrix * vec4f(ws_pos, 1.0));
+	var shadowUV =  shadowNDC.xy * vec2f(0.5, -0.5) + 0.5;
+	var shadow = 0.0;
+	for(var y = -1; y<=1; y++) {
+		for(var x = -1; x<=1; x++) {
+			shadow += textureSampleCompare(shadowMap, shadowSampler, shadowUV + vec2f(f32(x), f32(y)) / 4096, shadowNDC.z - 0.001);
+		}
+	}
+	if(any(shadowUV < vec2f(0)) || any(shadowUV > vec2f(1))) {
+		return 1;
+	}
+	return shadow / 9;
+}
+
+
 @fragment
 fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOut) -> R3FragmentOutput {
 	let n = normalize(vertexData.normal) * select(-1.0, 1.0, front_facing);
-	let color = vec3(clamp(dot(n, normalize(vec3(1,1,1))), 0.0, 1.0));
-	let outColor = vec4f(createOutputFragment(color), 1);
+	let l = sun.light.xyz;
+	let strength = sun.light.w;
+	var light = vec3(clamp(dot(n, l), 0.0, 1.0)) * strength;
+	light *= getShadow(vertexData.ws_pos);
+	let color = vec3(cos(vertexData.ws_pos) *0.5 + 0.5);
+	let outColor = vec4f(createOutputFragment(light * color), 1);
 	return R3FragmentOutput(outColor, fragmentUniform.id);
 }
 

@@ -6,6 +6,7 @@ import { ViewportCache } from "./ViewportCache";
 import { OutputForwardRenderConfig } from "../project/Config";
 import { CompositingPipeline } from "./CompositingPipeline";
 import { ResolvePipeline } from "./ResolvePipeline";
+import Camera from "../Viewport/Camera";
 
 export default class Renderer {
 	project: Project;
@@ -35,6 +36,8 @@ export default class Renderer {
 	r16ResolvePipeline!: ResolvePipeline;
 	r16ResolveBindGroupLayout: GPUBindGroupLayout;
 	heightFieldComputePassDescriptor: GPUComputePassDescriptor;
+	shadowViewUBO: GPUBuffer;
+	shadowBindGroup0: GPUBindGroup;
 
 
 	constructor(project: Project) {
@@ -42,6 +45,11 @@ export default class Renderer {
 		this.reconfigureContext();
 		this.viewUBO = gpuDevice.createBuffer({
 			label: "View UBO",
+			size: (3 * 16 + 12) * 4,
+			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+		});
+		this.shadowViewUBO = gpuDevice.createBuffer({
+			label: "shadow view UBO",
 			size: (3 * 16 + 12) * 4,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 		});
@@ -126,6 +134,13 @@ export default class Renderer {
 			label: "Global default bind group 0",
 			entries: [
 				{ binding: 0, resource: { buffer: this.viewUBO } }
+			],
+			layout: this.bindGroup0Layout,
+		});
+		this.shadowBindGroup0 = gpuDevice.createBindGroup({
+			label: "Global default shadow bind group 0",
+			entries: [
+				{ binding: 0, resource: { buffer: this.shadowViewUBO } }
 			],
 			layout: this.bindGroup0Layout,
 		});
@@ -315,9 +330,22 @@ export default class Renderer {
 			}
 			heightFieldComputeEncoder.end();
 
+			for (const sun of this.project.scene.sunlights) {
+				this.updateView(this.shadowViewUBO, this.frame, sun, sun.resolution, sun.resolution);
+				sun.updateSunUniforms();
+				const shadowRenderPassEncoder = commandEncoder.beginRenderPass(sun.renderPass);
+				shadowRenderPassEncoder.setViewport(0, 0, sun.resolution, sun.resolution, 0, 1);
+				shadowRenderPassEncoder.setBindGroup(0, this.shadowBindGroup0);
+				for (const hf of this.project.scene.heightFieldObjects) {
+					hf.renderDepth(shadowRenderPassEncoder);
+				}
+				shadowRenderPassEncoder.end();
+			}
+
 			const r3renderPassEncoder = commandEncoder.beginRenderPass(this.r3renderPassDescriptor);
 			r3renderPassEncoder.setViewport(0, 0, w, h, 0, 1);
 			r3renderPassEncoder.setBindGroup(0, this.bindGroup0);
+			r3renderPassEncoder.setBindGroup(3, Array.from(this.project.scene.sunlights)[0].bindGroup);
 			for (const hf of this.project.scene.heightFieldObjects) {
 				hf.render(r3renderPassEncoder);
 			}
@@ -447,5 +475,21 @@ export default class Renderer {
 
 	static getDepthStencilFormat(): GPUTextureFormat {
 		return "depth24plus";
+	}
+
+	private viewBuffer = new Float32Array(3 * 16 + 4);
+	private viewTimeBuffer = new Uint32Array(8);
+	updateView(viewUBO: GPUBuffer, frame: number, camera: Camera, width: number, height: number): void {
+		const projection = camera.getProjection();
+		const near = projection.near;
+		const far = projection.far;
+		camera.getViewMatrix().pushInFloat32ArrayColumnMajor(this.viewBuffer);
+		projection.getProjectionMatrix(width, height).pushInFloat32ArrayColumnMajor(this.viewBuffer, 16);
+		camera.transformationStack.getTransformationMatrix().pushInFloat32ArrayColumnMajor(this.viewBuffer, 2 * 16);
+		this.viewBuffer.set([near, far, window.devicePixelRatio, 0], 3 * 16);
+		gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);
+
+		this.viewTimeBuffer.set([0, 0, width, height, frame, 0, 0, 0], 0);
+		gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
 	}
 }
