@@ -23,7 +23,7 @@ export abstract class OutputRenderConfig {
 
 export class OutputForwardRenderConfig extends OutputRenderConfig {
 	mode: "forward" = "forward";
-	msaa: MSAAOptions = 4;
+	msaa: MSAAOptions = 1;
 }
 
 export class OutputDeferredRenderConfig extends OutputRenderConfig {

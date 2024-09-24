@@ -16,7 +16,8 @@ export default class HeightFieldR3 extends R3Object {
 	dataBuffer: GPUBuffer;
 	dataBindGroup: GPUBindGroup;
 	computeBindGroup: GPUBindGroup;
-	constructor(project: Project, heightFunction: string, xVerts: number = 1000, yVerts: number = 1000) {
+	constructor(project: Project, heightFunction: string, xVerts: number = 1000, yVerts: number = 1000,
+		geomMinX = 0, geomMinY = 0, geomSizeX = 1, geomSizeY = 1, domMinX = 0, domMinY = 0, domSizeX = 1, domSizeY = 1) {
 		super(project);
 		this._xVerts = xVerts;
 		this._yVerts = yVerts;
@@ -34,14 +35,14 @@ export default class HeightFieldR3 extends R3Object {
 			size: 10 * 4,
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
 		});
-		this.floatData[0] = -10;
-		this.floatData[1] = -10;
-		this.floatData[2] = 20;
-		this.floatData[3] = 20;
-		this.floatData[4] = -10;
-		this.floatData[5] = -10;
-		this.floatData[6] = 20;
-		this.floatData[7] = 20;
+		this.floatData[0] = geomMinX;
+		this.floatData[1] = geomMinY;
+		this.floatData[2] = geomSizeX;
+		this.floatData[3] = geomSizeY;
+		this.floatData[4] = domMinX;
+		this.floatData[5] = domMinY;
+		this.floatData[6] = domSizeX;
+		this.floatData[7] = domSizeY;
 		this.uintData[0] = xVerts;
 		this.uintData[1] = yVerts;
 		gpuDevice.queue.writeBuffer(this.dataBuffer, 0, this.floatData);

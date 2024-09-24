@@ -122,8 +122,8 @@ export class ViewportCache {
 		}
 
 		if (this.viewport.useOverlays) {
-			if (!this.overlayTextureSS || !this.idTextureMS) {
-				console.error("Texture missing");
+			if (!this.overlayTextureSS) {
+				console.error("Overlay Texture missing!");
 				return;
 			}
 			this.compositingBindGroup0 = gpuDevice.createBindGroup({
@@ -135,13 +135,19 @@ export class ViewportCache {
 				],
 				layout: this.project.renderer.compositingBindGroupLayout,
 			});
-			this.r16ResolveBindGroup0 = gpuDevice.createBindGroup({
-				label: "R16u resolve bind group 0",
-				entries: [
-					{ binding: 0, resource: this.idTextureMS.createView() },
-				],
-				layout: this.project.renderer.r16ResolveBindGroupLayout,
-			});
+			if (config.msaa > 1) {
+				if (!this.idTextureMS) {
+					console.error("Multisampled ID Texture missing!");
+					return;
+				}
+				this.r16ResolveBindGroup0 = gpuDevice.createBindGroup({
+					label: "R16u resolve bind group 0",
+					entries: [
+						{ binding: 0, resource: this.idTextureMS.createView() },
+					],
+					layout: this.project.renderer.r16ResolveBindGroupLayout,
+				});
+			}
 		}
 
 		this.prevWidth = w;
@@ -366,13 +372,13 @@ export class ViewportCache {
 				const selectionTime = Number(times[5] - times[4]);
 				const overlayTime = Number(times[7] - times[6]);
 				const compositingTime = Number(times[9] - times[8]);
-				// console.log(
-				// 	"R3:", r3Time / 1000000,
-				// 	"R16 Resolve:", r16Time / 1000000,
-				// 	"Selection", selectionTime / 1000000,
-				// 	"Overlay", overlayTime / 1000000,
-				// 	"Compositing", compositingTime / 1000000,
-				// 	"total:", (r3Time + r16Time + selectionTime + overlayTime + compositingTime) / 1000000);
+				console.log(
+					"R3:", r3Time / 1000000,
+					"R16 Resolve:", r16Time / 1000000,
+					"Selection", selectionTime / 1000000,
+					"Overlay", overlayTime / 1000000,
+					"Compositing", compositingTime / 1000000,
+					"total:", (r3Time + r16Time + selectionTime + overlayTime + compositingTime) / 1000000);
 
 				this.timeStempMapBuffer.unmap();
 				gpuDevice.queue.writeBuffer(this.timeStempBufferResolve, 0, this.resetBuffer, 0, this.resetBuffer.length)

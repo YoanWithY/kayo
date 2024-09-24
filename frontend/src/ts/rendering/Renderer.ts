@@ -217,7 +217,7 @@ export default class Renderer {
 			},
 		}
 		this.compositingRenderPassDescriptor = {
-			label: "Overlay Render Pass",
+			label: "compositing render pass",
 			colorAttachments: [
 				{
 					loadOp: "load",

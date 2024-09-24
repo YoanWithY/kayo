@@ -280,7 +280,7 @@ export default class mat4 {
 	}
 
 	/**
-	 * Creates a OpenGL perspective projection matrix form the given parameters.
+	 * Creates a WebGPU perspective projection matrix form the given parameters. Target z range: [0, 1].
 	 * @param r The right edge of the near clipping plane.
 	 * @param l The left edge of the near clipping plane.
 	 * @param t The top edge of the near clipping plane.
@@ -288,12 +288,32 @@ export default class mat4 {
 	 * @param n The distance of the near clipping plane.
 	 * @param f The distance to the far clipping plane.
 	 */
-	public static perspective(r: number = 0.1, l: number = 0.1, t: number = 0.1, b: number = 0.1, n: number = 0.1, f: number = 1000): mat4 {
+	public static perspective(r: number = 0.1, l: number = -0.1, t: number = 0.1, b: number = -0.1, n: number = 0.1, f: number = 1000): mat4 {
 		const n2 = 2 * n;
 		const rml = r - l;
 		const tmb = t - b;
 		const fmn = f - n;
-		return new mat4(n2 / rml, 0, (r + l) / rml, 0, 0, n2 / tmb, (t + b) / tmb, 0, 0, 0, -(f + n) / fmn, -n2 * f / fmn, 0, 0, -1, 0);
+		return new mat4(
+			n2 / rml, 0, (r + l) / rml, 0,
+			0, n2 / tmb, (t + b) / tmb, 0,
+			0, 0, -(f) / fmn, -n * f / fmn,
+			0, 0, -1, 0);
+	}
+
+	/**
+	 * Creates a WebGPU orthographic projection matrix from the given parameters. Target z range: [0, 1].
+	 * @param r The right edge of the near clipping plane.
+	 * @param l The left edge of the near clipping plane.
+	 * @param t The top edge of the near clipping plane.
+	 * @param b the bottom edge of the near clipping plane.
+	 * @param n The distance of the near clipping plane.
+	 * @param f The distance to the far clipping plane.
+	 */
+	public static orthographic(r: number = 1, l: number = -1, t: number = 1, b: number = -1, n: number = 0, f: number = 1000): mat4 {
+		const rml = r - l;
+		const tmb = t - b;
+		const fmn = f - n;
+		return new mat4(2 / rml, 0, 0, -(r + l) / rml, 0, 2 / tmb, 0, -(t + b) / tmb, 0, 0, -1 / fmn, -(n) / fmn, 0, 0, 0, 1);
 	}
 
 	/**

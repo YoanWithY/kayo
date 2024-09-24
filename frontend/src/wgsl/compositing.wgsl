@@ -52,11 +52,18 @@ fn selectionOverlay(tc: vec2i) -> vec4f {
 	return edgeColorArray[thisSelection] * factor;
 }
 
+fn over_blend(c1: vec4<f32>, c2: vec4<f32>) -> vec4<f32> {
+    let alpha_out = c1.a + c2.a * (1.0 - c1.a);
+    let color_out = (c1.rgb * c1.a + c2.rgb * c2.a * (1.0 - c1.a)) / alpha_out;
+    return vec4<f32>(color_out, alpha_out);
+}
+
 @fragment
 fn fragment_main(@builtin(position) position: vec4f) -> @location(0) vec4f {
 	let tc = vec2i(position.xy);
 	let overlay = textureLoad(overlayRT, tc, 0);
 	let selection = selectionOverlay(tc);
-	let color = convertToTargetColorSpace(select(overlay.rgb, selection.rgb, selection.a > 0.0));
-	return vec4f(color, max(overlay.a, selection.a));
+	let outOverlay = over_blend(overlay, selection);
+	let color = convertToTargetColorSpace(outOverlay.rgb);
+	return vec4f(color, outOverlay.a);
 }

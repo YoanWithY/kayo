@@ -92,7 +92,7 @@ fn steps(v: vec3f, stepSize: f32) -> vec3f {
 @fragment
 fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOut) -> R3FragmentOutput {
 	let n = normalize(vertexData.normal) * select(-1.0, 1.0, front_facing);
-	let color = vec3(clamp(dot(n, normalize(vec3(1,0,0))), 0.0, 1.0));
+	let color = vec3(clamp(dot(n, normalize(vec3(1,1,1))), 0.0, 1.0));
 	let outColor = vec4f(createOutputFragment(color), 1);
 	return R3FragmentOutput(outColor, fragmentUniform.id);
 }

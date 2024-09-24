@@ -24,17 +24,30 @@ export class Project {
 		this.uiRoot = WrappingPane.createWrappingPane(this);
 		document.body.appendChild(this.uiRoot);
 
-		this.scene.heightFieldObjects.add(new HeightFieldR3(this, "return sin(arg.x * 8.0)  * f32(view.frame.x) / 100.0 * sin(arg.y * 8.0);"));
 
-		const h2 = new HeightFieldR3(this, "return sin(arg.x * 8.0) * sin(arg.y * 8.0);");
-		h2.transformationStack.rotate.setValues(0.5, 0.5, 0.5);
-		h2.isSelected = true;
-		this.scene.heightFieldObjects.add(h2);
-
-		const h3 = new HeightFieldR3(this, "return sin(arg.x * 8.0) * sin(arg.y * 8.0);");
-		h3.transformationStack.rotate.setValues(1.5, 1.5, 1.5);
-		this.scene.heightFieldObjects.add(h3);
-		h3.isActive = true;
+		const arr = [[1, 0], [1, 1], [0, 1]];
+		for (let i = 0; i < 18; i++) {
+			const scale = Math.pow(2, i);
+			for (const a of arr) {
+				const h = new HeightFieldR3(
+					this,
+					`return sin(arg.x / 1000.0) * sin(arg.y / 1000.0) * 500.0 + 
+					sin(arg.x / 25.0) * sin(arg.y / 25.0) * 25.0 + 
+					sin(arg.x / 5.0 + f32(view.frame.x) / 10.0) * sin(arg.y / 5.0) * 5.0 +
+					sin(arg.x) * sin(arg.y);`,
+					100,
+					100,
+					a[0] * scale,
+					a[1] * scale,
+					scale,
+					scale,
+					a[0] * scale,
+					a[1] * scale,
+					scale,
+					scale);
+				this.scene.heightFieldObjects.add(h);
+			}
+		}
 
 		this.scene.gridPipeline = new GridPipeline(this);
 	}

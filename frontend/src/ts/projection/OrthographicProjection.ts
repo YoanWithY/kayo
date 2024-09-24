@@ -1,16 +1,16 @@
 import mat4 from "../math/mat4";
 import Projection from "./Projection";
 
-export default class PerspectiveProjection implements Projection {
-    vFOV = 90;
-    near = 0.1;
-    far = 1000;
+export default class OrthographicProjection implements Projection {
+    height = 100;
+    near = 0.0;
+    far = 10000;
     getProjectionMatrix(width: number, height: number): mat4 {
         const AR = width / height;
-        const t = Math.tan(this.vFOV / 2) * this.near;
+        const t = this.height / 2;
         const b = -t;
         const r = t * AR;
         const l = -r;
-        return mat4.perspective(r, l, t, b, this.near, this.far);
+        return mat4.orthographic(r, l, t, b, this.near, this.far);
     }
 }

@@ -7,8 +7,6 @@ struct HeightField {
 	yVerts: u32,
 }
 
-const epsilon = 0.01;
-
 #include <utility/frame>
 
 @group(1) @binding(0) var<uniform> heightField: HeightField;
@@ -30,11 +28,13 @@ fn mapToLocal(p: vec2f) -> vec2f {
 	if(id.x >= heightField.xVerts || id.y >= heightField.yVerts) {
 		return;
 	}
-	let norm = vec2f(id.xy) / (vec2f(vec2u(heightField.xVerts, heightField.yVerts)) - 1);
+	let verts = vec2f(vec2u(heightField.xVerts, heightField.yVerts));
+	let epsilon = heightField.domainSize / (verts * 2);
+	let norm = vec2f(id.xy) / (verts - 1);
 	let dom0 = mapToDomain(norm);
 	let p0 = vec3f(mapToLocal(norm), hf(dom0));
-	let p1 = vec3f(mapToLocal(norm) + vec2f(epsilon, 0), hf(dom0 + vec2f(epsilon / heightField.geometrySize.x, 0)));
-	let p2 = vec3f(mapToLocal(norm) + vec2f(0, epsilon), hf(dom0 + vec2f(0, epsilon / heightField.geometrySize.y)));
+	let p1 = vec3f(mapToLocal(norm) + vec2f(epsilon.x, 0), hf(dom0 + vec2f(epsilon.x * heightField.domainSize.x /  heightField.geometrySize.x, 0)));
+	let p2 = vec3f(mapToLocal(norm) + vec2f(0, epsilon.x), hf(dom0 + vec2f(0, epsilon.y * heightField.domainSize.y / heightField.geometrySize.y)));
 
 	let t = p1 - p0;
 	let b = p2 - p0;
