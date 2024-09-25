@@ -18,6 +18,8 @@ struct HeightField {
 }
 @group(2) @binding(0) var<uniform> heightField: HeightField;
 @group(2) @binding(1) var heightCache: texture_2d<f32>;
+@group(2) @binding(2) var albedoT: texture_2d<f32>;
+@group(2) @binding(3) var mineSampler: sampler;
 
 fn mapToLocal(p: vec2f) -> vec2f {
 	return p * heightField.geometrySize + heightField.geometryMin;
@@ -102,17 +104,57 @@ fn getShadow(ws_pos: vec3f) -> f32 {
 	var shadowNDC = (sun.matrix * vec4f(ws_pos, 1.0));
 	var shadowUV =  shadowNDC.xy * vec2f(0.5, -0.5) + 0.5;
 	var shadow = 0.0;
-	for(var y = -1; y<=1; y++) {
-		for(var x = -1; x<=1; x++) {
-			shadow += textureSampleCompare(shadowMap, shadowSampler, shadowUV + vec2f(f32(x), f32(y)) / 4096, shadowNDC.z - 0.001);
+	for(var y = -2; y<=2; y++) {
+		for(var x = -2; x<=2; x++) {
+			shadow += textureSampleCompare(shadowMap, shadowSampler, shadowUV + vec2f(f32(x), f32(y)) / 4096, shadowNDC.z - 0.003);
 		}
 	}
 	if(any(shadowUV < vec2f(0)) || any(shadowUV > vec2f(1))) {
 		return 1;
 	}
-	return shadow / 9;
+	return shadow / 25;
 }
 
+fn xor(a: bool, b: bool) -> bool {
+	return (a || b) && !(a && b);
+}
+
+fn checkerBoard(uv: vec2f) -> f32 {
+    let uvM = fract(uv / 2.0);
+    return select(0.0, 1.0, xor((uvM.x < 0.5), (uvM.y < 0.5)));
+}
+
+fn queryMipLevel(texture: texture_2d<f32>, uv: vec2<f32>) -> f32 {
+    let scaledUV = uv * vec2f(textureDimensions(texture).xy);
+    let dx = dpdxFine(scaledUV);
+    let dy = dpdyFine(scaledUV);
+	let dmax = max(dot(dx, dx), dot(dy, dy));
+    return 0.5 * log2(dmax);
+}
+
+fn mineSample(texture: texture_2d<f32>, uv: vec2f) -> vec4f {
+	let mipLevel = queryMipLevel(texture, uv);
+	let texSize = textureDimensions(texture, 0).xy;
+	let texSizei = vec2i(texSize);
+	let uvT = uv * vec2f(texSize);
+	let f = fract(uvT);
+	let p = vec2i(floor(uvT));
+	let w = fwidth(uvT) * 0.9;
+    let a = clamp(1.0 - (abs(fract(uvT - 0.5) - 0.5) / w - (0.5 - 1.0)), vec2f(0), vec2f(1));
+
+	let xOff = select(vec2i(-1, 0), vec2i(1, 0), f.x >= 0.5);
+	let yOff = select(vec2i(0, -1), vec2i(0, 1), f.y >= 0.5);
+	let thisSample = textureLoad(texture, p % texSizei, 0);
+	let otherX = textureLoad(texture, (p + xOff) % texSizei, 0);
+	let otherY = textureLoad(texture, (p + yOff) % texSizei, 0);
+	let otherXY = textureLoad(texture, (p + xOff + yOff) % texSizei, 0);
+	let directSample = textureSample(texture, mineSampler, uv);
+	let analyticSample = mix(mix(thisSample, otherX, a.x), mix(otherY, otherY, a.x), a.y);
+	if(mipLevel < 1.0) {
+		return mix(analyticSample, directSample, max(mipLevel, 0));
+	}
+	return directSample;
+}
 
 @fragment
 fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOut) -> R3FragmentOutput {
@@ -121,8 +163,11 @@ fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOu
 	let strength = sun.light.w;
 	var light = vec3(clamp(dot(n, l), 0.0, 1.0)) * strength;
 	light *= getShadow(vertexData.ws_pos);
-	let color = vec3(cos(vertexData.ws_pos) *0.5 + 0.5);
-	let outColor = vec4f(createOutputFragment(light * color), 1);
+	light += 0.1;
+
+	let uv = vertexData.ws_pos.xy;
+	let albedo = sRGB_EOTF(mineSample(albedoT, uv).rgb);
+	let outColor = vec4f(createOutputFragment(light * albedo.rgb), 1);
 	return R3FragmentOutput(outColor, fragmentUniform.id);
 }
 

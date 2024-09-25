@@ -28,6 +28,23 @@ export const heightFieldDataLayout = gpuDevice.createBindGroupLayout(
 						sampleType: "unfilterable-float",
 						viewDimension: "2d"
 					}
+				},
+				{
+					binding: 2,
+					visibility: GPUShaderStage.FRAGMENT,
+					texture:
+					{
+						multisampled: false,
+						sampleType: "float",
+						viewDimension: "2d"
+					}
+				},
+				{
+					binding: 3,
+					visibility: GPUShaderStage.FRAGMENT,
+					sampler: {
+						type: "filtering"
+					}
 				}
 			]
 	});

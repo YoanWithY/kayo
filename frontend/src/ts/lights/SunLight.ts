@@ -84,7 +84,7 @@ export class SunLight extends R3Object implements Camera {
 						resource: gpuDevice.createSampler(
 							{
 								compare: "less",
-								magFilter: "linear"
+								magFilter: "linear",
 							})
 					}
 				]

@@ -16,7 +16,7 @@ export default class HeightFieldR3 extends R3Object {
 	dataBuffer: GPUBuffer;
 	dataBindGroup: GPUBindGroup;
 	computeBindGroup: GPUBindGroup;
-	constructor(project: Project, heightFunction: string, xVerts: number = 1000, yVerts: number = 1000,
+	constructor(project: Project, albedo: GPUTexture, heightFunction: string, xVerts: number = 1000, yVerts: number = 1000,
 		geomMinX = 0, geomMinY = 0, geomSizeX = 1, geomSizeY = 1, domMinX = 0, domMinY = 0, domSizeX = 1, domSizeY = 1) {
 		super(project);
 		this._xVerts = xVerts;
@@ -63,6 +63,23 @@ export default class HeightFieldR3 extends R3Object {
 						{
 							binding: 1,
 							resource: this.cacheTexture.createView()
+						},
+						{
+							binding: 2,
+							resource: albedo.createView()
+						},
+						{
+							binding: 3,
+							resource: gpuDevice.createSampler(
+								{
+									addressModeU: "repeat",
+									addressModeV: "repeat",
+									magFilter: "linear",
+									minFilter: "linear",
+									mipmapFilter: "linear",
+									maxAnisotropy: 16
+								}
+							)
 						}
 					]
 			});

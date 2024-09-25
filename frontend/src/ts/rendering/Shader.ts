@@ -6,6 +6,9 @@ import frame from "../../wgsl/utility/frame.wgsl?raw";
 import fullScreenQuad from "../../wgsl/utility/fullScreenQuadVertex.wgsl?raw";
 import targetColorSpace from "../../wgsl/utility/targetColorSpace.wgsl?raw";
 import r3 from "../../wgsl/utility/r3.wgsl?raw";
+import mipmapCode from "./mipmap.wgsl?raw";
+import { gpuDevice } from "../GPUX";
+import { fragmentEntryPoint, vertexEntryPoint } from "../Material/AbstractPipeline";
 
 const snippets: { [key: string]: string } = {
 	"utility/fragmentOutput": fragmentOutput,
@@ -46,15 +49,84 @@ export async function loadImageTexture(device: GPUDevice, imageUrl: string): Pro
 
 	const texture = device.createTexture({
 		size: [imageBitmap.width, imageBitmap.height, 1],
+		mipLevelCount: Math.log2(Math.max(imageBitmap.width, imageBitmap.height)) + 1,
 		format: 'rgba8unorm',
 		usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
 	});
 
 	device.queue.copyExternalImageToTexture(
-		{ source: imageBitmap },
+		{ source: imageBitmap, flipY: true },
 		{ texture: texture },
 		[imageBitmap.width, imageBitmap.height]
 	);
 
 	return texture;
+}
+
+
+const mipMapPipelines: { [key: string]: GPURenderPipeline } = {};
+const mipMapModule = gpuDevice.createShaderModule(
+	{
+		label: "mip map shader module",
+		code: resolveShader(mipmapCode),
+		compilationHints: [{ entryPoint: vertexEntryPoint }, { entryPoint: fragmentEntryPoint }]
+	}
+);
+const sampler = gpuDevice.createSampler({ minFilter: "linear" });
+export function generateMipMap(texture: GPUTexture) {
+	if (!mipMapPipelines[texture.format]) {
+		mipMapPipelines[texture.format] = gpuDevice.createRenderPipeline(
+			{
+				layout: "auto",
+				vertex: {
+					module: mipMapModule
+				},
+				fragment: {
+					module: mipMapModule,
+					targets: [{ format: texture.format }]
+				},
+				primitive: { topology: "triangle-strip" }
+			}
+		);
+	}
+
+	const pipeline = mipMapPipelines[texture.format];
+
+	const encoder = gpuDevice.createCommandEncoder({ label: 'mip gen encoder' });
+	let width = texture.width;
+	let height = texture.height;
+	let baseMipLevel = 0;
+	while (width > 1 || height > 1) {
+		width = Math.max(1, width / 2 | 0);
+		height = Math.max(1, height / 2 | 0);
+
+		const bindGroup = gpuDevice.createBindGroup({
+			layout: pipeline.getBindGroupLayout(0),
+			entries: [
+				{ binding: 0, resource: texture.createView({ baseMipLevel: baseMipLevel, mipLevelCount: 1 }) },
+				{ binding: 1, resource: sampler },
+			],
+		});
+		baseMipLevel++
+
+		const renderPassDescriptor: GPURenderPassDescriptor = {
+			label: 'mip render pass',
+			colorAttachments: [
+				{
+					view: texture.createView({ baseMipLevel: baseMipLevel, mipLevelCount: 1 }),
+					loadOp: 'clear',
+					storeOp: 'store',
+					clearValue: [1, 1, 1, 1]
+				},
+			],
+		};
+
+		const pass = encoder.beginRenderPass(renderPassDescriptor);
+		pass.setViewport(0, 0, width, height, 0, 1);
+		pass.setPipeline(pipeline);
+		pass.setBindGroup(0, bindGroup);
+		pass.draw(4);
+		pass.end();
+	}
+	gpuDevice.queue.submit([encoder.finish()]);
 }

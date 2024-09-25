@@ -4,10 +4,15 @@ import Renderer from "../rendering/Renderer";
 import Scene from "./Scene";
 import { WrappingPane } from "../ui/Wrapping/WrappingPane";
 import { ViewportPane } from "../ui/panes/ViewportPane";
-import { gpu } from "../GPUX";
+import { gpu, gpuDevice } from "../GPUX";
 import { GridPipeline } from "../debug/GridPipeline";
 import HeightFieldR3 from "../dynamicObject/heightField/HeightFieldR3";
 import { SunLight } from "../lights/SunLight";
+import { generateMipMap, loadImageTexture } from "../rendering/Shader";
+
+
+const albedo = await loadImageTexture(gpuDevice, "./dirt.png");
+generateMipMap(albedo);
 export class Project {
 
 	config: ProjectConfig;
@@ -24,6 +29,8 @@ export class Project {
 		this.scene = new Scene();
 		this.uiRoot = WrappingPane.createWrappingPane(this);
 		document.body.appendChild(this.uiRoot);
+		HeightFieldR3.init(this);
+
 
 
 		const arr = [[1, 0], [1, 1], [0, 1]];
@@ -31,11 +38,12 @@ export class Project {
 			const scale = Math.pow(2, i);
 			for (const a of arr) {
 				const h = new HeightFieldR3(
-					this,
-					`return sin(arg.x / 1000.0) * sin(arg.y / 1000.0) * 500.0 + 
-					sin(arg.x / 25.0) * sin(arg.y / 25.0) * 25.0 + 
-					sin(arg.x / 5.0 + f32(view.frame.x) / 10.0) * sin(arg.y / 5.0) * 5.0 +
-					sin(arg.x) * sin(arg.y);`,
+					this, albedo,
+					`
+					let a = arg;
+					return sin(a.x / 1000.0) * sin(a.y / 1000.0) * 500.0 + 
+					sin(a.x / 25.0) * sin(a.y / 25.0) * 25.0 + 
+					sin(a.x / 5.0) * sin(a.y / 5.0) * 5.0;`,
 					100,
 					100,
 					a[0] * scale,
@@ -49,7 +57,7 @@ export class Project {
 				this.scene.heightFieldObjects.add(h);
 			}
 		}
-		HeightFieldR3.init(this);
+
 		const s = new SunLight(this);
 		s.transformationStack.translate.setValues(500, 0, 500);
 		s.transformationStack.rotate.setValues(1.2, 0, 1);
