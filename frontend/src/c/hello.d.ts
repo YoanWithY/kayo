@@ -18,7 +18,7 @@ interface WasmModule {
 type EmbindString = ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string;
 interface EmbindModule {
   helloWorld(): void;
-  read(_0: EmbindString): void;
+  readFileAsString(_0: EmbindString): number;
 }
 
 export type MainModule = WasmModule & typeof RuntimeExports & EmbindModule;

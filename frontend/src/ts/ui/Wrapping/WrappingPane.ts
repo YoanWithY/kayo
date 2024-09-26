@@ -46,7 +46,7 @@ export class WrappingPane extends HTMLElement {
 					const content = e.target?.result;
 					if (!content)
 						return
-					wasmInstance.read(content)
+					wasmInstance.readFileAsString(content)
 				};
 				reader.readAsArrayBuffer(file); // Read file as ArrayBuffer
 			}
