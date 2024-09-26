@@ -37,7 +37,7 @@ export class WrappingPane extends HTMLElement {
 
 		const fi = document.createElement("input");
 		fi.type = "file";
-		fi.addEventListener("change", (e: Event) => {
+		fi.addEventListener("change", () => {
 			const file = fi.files?.[0];
 			if (file) {
 				// Create a FileReader to read the file as an ArrayBuffer
