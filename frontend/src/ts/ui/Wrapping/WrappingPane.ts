@@ -4,6 +4,7 @@ import fullScreenOnIcon from "../../../svg/fullscreenOn.svg?raw";
 import fullScreenOffIcon from "../../../svg/fullscreenOff.svg?raw";
 import { IconedToggleButton } from "../components/IconedToggleButton";
 import { Project } from "../../project/Project";
+import { wasmInstance } from "../../../c/wasmHello";
 
 export class WrappingPane extends HTMLElement {
 	project!: Project;
@@ -33,6 +34,24 @@ export class WrappingPane extends HTMLElement {
 		});
 
 		p.header.appendChild(fullScreenButton);
+
+		const fi = document.createElement("input");
+		fi.type = "file";
+		fi.addEventListener("change", (e: Event) => {
+			const file = fi.files?.[0];
+			if (file) {
+				// Create a FileReader to read the file as an ArrayBuffer
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					const content = e.target?.result;
+					if (!content)
+						return
+					wasmInstance.read(content)
+				};
+				reader.readAsArrayBuffer(file); // Read file as ArrayBuffer
+			}
+		});
+		p.header.appendChild(fi);
 
 		p.footer = Footer.createFooter();
 		p.appendChild(p.header);
