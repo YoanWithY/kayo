@@ -18,7 +18,21 @@ interface WasmModule {
 type EmbindString = ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string;
 interface EmbindModule {
   helloWorld(): void;
-  readFileAsString(_0: EmbindString): number;
+  openRegion(_0: EmbindString, _1: number, _2: number, _3: number, _4: EmbindString): void;
+  setActiveChunk(_0: EmbindString, _1: number, _2: number, _3: number): number;
+  getByte(_0: EmbindString): number;
+  getShort(_0: EmbindString): number;
+  getInt(_0: EmbindString): number;
+  getLong(_0: EmbindString): bigint;
+  getFloat(_0: EmbindString): number;
+  getDouble(_0: EmbindString): number;
+  getString(_0: EmbindString): string;
+  getList(_0: EmbindString): string;
+  getCompound(_0: EmbindString): string;
+  buildChunk(_0: EmbindString, _1: number, _2: number, _3: number): number;
+  getPalette(_0: number): string;
+  getByteArray(_0: EmbindString): any;
+  getSectionView(_0: EmbindString, _1: number, _2: number, _3: number, _4: number): any;
 }
 
 export type MainModule = WasmModule & typeof RuntimeExports & EmbindModule;

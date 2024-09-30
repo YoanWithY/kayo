@@ -7,6 +7,7 @@ import { OutputForwardRenderConfig } from "../project/Config";
 import { CompositingPipeline } from "./CompositingPipeline";
 import { ResolvePipeline } from "./ResolvePipeline";
 import Camera from "../Viewport/Camera";
+import { MinecraftOpaquePipeline } from "../minecraft/MinecraftOpaquePipeline";
 
 export default class Renderer {
 	project: Project;
@@ -274,6 +275,14 @@ export default class Renderer {
 			gp.multisample.count = msaa;
 			gp.buildPipeline();
 		}
+
+		const minePipe = MinecraftOpaquePipeline.pipeline;
+		minePipe.fragmentConstants["targetColorSpace"] = outConsts["targetColorSpace"];
+		minePipe.fragmentConstants["componentTranfere"] = outConsts["componentTranfere"];
+		minePipe.fragmentTargets[0].format = format;
+		minePipe.multisample.count = msaa;
+		minePipe.buildPipeline();
+
 		this.compositingPipeline.fragmentTargets[0].format = format;
 		this.compositingPipeline.buildPipeline();
 		this.needsPipleineRebuild = false;
@@ -339,6 +348,7 @@ export default class Renderer {
 				for (const hf of this.project.scene.heightFieldObjects) {
 					hf.renderDepth(shadowRenderPassEncoder);
 				}
+
 				shadowRenderPassEncoder.end();
 			}
 
@@ -348,6 +358,12 @@ export default class Renderer {
 			r3renderPassEncoder.setBindGroup(3, Array.from(this.project.scene.sunlights)[0].bindGroup);
 			for (const hf of this.project.scene.heightFieldObjects) {
 				hf.render(r3renderPassEncoder);
+			}
+
+			r3renderPassEncoder.setPipeline(MinecraftOpaquePipeline.pipeline.gpuPipeline);
+			r3renderPassEncoder.setBindGroup(2, MinecraftOpaquePipeline.bindGroup2)
+			for (const section of this.project.scene.minecraftSections) {
+				section.render(r3renderPassEncoder);
 			}
 			r3renderPassEncoder.end();
 

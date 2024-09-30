@@ -103,16 +103,11 @@ struct Sun {
 fn getShadow(ws_pos: vec3f) -> f32 {
 	var shadowNDC = (sun.matrix * vec4f(ws_pos, 1.0));
 	var shadowUV =  shadowNDC.xy * vec2f(0.5, -0.5) + 0.5;
-	var shadow = 0.0;
-	for(var y = -2; y<=2; y++) {
-		for(var x = -2; x<=2; x++) {
-			shadow += textureSampleCompare(shadowMap, shadowSampler, shadowUV + vec2f(f32(x), f32(y)) / 4096, shadowNDC.z - 0.003);
-		}
-	}
+	var shadow = textureSampleCompare(shadowMap, shadowSampler, shadowUV, shadowNDC.z - 0.0003);
 	if(any(shadowUV < vec2f(0)) || any(shadowUV > vec2f(1))) {
 		return 1;
 	}
-	return shadow / 25;
+	return shadow;
 }
 
 fn xor(a: bool, b: bool) -> bool {

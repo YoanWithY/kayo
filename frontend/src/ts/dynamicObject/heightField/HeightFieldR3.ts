@@ -16,9 +16,11 @@ export default class HeightFieldR3 extends R3Object {
 	dataBuffer: GPUBuffer;
 	dataBindGroup: GPUBindGroup;
 	computeBindGroup: GPUBindGroup;
+	private _albedo: GPUTexture;
 	constructor(project: Project, albedo: GPUTexture, heightFunction: string, xVerts: number = 1000, yVerts: number = 1000,
 		geomMinX = 0, geomMinY = 0, geomSizeX = 1, geomSizeY = 1, domMinX = 0, domMinY = 0, domSizeX = 1, domSizeY = 1) {
 		super(project);
+		this._albedo = albedo;
 		this._xVerts = xVerts;
 		this._yVerts = yVerts;
 		this.cacheTexture = gpuDevice.createTexture({
@@ -46,43 +48,7 @@ export default class HeightFieldR3 extends R3Object {
 		this.uintData[1] = yVerts;
 		gpuDevice.queue.writeBuffer(this.dataBuffer, 0, this.floatData);
 		gpuDevice.queue.writeBuffer(this.dataBuffer, this.floatData.byteLength, this.uintData);
-		this.dataBindGroup = gpuDevice.createBindGroup(
-			{
-				label: "height field data bind group",
-				layout: heightFieldDataLayout,
-				entries:
-					[
-						{
-							binding: 0,
-							resource:
-							{
-								label: "height field data buffer binding",
-								buffer: this.dataBuffer
-							}
-						},
-						{
-							binding: 1,
-							resource: this.cacheTexture.createView()
-						},
-						{
-							binding: 2,
-							resource: albedo.createView()
-						},
-						{
-							binding: 3,
-							resource: gpuDevice.createSampler(
-								{
-									addressModeU: "repeat",
-									addressModeV: "repeat",
-									magFilter: "linear",
-									minFilter: "linear",
-									mipmapFilter: "linear",
-									maxAnisotropy: 16
-								}
-							)
-						}
-					]
-			});
+		this.dataBindGroup = this._createDataBindGroup();
 		this.computeBindGroup = gpuDevice.createBindGroup(
 			{
 				label: "height field compute bind group",
@@ -122,6 +88,51 @@ export default class HeightFieldR3 extends R3Object {
 					module: computeModule
 				}
 			});
+	}
+
+	private _createDataBindGroup() {
+		return gpuDevice.createBindGroup(
+			{
+				label: "height field data bind group",
+				layout: heightFieldDataLayout,
+				entries:
+					[
+						{
+							binding: 0,
+							resource:
+							{
+								label: "height field data buffer binding",
+								buffer: this.dataBuffer
+							}
+						},
+						{
+							binding: 1,
+							resource: this.cacheTexture.createView()
+						},
+						{
+							binding: 2,
+							resource: this._albedo.createView()
+						},
+						{
+							binding: 3,
+							resource: gpuDevice.createSampler(
+								{
+									addressModeU: "repeat",
+									addressModeV: "repeat",
+									magFilter: "linear",
+									minFilter: "linear",
+									mipmapFilter: "linear",
+									maxAnisotropy: 16
+								}
+							)
+						}
+					]
+			});
+	}
+
+	public setAlbedo(texture: GPUTexture) {
+		this._albedo = texture;
+		this.dataBindGroup = this._createDataBindGroup();
 	}
 
 	static selectionPipeline: HeightFieldSelectionPipeline;

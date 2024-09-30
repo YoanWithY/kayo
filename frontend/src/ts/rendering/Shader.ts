@@ -42,25 +42,36 @@ export function resolveShader(code: string, map: { [key: string]: string } = {})
 	return resolveVariables(resolveIncludes(code), map);
 }
 
-export async function loadImageTexture(device: GPUDevice, imageUrl: string): Promise<GPUTexture> {
+export function getNumberOfMipMapLevels(image: ImageBitmap) {
+	return Math.log2(Math.max(image.width, image.height)) + 1;
+}
+
+export function imageToTexture(image: ImageBitmap, genMipMaps: boolean) {
+	const texture = gpuDevice.createTexture({
+		size: [image.width, image.height, 1],
+		mipLevelCount: getNumberOfMipMapLevels(image),
+		format: 'rgba8unorm',
+		usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC | GPUTextureUsage.RENDER_ATTACHMENT
+	});
+
+	gpuDevice.queue.copyExternalImageToTexture(
+		{ source: image, flipY: true },
+		{ texture: texture },
+		[image.width, image.height]
+	);
+
+	if (genMipMaps)
+		generateMipMap(texture);
+
+	return texture;
+}
+
+export async function loadImageTexture(imageUrl: string, genMipMaps: boolean): Promise<GPUTexture> {
 	const response = await fetch(imageUrl);
 	const blob = await response.blob();
 	const imageBitmap = await createImageBitmap(blob);
 
-	const texture = device.createTexture({
-		size: [imageBitmap.width, imageBitmap.height, 1],
-		mipLevelCount: Math.log2(Math.max(imageBitmap.width, imageBitmap.height)) + 1,
-		format: 'rgba8unorm',
-		usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT
-	});
-
-	device.queue.copyExternalImageToTexture(
-		{ source: imageBitmap, flipY: true },
-		{ texture: texture },
-		[imageBitmap.width, imageBitmap.height]
-	);
-
-	return texture;
+	return imageToTexture(imageBitmap, genMipMaps);
 }
 
 
