@@ -160,6 +160,26 @@ export default class mat2 {
 		return new mat2(cosa, -sina, sina, cosa);
 	}
 
+	public static rotationZ180() {
+		return mat2.fromColumnMajor(-1, 0, 0, -1);
+	}
+
+	public static rotationZ90CW() {
+		return mat2.fromColumnMajor(0, -1, 1, 0);
+	}
+
+	public static rotationZ270CW() {
+		return mat2.fromColumnMajor(0, 1, -1, 0);
+	}
+
+	public static rotationZ90CCW() {
+		return mat2.rotationZ270CW();
+	}
+	
+	public static rotationZ270CCW() {
+		return mat2.rotationZ90CW();
+	}
+
 	/**
 	 * Appends a rotation operation around the z-axis by a given angle.
 	 * @param a the angle to rotate in radians.

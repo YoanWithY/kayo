@@ -1,5 +1,5 @@
 import { gpuDevice } from "../GPUX";
-import { ParsedBlockStateModel } from "./MinecraftBlock";
+import { MinecraftBlock } from "./MinecraftBlock";
 import { minecraftBindgroup1Layout } from "./MinecraftOpaquePipeline";
 import { MinecraftWorld, PaletteEntry } from "./MinecraftWorld";
 export class MultiBlockStateSection implements MultiBlockStateSection {
@@ -9,7 +9,7 @@ export class MultiBlockStateSection implements MultiBlockStateSection {
 	y: number;
 	z: number;
 	palette: PaletteEntry[];
-	blockStates: ParsedBlockStateModel[][][];
+	blocks: MinecraftBlock[][][];
 	geomBuffer: GPUBuffer;
 	texBuffer: GPUBuffer;
 	texIndexBuffer: GPUBuffer;
@@ -31,7 +31,7 @@ export class MultiBlockStateSection implements MultiBlockStateSection {
 		this.z = z;
 		this.palette = palette;
 
-		this.blockStates = Array(16).fill(undefined).map(() =>
+		this.blocks = Array(16).fill(undefined).map(() =>
 			Array(16).fill(undefined).map(() =>
 				Array(16).fill(undefined)
 			)
@@ -77,20 +77,20 @@ export class MultiBlockStateSection implements MultiBlockStateSection {
 					const blockState = this.minecraftWorld.ressourcePack.getBlockStateByURL(block.Name);
 					if (!blockState)
 						throw new Error(`Blockstate of Block ${block} is unknown.`);
-					const blockStateModels = blockState.getVariantByProperties(block.Properties);
+					const blockStateModels = blockState.getBlockStateModelByProperties(block.Properties);
+
 					if (!blockStateModels)
 						continue
-					if (Array.isArray(blockStateModels))
-						this.blockStates[z][y][x] = blockStateModels[Math.floor(Math.random() * blockStateModels.length)];
-					else
-						this.blockStates[z][y][x] = blockStateModels;
+	
+						this.blocks[z][y][x] = new MinecraftBlock(block.Name, blockStateModels);
+							
 				}
 			}
 		}
 	}
 
-	public getBlockStateModel(x: number, y: number, z: number): ParsedBlockStateModel {
-		return this.blockStates[z][y][x];
+	public getBlock(x: number, y: number, z: number): MinecraftBlock {
+		return this.blocks[z][y][x];
 	}
 
 	public buildGeometry() {
@@ -102,10 +102,10 @@ export class MultiBlockStateSection implements MultiBlockStateSection {
 		for (let z = 0; z < 16; z++) {
 			for (let y = 0; y < 16; y++) {
 				for (let x = 0; x < 16; x++) {
-					const blockState = this.getBlockStateModel(x, y, z);
-					if (!blockState)
+					const block = this.getBlock(x, y, z);
+					if (!block)
 						continue
-					this.faceNumber += blockState.build(geom, tex, texIndex, x, y, z);
+					this.faceNumber += block.build(geom, tex, texIndex, x, y, z);
 					i++;
 				}
 			}

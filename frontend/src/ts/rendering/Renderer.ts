@@ -281,6 +281,7 @@ export default class Renderer {
 		minePipe.fragmentConstants["componentTranfere"] = outConsts["componentTranfere"];
 		minePipe.fragmentTargets[0].format = format;
 		minePipe.multisample.count = msaa;
+		minePipe.multisample.alphaToCoverageEnabled = msaa > 1;
 		minePipe.buildPipeline();
 
 		this.compositingPipeline.fragmentTargets[0].format = format;

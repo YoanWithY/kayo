@@ -7,22 +7,29 @@ export default class LookAtTransform implements Transformation {
     /**
      * The Point to look at.
      */
-    p = new vec3();
+    p: vec3;
 
     /**
      * The polar angle.
      */
-    theta = Maths.toRAD(90);
+    theta: number;
 
     /**
      * The azimuthal angle.
      */
-    phi = 0;
+    phi: number;
 
     /**
      * The distance to the point (radius on the sphere).
      */
-    r = 15;
+    r: number
+
+    constructor(p = new vec3(), r = 15, theta= Maths.toRAD(90), phi = 0) {
+        this.p = p;
+        this.r = r;
+        this.theta = theta;
+        this.phi = phi;
+    }
 
     getTransformationMatrix() {
         const dir = vec3.sphericalToEuclidean(this.theta, this.phi, this.r);

@@ -1,3 +1,4 @@
+import mat2 from "../math/mat2";
 import mat3 from "../math/mat3";
 import { toRAD } from "../math/math";
 import vec2 from "../math/vec2";
@@ -11,7 +12,7 @@ export type BlockDisplayMode = "thirdperson_righthand" | "thirdperson_lefthand" 
 export type ElementFace = "down" | "up" | "north" | "south" | "west" | "east";
 
 type ParsedFace = {
-	uv?: [number, number, number, number],
+	uv: [number, number, number, number],
 	texture: string | MinecraftTexture,
 	cullface: ElementFace,
 	rotation: 0 | 90 | 180 | 270,
@@ -74,45 +75,20 @@ class BuiltFace {
 	geomTangent: vec3;
 	geomBitangent: vec3;
 	texture?: MinecraftTexture;
+	tint: boolean = false;
 	constructor(parsedFace: ParsedFace, parsedElement: ParsedBlockModelElement, parsedBlockStateModel: ParsedBlockStateModel, faceKey: ElementFace) {
+		if(parsedFace.tintindex !== undefined)
+			this.tint = parsedFace.tintindex !== -1;
 		if(parsedFace.texture instanceof MinecraftTexture)
 			this.texture = parsedFace.texture;
 		const from = parsedElement.from;
 		const to = parsedElement.to;
 
-		if(parsedFace.uv) {
+		
 			this.uvOrigin = new vec2(parsedFace.uv[0], 16 - parsedFace.uv[1]).divS(16);
 			this.uvTangent = new vec2(parsedFace.uv[2] - parsedFace.uv[0], 0).divS(16);
 			this.uvBitangent = new vec2(0, -(parsedFace.uv[3] - parsedFace.uv[1])).divS(16);
-		} else {
-			this.uvOrigin = new vec2(0, 0);
-			this.uvTangent = new vec2(1, 0);
-			this.uvBitangent = new vec2(0, 1);
-		}
-
-		switch(parsedFace.rotation) {
-			case 0: {
-				break;
-			}
-			case 90:{
-				this.uvOrigin = this.uvOrigin.add(this.uvBitangent);
-				this.uvTangent = new vec2(-this.uvTangent.y, this.uvTangent.x);
-				this.uvBitangent = new vec2(-this.uvBitangent.y, this.uvBitangent.x);
-				break;
-			}
-			case 180:{
-				this.uvOrigin = this.uvOrigin.add(this.uvTangent).add(this.uvBitangent);
-				this.uvTangent = this.uvTangent.mulS(-1);
-				this.uvBitangent = this.uvBitangent.mulS(-1);
-				break;
-			}
-			case 270:{
-				this.uvOrigin = this.uvOrigin.add(this.uvTangent);
-				this.uvTangent = new vec2(this.uvTangent.y, -this.uvTangent.x);
-				this.uvBitangent = new vec2(this.uvBitangent.y, -this.uvBitangent.x);
-				break;
-			}
-		}
+	
 
 		switch (faceKey) {
 			case "down": {
@@ -149,6 +125,32 @@ class BuiltFace {
 				this.geomOrigin = new vec3(to[0] / 16, to[1] / 16, to[2] / 16);
 				this.geomTangent = new vec3(0, 0, (from[2] - to[2]) / 16);
 				this.geomBitangent = new vec3(0, (from[1] - to[1]) / 16, 0);
+				break;
+			}
+		}
+
+		switch(parsedFace.rotation) {
+			case 0: {
+				break;
+			}
+			case 90:{
+				this.uvOrigin = this.uvOrigin.add(this.uvBitangent);
+				const b = this.uvBitangent;
+				this.uvBitangent = this.uvTangent
+				this.uvTangent = b.mulS(-1);
+				break;
+			}
+			case 180:{
+				this.uvOrigin = this.uvOrigin.add(this.uvTangent).add(this.uvBitangent);
+				this.uvTangent = this.uvTangent.mulS(-1);
+				this.uvBitangent = this.uvBitangent.mulS(-1);
+				break;
+			}
+			case 270:{
+				this.uvOrigin = this.uvOrigin.add(this.uvTangent);
+				const t = this.uvTangent;
+				this.uvTangent = this.uvBitangent
+				this.uvBitangent = t.mulS(-1);
 				break;
 			}
 		}
@@ -201,6 +203,7 @@ class BuiltFace {
 			this.geomOrigin = rotX.multVec(this.geomOrigin.sub(origin)).add(origin);
 			this.geomTangent = rotX.multVec(this.geomTangent);
 			this.geomBitangent = rotX.multVec(this.geomBitangent);
+			
 		}
 
 		if(parsedBlockStateModel.y) {
@@ -223,6 +226,48 @@ class BuiltFace {
 			this.geomOrigin = rotY.multVec(this.geomOrigin.sub(origin)).add(origin);
 			this.geomTangent = rotY.multVec(this.geomTangent);
 			this.geomBitangent = rotY.multVec(this.geomBitangent);
+
+			if(parsedBlockStateModel.uvlock) {
+				if(faceKey === "down") {
+					let uvRot:mat2;
+					switch(parsedBlockStateModel.y) {
+						case 90: {
+							uvRot = mat2.rotationZ90CW();
+							break;
+						}
+						case 180: {
+							uvRot = mat2.rotationZ180();
+							break;
+						}
+						case 270: {
+							uvRot = mat2.rotationZ270CW();
+							break;
+						}
+					}
+					this.uvOrigin = uvRot.multVec(this.uvOrigin.subS(0.5)).addS(0.5);
+					this.uvTangent = uvRot.multVec(this.uvTangent);
+					this.uvBitangent = uvRot.multVec(this.uvBitangent);
+				} else if(faceKey === "up") {
+					let uvRot:mat2;
+					switch(parsedBlockStateModel.y) {
+						case 90: {
+							uvRot = mat2.rotationZ90CW();
+							break;
+						}
+						case 180: {
+							uvRot = mat2.rotationZ180();
+							break;
+						}
+						case 270: {
+							uvRot = mat2.rotationZ270CW();
+							break;
+						}
+					}
+					this.uvOrigin = uvRot.multVec(this.uvOrigin.subS(0.5)).addS(0.5);
+					this.uvTangent = uvRot.multVec(this.uvTangent);
+					this.uvBitangent = uvRot.multVec(this.uvBitangent);
+				}					
+			}
 		}
 	}
 }
@@ -355,17 +400,17 @@ export class ParsedBlockModel {
 			const from = e.from;
 			const to = e.to;
 			if (faces.down && !faces.down.uv)
-				faces.down.uv = [from[0], from[1], to[0], to[1]];
+				faces.down.uv = [from[0], 16 - to[2], to[0], 16 - from[2]];
 			if (faces.up && !faces.up.uv)
-				faces.up.uv = [from[0], from[1], to[0], to[1]];
+				faces.up.uv = [from[0], from[2], to[0], to[2]];
 			if (faces.north && !faces.north.uv)
-				faces.north.uv = [from[0], from[1], to[0], to[1]];
+				faces.north.uv = [16 - to[0], 16 - to[1], 16 - from[0], 16 - from[1]];
 			if (faces.east && !faces.east.uv)
-				faces.east.uv = [from[0], from[1], to[0], to[1]];
+				faces.east.uv = [16 - to[2], 16 - to[1], 16 - from[2], 16 - from[1]];
 			if (faces.south && !faces.south.uv)
-				faces.south.uv = [from[0], from[1], to[0], to[1]];
+				faces.south.uv = [from[0], 16 - to[1], to[0], 16 - from[1]];
 			if (faces.west && !faces.west.uv)
-				faces.west.uv = [from[0], from[1], to[0], to[1]];
+				faces.west.uv = [from[2], 16 - to[1], to[2], 16- from[1]];
 		}
 	}
 
@@ -395,7 +440,8 @@ class BuiltBlockModel {
 					continue
 				geom.push(...face.geomOrigin.add(pos), ...face.geomTangent, ...face.geomBitangent);
 				tex.push(...face.uvOrigin, ...face.uvTangent, ...face.uvBitangent);
-				texIndex.push(face.texture ? face.texture.layer : 0);
+				texIndex.push(face.texture ? face.texture.layer : 0, face.tint ? 1 : 0);
+				
 				faceCount++;
 			}
 		}
@@ -424,6 +470,8 @@ export class ParsedBlockStateModel {
 			this.y = parsed.y;
 		if (parsed.weight !== undefined)
 			this.weight = parsed.weight;
+		if (parsed.uvlock !== undefined)
+			this.uvlock = parsed.uvlock;
 		this.builtModel = new BuiltBlockModel(this);
 	}
 
@@ -441,7 +489,7 @@ export class ObjMap<T> {
 
 	find(key: any): T | undefined {
 		const res = this.keyValuePairs.filter((val) => {
-			for (const subKey in key) {
+			for (const subKey in val.key) {
 				if (val.key[subKey] !== key[subKey])
 					return false
 			}
@@ -453,10 +501,115 @@ export class ObjMap<T> {
 	}
 }
 
+class Matcher {
+	matches(_: any):boolean {
+		return true;
+	}
+}
+
+class StateMatcher extends Matcher{
+	key: string;
+	values: string[];
+	constructor(key: string, values: string) {
+		super();
+		this.key = key;
+		this.values = values.split("|");
+	}
+	matches(properties: any): boolean {
+		const propValue = properties[this.key];
+		if(!propValue)
+			return false;
+		return this.values.includes(propValue);
+	}
+}
+
+class OrMatcher extends Matcher{
+	conditions: StateMatcher[][] = [];
+	constructor(parsed: any) {
+		super();
+		for(const obj of parsed) {
+			const smArray: StateMatcher[] = [];
+			for(const key in obj)
+				smArray.push(new StateMatcher(key, obj[key]));
+			this.conditions.push(smArray);
+		}
+	}
+	matches(properties: any): boolean {
+		for(const smArr of this.conditions) {
+			let matches = true;
+			for(const m of smArr) {
+				if(!m.matches(properties))
+					matches = false;
+			}
+			if(!matches)
+				continue;
+			return true;
+		}
+ 		return false;
+	}
+}
+
+class AndMatcher extends Matcher{
+	conditions: StateMatcher[][] = [];
+	constructor(parsed: any) {
+		super();
+		for(const obj of parsed) {
+			const smArray: StateMatcher[] = [];
+			for(const key in obj)
+				smArray.push(new StateMatcher(key, obj[key]));
+			this.conditions.push(smArray);
+		}
+	}
+	matches(properties: any): boolean {
+		for(const smArr of this.conditions) {
+			for(const m of smArr) {
+				if(!m.matches(properties))
+					return false;
+			}
+		}
+ 		return true;
+	}
+}
+
+class MultiPartCase {
+	apply: ParsedBlockStateModel | ParsedBlockStateModel[];
+	when: Matcher;
+	constructor(res: ResourcePack, parsed: any) {
+		if(Array.isArray(parsed.apply)) {
+			this.apply = [];
+			for(const key in parsed.apply)
+				this.apply.push(new ParsedBlockStateModel(res, parsed.apply[key]));
+		} else {
+			this.apply = new ParsedBlockStateModel(res, parsed.apply);
+		}
+
+		const parsedWhen = parsed.when;
+		if(parsedWhen === undefined) {
+			this.when = new Matcher();
+			return;
+		}
+
+		const whenOR = parsedWhen.OR;
+		if(whenOR !== undefined) {
+			this.when = new OrMatcher(whenOR);
+			return;
+		}
+
+		const whenAND = parsedWhen.AND;
+		if(whenAND !== undefined) {
+			this.when = new AndMatcher(whenAND);
+			return;
+		}
+
+		const key = Object.keys(parsedWhen)[0];
+		this.when = new StateMatcher(key, parsedWhen[key]);
+	}
+}
+
 export class BlockState {
 	name: string;
 	variants?: ObjMap<ParsedBlockStateModel | ParsedBlockStateModel[]>;
-	multipart?: {}[];
+	multipart?: MultiPartCase[];
 
 	constructor(res: ResourcePack, name: string, parsed: any) {
 		this.name = name;
@@ -476,7 +629,14 @@ export class BlockState {
 					this.variants.add(mapKey, new ParsedBlockStateModel(res, value));
 				}
 			}
-		};
+			return;
+		}
+
+		if(parsed.multipart !== undefined) {
+			this.multipart = [];
+			for(const parsedMultipartCase of parsed.multipart)
+				this.multipart.push(new MultiPartCase(res, parsedMultipartCase));
+		}
 	}
 
 	public parseVariantKey(key: string): any {
@@ -493,24 +653,29 @@ export class BlockState {
 	}
 
 
-	public getVariantByProperties(properties: any): ParsedBlockStateModel | ParsedBlockStateModel[] | undefined {
-		if (!this.variants)
-			return undefined;
-		if (!properties)
-			return this.variants.find({});
-		return this.variants.find(properties);
-	}
+	public getBlockStateModelByProperties(properties: any): ParsedBlockStateModel | ParsedBlockStateModel[] | undefined {
+		if (this.variants) {
+			const models = this.variants.find(properties === undefined ? {} : properties)
+			if(Array.isArray(models))
+				return models[Math.floor(Math.random() * models.length)];
+			else
+				return models;
+		}
 
-	public build(geom: number[], tex: number[], texIndex: number[], properties: any, x: number, y: number, z: number): number {
-		if (!this.variants)
-			return 0;
-
-		const blockModels = this.getVariantByProperties(properties);
-		const blockModel = Array.isArray(blockModels) ? blockModels[Math.floor(Math.random() * blockModels.length)] : blockModels;
-		if (!blockModel)
-			return 0;
-
-		return blockModel.build(geom, tex, texIndex, x, y, z);
+		if (this.multipart) {
+			const tempArray: ParsedBlockStateModel[] = [];
+			for(const mpCase of this.multipart) {
+				if(mpCase.when.matches(properties)) {
+					const apply = mpCase.apply;
+					if(Array.isArray(apply))
+						tempArray.push(apply[Math.floor(Math.random() * apply.length)]);
+					else
+						tempArray.push(apply);
+				}
+			}
+			return tempArray;
+		}
+		return undefined;
 	}
 }
 
@@ -525,20 +690,28 @@ export class BlockState {
 // 	}
 // }
 
-// class MinecraftBlock {
-// 	name: string;
-// 	quads: ParsedBlockModelElement[] = [];
-// 	northFace: BlockFace;
-// 	eastFace: BlockFace;
-// 	southFace: BlockFace;
-// 	westFace: BlockFace;
-// 	topFace: BlockFace;
-// 	bottomFace: BlockFace;
-// 	constructor(blockStateModel: BlockStateModel) {
-// 		const model = blockStateModel.model;
-// 		this.name = blockStateModel.model.name;
-// 		for(const e in model.elements) {
-// 			const element = new ParsedBlockModelElement
-// 		}
-// 	}
-// }
+export class MinecraftBlock {
+	name: string;
+	parsedBlockStateModels: ParsedBlockStateModel | ParsedBlockStateModel[];
+	// northFace: BlockFace;
+	// eastFace: BlockFace;
+	// southFace: BlockFace;
+	// westFace: BlockFace;
+	// topFace: BlockFace;
+	// bottomFace: BlockFace;
+	constructor(name: string, blockStateModels:  ParsedBlockStateModel | ParsedBlockStateModel[]) {
+		this.name = name;
+		this.parsedBlockStateModels = blockStateModels;
+	}
+
+	build(geom: number[], tex: number[], texIndex: number[], x: number, y: number, z: number): number {
+		if(Array.isArray(this.parsedBlockStateModels)) {
+			let faceNumber = 0;
+			for(const parsedBlockStateModel of this.parsedBlockStateModels)
+				faceNumber += parsedBlockStateModel.build(geom, tex,  texIndex, x, y, z);
+			return faceNumber;
+		} else {
+			return this.parsedBlockStateModels.build(geom, tex, texIndex, x, y, z);
+		}
+	}
+}

@@ -35,7 +35,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 			box: "device-pixel-content-box"
 		});
 
-		const lookAt = new LookAtTransform();
+		const lookAt = new LookAtTransform(new vec3(8, 8, 150), 5);
 		this.camera.transformationStack.push(lookAt);
 
 		const rotateView = (dx: number, dy: number) => {

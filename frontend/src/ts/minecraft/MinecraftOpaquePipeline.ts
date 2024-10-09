@@ -93,9 +93,10 @@ export class MinecraftOpaquePipeline extends AbstractPipeline {
 				stepMode: "instance"
 			},
 			{
-				arrayStride: 4,
+				arrayStride: 8,
 				attributes: [
 					{ shaderLocation: 6, offset: 0, format: "uint32" },
+					{ shaderLocation: 7, offset: 4, format: "uint32" },
 				],
 				stepMode: "instance"
 			}
@@ -103,7 +104,7 @@ export class MinecraftOpaquePipeline extends AbstractPipeline {
 		this.fragmentConstants = project.getDisplayFragmentOutputConstants();
 		this.topology = "triangle-strip";
 		this.cullMode = "back";
-		this.depthCompare = "less";
+		this.depthCompare = "less-equal";
 		this.depthWriteEnabled = true;
 		this.depthStencilFormat = Renderer.getDepthStencilFormat();
 		this.fragmentTargets = project.getFragmentTargets();

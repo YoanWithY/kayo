@@ -28,7 +28,7 @@ export class SingleBlockStateSection implements Section {
 		this.paletteEntry = paletteEntry;
 		const blockState = this.minecraftWorld.ressourcePack.getBlockStateByURL(this.paletteEntry.Name);
 		if (blockState) {
-			const blockStateModels = blockState.getVariantByProperties(paletteEntry.Properties);
+			const blockStateModels = blockState.getBlockStateModelByProperties(paletteEntry.Properties);
 			if (blockStateModels)
 				if (Array.isArray(blockStateModels))
 					this.blockStateModel = blockStateModels[0];
