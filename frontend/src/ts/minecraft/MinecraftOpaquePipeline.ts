@@ -64,7 +64,7 @@ export class MinecraftOpaquePipeline extends AbstractPipeline {
 	depthStencilFormat: GPUTextureFormat;
 	depthCompare: GPUCompareFunction;
 	depthWriteEnabled: boolean;
-	frontFace: GPUFrontFace = "cw";
+	frontFace: GPUFrontFace = "ccw";
 	project: Project;
 
 	constructor(project: Project, label: string) {
@@ -84,17 +84,18 @@ export class MinecraftOpaquePipeline extends AbstractPipeline {
 				stepMode: "instance"
 			},
 			{
-				arrayStride: 4 * 4,
+				arrayStride: 6 * 4,
 				attributes: [
 					{ shaderLocation: 3, offset: 0, format: "float32x2" },
 					{ shaderLocation: 4, offset: 2 * 4, format: "float32x2" },
+					{ shaderLocation: 5, offset: 4 * 4, format: "float32x2" },
 				],
 				stepMode: "instance"
 			},
 			{
 				arrayStride: 4,
 				attributes: [
-					{ shaderLocation: 5, offset: 0, format: "uint32" },
+					{ shaderLocation: 6, offset: 0, format: "uint32" },
 				],
 				stepMode: "instance"
 			}
@@ -147,10 +148,9 @@ export class MinecraftOpaquePipeline extends AbstractPipeline {
 							label: "all block texture array",
 							addressModeU: "clamp-to-edge",
 							addressModeV: "clamp-to-edge",
-							magFilter: "linear",
+							magFilter: "nearest",
 							minFilter: "linear",
 							mipmapFilter: "linear",
-							maxAnisotropy: 16
 						}
 					)
 				}

@@ -362,9 +362,7 @@ export default class Renderer {
 
 			r3renderPassEncoder.setPipeline(MinecraftOpaquePipeline.pipeline.gpuPipeline);
 			r3renderPassEncoder.setBindGroup(2, MinecraftOpaquePipeline.bindGroup2)
-			for (const section of this.project.scene.minecraftSections) {
-				section.render(r3renderPassEncoder);
-			}
+			this.project.scene.minecraftWorld?.render(r3renderPassEncoder);
 			r3renderPassEncoder.end();
 
 			if (viewport.useOverlays) {

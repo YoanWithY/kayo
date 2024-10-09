@@ -1,6 +1,6 @@
 import { ZipInfo } from "unzipit";
 import { MinecraftTexture } from "./MinecraftTexture";
-import { BlockModel, BlockState } from "./MinecraftBlock";
+import { ParsedBlockModel, BlockState } from "./MinecraftBlock";
 import { gpuDevice } from "../GPUX";
 
 export class MinecraftNamespaceResources {
@@ -31,7 +31,7 @@ export class ResourcePack {
 		return namespace;
 	}
 
-	getModelByURL(rl: string): BlockModel | undefined {
+	getModelByURL(rl: string): ParsedBlockModel | undefined {
 		let namespacename = "minecraft";
 		const parts = rl.split(":");
 		let path = rl;
@@ -71,7 +71,7 @@ export class ResourcePack {
 			const namespaceres = this.namespaceResources[namespaceName];
 			const blockModels = namespaceres.models.block;
 			for (const b in blockModels) {
-				(blockModels[b] as BlockModel).expandRecursevly(this);
+				(blockModels[b] as ParsedBlockModel).expandRecursevly(this);
 			}
 		}
 
@@ -79,7 +79,7 @@ export class ResourcePack {
 			const namespaceres = this.namespaceResources[namespaceName];
 			const blockModels = namespaceres.models.block;
 			for (const b in blockModels) {
-				(blockModels[b] as BlockModel).resolveTextuers(this);
+				(blockModels[b] as ParsedBlockModel).resolveTextuers(this);
 			}
 		}
 
@@ -183,7 +183,7 @@ export class ResourcePack {
 
 					entries[key].json().then(object => {
 						const blockName = filename.substring(0, filename.length - 5);
-						typeContainer[blockName] = new BlockModel(blockName, object);
+						typeContainer[blockName] = new ParsedBlockModel(blockName, object);
 						update(key);
 					})
 					break;

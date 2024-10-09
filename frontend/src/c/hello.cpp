@@ -146,7 +146,7 @@ emscripten::val getSectionView(std::string world, int dimension, int sectionX, i
 	auto section = minecraftWorld->getSectionsByDimension(dimension)[std::make_tuple(sectionX, sectionY, sectionZ)];
 	if (!section) {
 		std::ostringstream oss;
-		oss << "The given section at dimension: " << dimension << ", X: " << sectionX << ", Y: " << sectionY << ", Z: " << sectionZ << " is not known." << std::endl;
+		oss << "The given section at dimension: " << dimension << ", X: " << sectionX << ", Y: " << int(sectionY) << ", Z: " << sectionZ << " is not known." << std::endl;
 		throw std::runtime_error(oss.str());
 	}
 	return emscripten::val(emscripten::typed_memory_view(4096 * 2, section));

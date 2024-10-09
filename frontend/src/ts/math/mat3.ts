@@ -53,6 +53,30 @@ export default class mat3 {
 		return new mat3(1, 0, 0, 0, 1, 0, 0, 0, 1);
 	}
 
+	public static rotationX90(): mat3 {
+		return mat3.fromColumnMajor(1, 0, 0, 0, 0, -1, 0, 1, 0);
+	}
+	
+	public static rotationX180(): mat3 {
+		return mat3.fromColumnMajor(1, 0, 0, 0, -1, 0, 0, 0, -1);
+	}
+	
+	public static rotationX270(): mat3 {
+		return mat3.fromColumnMajor(1, 0, 0, 0, 0, 1, 0, -1, 0);
+	}
+
+	public static rotationY90(): mat3 {
+		return mat3.fromColumnMajor(0, 0, 1, 0, 1, 0, -1, 0, 0);
+	}
+	
+	public static rotationY180(): mat3 {
+		return mat3.fromColumnMajor(-1, 0, 0, 0, 1, 0, 0, 0, -1);
+	}
+	
+	public static rotationY270(): mat3 {
+		return mat3.fromColumnMajor(0, 0, -1, 0, 1, 0, 1, 0, 0);
+	}
+
 	public transpose(): mat3 {
 		return new mat3(this[0], this[3], this[6], this[1], this[4], this[7], this[2], this[5], this[8]);
 	}

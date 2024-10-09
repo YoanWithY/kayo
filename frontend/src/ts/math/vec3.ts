@@ -165,6 +165,10 @@ export default class vec3 implements vec<vec3> {
 		return new vec3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x);
 	}
 
+	public apply(f: (c: number) => number) {
+		return new vec3(f(this.x), f(this.y), f(this.z));
+	}
+
 	/**
 	 * (θ, φ, r) → (x, y, z) following ISO/IEC 80000:
 	 * 

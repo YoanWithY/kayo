@@ -7,9 +7,11 @@ import { Project } from "../../project/Project";
 import { wasmInstance } from "../../../c/wasmHello";
 import { unzip } from "unzipit";
 import { ResourcePack } from "../../minecraft/ResourcePack";
-import { Section } from "../../minecraft/Section";
+import { MultiBlockStateSection } from "../../minecraft/MultiBlockStateSection";
 import HeightFieldR3 from "../../dynamicObject/heightField/HeightFieldR3";
 import { MinecraftOpaquePipeline } from "../../minecraft/MinecraftOpaquePipeline";
+import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
+import { Section, SingleBlockStateSection } from "../../minecraft/AbstractSection";
 
 export class WrappingPane extends HTMLElement {
 	project!: Project;
@@ -75,12 +77,23 @@ export class WrappingPane extends HTMLElement {
 						console.log(".msc")
 						try {
 							wasmInstance.openRegion("World", 0, 0, 0, content);
+							const mWorld = new MinecraftWorld("World", res);
+							project.scene.minecraftWorld = mWorld;
 							console.log(wasmInstance.buildChunk("World", 0, 0, 0));
 							wasmInstance.setActiveChunk("World", 0, 0, 0);
-							for (let y = -4; y < 10; y++) {
-								const palette = JSON.parse(wasmInstance.getPalette(y));
-								const section = new Section(res, 0, 0, y, 0, palette, wasmInstance.getSectionView("World", 0, 0, y, 0));
-								project.scene.minecraftSections.add(section);
+							for (let y = -4; y < 11; y++) {
+								const palette = JSON.parse(wasmInstance.getPalette(y)) as PaletteEntry[];
+								let section: Section;
+								if (palette.length === 1) {
+									section = new SingleBlockStateSection(mWorld, 0, 0, y, 0, palette[0]);
+									section;
+								}
+								else {
+									const sectionDataView = wasmInstance.getSectionView("World", 0, 0, y, 0);
+									const section = new MultiBlockStateSection(mWorld, 0, 0, y, 0, palette, sectionDataView);
+									section.buildGeometry();
+									project.scene.minecraftWorld.sections[`${0},${y},${0}`] = section;
+								}
 							}
 
 						} catch (e) {

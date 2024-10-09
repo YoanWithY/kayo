@@ -41,4 +41,7 @@ export class MinecraftTexture {
 			}
 		}
 	}
+	isOpaque(): boolean {
+		return !this.hasSemiTransparent && !this.hasTransparent;
+	}
 }
