@@ -69,6 +69,10 @@ export default class mat4 {
 		return new mat4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 	}
 
+	public getColumn(c: number) {
+		return new vec4(this[c], this[c + 4], this[c + 8], this[c + 12]);
+	}
+
 	public transpose(): mat4 {
 		return new mat4(this[0], this[4], this[8], this[12], this[1], this[5], this[9], this[13], this[2], this[6], this[10], this[14], this[3], this[7], this[11], this[15]);
 	}

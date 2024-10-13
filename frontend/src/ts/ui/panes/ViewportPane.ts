@@ -1,5 +1,6 @@
 import { gpuDevice } from "../../GPUX";
 import ViewportCamera from "../../Viewport/ViewportCamera";
+import mat3 from "../../math/mat3";
 import vec2 from "../../math/vec2";
 import vec3 from "../../math/vec3";
 import { Project } from "../../project/Project";
@@ -49,7 +50,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 			lookAt.p = lookAt.p.add(lat.mulS(-dx / 256 * lookAt.r).add(lon.mulS(-dy / 256 * lookAt.r)));
 		}
 
-		const move = (e: MouseEvent) => {
+		const orbitMove = (e: MouseEvent) => {
 			if (e.shiftKey)
 				shiftView(e.movementX, e.movementY)
 			else
@@ -57,26 +58,83 @@ export class ViewportPane extends HTMLElement implements Viewport {
 			this.project.renderer.requestAnimationFrameWith(this);
 		}
 
+		const walkLook = (e: MouseEvent) => {
+			const camPos1 = this.camera.getWorldLocation();
+			const dphi = e.movementX / 256;
+			const dtheta = e.movementY / 256;
+			lookAt.phi -= dphi;
+			lookAt.theta -= dtheta;
+			const camPos2 = this.camera.getWorldLocation();
+			lookAt.p = lookAt.p.add(camPos1.sub(camPos2));
+			this.project.renderer.requestAnimationFrameWith(this);
+		}
+
+		let intID: number | undefined = undefined;
+		let keyMap: any = {};
+		let speed = 0.25;
 		const mm = (e: MouseEvent) => {
-			if (e.buttons === 1 && !document.pointerLockElement) {
-				this.requestPointerLock();
-				this.addEventListener("mousemove", move);
-				move(e);
+			if (document.pointerLockElement)
+				return;
+
+			this.requestPointerLock();
+			if (e.buttons === 4) {
+				this.addEventListener("mousemove", orbitMove);
+				orbitMove(e);
+			} else if (e.buttons === 2) {
+				this.addEventListener("mousemove", walkLook);
+				walkLook(e);
+				const walkMove = () => {
+					const mat = this.camera.transformationStack.getTransformationMatrix();
+					if (keyMap["w"]) {
+						lookAt.p = lookAt.p.sub(mat.getColumn(2).xyz.mulS(speed));
+						this.project.renderer.requestAnimationFrameWith(this);
+					}
+
+					if (keyMap["s"]) {
+						lookAt.p = lookAt.p.sub(mat.getColumn(2).xyz.mulS(-speed));
+						this.project.renderer.requestAnimationFrameWith(this);
+					}
+
+					if (keyMap["a"]) {
+						lookAt.p = lookAt.p.sub(mat.getColumn(0).xyz.mulS(speed));
+						this.project.renderer.requestAnimationFrameWith(this);
+					}
+
+					if (keyMap["d"]) {
+						lookAt.p = lookAt.p.sub(mat.getColumn(0).xyz.mulS(-speed));
+						this.project.renderer.requestAnimationFrameWith(this);
+					}
+				}
+				walkMove();
+				clearInterval(intID);
+				intID = setInterval(walkMove, 8);
 			}
 		}
 
-		this.onmousedown = () => {
+		document.body.addEventListener("keydown", e => keyMap[e.key] = true);
+		document.body.addEventListener("keyup", e => delete keyMap[e.key]);
+
+		this.onmousedown = (e) => {
+			e.preventDefault();
 			this.addEventListener("mousemove", mm);
 		}
 
 		this.onmouseup = () => {
-			this.removeEventListener("mousemove", move);
+			this.removeEventListener("mousemove", walkLook);
+			this.removeEventListener("mousemove", orbitMove);
+			clearInterval(intID);
+			intID = undefined;
 			this.removeEventListener("mousemove", mm);
 			document.exitPointerLock();
 		}
 
 		this.addEventListener("wheel", e => {
 			e.preventDefault();
+			if (intID !== undefined) {
+				speed *= 1.0 - e.deltaY / 300;
+				this.project.renderer.requestAnimationFrameWith(this);
+				return;
+			}
 			const val = e.deltaY / window.devicePixelRatio;
 			lookAt.r += lookAt.r * val / 1024;
 			this.project.renderer.requestAnimationFrameWith(this);
@@ -132,8 +190,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 		});
 	}
 
-
-	useOverlays: boolean = false;
+	useOverlays: boolean = true;
 
 	private viewBuffer = new Float32Array(3 * 16 + 4);
 	private viewTimeBuffer = new Uint32Array(8);
@@ -174,6 +231,8 @@ export class ViewportPane extends HTMLElement implements Viewport {
 
 	static createViewportPane(project: Project) {
 		const p = document.createElement("viewport-pane") as ViewportPane;
+		p.setAttribute("tabindex", "-1");
+		p.focus();
 		p.project = project;
 		p.appendChild(p.canvas);
 		return p;
