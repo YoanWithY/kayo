@@ -39,6 +39,8 @@ void buildChunkSections(std::map<std::tuple<int, int8_t, int>, const uint16_t*>&
 		NBT::CompoundTag* section = sectionBase->as<NBT::CompoundTag>();
 		int8_t yPos = section->getTag<NBT::ByteTag>("Y")->value;
 		NBT::CompoundTag* block_states = section->getTag<NBT::CompoundTag>("block_states");
+		if (!block_states)
+			continue;
 		NBT::ListTag* palette = block_states->getTag<NBT::ListTag>("palette");
 		int paletteSize = palette->value.size();
 		if (paletteSize <= 1)

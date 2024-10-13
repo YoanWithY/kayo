@@ -2,6 +2,7 @@ import { ZipInfo } from "unzipit";
 import { MinecraftTexture } from "./MinecraftTexture";
 import { ParsedBlockModel, BlockState } from "./MinecraftBlock";
 import { gpuDevice } from "../GPUX";
+import { getNumberOfMipMapLevels } from "../rendering/Shader";
 
 export class MinecraftNamespaceResources {
 	namespace: string;
@@ -14,12 +15,14 @@ export class MinecraftNamespaceResources {
 }
 
 export class ResourcePack {
+	fallback: ResourcePack | undefined;
 	name: string;
 	namespaceResources: { [key: string]: MinecraftNamespaceResources };
 	allBlockTextures!: GPUTexture;
-	constructor(name: string) {
+	constructor(name: string, fallback?: ResourcePack) {
 		this.name = name;
 		this.namespaceResources = {};
+		this.fallback = fallback;
 	}
 
 	getNamespace(namespaceName: string) {
@@ -40,7 +43,18 @@ export class ResourcePack {
 			path = parts[1];
 		}
 		const resPath = path.split("/");
-		return this.getNamespace(namespacename).models[resPath[0]][resPath[1]];
+		const namespaceRes = this.getNamespace(namespacename);
+		let ret: ParsedBlockModel | undefined = namespaceRes.models[resPath[0]][resPath[1]];
+		if (!ret && this.fallback !== undefined) {
+			ret = this.fallback.getModelByURL(rl);
+			if (ret) {
+				const bm = new ParsedBlockModel(resPath[1], ret.parsed);
+				bm.prep(this);
+				namespaceRes.models[resPath[0]][resPath[1]] = bm;
+				ret = bm;
+			}
+		}
+		return ret;
 	}
 
 	getTextureByURL(rl: string): MinecraftTexture | undefined {
@@ -52,7 +66,10 @@ export class ResourcePack {
 			path = parts[1];
 		}
 		const resPath = path.split("/");
-		return this.getNamespace(namespacename).textures[resPath[0]][resPath[1]];
+		let ret: MinecraftTexture | undefined = this.getNamespace(namespacename).textures[resPath[0]][resPath[1]];
+		if (!ret && this.fallback !== undefined)
+			ret = this.fallback.getTextureByURL(rl);
+		return ret;
 	}
 
 	getBlockStateByURL(rl: string): BlockState | undefined {
@@ -63,7 +80,17 @@ export class ResourcePack {
 			namespacename = parts[0];
 			path = parts[1];
 		}
-		return this.getNamespace(namespacename).blockstates[path];
+		const namespaceRes = this.getNamespace(namespacename);
+		let ret: BlockState | undefined = namespaceRes.blockstates[path];
+		if (!ret && this.fallback !== undefined) {
+			ret = this.fallback.getBlockStateByURL(rl);
+			if (ret) {
+				const bs = new BlockState(this, path, ret.parsed);
+				namespaceRes.blockstates[path] = bs;
+				ret = bs;
+			}
+		}
+		return ret;
 	}
 
 	initialize() {
@@ -79,7 +106,7 @@ export class ResourcePack {
 			const namespaceres = this.namespaceResources[namespaceName];
 			const blockModels = namespaceres.models.block;
 			for (const b in blockModels) {
-				(blockModels[b] as ParsedBlockModel).resolveTextuers(this);
+				(blockModels[b] as ParsedBlockModel).resolveTextures(this);
 			}
 		}
 
@@ -93,49 +120,59 @@ export class ResourcePack {
 
 		for (const namespaceName in this.namespaceResources) {
 			const namespaceres = this.namespaceResources[namespaceName];
-			const blokTextures = namespaceres.textures.block;
+			const blockTextures = namespaceres.textures.block;
+
+			if (!blockTextures)
+				continue;
+
 			let blockTextureCount = 0;
-			for (const _ in blokTextures)
+			for (const _ in blockTextures)
 				blockTextureCount++;
 
+
+			const refImage = blockTextures.stone.image;
+			const mipLevels = getNumberOfMipMapLevels(refImage);
 			this.allBlockTextures = gpuDevice.createTexture({
+				label: `all block textures array for ${this.name}`,
 				format: "rgba8unorm",
-				size: [16, 16, blockTextureCount],
+				size: [refImage.width, refImage.height, blockTextureCount],
 				usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING,
-				mipLevelCount: 5,
+				mipLevelCount: mipLevels,
 			});
 
 			const copyEncoder = gpuDevice.createCommandEncoder({ label: "texture copy encoder" });
 			let layer = 0;
-			for (const t in blokTextures) {
-				const tex = blokTextures[t];
-				tex.layer = layer;
-				for (let mip = 0; mip < 5; mip++) {
+			for (const t in blockTextures) {
+				const tex = blockTextures[t];
+				tex.layer = layer++;
+				if (tex.image.width != refImage.width)
+					continue;
+				for (let mip = 0; mip < mipLevels; mip++) {
 					const f = 1 << mip;
 					copyEncoder.copyTextureToTexture(
 						{
 							texture: tex.gpuTexture,
-							mipLevel: mip
+							mipLevel: mip,
 						},
 						{
 							texture: this.allBlockTextures,
 							mipLevel: mip,
-							origin: [0, 0, layer]
+							origin: [0, 0, tex.layer],
 						},
 						{
 							width: this.allBlockTextures.width / f,
 							height: this.allBlockTextures.height / f,
 							depthOrArrayLayers: 1,
+
 						});
 				}
-				layer++;
 			}
 			gpuDevice.queue.submit([copyEncoder.finish()]);
 		}
 	}
 
-	static parse(zip: ZipInfo, name: string, onDone: () => void, onProgress: (total: number, pending: number, name: string) => void): ResourcePack {
-		const r = new ResourcePack(name);
+	static parse(zip: ZipInfo, name: string, fallback: ResourcePack | undefined, onDone: () => void, onProgress: (total: number, pending: number, name: string) => void): ResourcePack {
+		const r = new ResourcePack(name, fallback);
 		const entries = zip.entries;
 		let pending = 0;
 		let total = 0;

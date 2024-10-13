@@ -149,9 +149,10 @@ export class MinecraftOpaquePipeline extends AbstractPipeline {
 							label: "all block texture array",
 							addressModeU: "clamp-to-edge",
 							addressModeV: "clamp-to-edge",
-							magFilter: "nearest",
+							magFilter: "linear",
 							minFilter: "linear",
 							mipmapFilter: "linear",
+							maxAnisotropy: 16
 						}
 					)
 				}

@@ -1,8 +1,9 @@
 import mat4 from "../math/mat4";
+import { toRAD } from "../math/math";
 import Projection from "./Projection";
 
 export default class PerspectiveProjection implements Projection {
-    vFOV = 90;
+    vFOV = toRAD(60);
     near = 0.1;
     far = 1000;
     getProjectionMatrix(width: number, height: number): mat4 {

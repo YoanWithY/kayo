@@ -54,9 +54,7 @@ T* NBTContainer::getTag(const std::string& entry) const {
 		if (it->name == entry)
 			return dynamic_cast<T*>(it);
 	}
-	std::ostringstream oss;
-	oss << "The given entry: \"" << entry << "\" is not known to the container: \"" << this->name << "\".";
-	throw std::runtime_error(oss.str());
+	return nullptr;
 }
 
 class EndTag : public NBTBase {

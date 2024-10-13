@@ -133,7 +133,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 	}
 
 
-	useOverlays: boolean = true;
+	useOverlays: boolean = false;
 
 	private viewBuffer = new Float32Array(3 * 16 + 4);
 	private viewTimeBuffer = new Uint32Array(8);

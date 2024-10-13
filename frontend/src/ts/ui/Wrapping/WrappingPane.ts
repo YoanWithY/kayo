@@ -7,11 +7,9 @@ import { Project } from "../../project/Project";
 import { wasmInstance } from "../../../c/wasmHello";
 import { unzip } from "unzipit";
 import { ResourcePack } from "../../minecraft/ResourcePack";
-import { MultiBlockStateSection } from "../../minecraft/MultiBlockStateSection";
-import HeightFieldR3 from "../../dynamicObject/heightField/HeightFieldR3";
+import { MinecraftSection } from "../../minecraft/MinecraftSection";
 import { MinecraftOpaquePipeline } from "../../minecraft/MinecraftOpaquePipeline";
 import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
-import { Section, SingleBlockStateSection } from "../../minecraft/AbstractSection";
 
 export class WrappingPane extends HTMLElement {
 	project!: Project;
@@ -57,19 +55,12 @@ export class WrappingPane extends HTMLElement {
 
 					if (file.type === "application/x-zip-compressed") {
 						const n = performance.now();
-						res = ResourcePack.parse(await unzip(content), "minecraft", () => {
-							console.log("in", performance.now() - n);
+
+						res = ResourcePack.parse(await unzip(content), file.name.substring(0, file.name.lastIndexOf(".")), res, () => {
 							res.initialize();
 							MinecraftOpaquePipeline.setRessourcePack(res);
 
-							const tex = res.getTextureByURL("minecraft:block/rail");
-							if (!tex)
-								return;
-							project.scene.heightFieldObjects.forEach((hf: HeightFieldR3) => {
-								hf.setAlbedo(tex.gpuTexture);
-
-							})
-							console.log(res);
+							console.log("in", performance.now() - n, res);
 						}, () => { });
 						return
 					}
@@ -79,22 +70,27 @@ export class WrappingPane extends HTMLElement {
 							wasmInstance.openRegion("World", 0, 0, 0, content);
 							const mWorld = new MinecraftWorld("World", res);
 							project.scene.minecraftWorld = mWorld;
-							console.log(wasmInstance.buildChunk("World", 0, 0, 0));
-							wasmInstance.setActiveChunk("World", 0, 0, 0);
-							for (let y = -4; y < 11; y++) {
-								const palette = JSON.parse(wasmInstance.getPalette(y)) as PaletteEntry[];
-								let section: Section;
-								if (palette.length === 1) {
-									section = new SingleBlockStateSection(mWorld, 0, 0, y, 0, palette[0]);
-									section;
-								}
-								else {
-									const sectionDataView = wasmInstance.getSectionView("World", 0, 0, y, 0);
-									const section = new MultiBlockStateSection(mWorld, 0, 0, y, 0, palette, sectionDataView);
-									section.buildGeometry();
-									project.scene.minecraftWorld.sections[`${0},${y},${0}`] = section;
+							for (let x = 0; x < 16; x++) {
+								for (let z = 0; z < 16; z++) {
+
+									const status = wasmInstance.buildChunk("World", 0, x, z);
+									if (status !== 0)
+										continue;
+
+									wasmInstance.setActiveChunk("World", 0, x, z);
+									for (let y = -4; y < 15; y++) {
+										const palette = JSON.parse(wasmInstance.getPalette(y)) as PaletteEntry[];
+										let section: MinecraftSection;
+										let sectionDataView: any = undefined;
+										if (palette.length > 1)
+											sectionDataView = wasmInstance.getSectionView("World", 0, x, y, z);
+										section = new MinecraftSection(mWorld, 0, x, y, z, palette, sectionDataView);
+										project.scene.minecraftWorld.setSection(x, y, z, section);
+									}
 								}
 							}
+							mWorld.buildGeometry();
+							console.log(res);
 
 						} catch (e) {
 							console.error(e);

@@ -73,7 +73,7 @@ fn mineSample(layer: u32, uv: vec2f, uTC: vec2f) -> vec4f {
 	let uvT = uv * vec2f(texSize);
 	let f = fract(uvT);
 	let p = vec2i(floor(uvT));
-	let w = fwidth(uvT) * 0.7;
+	let w = fwidth(uvT) * 0.7071;
     var a = clamp(1.0 - (abs(fract(uvT - 0.5) - 0.5) / w - (0.5 - 1.0)), vec2f(0), vec2f(1));
 	let uTCa = clamp(1.0 - (abs(fract(uTC - 0.5) - 0.5) / fwidth(uTC)), vec2f(0), vec2f(1));
 
@@ -129,7 +129,7 @@ fn fragment_main(fragment: VertexOut) -> R3FragmentOutput {
 		albedoAlpha = vec4f(albedoAlpha.rgb * vec3f(0.57, 0.74, 0.35), albedoAlpha.a);
 	}
 	let albedo = sRGB_EOTF(albedoAlpha.rgb);
-	// let albedo = vec3f(fragment.normal);
+	// let albedo = vec3f(fragment.tc, 0);
 	let outColor = vec4f(createOutputFragment(albedo * light), albedoAlpha.a);
 
 	return R3FragmentOutput(outColor, 1);

@@ -22,7 +22,7 @@ export class MinecraftTexture {
 		this.name = name;
 		this.image = image;
 
-		this.gpuTexture = imageToTexture(image, true);
+		this.gpuTexture = imageToTexture(image, true, name);
 
 		const data = getImagePixels(image);
 		for (let i = 3; i < data.length; i += 4) {
@@ -35,7 +35,7 @@ export class MinecraftTexture {
 				continue;
 			}
 
-			if (alpha < 255) {
+			if (alpha < 200) {
 				this.hasSemiTransparent = true;
 				continue;
 			}

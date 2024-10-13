@@ -46,8 +46,9 @@ export function getNumberOfMipMapLevels(image: ImageBitmap) {
 	return Math.log2(Math.max(image.width, image.height)) + 1;
 }
 
-export function imageToTexture(image: ImageBitmap, genMipMaps: boolean) {
+export function imageToTexture(image: ImageBitmap, genMipMaps: boolean, name?: string) {
 	const texture = gpuDevice.createTexture({
+		label: name,
 		size: [image.width, image.height, 1],
 		mipLevelCount: getNumberOfMipMapLevels(image),
 		format: 'rgba8unorm',
