@@ -1,6 +1,5 @@
 import { gpuDevice } from "../../GPUX";
 import ViewportCamera from "../../Viewport/ViewportCamera";
-import mat3 from "../../math/mat3";
 import vec2 from "../../math/vec2";
 import vec3 from "../../math/vec3";
 import { Project } from "../../project/Project";
