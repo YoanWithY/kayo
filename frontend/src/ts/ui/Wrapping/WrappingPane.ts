@@ -70,8 +70,8 @@ export class WrappingPane extends HTMLElement {
 							wasmInstance.openRegion("World", 0, 0, 0, content);
 							const mWorld = new MinecraftWorld("World", res);
 							project.scene.minecraftWorld = mWorld;
-							for (let x = 0; x < 16; x++) {
-								for (let z = 0; z < 16; z++) {
+							for (let x = 0; x < 8; x++) {
+								for (let z = 0; z < 8; z++) {
 
 									const status = wasmInstance.buildChunk("World", 0, x, z);
 									if (status !== 0)
@@ -84,13 +84,15 @@ export class WrappingPane extends HTMLElement {
 										let sectionDataView: any = undefined;
 										if (palette.length > 1)
 											sectionDataView = wasmInstance.getSectionView("World", 0, x, y, z);
+										else if (palette.length === 1 && palette[0].Name == "minecraft:air")
+											continue
 										section = new MinecraftSection(mWorld, 0, x, y, z, palette, sectionDataView);
 										project.scene.minecraftWorld.setSection(x, y, z, section);
 									}
 								}
 							}
 							mWorld.buildGeometry();
-							console.log(res);
+							mWorld.buildBundle(project.renderer.bindGroup0);
 
 						} catch (e) {
 							console.error(e);

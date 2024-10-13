@@ -176,14 +176,15 @@ export class MinecraftSection {
 		});
 	}
 
-	public render(renderPassEncoder: GPURenderPassEncoder) {
+	public render(renderPassEncoder: GPURenderPassEncoder | GPURenderBundleEncoder) {
 		if (this._faceNumber === 0)
-			return;
+			return 0;
 		renderPassEncoder.setVertexBuffer(0, this._geomBuffer);
 		renderPassEncoder.setVertexBuffer(1, this._texBuffer);
 		renderPassEncoder.setVertexBuffer(2, this._texIndexBuffer);
 		renderPassEncoder.setBindGroup(1, this._bindGroup1);
 		renderPassEncoder.draw(4, this._faceNumber);
+		return this._faceNumber;
 	}
 
 	public get minecraftWorld(): MinecraftWorld {

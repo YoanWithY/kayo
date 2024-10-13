@@ -27,7 +27,7 @@ export default class Renderer {
 	private registeredViewports = new Set<Viewport>();
 	private viewportCache = new Map<Viewport, ViewportCache>();
 	private viewUBO: GPUBuffer;
-	private bindGroup0: GPUBindGroup;
+	bindGroup0: GPUBindGroup;
 	bindGroup0Layout: GPUBindGroupLayout;
 	bindGroupR3Layout: GPUBindGroupLayout;
 
@@ -361,9 +361,7 @@ export default class Renderer {
 				hf.render(r3renderPassEncoder);
 			}
 
-			r3renderPassEncoder.setPipeline(MinecraftOpaquePipeline.pipeline.gpuPipeline);
-			r3renderPassEncoder.setBindGroup(2, MinecraftOpaquePipeline.bindGroup2)
-			this.project.scene.minecraftWorld?.render(r3renderPassEncoder);
+			this.project.scene.minecraftWorld?.renderBundle(r3renderPassEncoder);
 			r3renderPassEncoder.end();
 
 			if (viewport.useOverlays) {

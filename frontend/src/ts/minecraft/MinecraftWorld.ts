@@ -1,12 +1,15 @@
 import { ResourcePack as ResourcePack } from "./ResourcePack";
 import { MinecraftSection } from "./MinecraftSection";
 import { BlockNeighborhood } from "./MinecraftBlock";
+import { gpuDevice } from "../GPUX";
+import { MinecraftOpaquePipeline } from "./MinecraftOpaquePipeline";
 
 export type PaletteEntry = { Name: string, Properties?: { [key: string]: string } };
 
 export class MinecraftWorld {
 	name: string;
 	ressourcePack: ResourcePack;
+	bundle!: GPURenderBundle;
 
 	private _sections: { [key: string]: MinecraftSection };
 
@@ -22,10 +25,32 @@ export class MinecraftWorld {
 		}
 	}
 
-	render(renderPassEncoder: GPURenderPassEncoder) {
+	buildBundle(bindGroup0: GPUBindGroup) {
+		const e = gpuDevice.createRenderBundleEncoder({
+			label: "Minecraft render bundle encoder",
+			colorFormats: ["bgra8unorm", "r16uint"],
+			depthStencilFormat: "depth24plus",
+			sampleCount: 4
+		});
+		e.setBindGroup(0, bindGroup0);
+		e.setPipeline(MinecraftOpaquePipeline.pipeline.gpuPipeline);
+		e.setBindGroup(2, MinecraftOpaquePipeline.bindGroup2)
+		this.render(e);
+		this.bundle = e.finish({ label: "Minecraft World bundle" });
+	}
+
+	render(renderPassEncoder: GPURenderPassEncoder | GPURenderBundleEncoder) {
+		let quads = 0;
+		let chunks = 0;
 		for (const key in this._sections) {
-			this._sections[key].render(renderPassEncoder);
+			chunks++;
+			quads += this._sections[key].render(renderPassEncoder);
 		}
+		console.log(quads, chunks);
+	}
+
+	renderBundle(renderPassEncoder: GPURenderPassEncoder) {
+		renderPassEncoder.executeBundles([this.bundle]);
 	}
 
 	getSection(x: number, y: number, z: number): MinecraftSection | undefined {
