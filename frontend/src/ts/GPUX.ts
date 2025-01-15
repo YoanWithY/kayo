@@ -1,29 +1,39 @@
-export const gpu = window.navigator.gpu;
-if (!gpu) {
-    alert("WebGPU not supported.");
-    throw new Error("WebGPU not supported.");
+export type GPUX = {
+    gpu: GPU,
+    gpuAdapter: GPUAdapter,
+    gpuDevice: GPUDevice
 }
 
-export const gpuAdapter: GPUAdapter = await gpu.requestAdapter({ powerPreference: "high-performance" }) as GPUAdapter;
-if (!gpuAdapter) {
-    alert("Could not create GPU adapter.");
-    throw new Error("Could not create GPU adapter.");
-}
+let initialied = false;
+export async function gpuInit() : Promise<string | GPUX> {
+    if(initialied)
+        return "WebGPU is already initialized!";
 
-export const gpuDevice = await gpuAdapter.requestDevice({
-    label: "Main GPU Device",
-    requiredFeatures: [
-        "timestamp-query"
-    ],
-    defaultQueue: { label: "Main Queue" },
-    requiredLimits: { maxTextureArrayLayers: gpuAdapter.limits.maxTextureArrayLayers }
-});
+    const gpu = window.navigator.gpu;
+    if (!gpu)
+        return "WebGPU is not supported!";
 
-if (!gpuDevice) {
-    alert("Could not create GPU Device.");
-    throw new Error("Could not create GPU Device.");
-}
+    const adapterOptions: GPURequestAdapterOptions = {
+        powerPreference: "high-performance",
+        forceFallbackAdapter: false,
+        featureLevel: "core" };
+    const gpuAdapter = await gpu.requestAdapter(adapterOptions);
 
-export function gpuInit() {
+    if (!gpuAdapter)
+        return "Could not request GPU adapter!";
+
+    const devicei: GPUDeviceDescriptor = {
+        label: "Main GPU Device",
+        requiredFeatures: [
+            "timestamp-query"
+        ],
+        defaultQueue: { label: "Default Queue" },
+        requiredLimits: { maxTextureArrayLayers: gpuAdapter.limits.maxTextureArrayLayers }
+    };
+    const gpuDevice = await gpuAdapter.requestDevice(devicei);
+    if (!gpuDevice)
+        return "Could not request GPU device!";
+    
+    initialied = true;
     return { gpu, gpuAdapter, gpuDevice };
 }

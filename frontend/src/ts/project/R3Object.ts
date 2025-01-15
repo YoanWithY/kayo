@@ -1,4 +1,3 @@
-import { gpuDevice } from "../GPUX";
 import TransformationStack from "../transformation/TransformationStack";
 import { Project } from "./Project";
 
@@ -29,7 +28,7 @@ export default abstract class R3Object {
     }
     vertexUniformData = new Float32Array(16);
     fragmentUniformData = new Uint32Array(2);
-    updateUniforms() {
+    updateUniforms(gpuDevice: GPUDevice) {
         this.transformationStack.getTransformationMatrix().pushInFloat32ArrayColumnMajor(this.vertexUniformData);
 
         this.fragmentUniformData[0] = this._id;

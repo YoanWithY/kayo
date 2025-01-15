@@ -26,6 +26,7 @@ struct Section {
 };
 
 #include <utility/frame>
+#include <virtualTexture>
 @group(1) @binding(0) var<uniform> section: Section;
 @vertex
 fn vertex_main(vertex: VertexIn) -> VertexOut {
@@ -55,62 +56,61 @@ fn vertex_main(vertex: VertexIn) -> VertexOut {
 	return VertexOut(out_pos, normal, vertex.tangent, vertex.bitangent, vertex.textureIndex, vertex.tint, tc, uTC);
 }
 
-@group(2) @binding(0) var textures: texture_2d_array<f32>;
-@group(2) @binding(1) var textureSampler: sampler;
+fn mineSample(v_id: u32, uv: vec2f, uTC: vec2f) -> vec4f {
+	let id_coord = virtualTextureIDCoordinate(v_id);
+	let info = virtualTextureInfo(id_coord);
+	let tex_size = virtualTextureDimensions(info);
+	let uv_t = uv * vec2f(tex_size);
+	let mip_level = virtualTextureQueryLevel(dpdxFine(uv_t), dpdyFine(uv_t), false);
 
-fn queryMipLevel(uv: vec2<f32>) -> f32 {
-    let scaledUV = uv * vec2f(textureDimensions(textures).xy);
-    let dx = dpdxFine(scaledUV);
-    let dy = dpdyFine(scaledUV);
-	let dmax = max(dot(dx, dx), dot(dy, dy));
-    return 0.5 * log2(dmax);
-}
-fn mineSample(layer: u32, uv: vec2f, uTC: vec2f) -> vec4f {
-	let mipLevel = queryMipLevel(uv);
-	let texSize = textureDimensions(textures, 0).xy;
-	let texSizei = vec2i(texSize);
-	let texSizei1 = texSizei - 1;
-	let uvT = uv * vec2f(texSize);
-	let f = fract(uvT);
-	let p = vec2i(floor(uvT));
-	let w = fwidth(uvT) * 0.7071;
-    var a = clamp(1.0 - (abs(fract(uvT - 0.5) - 0.5) / w - (0.5 - 1.0)), vec2f(0), vec2f(1));
+	let tex_sizei_1 = vec2u(tex_size - 1);
+	let f = fract(uv_t);
+	let p = vec2i(floor(uv_t));
+	let w = fwidth(uv_t) * 0.7071;
+    var a = clamp(1.0 - (abs(fract(uv_t - 0.5) - 0.5) / w - (0.5 - 1.0)), vec2f(0), vec2f(1));
 	let uTCa = clamp(1.0 - (abs(fract(uTC - 0.5) - 0.5) / fwidth(uTC)), vec2f(0), vec2f(1));
 
-	let xOff = select(select(vec2i(-1, 0), vec2i(1, 0), f.x >= 0.5), vec2i(0), uTCa.x > 0);
-	let yOff = select(select(vec2i(0, -1), vec2i(0, 1), f.y >= 0.5), vec2i(0), uTCa.y > 0);
-	var thisSample = textureLoad(textures, clamp(p, vec2i(0), texSizei1), layer, 0);
-	var otherX = textureLoad(textures, clamp(p + xOff, vec2i(0), texSizei1), layer, 0);
-	var otherY = textureLoad(textures, clamp(p + yOff, vec2i(0),  texSizei1), layer, 0);
-	var otherXY = textureLoad(textures, clamp(p + xOff + yOff, vec2i(0), texSizei1), layer, 0);
-	let directSample = textureSample(textures, textureSampler, uv, layer);
-
-	if(thisSample.a == 1) {
-		if(otherX.a == 0) {
-			otherX = vec4f(thisSample.rgb, otherX.a);
-		}
-		if(otherY.a == 0) {
-			otherY = vec4f(thisSample.rgb, otherY.a);
+	let direct_sample = virtualTextureSample(v_id, uv);
+	if(mip_level > 0) {
+		if(mip_level >= 1) {
+			return direct_sample;
 		}
 	}
 
-	if(thisSample.a == 0) {
-		if(otherX.a == 1) {
-			if(otherY.a == 1) {
-				thisSample = select(vec4f(otherX.rgb, thisSample.a), vec4f(otherY.rgb, thisSample.a), a.y > a.x);
+	let x_off = select(select(vec2i(-1, 0), vec2i(1, 0), f.x >= 0.5), vec2i(0), uTCa.x > 0);
+	let y_off = select(select(vec2i(0, -1), vec2i(0, 1), f.y >= 0.5), vec2i(0), uTCa.y > 0);
+
+	let tile_coord = virtualTextureMipAtlasCoordinate(v_id);
+	var samples = virtualTextureGather4Fast(
+		clamp(vec2u(p), vec2u(0), tex_sizei_1),
+		clamp(vec2u(p + x_off), vec2u(0), tex_sizei_1),
+		clamp(vec2u(p + y_off), vec2u(0),  tex_sizei_1),
+		clamp(vec2u(p + x_off + y_off), vec2u(0), tex_sizei_1),
+		0, info, tile_coord);
+
+	if(samples[0].a == 1) {
+		if(samples[1].a == 0) {
+			samples[1] = vec4f(samples[0].rgb, samples[1].a);
+		}
+		if(samples[2].a == 0) {
+			samples[2] = vec4f(samples[0].rgb, samples[2].a);
+		}
+	}
+
+	if(samples[0].a == 0) {
+		if(samples[1].a == 1) {
+			if(samples[2].a == 1) {
+				samples[0] = select(vec4f(samples[1].rgb, samples[0].a), vec4f(samples[2].rgb, samples[0].a), a.y > a.x);
 			} else {
-				thisSample = vec4f(otherX.rgb, thisSample.a);
+				samples[0] = vec4f(samples[1].rgb, samples[0].a);
 			}
-		} else if(otherY.a == 1) {
-			thisSample = vec4f(otherY.rgb, thisSample.a);
+		} else if(samples[2].a == 1) {
+			samples[0] = vec4f(samples[2].rgb, samples[0].a);
 		}
 	}
 
-	let analyticSample = mix(mix(thisSample, otherX, a.x), mix(otherY, otherY, a.x), a.y);
-	if(mipLevel < 1.0) {
-		return mix(analyticSample, directSample, max(mipLevel, 0));
-	}
-	return directSample;
+	let analytic_sample = mix(mix(samples[0], samples[1], a.x), mix(samples[2], samples[3], a.x), a.y);
+	return mix(analytic_sample, direct_sample, max(mip_level, 0));
 }
 
 // fn mineSample(layer: u32, uv: vec2f, uTC: vec2f) -> vec4f {

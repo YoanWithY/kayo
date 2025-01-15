@@ -8,6 +8,10 @@ export interface Viewport {
 	 */
 	canvasContext?: GPUCanvasContext;
 	/**
+	 * The window this viewport belongs to.
+	 */
+	window: Window;
+	/**
 	 * The texture where the color output shall be written to.
 	 */
 	getCurrentTexture(): GPUTexture;

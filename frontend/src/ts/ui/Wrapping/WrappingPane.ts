@@ -8,39 +8,41 @@ import { wasmInstance } from "../../../c/wasmHello";
 import { unzip } from "unzipit";
 import { ResourcePack } from "../../minecraft/ResourcePack";
 import { MinecraftSection } from "../../minecraft/MinecraftSection";
-import { MinecraftOpaquePipeline } from "../../minecraft/MinecraftOpaquePipeline";
 import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
+import TextureUtils from "../../Textures/TextureUtils";
+import { PageContext } from "../../PageContext";
 
 export class WrappingPane extends HTMLElement {
 	project!: Project;
 	baseSplitPaneContainer!: SplitPaneContainer;
 	header!: HTMLDivElement;
 	footer!: Footer;
-	static createWrappingPane(project: Project): WrappingPane {
-		const p = document.createElement("wrapping-pane") as WrappingPane;
+	static createWrappingPane(win: Window, pageContext: PageContext): WrappingPane {
+		const p = win.document.createElement("wrapping-pane") as WrappingPane;
+		const project = pageContext.project;
 		p.project = project;
-		p.baseSplitPaneContainer = SplitPaneContainer.createRoot(project);
-		p.header = document.createElement("div");
+		p.baseSplitPaneContainer = SplitPaneContainer.createRoot(win, pageContext, p);
+		p.header = win.document.createElement("div");
 
-		const fullScreenButton = IconedToggleButton.createIconedToggleButton(
+		const fullScreenButton = IconedToggleButton.createIconedToggleButton(win,
 			fullScreenOffIcon,
 			fullScreenOnIcon,
 			() => {
-				if (document.fullscreenElement)
-					document.exitFullscreen();
+				if (win.document.fullscreenElement)
+					win.document.exitFullscreen();
 			},
-			() => document.documentElement.requestFullscreen()
+			() => win.document.documentElement.requestFullscreen()
 		);
 
-		document.addEventListener('fullscreenchange', () => {
-			if (!document.fullscreenElement) {
+		win.addEventListener('fullscreenchange', () => {
+			if (!win.document.fullscreenElement) {
 				fullScreenButton.turnOff();
 			}
 		});
 
 		p.header.appendChild(fullScreenButton);
 
-		const fi = document.createElement("input");
+		const fi = win.document.createElement("input");
 		fi.type = "file";
 		let res: ResourcePack;
 		fi.addEventListener("change", async () => {
@@ -56,9 +58,16 @@ export class WrappingPane extends HTMLElement {
 					if (file.type === "application/x-zip-compressed") {
 						const n = performance.now();
 
-						res = ResourcePack.parse(await unzip(content), file.name.substring(0, file.name.lastIndexOf(".")), res, () => {
-							res.initialize();
-							MinecraftOpaquePipeline.setRessourcePack(res);
+						const image = await TextureUtils.loadImageBitmap("./glowstone.png");
+						const vt = project.renderer.virtualTextureSystem.allocateVirtualTexture("test texture", image.width, image.height, "repeat", "repeat", "linear", "linear", "linear", true);
+						if (vt === undefined)
+							return;
+						const atlas = project.renderer.virtualTextureSystem.generateMipAtlas(image, vt.samplingDescriptor);
+						vt.makeResident(atlas, 0, 0, 0);
+
+
+						res = ResourcePack.parse(await unzip(content), file.name.substring(0, file.name.lastIndexOf(".")), res, vt, () => {
+							res.initialize(vt.virtualTextureSystem);
 
 							console.log("in", performance.now() - n, res);
 						}, () => { });
@@ -68,7 +77,7 @@ export class WrappingPane extends HTMLElement {
 						console.log(".msc")
 						try {
 							wasmInstance.openRegion("World", 0, 0, 0, content);
-							const mWorld = new MinecraftWorld("World", res);
+							const mWorld = new MinecraftWorld("World", res, 8);
 							project.scene.minecraftWorld = mWorld;
 							for (let x = 0; x < 8; x++) {
 								for (let z = 0; z < 8; z++) {
@@ -86,13 +95,13 @@ export class WrappingPane extends HTMLElement {
 											sectionDataView = wasmInstance.getSectionView("World", 0, x, y, z);
 										else if (palette.length === 1 && palette[0].Name == "minecraft:air")
 											continue
-										section = new MinecraftSection(mWorld, 0, x, y, z, palette, sectionDataView);
+										section = new MinecraftSection(project, mWorld, 0, x, y, z, palette, sectionDataView);
 										project.scene.minecraftWorld.setSection(x, y, z, section);
 									}
 								}
 							}
 							mWorld.buildGeometry();
-							mWorld.buildBundle(project.renderer.bindGroup0);
+							mWorld.buildBundle(project.gpux.gpuDevice, project.renderer.bindGroup0);
 
 						} catch (e) {
 							console.error(e);

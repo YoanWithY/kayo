@@ -1,8 +1,14 @@
-export default class OutlinerPane extends HTMLElement {
+import { PageContext } from "../../PageContext";
+import BasicPane from "./BasicPane";
 
-    static createOutlinerPane() {
-        const p = document.createElement("outliner-pane") as OutlinerPane;
-        return p;
+export default class OutlinerPane extends BasicPane {
+
+    public static createUIElement(win: Window, pageContext: PageContext, obj: any): OutlinerPane {
+        return super.createUIElement(win, pageContext, obj);
+    }
+
+    public static getDomClass() {
+        return "outliner-pane"
     }
 }
 

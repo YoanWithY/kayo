@@ -1,37 +1,9 @@
-import { gpuDevice } from "../GPUX";
 import mat4 from "../math/mat4";
 import { Project } from "../project/Project";
 import R3Object from "../project/R3Object";
 import OrthographicProjection from "../projection/OrthographicProjection";
 import Projection from "../projection/Projection";
 import Camera from "../Viewport/Camera";
-
-export const sunBindGroupLayout = gpuDevice.createBindGroupLayout({
-	label: "sun bind group layout",
-	entries: [
-		{
-			binding: 0,
-			visibility: GPUShaderStage.FRAGMENT,
-			buffer: { type: "uniform" }
-		},
-		{
-			binding: 1,
-			visibility: GPUShaderStage.FRAGMENT,
-			texture: {
-				multisampled: false,
-				sampleType: "depth",
-				viewDimension: "2d"
-			}
-		},
-		{
-			binding: 2,
-			visibility: GPUShaderStage.FRAGMENT,
-			sampler: {
-				type: "comparison"
-			}
-		},
-	]
-});
 
 export class SunLight extends R3Object implements Camera {
 	projection: OrthographicProjection
@@ -40,10 +12,45 @@ export class SunLight extends R3Object implements Camera {
 	resolution: number;
 	bindGroup: GPUBindGroup;
 	buffer: GPUBuffer;
+	project: Project;
+	static sunBindGroupLayout: any;
+
+	public static init(project: Project) {
+		const gpuDevice = project.gpux.gpuDevice;
+		this.sunBindGroupLayout = gpuDevice.createBindGroupLayout({
+			label: "sun bind group layout",
+			entries: [
+				{
+					binding: 0,
+					visibility: GPUShaderStage.FRAGMENT,
+					buffer: { type: "uniform" }
+				},
+				{
+					binding: 1,
+					visibility: GPUShaderStage.FRAGMENT,
+					texture: {
+						multisampled: false,
+						sampleType: "depth",
+						viewDimension: "2d"
+					}
+				},
+				{
+					binding: 2,
+					visibility: GPUShaderStage.FRAGMENT,
+					sampler: {
+						type: "comparison"
+					}
+				},
+			]
+		});
+	}
+
 	constructor(project: Project, rangeWidth = 1000, distance = 1000, resolution = 4096) {
 		super(project);
+		this.project = project;
 		this.projection = new OrthographicProjection(rangeWidth, 0, distance);
 		this.resolution = resolution;
+		const gpuDevice = project.gpux.gpuDevice;
 		this.shadowMap = gpuDevice.createTexture({
 			label: "Sun Light shadow map",
 			format: "depth24plus",
@@ -69,7 +76,7 @@ export class SunLight extends R3Object implements Camera {
 		this.bindGroup = gpuDevice.createBindGroup(
 			{
 				label: "sun bind group",
-				layout: sunBindGroupLayout,
+				layout: SunLight.sunBindGroupLayout,
 				entries: [
 					{
 						binding: 0,
@@ -106,7 +113,7 @@ export class SunLight extends R3Object implements Camera {
 		renderPassEncoder;
 	}
 	floatData = new Float32Array(20);
-	updateSunUniforms() {
+	updateSunUniforms(gpuDevice: GPUDevice) {
 		const mat = this.transformationStack.getTransformationMatrix();
 		this.projection.getProjectionMatrix(this.resolution, this.resolution).mult(this.getViewMatrix()).pushInFloat32ArrayColumnMajor(this.floatData);
 		this.floatData.set([mat[2], mat[6], mat[10], 1], 16);

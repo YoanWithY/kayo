@@ -1,12 +1,13 @@
-import { Project } from "../../project/Project";
+import { PageContext } from "../../PageContext";
 import { PaneStripe } from "../panes/PaneStripe";
 import { ViewportPane } from "../panes/ViewportPane";
+import { WrappingPane } from "../Wrapping/WrappingPane";
 import { SplitablePane } from "./SplitablePane";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 export class SplitPaneContainer extends HTMLElement {
-	static createSplitPaneContainer(orientation: string, rect: DOMRect) {
-		const c = document.createElement("split-pane-container");
+	static createSplitPaneContainer(win: Window, orientation: string, rect: DOMRect) {
+		const c = win.document.createElement("split-pane-container");
 		c.setAttribute("split-pane-container-orientation", orientation);
 		if (orientation == "vertical") {
 			c.style.height = rect.height + "px";
@@ -17,11 +18,11 @@ export class SplitPaneContainer extends HTMLElement {
 		return c;
 	}
 
-	static createRoot(project: Project) {
-		const c = document.createElement("split-pane-container");
+	static createRoot(win: Window, pageContext: PageContext, uiRoot: WrappingPane) {
+		const c = win.document.createElement("split-pane-container");
 		c.setAttribute("split-pane-container-orientation", "none");
 		c.setAttribute("id", "wrapper");
-		c.appendChild(SplitablePane.createSplitablePane(project, ViewportPane.createViewportPane));
+		c.appendChild(SplitablePane.createSplitablePane(win, pageContext, uiRoot, ViewportPane));
 		return c as SplitPaneContainer;
 	}
 

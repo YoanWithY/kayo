@@ -1,3 +1,4 @@
+import { PTPMessageLog } from "../collaborative/PTPMessageLog";
 import { MSAAOptions as MSAAOption, OutputConfig, OutputDeferredRenderConfig, OutputDisplayConfig, OutputForwardRenderConfig, OutputRenderConfig, ProjectConfig, RenderMode, SwapChainBitDepth } from "./Config";
 import { Project } from "./Project";
 import StateVariable from "./StateVariable";
@@ -5,10 +6,12 @@ import StateVariable from "./StateVariable";
 export class ProjectState {
 	project: Project;
 	output: OutputState;
+	ptpMessageLog: PTPMessageLog;
 
 	constructor(project: Project, config: ProjectConfig) {
 		this.project = project;
 		this.output = new OutputState(project, config.output);
+		this.ptpMessageLog = new PTPMessageLog(project, []);
 	}
 }
 export class OutputState {

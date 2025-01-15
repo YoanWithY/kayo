@@ -1,4 +1,3 @@
-import { gpuDevice } from "../GPUX";
 import { StateVariableChangeCallback } from "../project/StateVariable";
 import { Project } from "../project/Project";
 import { Viewport } from "./Viewport";
@@ -8,9 +7,13 @@ import { CompositingPipeline } from "./CompositingPipeline";
 import { ResolvePipeline } from "./ResolvePipeline";
 import Camera from "../Viewport/Camera";
 import { MinecraftOpaquePipeline } from "../minecraft/MinecraftOpaquePipeline";
+import { DisplayInfo } from "../Material/AbstractRenderingPipeline";
+import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
+import { ViewportPane } from "../ui/panes/ViewportPane";
 
 export default class Renderer {
 	project: Project;
+	viewportPanes = new Set<ViewportPane>;
 	preRenderFunctions = new Set<{ val: any, f: StateVariableChangeCallback<any> }>();
 
 	private r3renderPassDescriptor: GPURenderPassDescriptor;
@@ -22,11 +25,12 @@ export default class Renderer {
 	public needsPipleineRebuild = true;
 	public needsContextReconfiguration = true;
 
-	private requestedAnimationFrame = false;
+	private requestedAnimationFrame: Map<Window, boolean> = new Map<Window, boolean>();
 	private viewportsToUpdate = new Set<Viewport>();
 	private registeredViewports = new Set<Viewport>();
 	private viewportCache = new Map<Viewport, ViewportCache>();
 	private viewUBO: GPUBuffer;
+	private gpuDevice: GPUDevice;
 	bindGroup0: GPUBindGroup;
 	bindGroup0Layout: GPUBindGroupLayout;
 	bindGroupR3Layout: GPUBindGroupLayout;
@@ -39,22 +43,24 @@ export default class Renderer {
 	heightFieldComputePassDescriptor: GPUComputePassDescriptor;
 	shadowViewUBO: GPUBuffer;
 	shadowBindGroup0: GPUBindGroup;
-
+	virtualTextureSystem: VirtualTextureSystem;
 
 	constructor(project: Project) {
 		this.project = project;
+		this.gpuDevice = project.gpux.gpuDevice;
 		this.reconfigureContext();
-		this.viewUBO = gpuDevice.createBuffer({
+		this.viewUBO = this.gpuDevice.createBuffer({
 			label: "View UBO",
 			size: (3 * 16 + 12) * 4,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 		});
-		this.shadowViewUBO = gpuDevice.createBuffer({
+		this.shadowViewUBO = this.gpuDevice.createBuffer({
 			label: "shadow view UBO",
 			size: (3 * 16 + 12) * 4,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 		});
-		this.bindGroup0Layout = gpuDevice.createBindGroupLayout({
+		this.virtualTextureSystem = new VirtualTextureSystem(this.project.gpux);
+		this.bindGroup0Layout = this.gpuDevice.createBindGroupLayout({
 			label: "Global default bind group 0 layout",
 			entries: [
 				{
@@ -64,9 +70,10 @@ export default class Renderer {
 						type: "uniform",
 					}
 				},
+				...VirtualTextureSystem.bindGroupEntries
 			]
 		});
-		this.bindGroupR3Layout = gpuDevice.createBindGroupLayout({
+		this.bindGroupR3Layout = this.gpuDevice.createBindGroupLayout({
 			label: "Default R3 bind group layout",
 			entries: [
 				{
@@ -85,7 +92,7 @@ export default class Renderer {
 				},
 			]
 		});
-		this.compositingBindGroupLayout = gpuDevice.createBindGroupLayout({
+		this.compositingBindGroupLayout = this.gpuDevice.createBindGroupLayout({
 			label: "Compositing bind group layout",
 			entries: [
 				{
@@ -117,7 +124,7 @@ export default class Renderer {
 				},
 			]
 		});
-		this.r16ResolveBindGroupLayout = gpuDevice.createBindGroupLayout({
+		this.r16ResolveBindGroupLayout = this.gpuDevice.createBindGroupLayout({
 			label: "R16u resolve bind group layout",
 			entries: [
 				{
@@ -131,17 +138,19 @@ export default class Renderer {
 				},
 			]
 		});
-		this.bindGroup0 = gpuDevice.createBindGroup({
+		this.bindGroup0 = this.gpuDevice.createBindGroup({
 			label: "Global default bind group 0",
 			entries: [
-				{ binding: 0, resource: { buffer: this.viewUBO } }
+				{ binding: 0, resource: { buffer: this.viewUBO } },
+				...this.virtualTextureSystem.bindGroupEntries
 			],
 			layout: this.bindGroup0Layout,
 		});
-		this.shadowBindGroup0 = gpuDevice.createBindGroup({
+		this.shadowBindGroup0 = this.gpuDevice.createBindGroup({
 			label: "Global default shadow bind group 0",
 			entries: [
-				{ binding: 0, resource: { buffer: this.shadowViewUBO } }
+				{ binding: 0, resource: { buffer: this.shadowViewUBO } },
+				...this.virtualTextureSystem.bindGroupEntries
 			],
 			layout: this.bindGroup0Layout,
 		});
@@ -263,29 +272,29 @@ export default class Renderer {
 		const outConsts = this.project.getDisplayFragmentOutputConstants();
 		const format = this.project.getSwapChainFormat();
 		const msaa = (this.project.config.output.render as OutputForwardRenderConfig).msaa;
-		for (const hf of this.project.scene.heightFieldObjects) {
-			hf.pipeline.fragmentConstants["targetColorSpace"] = outConsts["targetColorSpace"];
-			hf.pipeline.fragmentConstants["componentTranfere"] = outConsts["componentTranfere"];
-			hf.pipeline.fragmentTargets[0].format = format;
-			hf.pipeline.multisample.count = msaa;
-			hf.pipeline.buildPipeline();
+
+		const surfaceInfo: DisplayInfo = {
+			gpuDevice: this.gpuDevice,
+			targetColorSpace: outConsts.targetColorSpace,
+			componentTransfere: outConsts.componentTranfere,
+			msaa: msaa,
+			format: format,
 		}
+		for (const hf of this.project.scene.heightFieldObjects)
+			hf.pipeline.updateDisplayProperties(surfaceInfo);
+
 		const gp = this.project.scene.gridPipeline
-		if (gp) {
-			gp.multisample.count = msaa;
-			gp.buildPipeline();
-		}
+		if (gp)
+			gp.updateDisplayProperties(surfaceInfo);
+
+		const background = this.project.scene.background.pipeline;
+		background.updateDisplayProperties(surfaceInfo);
 
 		const minePipe = MinecraftOpaquePipeline.pipeline;
-		minePipe.fragmentConstants["targetColorSpace"] = outConsts["targetColorSpace"];
-		minePipe.fragmentConstants["componentTranfere"] = outConsts["componentTranfere"];
-		minePipe.fragmentTargets[0].format = format;
-		minePipe.multisample.count = msaa;
-		minePipe.multisample.alphaToCoverageEnabled = msaa > 1;
-		minePipe.buildPipeline();
+		minePipe.updateDisplayProperties(surfaceInfo);
 
 		this.compositingPipeline.fragmentTargets[0].format = format;
-		this.compositingPipeline.buildPipeline();
+		this.compositingPipeline.buildPipeline(this.gpuDevice);
 		this.needsPipleineRebuild = false;
 	}
 
@@ -296,9 +305,11 @@ export default class Renderer {
 
 	jsTime = "";
 	frame = 0;
-	loop = () => {
+	loop = (_: number, window: Window) => {
 		const start = performance.now();
-		this.requestedAnimationFrame = false;
+
+		this.requestedAnimationFrame.set(window, false);
+
 		for (const o of this.preRenderFunctions)
 			o.f(o.val);
 
@@ -320,7 +331,7 @@ export default class Renderer {
 				console.error("Could not find viewport cache.");
 				continue;
 			}
-			const commandEncoder = gpuDevice.createCommandEncoder();
+			const commandEncoder = this.gpuDevice.createCommandEncoder();
 			const config = this.project.config.output.render as OutputForwardRenderConfig;
 			viewportCache.setupRenderPasses(
 				this.r3renderPassDescriptor,
@@ -342,7 +353,7 @@ export default class Renderer {
 
 			for (const sun of this.project.scene.sunlights) {
 				this.updateView(this.shadowViewUBO, this.frame, sun, sun.resolution, sun.resolution);
-				sun.updateSunUniforms();
+				sun.updateSunUniforms(this.gpuDevice);
 				const shadowRenderPassEncoder = commandEncoder.beginRenderPass(sun.renderPass);
 				shadowRenderPassEncoder.setViewport(0, 0, sun.resolution, sun.resolution, 0, 1);
 				shadowRenderPassEncoder.setBindGroup(0, this.shadowBindGroup0);
@@ -355,6 +366,9 @@ export default class Renderer {
 
 			const r3renderPassEncoder = commandEncoder.beginRenderPass(this.r3renderPassDescriptor);
 			r3renderPassEncoder.setViewport(0, 0, w, h, 0, 1);
+
+			this.project.scene.background.recordForwardRendering(r3renderPassEncoder);
+
 			r3renderPassEncoder.setBindGroup(0, this.bindGroup0);
 			r3renderPassEncoder.setBindGroup(3, Array.from(this.project.scene.sunlights)[0].bindGroup);
 			for (const hf of this.project.scene.heightFieldObjects) {
@@ -388,10 +402,9 @@ export default class Renderer {
 				const overlayRenderPassEncoder = commandEncoder.beginRenderPass(this.overlayRenderPassDescriptor);
 				overlayRenderPassEncoder.setViewport(0, 0, w, h, 0, 1);
 				overlayRenderPassEncoder.setBindGroup(0, this.bindGroup0);
-				if (this.project.scene.gridPipeline) {
-					overlayRenderPassEncoder.setPipeline(this.project.scene.gridPipeline.gpuPipeline);
-					overlayRenderPassEncoder.draw(4, 2);
-				}
+				if (this.project.scene.gridPipeline)
+					this.project.scene.gridPipeline.recordForwardRendering(overlayRenderPassEncoder);
+
 				overlayRenderPassEncoder.end();
 
 				const compositingRenderPassEncoder = commandEncoder.beginRenderPass(this.compositingRenderPassDescriptor);
@@ -404,18 +417,15 @@ export default class Renderer {
 			}
 
 			viewportCache.resolvePerformanceQueryCommand(commandEncoder);
-			gpuDevice.queue.submit([commandEncoder.finish()]);
+			this.gpuDevice.queue.submit([commandEncoder.finish()]);
 			viewportCache.asyncGPUPerformanceUpdate();
 		}
 
 		this.jsTime = `${(performance.now() - start).toFixed(3)}ms`;
-		this.setPerf();
 		this.viewportsToUpdate.clear();
 		this.frame++;
-	}
-
-	setPerf() {
-		this.project.uiRoot.footer.perf.textContent = `Performance: JS: ${this.jsTime}`;
+		// for(const v of this.registeredViewports)
+		// 	this.requestAnimationFrameWith(v);
 	}
 
 	requestAnimationFrameWith(viewport: Viewport) {
@@ -424,11 +434,11 @@ export default class Renderer {
 			return;
 		}
 		this.viewportsToUpdate.add(viewport);
-		if (this.requestedAnimationFrame)
+		if (this.requestedAnimationFrame.get(viewport.window) === true)
 			return;
 
-		requestAnimationFrame(this.loop);
-		this.requestedAnimationFrame = true;
+		this.requestedAnimationFrame.set(viewport.window, true);
+		viewport.window.requestAnimationFrame((ts: number) => { this.loop(ts, viewport.window) });
 	}
 
 	registerViewport(viewport: Viewport) {
@@ -451,17 +461,17 @@ export default class Renderer {
 	}
 
 	getNew3RData(): { vertexUniformBuffer: GPUBuffer, fragmentUniformBuffer: GPUBuffer, bindGroup: GPUBindGroup } {
-		const vertexUniformBuffer = gpuDevice.createBuffer({
+		const vertexUniformBuffer = this.gpuDevice.createBuffer({
 			label: "R3 default vertex uniforms buffer",
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 			size: 16 * 4
 		});
-		const fragmentUniformBuffer = gpuDevice.createBuffer({
+		const fragmentUniformBuffer = this.gpuDevice.createBuffer({
 			label: "R3 default fragment uniforms buffer",
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 			size: 4 * 4
 		});
-		const bindGroup = gpuDevice.createBindGroup({
+		const bindGroup = this.gpuDevice.createBindGroup({
 			label: "R3 Bind Group",
 			entries: [
 				{
@@ -500,9 +510,9 @@ export default class Renderer {
 		projection.getProjectionMatrix(width, height).pushInFloat32ArrayColumnMajor(this.viewBuffer, 16);
 		camera.transformationStack.getTransformationMatrix().pushInFloat32ArrayColumnMajor(this.viewBuffer, 2 * 16);
 		this.viewBuffer.set([near, far, window.devicePixelRatio, 0], 3 * 16);
-		gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);
+		this.gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);
 
 		this.viewTimeBuffer.set([0, 0, width, height, frame, 0, 0, 0], 0);
-		gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
+		this.gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
 	}
 }

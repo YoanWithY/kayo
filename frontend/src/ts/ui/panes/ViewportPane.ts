@@ -1,19 +1,20 @@
-import { gpuDevice } from "../../GPUX";
+import { PageContext } from "../../PageContext";
 import ViewportCamera from "../../Viewport/ViewportCamera";
 import vec2 from "../../math/vec2";
 import vec3 from "../../math/vec3";
 import { Project } from "../../project/Project";
 import { Viewport } from "../../rendering/Viewport";
 import LookAtTransform from "../../transformation/LookAt";
+import BasicPane from "./BasicPane";
+import viewportPaneTemplate from "./ViewportPaneTemplate.json"
 
-export class ViewportPane extends HTMLElement implements Viewport {
-	static viewportPanes = new Set<ViewportPane>;
-
+export class ViewportPane extends BasicPane implements Viewport {
 	public camera = new ViewportCamera();
-	public canvasContext: GPUCanvasContext;
-	public canvas: HTMLCanvasElement;
+	public canvasContext!: GPUCanvasContext;
+	public canvas!: HTMLCanvasElement;
 	public lable = "My Viewport";
 	public project!: Project;
+	public window!: Window;
 
 	resizeObserver: ResizeObserver = new ResizeObserver((e) => {
 		const size = e[0].devicePixelContentBoxSize[0];
@@ -28,14 +29,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 	constructor() {
 		super();
 
-		this.canvas = document.createElement("canvas");
-		this.canvasContext = this.canvas.getContext("webgpu") as GPUCanvasContext;
-
-		this.resizeObserver.observe(this, {
-			box: "device-pixel-content-box"
-		});
-
-		const lookAt = new LookAtTransform(new vec3(8, 8, 150), 5);
+		const lookAt = new LookAtTransform(new vec3(8, 8, 8), 5);
 		this.camera.transformationStack.push(lookAt);
 
 		const rotateView = (dx: number, dy: number) => {
@@ -200,10 +194,10 @@ export class ViewportPane extends HTMLElement implements Viewport {
 		this.camera.getProjection().getProjectionMatrix(this.canvas.width, this.canvas.height).pushInFloat32ArrayColumnMajor(this.viewBuffer, 16);
 		this.camera.transformationStack.getTransformationMatrix().pushInFloat32ArrayColumnMajor(this.viewBuffer, 2 * 16);
 		this.viewBuffer.set([near, far, window.devicePixelRatio, 0], 3 * 16);
-		gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);
+		this.project.gpux.gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);
 
 		this.viewTimeBuffer.set([0, 0, this.canvas.width, this.canvas.height, frame, 0, 0, 0], 0);
-		gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
+		this.project.gpux.gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
 	}
 
 	getCurrentTexture(): GPUTexture {
@@ -219,21 +213,32 @@ export class ViewportPane extends HTMLElement implements Viewport {
 	}
 
 	connectedCallback() {
-		ViewportPane.viewportPanes.add(this);
+		this.project.renderer.viewportPanes.add(this);
 		this.project.renderer.registerViewport(this);
+		this.resizeObserver.observe(this, {
+			box: "device-pixel-content-box"
+		});
 	}
 
 	disconnectedCallback() {
-		ViewportPane.viewportPanes.delete(this);
+		this.project.renderer.viewportPanes.delete(this);
 		this.project.renderer.unregisterViewport(this);
+		this.resizeObserver.unobserve(this);
 	}
 
-	static createViewportPane(project: Project) {
-		const p = document.createElement("viewport-pane") as ViewportPane;
+	public static createUIElement(win: Window, pageContext: PageContext): ViewportPane {
+		const p = super.createUIElement(win, pageContext, viewportPaneTemplate) as ViewportPane;
+		p.canvas = win.document.createElement("canvas");
+		p.canvasContext = p.canvas.getContext("webgpu") as GPUCanvasContext;
+		p.window = win;
 		p.setAttribute("tabindex", "-1");
 		p.focus();
-		p.project = project;
+		p.project = p.pageContext.project;
 		p.appendChild(p.canvas);
 		return p;
+	}
+
+	public static getDomClass() {
+		return "viewport-pane"
 	}
 }

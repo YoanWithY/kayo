@@ -17,6 +17,14 @@ ressource-pane {
 	background-color: var(--pane-background-color);
 }
 
+ptp-chat {
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: var(--pane-background-color);
+}
+
 viewport-pane {
 	display: flex;
 	flex-direction: column;

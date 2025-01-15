@@ -1,0 +1,95 @@
+{
+	"class": "output-pane",
+	"children": [
+		{
+			"class": "collapsible-element",
+			"text": "Renderng",
+			"content": {
+				"class": "grid-2col",
+				"children": [
+					{
+						"class": "span-element",
+						"text": "MSAA"
+					},
+					{
+						"class": "select-box",
+						"stateVariableURL": "state.output.render.msaa",
+						"options": [
+							{
+								"value": 1,
+								"text": "1"
+							},
+							{
+								"value": 4,
+								"text": "4"
+							}
+						]
+					}
+				]
+			}
+		},
+		{
+			"class": "collapsible-element",
+			"text": "Display Output",
+			"content": {
+				"class": "grid-2col",
+				"children": [
+					{
+						"class": "span-element",
+						"text": "Color Space"
+					},
+					{
+						"class": "select-box",
+						"stateVariableURL": "state.output.display.swapChainColorSpace",
+						"options": [
+							{
+								"value": "display-p3",
+								"text": "Display P3"
+							},
+							{
+								"value": "srgb",
+								"text": "sRGB"
+							}
+						]
+					},
+					{
+						"class": "span-element",
+						"text": "Bit Depth"
+					},
+					{
+						"class": "select-box",
+						"stateVariableURL": "state.output.display.swapChainBitDepth",
+						"options": [
+							{
+								"value": "8bpc",
+								"text": "8 bpc"
+							},
+							{
+								"value": "16bpc",
+								"text": "16 bpc"
+							}
+						]
+					},
+					{
+						"class": "span-element",
+						"text": "Dynamic Range"
+					},
+					{
+						"class": "select-box",
+						"stateVariableURL": "state.output.display.swapChainToneMappingMode",
+						"options": [
+							{
+								"value": "standard",
+								"text": "Standard"
+							},
+							{
+								"value": "extended",
+								"text": "Extended"
+							}
+						]
+					}
+				]
+			}
+		}
+	]
+}

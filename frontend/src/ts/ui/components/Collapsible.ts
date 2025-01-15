@@ -1,3 +1,5 @@
+import { PageContext } from "../../PageContext";
+import { buildUIElement } from "../ui";
 import Tooltip from "./Tooltip";
 
 export default class Collapsible extends HTMLElement {
@@ -14,19 +16,29 @@ export default class Collapsible extends HTMLElement {
 		}
 	}
 
-	public static createCollapsible(name = "", tooltip?: HTMLElement) {
-		const p = document.createElement("collapsible-element") as Collapsible;
-		p.collapsibleButton = CollapsibleButton.createCollapsibleButton();
+	public static createUIElement(win: Window, pageContext: PageContext, obj: any) {
+		const p = win.document.createElement(this.getDomClass()) as Collapsible;
+
+		p.collapsibleButton = CollapsibleButton.createCollapsibleButton(win);
 		p.collapsibleButton.collapsible = p;
+		p.collapsibleButton.textContent = obj.text;
 		p.appendChild(p.collapsibleButton);
 
-		p.collapsibleContentContainer = document.createElement("collapsible-content-container") as CollapsibleContentContainer;
-		p.collapsibleButton.textContent = name;
+		p.collapsibleContentContainer = win.document.createElement(CollapsibleContentContainer.getDomClass()) as CollapsibleContentContainer;
 
+		const content = obj.content;
+		if (content !== undefined)
+			p.collapsibleContentContainer.appendChild(buildUIElement(win, pageContext, obj.content))
+
+		const tooltip = obj.tooltip;
 		if (tooltip !== undefined) {
 			Tooltip.register(Tooltip.createTooltip(tooltip), p.collapsibleButton);
 		}
 		return p;
+	}
+
+	public static getDomClass() {
+		return "collapsible-element";
 	}
 }
 
@@ -40,12 +52,21 @@ export class CollapsibleButton extends HTMLElement {
 		});
 	}
 
-	public static createCollapsibleButton() {
-		const p = document.createElement("collapsible-button") as CollapsibleButton;
+	public static createCollapsibleButton(win: Window) {
+		const p = win.document.createElement(this.getDomClass()) as CollapsibleButton;
 		p.setAttribute("state", "closed");
 		return p;
 	}
+
+	public static getDomClass() {
+		return "collapsible-button"
+	}
 }
 
-export class CollapsibleContentContainer extends HTMLElement { }
+export class CollapsibleContentContainer extends HTMLElement {
+
+	public static getDomClass() {
+		return "collapsible-content-container"
+	}
+}
 

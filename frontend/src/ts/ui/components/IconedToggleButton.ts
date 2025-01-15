@@ -27,13 +27,8 @@ export class IconedToggleButton extends HTMLElement {
 		this.offCalback();
 	}
 
-	static createIconedToggleButton(
-		offSvg: string,
-		onSvg: string,
-		offCallback: () => void,
-		onCalback: () => void,
-		on = false) {
-		const p = document.createElement("iconed-toggle-button") as IconedToggleButton;
+	static createIconedToggleButton(win: Window, offSvg: string, onSvg: string, offCallback: () => void, onCalback: () => void, on = false) {
+		const p = win.document.createElement("iconed-toggle-button") as IconedToggleButton;
 		p.isOn = on;
 		p.innerHTML = on ? onSvg : offSvg;
 		p.offSvg = offSvg;

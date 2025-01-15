@@ -1,30 +1,30 @@
-import { imageToTexture } from "../rendering/Shader";
-
-const canvas = new OffscreenCanvas(1, 1);
-const context = canvas.getContext('2d', { willReadFrequently: true })!;
-context.globalCompositeOperation = "copy"
-function getImagePixels(imageBitmap: ImageBitmap): Uint8ClampedArray {
-	canvas.width = imageBitmap.width;
-	canvas.height = imageBitmap.height;
-	context.drawImage(imageBitmap, 0, 0);
-	const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-	return imageData.data;
-}
+import TextureUtils from "../Textures/TextureUtils";
+import { VirtualTexture2D } from "../Textures/VirtualTexture2D";
 
 export class MinecraftTexture {
 	name: string;
 	image: ImageBitmap;
 	hasTransparent = false;
 	hasSemiTransparent = false;
-	gpuTexture: GPUTexture;
-	layer!: number;
-	constructor(name: string, image: ImageBitmap) {
+	virtualTexture: VirtualTexture2D;
+	constructor(name: string, image: ImageBitmap, fallback: VirtualTexture2D) {
 		this.name = name;
 		this.image = image;
 
-		this.gpuTexture = imageToTexture(image, true, name);
+		this.scan(image);
 
-		const data = getImagePixels(image);
+		const vt = fallback.virtualTextureSystem.allocateVirtualTexture(name, image.width, image.height, "clamp-to-edge", "clamp-to-edge", "linear", "nearest", "linear", true);
+		if (vt === undefined) {
+			this.virtualTexture = fallback;
+			return;
+		}
+		this.virtualTexture = vt;
+		const atlas = fallback.virtualTextureSystem.generateMipAtlas(image, this.virtualTexture.samplingDescriptor);
+		this.virtualTexture.makeResident(atlas, 0, 0, 0);
+	}
+
+	private scan(image: ImageBitmap) {
+		const data = TextureUtils.getImagePixels(image);
 		for (let i = 3; i < data.length; i += 4) {
 			if (this.hasSemiTransparent && this.hasSemiTransparent)
 				return;

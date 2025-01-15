@@ -3,30 +3,19 @@ struct VertexOut {
 	@location(0) ls_position: vec2f,
 	@location(1) ws_position: vec2f,
 	@location(2) cs_position: vec3f,
-	@location(3) @interpolate(flat) instance: u32,
+	@location(3) actual_pos: vec4f,
 }
 
 #include <utility/frame>
 
-fn isLargePass(instance: u32) -> bool {
-	return instance != 0;
-}
-const smallSize = 10.0;
-
 @vertex
-fn vertex_main(@builtin(vertex_index) index: u32, @builtin(instance_index) instance: u32) -> VertexOut {
-	let x = index / 2;
-	let y = index % 2;
-
-	let far = getFar();
-	let largePass = isLargePass(instance);
-	let ls_pos = (vec2f(f32(x), f32(y)) * 2.0 - 1.0) * select(smallSize + 0.125, far * 4.0, largePass);
-
+fn vertex_main(@builtin(vertex_index) index: u32, @location(0) ls_pos: vec2f) -> VertexOut {
 	let cameraGridOffset = floor(getCameraPosition().xy);
 	let ws_pos = ls_pos + cameraGridOffset;
 	let cs_pos = view.viewMat * vec4f(ws_pos, 0, 1);
 	let pos = view.projectionMat * cs_pos;
-	return VertexOut(pos, ls_pos, ws_pos, cs_pos.xyz, instance);
+	let clamped_pos = pos.xyww;
+	return VertexOut(clamped_pos, ls_pos, ws_pos, cs_pos.xyz, pos);
 }
 
 const lineThickness = 1.0;
@@ -44,15 +33,15 @@ fn getAlpha(g_2D: vec4f, dist: f32, endFactor: f32, gridMode: i32, far: f32) -> 
 	return converage * falloff;
 }
 
-@fragment
-fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
-	let largePass = isLargePass(vertexData.instance);
-	let abs_ls_pos = abs(vertexData.ls_position);
-	let isInsideSmall = abs_ls_pos.x <= smallSize && abs_ls_pos.y <= smallSize;
+struct FragmentOutput {
+	@location(0) color: vec4f,
+	@builtin(frag_depth) depth: f32,
+}
 
-	if((largePass && isInsideSmall) || (!largePass && !isInsideSmall)) {
-		discard;
-	}
+@fragment
+fn fragment_main(vertexData: VertexOut) -> FragmentOutput {
+	let abs_ls_pos = abs(vertexData.ls_position);
+
 	let lt = lineThickness * sqrt(getDPR());
 	let ws_pos = vertexData.ws_position;
 	let g1_2D = getGrid(ws_pos, lt);
@@ -62,8 +51,9 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 	
 	let camPos = getCameraPosition();
 	let dist = length(vertexData.cs_position);
-	let endFactor = smoothstep(0.0, 50.0, abs(camPos.z)) * 0.6 + 0.4;
-	let far = view.projectionData[1];
+	let endFactor = smoothstep(0.0, 500.0, abs(camPos.z)) * 10.0 + 1.0;
+	let far = getFar();
+	let depthOut = clamp(vertexData.actual_pos.z / vertexData.actual_pos.w, 0.0, 1);
 	let a1 = getAlpha(g1_2D, dist, endFactor, 0, far);
 	let a10 = getAlpha(g10_2D, dist, endFactor, 1, far);
 	let a100 = getAlpha(g100_2D, dist, endFactor, 2, far);
@@ -88,5 +78,5 @@ fn fragment_main(vertexData: VertexOut) -> @location(0) vec4f {
 		}
 	}
 
-	return vec4f (color, a * 0.5);
+	return FragmentOutput(vec4f(color, a * 0.5), depthOut);
 }

@@ -1,53 +1,29 @@
-import { gpu, gpuAdapter, gpuDevice } from "../../GPUX";
-
-function objectToUl(obj: any): HTMLElement {
-	const ul = document.createElement('ul');
-	for (const key in obj) {
-		const value = obj[key];
-		if (typeof value === "function")
-			continue;
-
-		const li = document.createElement('li');
-		if (Array.isArray(value)) {
-			li.textContent = `${key}:`;
-			const arrayUl = document.createElement('ul');
-			value.forEach(item => {
-				const arrayLi = document.createElement('li');
-				if (typeof item === 'object' && item !== null) {
-					arrayLi.appendChild(objectToUl(item));
-				} else {
-					arrayLi.textContent = item.toString() + ":";
-				}
-				arrayUl.appendChild(arrayLi);
-			});
-			li.appendChild(arrayUl);
-		} else if (typeof value === 'object' && value !== null) {
-			li.textContent = `${key}:`;
-			li.appendChild(objectToUl(value));
-		} else {
-			li.textContent = `${key}: ${value}`;
-		}
-		ul.appendChild(li);
-	}
-	return ul;
-}
-
-export default class RessourcePane extends HTMLElement {
+import { PageContext } from "../../PageContext";
+import { objectToUl } from "../UIUtils";
+import BasicPane from "./BasicPane";
+import ressourcePaneTemplate from "./RessourcePaneTemplate.json"
+export default class RessourcePane extends BasicPane {
 	private tree: HTMLElement | null = null;
-	private listener = () => {
+	private _win!: Window;
+
+	private buildCallback = () => {
 		if (this.tree)
 			this.removeChild(this.tree);
+		const gpux = this.pageContext.project.gpux;
+		const gpu = gpux.gpu;
+		const gpuAdapter = gpux.gpuAdapter;
+		const gpuDevice = gpux.gpuDevice;
 		const obj = {
 			"Screen": {
-				"Available Width": `${screen.availWidth} pt`,
-				"Available Height": `${screen.availHeight} pt`,
-				"Width": `${screen.width} pt`,
-				"Height": `${screen.height} pt`,
-				"Orientation": screen.orientation,
-				"Color Depth": screen.colorDepth,
-				"Pixel Depth": screen.pixelDepth,
-				"Device Pixel Ratio": window.devicePixelRatio,
-				"Conclude HDR Support": screen.colorDepth > 24
+				"Available Width": `${this._win.screen.availWidth} pt`,
+				"Available Height": `${this._win.screen.availHeight} pt`,
+				"Width": `${this._win.screen.width} pt`,
+				"Height": `${this._win.screen.height} pt`,
+				"Orientation": this._win.screen.orientation,
+				"Color Depth": this._win.screen.colorDepth,
+				"Pixel Depth": this._win.screen.pixelDepth,
+				"Device Pixel Ratio": this._win.devicePixelRatio,
+				"Conclude HDR Support": this._win.screen.colorDepth > 24
 			},
 			"GPU": {
 				"Prefered Canvas Format": gpu.getPreferredCanvasFormat(),
@@ -65,20 +41,26 @@ export default class RessourcePane extends HTMLElement {
 				"Limits": gpuDevice.limits,
 			}
 		}
-		this.tree = objectToUl(obj);
+		this.tree = objectToUl(this._win, obj);
 		this.appendChild(this.tree);
 	}
 
-	public static createRessourcePane(): RessourcePane {
-		return document.createElement("ressource-pane") as RessourcePane;
+	public static createUIElement(win: Window, pageContext: PageContext): RessourcePane {
+		const p = super.createUIElement(win, pageContext, ressourcePaneTemplate) as RessourcePane;
+		p._win = win;
+		return p;
+	}
+
+	public static getDomClass(): string {
+		return "ressource-pane";
 	}
 
 	connectedCallback() {
-		this.listener();
-		window.addEventListener("resize", this.listener)
+		this.buildCallback();
+		this._win.addEventListener("resize", this.buildCallback)
 	}
 
 	disconnectedCallback() {
-		window.removeEventListener("resize", this.listener);
+		this._win.removeEventListener("resize", this.buildCallback);
 	}
 }

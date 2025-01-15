@@ -266,9 +266,9 @@ class BuiltFace {
 		const to = parsedElement.to;
 
 
-		this.uvOrigin = new vec2(parsedFace.uv[0], 16 - parsedFace.uv[1]).divS(16);
+		this.uvOrigin = new vec2(parsedFace.uv[0], parsedFace.uv[1]).divS(16);
 		this.uvTangent = new vec2(parsedFace.uv[2] - parsedFace.uv[0], 0).divS(16);
-		this.uvBitangent = new vec2(0, -(parsedFace.uv[3] - parsedFace.uv[1])).divS(16);
+		this.uvBitangent = new vec2(0, (parsedFace.uv[3] - parsedFace.uv[1])).divS(16);
 
 
 		switch (faceKey) {
@@ -516,7 +516,7 @@ class BuiltBlockModel {
 
 				geom.push(...face.geomOrigin.add(pos), ...face.geomTangent, ...face.geomBitangent);
 				tex.push(...face.uvOrigin, ...face.uvTangent, ...face.uvBitangent);
-				texIndex.push(face.texture ? face.texture.layer : 0, face.tint ? 1 : 0);
+				texIndex.push(face.texture ? face.texture.virtualTexture.virtualTextureID : 0, face.tint ? 1 : 0);
 
 				faceCount++;
 			}

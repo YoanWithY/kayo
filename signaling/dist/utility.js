@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = Path.dirname(__filename);
 export const hostname = getWlanIPAddress();
-export const port = 81;
+export const port = 4401;
 export const staticDirectory = Path.join(__dirname, '../../frontend/dist');
 export const wsUUID = new Map();
 function getWlanIPAddress() {

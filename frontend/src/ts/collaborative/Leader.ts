@@ -1,68 +1,14 @@
-import { WSRole, WSLeaderReady, Identity, WSServerIceCandidateMessage, WSServerRTCOfferMessage, WSClientIceCandidate, RTString } from "../../../../shared/messageTypes";
+import { WSRole, WSLeaderReady, Identity, WSServerIceCandidateMessage, WSServerRTCOfferMessage, WSClientIceCandidate, RTMessage, RTString } from "../../../../shared/messageTypes";
 import { Role } from "./Role";
-import { multicastRT, multicastRTFile, sendWS } from "./utils";
 
 export class Leader extends Role {
 	public readonly wsRole: WSRole = "Leader";
 	public readonly connectionsMap: Map<number, RTCPeerConnection> = new Map();
 	public readonly datachannelMap: Map<number, RTCDataChannel> = new Map();
 	public readonly progressMap: Map<number, { progress: HTMLProgressElement, text: HTMLParagraphElement }> = new Map();
-	private fileInput!: HTMLInputElement;
 
 	public answerRoleIsReady(): void {
-		const uploadButton = document.createElement('button');
-		uploadButton.id = 'uploadButton';
-		uploadButton.textContent = 'Upload File';
-
-		const sendButton = document.createElement("button");
-		sendButton.textContent = "Send";
-		sendButton.onclick = () => { multicastRT<RTString>(this.datachannelMap.values() as unknown as RTCDataChannel[], { type: "string", content: "send" }) };
-
-
-		// Create hidden file input
-		this.fileInput = document.createElement('input');
-		this.fileInput.type = 'file';
-		this.fileInput.id = 'fileInput';
-		this.fileInput.style.display = 'none';
-		document.body.appendChild(uploadButton);
-		document.body.appendChild(sendButton);
-		document.body.appendChild(this.fileInput);
-		const headline = document.createElement("h2");
-		headline.textContent = "Users:";
-		document.body.appendChild(headline);
-		uploadButton.addEventListener('click', () => {
-			this.fileInput?.click();
-		});
-
-		this.fileInput.addEventListener('change', (event) => {
-			const file = (event.target as HTMLInputElement).files?.[0];
-
-			if (file) {
-				const con: { dataChanel: RTCDataChannel; connection: RTCPeerConnection; id: number }[] = [];
-				for (let [key, value] of this.connectionsMap) {
-					if (key === 0)
-						continue;
-
-					const channel = this.datachannelMap.get(key);
-					if (channel)
-						con.push({ connection: value, dataChanel: channel, id: key });
-				}
-				const start = Date.now();
-				multicastRTFile(file, con, (bytesSend: number, id: number) => {
-					const prog = this.progressMap.get(id);
-					if (!prog)
-						return;
-					const percent = Math.round(bytesSend / file.size * 100);
-					prog.progress.value = percent;
-					prog.text.textContent = `To ID ${id}: ${percent}% | ${(bytesSend / (Date.now() - start) / 1000).toFixed(1)} MB/s`;
-				})
-				// sendWSFile(file, "All but Me", (bytesSend) => {
-				// 	console.log(bytesSend / file.size);
-				// });
-			}
-		});
-
-		sendWS<WSLeaderReady>({ type: "leader ready", content: null });
+		this.base.sendWS<WSLeaderReady>({ type: "leader ready", content: null });
 	}
 
 	public async acceptOffer(offer: RTCSessionDescription, originIdentity: Identity) {
@@ -90,25 +36,23 @@ export class Leader extends Role {
 		};
 
 		dataChannel.onopen = () => {
-			console.log("Data Channel to", identity, "opend.");
-
-			const progress = document.createElement("progress");
-			progress.value = 0;
-			progress.max = 100;
-			const text = document.createElement("p");
-			text.textContent = `To ID ${identity.id}:`;
-			this.progressMap.set(identity.id, { progress, text });
-			document.body.appendChild(text);
-			document.body.appendChild(progress);
-
+			console.log("Opened Channel:", dataChannel);
 		};
 
 		dataChannel.onmessage = (event: MessageEvent) => {
-			console.log(event.data);
+			if (typeof event.data === "string") {
+				const message = JSON.parse(event.data) as RTMessage;
+				switch (message.type) {
+					case "string": {
+						this.dispatchMessage(message.content);
+						break;
+					}
+				}
+			}
 		};
 
 		peerConnection.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
-			sendWS<WSServerIceCandidateMessage>({
+			this.base.sendWS<WSServerIceCandidateMessage>({
 				type: "ice candidate",
 				content: {
 					targetIdentity: identity,
@@ -129,7 +73,7 @@ export class Leader extends Role {
 				return;
 			}
 			console.log(peerConnection.localDescription.sdp);
-			sendWS<WSServerRTCOfferMessage>({
+			this.base.sendWS<WSServerRTCOfferMessage>({
 				type: "offer",
 				content: {
 					targetIdentity: identity, offer: description
@@ -148,5 +92,9 @@ export class Leader extends Role {
 		}
 		console.log(wsICECandidate.candidate?.candidate);
 		connection.addIceCandidate(wsICECandidate.candidate ? wsICECandidate.candidate : undefined);
+	}
+
+	public sendMessage(value: string): void {
+		this.base.multicastRT<RTString>(Array.from(this.datachannelMap.values()), { type: "string", content: value });
 	}
 }

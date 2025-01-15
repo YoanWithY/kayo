@@ -1,15 +1,13 @@
-import { gpuDevice } from "../../GPUX";
-import { AbstractPipeline, vertexGeometryEntryPoint } from "../../Material/AbstractPipeline";
+import { AbstractRenderingPipeline, vertexGeometryEntryPoint } from "../../Material/AbstractRenderingPipeline";
 import staticShaderCode from "./heightField.wgsl?raw";
-import { resolveShader } from "../../rendering/Shader";
+import { resolveShader } from "../../rendering/ShaderUtils";
 import { Project } from "../../project/Project";
-import { heightFieldDataLayout } from "./HeightFieldPipeline";
+import { HeightFieldPipeline } from "./HeightFieldPipeline";
 
-export class HeightFieldShadowPipeline extends AbstractPipeline {
+export class HeightFieldShadowPipeline extends AbstractRenderingPipeline {
 	vertexEntryPoint = vertexGeometryEntryPoint;
 	fragmentEntryPoint = undefined;
 	gpuPipeline: GPURenderPipeline;
-	readonly isDisplayOutputPipeline = false;
 	readonly shaderCode: string;
 	readonly preProzessedShaderCoder;
 	readonly shaderModule: GPUShaderModule;
@@ -40,7 +38,7 @@ export class HeightFieldShadowPipeline extends AbstractPipeline {
 		this.depthStencilFormat = "depth24plus";
 		this.fragmentTargets = [];
 
-		this.shaderModule = gpuDevice.createShaderModule(
+		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule(
 			{
 				label: `${label} shader module`,
 				code: this.preProzessedShaderCoder,
@@ -48,14 +46,14 @@ export class HeightFieldShadowPipeline extends AbstractPipeline {
 					{ entryPoint: vertexGeometryEntryPoint },
 				]
 			});
-		this.gpuPipeline = this.buildPipeline();
+		this.gpuPipeline = this.buildPipeline(this.project.gpux.gpuDevice);
 	}
 
 	createPipelineLayout(): GPUPipelineLayout | "auto" {
 		const renderer = this.project.renderer;
-		return gpuDevice.createPipelineLayout({
+		return this.project.gpux.gpuDevice.createPipelineLayout({
 			label: "Height field shadow pipeline layout",
-			bindGroupLayouts: [renderer.bindGroup0Layout, renderer.bindGroupR3Layout, heightFieldDataLayout],
+			bindGroupLayouts: [renderer.bindGroup0Layout, renderer.bindGroupR3Layout, HeightFieldPipeline.heightFieldDataLayout],
 		});
 	}
 }

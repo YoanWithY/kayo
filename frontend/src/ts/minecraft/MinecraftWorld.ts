@@ -1,7 +1,6 @@
 import { ResourcePack as ResourcePack } from "./ResourcePack";
 import { MinecraftSection } from "./MinecraftSection";
 import { BlockNeighborhood } from "./MinecraftBlock";
-import { gpuDevice } from "../GPUX";
 import { MinecraftOpaquePipeline } from "./MinecraftOpaquePipeline";
 
 export type PaletteEntry = { Name: string, Properties?: { [key: string]: string } };
@@ -10,13 +9,15 @@ export class MinecraftWorld {
 	name: string;
 	ressourcePack: ResourcePack;
 	bundle!: GPURenderBundle;
+	renderSize: number;
 
 	private _sections: { [key: string]: MinecraftSection };
 
-	constructor(name: string, ressourcePack: ResourcePack) {
+	constructor(name: string, ressourcePack: ResourcePack, renderSize: number) {
 		this.name = name;
 		this.ressourcePack = ressourcePack;
 		this._sections = {};
+		this.renderSize = renderSize;
 	}
 
 	buildGeometry() {
@@ -25,7 +26,7 @@ export class MinecraftWorld {
 		}
 	}
 
-	buildBundle(bindGroup0: GPUBindGroup) {
+	buildBundle(gpuDevice: GPUDevice, bindGroup0: GPUBindGroup) {
 		const e = gpuDevice.createRenderBundleEncoder({
 			label: "Minecraft render bundle encoder",
 			colorFormats: ["bgra8unorm", "r16uint"],
@@ -34,7 +35,7 @@ export class MinecraftWorld {
 		});
 		e.setBindGroup(0, bindGroup0);
 		e.setPipeline(MinecraftOpaquePipeline.pipeline.gpuPipeline);
-		e.setBindGroup(2, MinecraftOpaquePipeline.bindGroup2)
+		// e.setBindGroup(2, MinecraftOpaquePipeline.bindGroup2)
 		this.render(e);
 		this.bundle = e.finish({ label: "Minecraft World bundle" });
 	}

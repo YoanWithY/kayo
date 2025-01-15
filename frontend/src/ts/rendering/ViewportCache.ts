@@ -1,4 +1,3 @@
-import { gpuDevice } from "../GPUX";
 import { MSAAOptions, OutputForwardRenderConfig } from "../project/Config";
 import { Project } from "../project/Project";
 import { getElement } from "./RenderUtil";
@@ -26,22 +25,23 @@ export class ViewportCache {
 	r16ResolveBindGroup0!: GPUBindGroup;
 	project: Project;
 	prevUseOverlays: boolean = false;
+	gpuDevice: GPUDevice;
 	constructor(project: Project, viewport: Viewport) {
 		this.project = project;
 		this.viewport = viewport;
-
-		this.querySet = gpuDevice.createQuerySet({
+		this.gpuDevice = project.gpux.gpuDevice;
+		this.querySet = this.gpuDevice.createQuerySet({
 			label: `time stamp query set for ${viewport.lable}`,
 			type: 'timestamp',
 			count: 10,
 		});
-		this.timeStempBufferResolve = gpuDevice.createBuffer({
+		this.timeStempBufferResolve = this.gpuDevice.createBuffer({
 			label: `time stemp querey resolve buffer for ${viewport.lable}`,
 			size: this.querySet.count * 8,
 			usage: GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST | GPUBufferUsage.QUERY_RESOLVE,
 		});
 
-		this.timeStempMapBuffer = gpuDevice.createBuffer({
+		this.timeStempMapBuffer = this.gpuDevice.createBuffer({
 			label: `time stemp map buffer for ${viewport.lable}`,
 			size: this.timeStempBufferResolve.size,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
@@ -60,7 +60,7 @@ export class ViewportCache {
 		if (this.depthTextureSS)
 			this.depthTextureSS.destroy();
 
-		this.depthTextureSS = gpuDevice.createTexture({
+		this.depthTextureSS = this.gpuDevice.createTexture({
 			size: [w, h, 1],
 			format: 'depth24plus',
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
@@ -70,7 +70,7 @@ export class ViewportCache {
 
 		if (this.selectionRT)
 			this.selectionRT.destroy();
-		this.selectionRT = gpuDevice.createTexture({
+		this.selectionRT = this.gpuDevice.createTexture({
 			size: [w, h, 1],
 			format: 'r8uint',
 			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
@@ -80,7 +80,7 @@ export class ViewportCache {
 
 		if (this.selectionDepthRT)
 			this.selectionDepthRT.destroy();
-		this.selectionDepthRT = gpuDevice.createTexture({
+		this.selectionDepthRT = this.gpuDevice.createTexture({
 			size: [w, h, 1],
 			format: 'depth24plus',
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
@@ -90,7 +90,7 @@ export class ViewportCache {
 
 		if (this.idTextureSS)
 			this.idTextureSS.destroy();
-		this.idTextureSS = gpuDevice.createTexture({
+		this.idTextureSS = this.gpuDevice.createTexture({
 			label: "single sample matte attachment",
 			size: [w, h, 1],
 			format: "r16uint",
@@ -101,7 +101,7 @@ export class ViewportCache {
 		if (config.msaa > 1) {
 			if (this.idTextureMS)
 				this.idTextureMS.destroy();
-			this.idTextureMS = gpuDevice.createTexture({
+			this.idTextureMS = this.gpuDevice.createTexture({
 				label: "multisample id attachment texture",
 				size: [w, h, 1],
 				format: "r16uint",
@@ -112,7 +112,7 @@ export class ViewportCache {
 			if (this.depthTextureMS)
 				this.depthTextureMS.destroy();
 
-			this.depthTextureMS = gpuDevice.createTexture({
+			this.depthTextureMS = this.gpuDevice.createTexture({
 				size: [w, h, 1],
 				format: 'depth24plus',
 				usage: GPUTextureUsage.RENDER_ATTACHMENT,
@@ -126,7 +126,7 @@ export class ViewportCache {
 				console.error("Overlay Texture missing!");
 				return;
 			}
-			this.compositingBindGroup0 = gpuDevice.createBindGroup({
+			this.compositingBindGroup0 = this.gpuDevice.createBindGroup({
 				label: "compositing bind group 0",
 				entries: [
 					{ binding: 0, resource: this.overlayTextureSS.createView() },
@@ -140,7 +140,7 @@ export class ViewportCache {
 					console.error("Multisampled ID Texture missing!");
 					return;
 				}
-				this.r16ResolveBindGroup0 = gpuDevice.createBindGroup({
+				this.r16ResolveBindGroup0 = this.gpuDevice.createBindGroup({
 					label: "R16u resolve bind group 0",
 					entries: [
 						{ binding: 0, resource: this.idTextureMS.createView() },
@@ -172,7 +172,7 @@ export class ViewportCache {
 		if (this.colorTextureMS)
 			this.colorTextureMS.destroy();
 
-		this.colorTextureMS = gpuDevice.createTexture({
+		this.colorTextureMS = this.gpuDevice.createTexture({
 			size: [w, h, 1],
 			format: currentFormat,
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
@@ -201,7 +201,7 @@ export class ViewportCache {
 		if (this.overlayTextureSS)
 			this.overlayTextureSS.destroy();
 
-		this.overlayTextureSS = gpuDevice.createTexture({
+		this.overlayTextureSS = this.gpuDevice.createTexture({
 			label: "Overlay Attachment",
 			size: [w, h, 1],
 			format: "rgba8unorm",
@@ -215,7 +215,7 @@ export class ViewportCache {
 		}
 
 		if (config.msaa > 1) {
-			this.overlayTextureMS = gpuDevice.createTexture({
+			this.overlayTextureMS = this.gpuDevice.createTexture({
 				label: "Overlay resolve target",
 				size: [w, h, 1],
 				format: "rgba8unorm",
@@ -232,7 +232,7 @@ export class ViewportCache {
 		const displayConfig = this.project.config.output.display;
 		context.unconfigure();
 		context.configure({
-			device: gpuDevice,
+			device: this.gpuDevice,
 			format: this.project.getSwapChainFormat(),
 			colorSpace: displayConfig.swapChainColorSpace,
 			toneMapping: { mode: displayConfig.swapChainToneMappingMode },
@@ -381,7 +381,7 @@ export class ViewportCache {
 				// 	"total:", (r3Time + r16Time + selectionTime + overlayTime + compositingTime) / 1000000);
 
 				this.timeStempMapBuffer.unmap();
-				gpuDevice.queue.writeBuffer(this.timeStempBufferResolve, 0, this.resetBuffer, 0, this.resetBuffer.length)
+				this.gpuDevice.queue.writeBuffer(this.timeStempBufferResolve, 0, this.resetBuffer, 0, this.resetBuffer.length)
 				this.viewport.setGPUTime(r3Time, r16Time, selectionTime, overlayTime, compositingTime);
 			});
 		}

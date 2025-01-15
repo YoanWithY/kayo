@@ -1,0 +1,9 @@
+{
+	"class": "ptp-chat",
+	"children": [
+		{
+			"class": "ptp-chat-content",
+			"stateVariableURL": "state.ptpMessageLog"
+		}
+	]
+}

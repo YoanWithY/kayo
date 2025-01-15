@@ -1,56 +1,14 @@
-import { gpuDevice } from "../GPUX";
-import { AbstractPipeline } from "../Material/AbstractPipeline";
+import { AbstractDisplayOutputRenderingPipeline } from "../Material/AbstractRenderingPipeline";
 import { Project } from "../project/Project";
 import Renderer from "../rendering/Renderer";
-import { resolveShader } from "../rendering/Shader";
+import { resolveShader } from "../rendering/ShaderUtils";
 import staticShaderCode from "./minecraftOpaque.wgsl?raw";
-import { ResourcePack } from "./ResourcePack";
 
-export const minecraftBindgroup1Layout = gpuDevice.createBindGroupLayout(
-	{
-		label: "minecraft bind group 1 layout",
-		entries:
-			[
-				{
-					binding: 0,
-					visibility: GPUShaderStage.VERTEX,
-					buffer:
-					{
-						type: "uniform"
-					}
-				},
-			]
-	});
-
-export const minecraftBindgroup2Layout = gpuDevice.createBindGroupLayout(
-	{
-		label: "minecraft bind group 2 layout",
-		entries:
-			[
-				{
-					binding: 0,
-					visibility: GPUShaderStage.FRAGMENT,
-					texture: {
-						multisampled: false,
-						sampleType: "float",
-						viewDimension: "2d-array"
-					}
-				},
-				{
-					binding: 1,
-					visibility: GPUShaderStage.FRAGMENT,
-					sampler: {
-						type: "filtering"
-					}
-				}
-			]
-	});
-
-export class MinecraftOpaquePipeline extends AbstractPipeline {
+export class MinecraftOpaquePipeline extends AbstractDisplayOutputRenderingPipeline {
+	project: Project;
 	vertexEntryPoint = "vertex_main";
 	fragmentEntryPoint = "fragment_main";
 	gpuPipeline: GPURenderPipeline;
-	readonly isDisplayOutputPipeline = true;
 	readonly shaderCode: string;
 	readonly preProzessedShaderCoder;
 	readonly shaderModule: GPUShaderModule;
@@ -65,7 +23,7 @@ export class MinecraftOpaquePipeline extends AbstractPipeline {
 	depthCompare: GPUCompareFunction;
 	depthWriteEnabled: boolean;
 	frontFace: GPUFrontFace = "ccw";
-	project: Project;
+	static minecraftBindgroup1Layout: GPUBindGroupLayout;
 
 	constructor(project: Project, label: string) {
 		super(label);
@@ -73,6 +31,7 @@ export class MinecraftOpaquePipeline extends AbstractPipeline {
 		this.shaderCode = staticShaderCode;
 		this.preProzessedShaderCoder = resolveShader(this.shaderCode);
 		this.vertexConstants = {};
+		this.multisample.alphaToCoverageEnabled = false;
 		this.vertexBufferLayout = [
 			{
 				arrayStride: 9 * 4,
@@ -109,7 +68,7 @@ export class MinecraftOpaquePipeline extends AbstractPipeline {
 		this.depthStencilFormat = Renderer.getDepthStencilFormat();
 		this.fragmentTargets = project.getFragmentTargets();
 
-		this.shaderModule = gpuDevice.createShaderModule(
+		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule(
 			{
 				label: `${label} shader module`,
 				code: this.preProzessedShaderCoder,
@@ -118,47 +77,35 @@ export class MinecraftOpaquePipeline extends AbstractPipeline {
 					{ entryPoint: this.fragmentEntryPoint },
 				]
 			});
-		this.gpuPipeline = this.buildPipeline();
+		this.gpuPipeline = this.buildPipeline(this.project.gpux.gpuDevice);
 	}
 
 	createPipelineLayout(): GPUPipelineLayout | "auto" {
 		const renderer = this.project.renderer;
-		return gpuDevice.createPipelineLayout({
+		return this.project.gpux.gpuDevice.createPipelineLayout({
 			label: "Minecraft opaque pipeline layout",
-			bindGroupLayouts: [renderer.bindGroup0Layout, minecraftBindgroup1Layout, minecraftBindgroup2Layout],
+			bindGroupLayouts: [renderer.bindGroup0Layout, MinecraftOpaquePipeline.minecraftBindgroup1Layout],
 		});
 	}
 
 	static pipeline: MinecraftOpaquePipeline;
 	static init(project: Project) {
-		this.pipeline = new MinecraftOpaquePipeline(project, "Minecraft Opaque Pipeline");
-	}
-
-	static bindGroup2: GPUBindGroup;
-	static setRessourcePack(res: ResourcePack) {
-		this.bindGroup2 = gpuDevice.createBindGroup({
-			label: "minecraft bind group 2",
-			entries: [
-				{
-					binding: 0,
-					resource: res.allBlockTextures.createView({ arrayLayerCount: res.allBlockTextures.depthOrArrayLayers }),
-				},
-				{
-					binding: 1, resource: gpuDevice.createSampler(
+		this.minecraftBindgroup1Layout = project.gpux.gpuDevice.createBindGroupLayout(
+			{
+				label: "minecraft bind group 1 layout",
+				entries:
+					[
 						{
-							label: "all block texture array",
-							addressModeU: "clamp-to-edge",
-							addressModeV: "clamp-to-edge",
-							magFilter: "linear",
-							minFilter: "linear",
-							mipmapFilter: "linear",
-							maxAnisotropy: 16
-						}
-					)
-				}
-			],
-			layout: minecraftBindgroup2Layout
-		});
+							binding: 0,
+							visibility: GPUShaderStage.VERTEX,
+							buffer:
+							{
+								type: "uniform"
+							}
+						},
+					]
+			});
+		this.pipeline = new MinecraftOpaquePipeline(project, "Minecraft Opaque Pipeline");
 	}
 
 }

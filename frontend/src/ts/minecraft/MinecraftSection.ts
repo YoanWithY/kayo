@@ -1,6 +1,6 @@
-import { gpuDevice } from "../GPUX";
+import { Project } from "../project/Project";
 import { MinecraftBlock } from "./MinecraftBlock";
-import { minecraftBindgroup1Layout } from "./MinecraftOpaquePipeline";
+import { MinecraftOpaquePipeline } from "./MinecraftOpaquePipeline";
 import { MinecraftWorld, PaletteEntry } from "./MinecraftWorld";
 export class MinecraftSection {
 	private _minecraftWorld: MinecraftWorld;
@@ -15,7 +15,9 @@ export class MinecraftSection {
 	private _sectionBuffer: GPUBuffer;
 	private _faceNumber: number = 0;
 	private _bindGroup1: GPUBindGroup;
+	private gpuDevice;
 	constructor(
+		project: Project,
 		minecraftWorld: MinecraftWorld,
 		dimension: number,
 		x: number,
@@ -28,36 +30,36 @@ export class MinecraftSection {
 		this._x = x;
 		this._y = y;
 		this._z = z;
-
-		this._geomBuffer = gpuDevice.createBuffer({
+		this.gpuDevice = project.gpux.gpuDevice;
+		this._geomBuffer = this.gpuDevice.createBuffer({
 			label: "section geom buffer",
 			size: 0,
 			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
 		});
 
-		this._texBuffer = gpuDevice.createBuffer({
+		this._texBuffer = this.gpuDevice.createBuffer({
 			label: "section tex buffer",
 			size: 0,
 			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
 		});
 
-		this._texIndexBuffer = gpuDevice.createBuffer({
+		this._texIndexBuffer = this.gpuDevice.createBuffer({
 			label: "section tex index buffer",
 			size: 0,
 			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
 		});
 
-		this._sectionBuffer = gpuDevice.createBuffer({
+		this._sectionBuffer = this.gpuDevice.createBuffer({
 			label: "section uniform buffer",
 			size: 4 * 4,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 		});
-		gpuDevice.queue.writeBuffer(this._sectionBuffer, 0, new Float32Array([this._x * 16, this._y * 16, this._z * 16]));
+		this.gpuDevice.queue.writeBuffer(this._sectionBuffer, 0, new Float32Array([this._x * 16, this._y * 16, this._z * 16]));
 
-		this._bindGroup1 = gpuDevice.createBindGroup({
+		this._bindGroup1 = this.gpuDevice.createBindGroup({
 			label: "section bind group 1",
 			entries: [{ binding: 0, resource: { buffer: this._sectionBuffer } }],
-			layout: minecraftBindgroup1Layout
+			layout: MinecraftOpaquePipeline.minecraftBindgroup1Layout
 		});
 
 		let i = 0;
@@ -136,43 +138,43 @@ export class MinecraftSection {
 		const geomData = new Float32Array(geom);
 
 		this._geomBuffer.destroy();
-		this._geomBuffer = gpuDevice.createBuffer({
+		this._geomBuffer = this.gpuDevice.createBuffer({
 			label: `section (${this._x}, ${this._y}, ${this._z}) geom buffer`,
 			size: geomData.byteLength,
 			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
 		});
-		gpuDevice.queue.writeBuffer(this._geomBuffer, 0, geomData);
+		this.gpuDevice.queue.writeBuffer(this._geomBuffer, 0, geomData);
 
 		const texData = new Float32Array(tex);
 		this._texBuffer.destroy();
-		this._texBuffer = gpuDevice.createBuffer({
+		this._texBuffer = this.gpuDevice.createBuffer({
 			label: `section (${this._x}, ${this._y}, ${this._z}) tex buffer`,
 			size: texData.byteLength,
 			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
 		});
-		gpuDevice.queue.writeBuffer(this._texBuffer, 0, texData);
+		this.gpuDevice.queue.writeBuffer(this._texBuffer, 0, texData);
 
 		const texIndexData = new Uint32Array(texIndex);
 		this._texIndexBuffer.destroy();
-		this._texIndexBuffer = gpuDevice.createBuffer({
+		this._texIndexBuffer = this.gpuDevice.createBuffer({
 			label: `section (${this._x}, ${this._y}, ${this._z}) tex index buffer`,
 			size: texIndexData.byteLength,
 			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
 		});
-		gpuDevice.queue.writeBuffer(this._texIndexBuffer, 0, texIndexData);
+		this.gpuDevice.queue.writeBuffer(this._texIndexBuffer, 0, texIndexData);
 
 		this._sectionBuffer.destroy();
-		this._sectionBuffer = gpuDevice.createBuffer({
+		this._sectionBuffer = this.gpuDevice.createBuffer({
 			label: `section (${this._x}, ${this._y}, ${this._z}) uniform buffer`,
 			size: 4 * 4,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 		});
-		gpuDevice.queue.writeBuffer(this._sectionBuffer, 0, new Float32Array([this._x * 16, this._y * 16, this._z * 16]));
+		this.gpuDevice.queue.writeBuffer(this._sectionBuffer, 0, new Float32Array([this._x * 16, this._y * 16, this._z * 16]));
 
-		this._bindGroup1 = gpuDevice.createBindGroup({
+		this._bindGroup1 = this.gpuDevice.createBindGroup({
 			label: `section (${this._x}, ${this._y}, ${this._z}) bind group 1`,
 			entries: [{ binding: 0, resource: { buffer: this._sectionBuffer } }],
-			layout: minecraftBindgroup1Layout
+			layout: MinecraftOpaquePipeline.minecraftBindgroup1Layout
 		});
 	}
 

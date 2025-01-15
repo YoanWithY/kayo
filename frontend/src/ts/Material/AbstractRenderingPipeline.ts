@@ -1,13 +1,10 @@
-import { gpuDevice } from "../GPUX";
-
 export const vertexEntryPoint = "vertex_main";
 export const vertexGeometryEntryPoint = "vertex_geometry";
 export const fragmentEntryPoint = "fragment_main";
 export const fragmentSelectionEntryPoint = "fragment_selection";
 
-export abstract class AbstractPipeline {
+export abstract class AbstractRenderingPipeline {
 	abstract gpuPipeline: GPURenderPipeline;
-	abstract readonly isDisplayOutputPipeline: boolean;
 	readonly label: string;
 
 	abstract readonly shaderModule: GPUShaderModule;
@@ -103,7 +100,7 @@ export abstract class AbstractPipeline {
 		};
 	}
 
-	public buildPipeline(): GPURenderPipeline {
+	public buildPipeline(gpuDevice: GPUDevice): GPURenderPipeline {
 		const renderPipelineDescritor: GPURenderPipelineDescriptor = {
 			label: this.label,
 			vertex: this.createVertexState(),
@@ -115,5 +112,30 @@ export abstract class AbstractPipeline {
 		};
 		this.gpuPipeline = gpuDevice.createRenderPipeline(renderPipelineDescritor);
 		return this.gpuPipeline;
+	}
+}
+
+export interface DisplayInfo {
+	gpuDevice: GPUDevice,
+	targetColorSpace: number,
+	componentTransfere: number,
+	format: GPUTextureFormat,
+	msaa: number,
+}
+
+export abstract class AbstractMSAwareRenderingPipeline extends AbstractRenderingPipeline {
+	public updateDisplayProperties(surfaceInfo: DisplayInfo) {
+		this.multisample.count = surfaceInfo.msaa;
+		this.buildPipeline(surfaceInfo.gpuDevice);
+	}
+}
+
+export abstract class AbstractDisplayOutputRenderingPipeline extends AbstractMSAwareRenderingPipeline {
+	public updateDisplayProperties(surfaceInfo: DisplayInfo) {
+		this.fragmentConstants["targetColorSpace"] = surfaceInfo.targetColorSpace;
+		this.fragmentConstants["componentTranfere"] = surfaceInfo.componentTransfere;
+		this.fragmentTargets[0].format = surfaceInfo.format;
+		this.multisample.count = surfaceInfo.msaa;
+		this.buildPipeline(surfaceInfo.gpuDevice);
 	}
 }

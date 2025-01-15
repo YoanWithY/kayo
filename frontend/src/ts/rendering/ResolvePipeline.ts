@@ -1,14 +1,12 @@
-import { AbstractPipeline, fragmentEntryPoint, vertexEntryPoint } from "../Material/AbstractPipeline";
+import { AbstractRenderingPipeline, fragmentEntryPoint, vertexEntryPoint } from "../Material/AbstractRenderingPipeline";
 import { Project } from "../project/Project";
 import shaderCode from "../../wgsl/resolveFirst.wgsl?raw";
-import { resolveShader } from "./Shader";
-import { gpuDevice } from "../GPUX";
+import { resolveShader } from "./ShaderUtils";
 
-export class ResolvePipeline extends AbstractPipeline {
+export class ResolvePipeline extends AbstractRenderingPipeline {
 	vertexEntryPoint = vertexEntryPoint;
 	fragmentEntryPoint = fragmentEntryPoint;
 	gpuPipeline: GPURenderPipeline;
-	readonly isDisplayOutputPipeline = false;
 	readonly shaderCode: string;
 	readonly preProzessedShaderCoder;
 	readonly shaderModule: GPUShaderModule;
@@ -38,17 +36,17 @@ export class ResolvePipeline extends AbstractPipeline {
 		this.depthWriteEnabled = false;
 		this.fragmentTargets = [{ format: textureFormat }];
 
-		this.shaderModule = gpuDevice.createShaderModule(
+		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule(
 			{
 				label: `${label} shader module`,
 				code: this.preProzessedShaderCoder,
 				compilationHints: [{ entryPoint: vertexEntryPoint }, { entryPoint: fragmentEntryPoint }]
 			});
-		this.gpuPipeline = this.buildPipeline();
+		this.gpuPipeline = this.buildPipeline(this.project.gpux.gpuDevice);
 	}
 
 	createPipelineLayout(): GPUPipelineLayout | "auto" {
-		return gpuDevice.createPipelineLayout({
+		return this.project.gpux.gpuDevice.createPipelineLayout({
 			label: "r16u Resolve Pipeline Layout",
 			bindGroupLayouts: [this.project.renderer.r16ResolveBindGroupLayout],
 		});

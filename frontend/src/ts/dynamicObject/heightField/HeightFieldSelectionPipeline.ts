@@ -1,16 +1,14 @@
-import { gpuDevice } from "../../GPUX";
-import { AbstractPipeline, vertexGeometryEntryPoint, fragmentSelectionEntryPoint } from "../../Material/AbstractPipeline";
+import { AbstractRenderingPipeline, vertexGeometryEntryPoint, fragmentSelectionEntryPoint } from "../../Material/AbstractRenderingPipeline";
 import staticShaderCode from "./heightField.wgsl?raw";
-import { resolveShader } from "../../rendering/Shader";
+import { resolveShader } from "../../rendering/ShaderUtils";
 import Renderer from "../../rendering/Renderer";
 import { Project } from "../../project/Project";
-import { heightFieldDataLayout } from "./HeightFieldPipeline";
+import { HeightFieldPipeline } from "./HeightFieldPipeline";
 
-export class HeightFieldSelectionPipeline extends AbstractPipeline {
+export class HeightFieldSelectionPipeline extends AbstractRenderingPipeline {
 	vertexEntryPoint = vertexGeometryEntryPoint;
 	fragmentEntryPoint = fragmentSelectionEntryPoint;
 	gpuPipeline: GPURenderPipeline;
-	readonly isDisplayOutputPipeline = false;
 	readonly shaderCode: string;
 	readonly preProzessedShaderCoder;
 	readonly shaderModule: GPUShaderModule;
@@ -41,7 +39,7 @@ export class HeightFieldSelectionPipeline extends AbstractPipeline {
 		this.depthStencilFormat = Renderer.getDepthStencilFormat();
 		this.fragmentTargets = [{ format: "r8uint" }];
 
-		this.shaderModule = gpuDevice.createShaderModule(
+		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule(
 			{
 				label: `${label} shader module`,
 				code: this.preProzessedShaderCoder,
@@ -50,14 +48,14 @@ export class HeightFieldSelectionPipeline extends AbstractPipeline {
 					{ entryPoint: fragmentSelectionEntryPoint },
 				]
 			});
-		this.gpuPipeline = this.buildPipeline();
+		this.gpuPipeline = this.buildPipeline(this.project.gpux.gpuDevice);
 	}
 
 	createPipelineLayout(): GPUPipelineLayout | "auto" {
 		const renderer = this.project.renderer;
-		return gpuDevice.createPipelineLayout({
+		return this.project.gpux.gpuDevice.createPipelineLayout({
 			label: "Height field selection pipeline layout",
-			bindGroupLayouts: [renderer.bindGroup0Layout, renderer.bindGroupR3Layout, heightFieldDataLayout],
+			bindGroupLayouts: [renderer.bindGroup0Layout, renderer.bindGroupR3Layout, HeightFieldPipeline.heightFieldDataLayout],
 		});
 	}
 

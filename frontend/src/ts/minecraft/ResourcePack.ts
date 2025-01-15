@@ -1,8 +1,8 @@
 import { ZipInfo } from "unzipit";
 import { MinecraftTexture } from "./MinecraftTexture";
 import { ParsedBlockModel, BlockState } from "./MinecraftBlock";
-import { gpuDevice } from "../GPUX";
-import { getNumberOfMipMapLevels } from "../rendering/Shader";
+import { VirtualTexture2D } from "../Textures/VirtualTexture2D";
+import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 
 export class MinecraftNamespaceResources {
 	namespace: string;
@@ -93,7 +93,7 @@ export class ResourcePack {
 		return ret;
 	}
 
-	initialize() {
+	initialize(virtualTextureSystem: VirtualTextureSystem) {
 		for (const namespaceName in this.namespaceResources) {
 			const namespaceres = this.namespaceResources[namespaceName];
 			const blockModels = namespaceres.models.block;
@@ -117,61 +117,10 @@ export class ResourcePack {
 				blockstates[b] = new BlockState(this, b, blockstates[b]);
 			}
 		}
-
-		for (const namespaceName in this.namespaceResources) {
-			const namespaceres = this.namespaceResources[namespaceName];
-			const blockTextures = namespaceres.textures.block;
-
-			if (!blockTextures)
-				continue;
-
-			let blockTextureCount = 0;
-			for (const _ in blockTextures)
-				blockTextureCount++;
-
-
-			const refImage = blockTextures.stone.image;
-			const mipLevels = getNumberOfMipMapLevels(refImage);
-			this.allBlockTextures = gpuDevice.createTexture({
-				label: `all block textures array for ${this.name}`,
-				format: "rgba8unorm",
-				size: [refImage.width, refImage.height, blockTextureCount],
-				usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING,
-				mipLevelCount: mipLevels,
-			});
-
-			const copyEncoder = gpuDevice.createCommandEncoder({ label: "texture copy encoder" });
-			let layer = 0;
-			for (const t in blockTextures) {
-				const tex = blockTextures[t];
-				tex.layer = layer++;
-				if (tex.image.width != refImage.width)
-					continue;
-				for (let mip = 0; mip < mipLevels; mip++) {
-					const f = 1 << mip;
-					copyEncoder.copyTextureToTexture(
-						{
-							texture: tex.gpuTexture,
-							mipLevel: mip,
-						},
-						{
-							texture: this.allBlockTextures,
-							mipLevel: mip,
-							origin: [0, 0, tex.layer],
-						},
-						{
-							width: this.allBlockTextures.width / f,
-							height: this.allBlockTextures.height / f,
-							depthOrArrayLayers: 1,
-
-						});
-				}
-			}
-			gpuDevice.queue.submit([copyEncoder.finish()]);
-		}
+		virtualTextureSystem.physicalTexture.generateAllMips();
 	}
 
-	static parse(zip: ZipInfo, name: string, fallback: ResourcePack | undefined, onDone: () => void, onProgress: (total: number, pending: number, name: string) => void): ResourcePack {
+	static parse(zip: ZipInfo, name: string, fallback: ResourcePack | undefined, fb: VirtualTexture2D, onDone: () => void, onProgress: (total: number, pending: number, name: string) => void): ResourcePack {
 		const r = new ResourcePack(name, fallback);
 		const entries = zip.entries;
 		let pending = 0;
@@ -241,7 +190,7 @@ export class ResourcePack {
 					entries[key].blob('image/png').then(blob => {
 						createImageBitmap(blob, { colorSpaceConversion: 'none' }).then(image => {
 							const textureName = filename.substring(0, filename.length - 4);
-							typeContainer[textureName] = new MinecraftTexture(textureName, image);
+							typeContainer[textureName] = new MinecraftTexture(textureName, image, fb);
 							update(key);
 						})
 					})

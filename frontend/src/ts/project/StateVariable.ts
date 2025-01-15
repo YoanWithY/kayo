@@ -1,3 +1,4 @@
+import UIVariableComponent from "../ui/components/UIComponent";
 import { Project } from "./Project";
 
 export type StateVariableChangeCallback<T> = (value: T) => void;
@@ -10,6 +11,7 @@ export default class StateVariable<T> {
 	private _value: T;
 	private _immediateObserverFunctions: Set<StateVariableChangeCallback<T>> = new Set();
 	private _deferredObserverFunctions: Set<StateVariableChangeCallback<T>> = new Set();
+	private _boundUIComponents = new Map<UIVariableComponent<T>, StateVariableChangeCallback<T>>();
 	project: Project;
 	constructor(project: Project, value: T) {
 		this.project = project;
@@ -27,9 +29,9 @@ export default class StateVariable<T> {
 
 	/**
 	 * Add a callback function to execute when this value changes.
-	 * Mutation inside the value will not automatically fire the events.
+	 * Mutations inside the value (if the value type is an object) will not automatically fire the events.
 	 * Use ``this.fireChangeEvents()`` in such a case.
-	 * @param callback The callback function to call when the value changes.
+	 * @param callback The callback function to call when the value changes. This callback **must not** access state variables in order to maintain the consistency model.
 	 * @param mode If ``immediate``, the callback will be executed immediately after the value changed.
 	 * If ``deferred``, the execution will be deferred to right befor the next rendering cycles.
 	 * @returns Returns whether or not the provided callback was added (because of set semantics).
@@ -54,6 +56,19 @@ export default class StateVariable<T> {
 		} else {
 			return this._deferredObserverFunctions.delete(callback);
 		}
+	}
+
+	public bind(uiComponent: UIVariableComponent<T>) {
+		if (this._boundUIComponents.get(uiComponent) !== undefined)
+			return false;
+
+		const uiCallback: StateVariableChangeCallback<T> = (value: T) => {
+			uiComponent.setValue(value);
+		};
+		this._boundUIComponents.set(uiComponent, uiCallback);
+		this.addChangeListener(uiCallback, "immediate");
+		uiCallback(this.value);
+		return true;
 	}
 
 	public fireChangeEvents() {

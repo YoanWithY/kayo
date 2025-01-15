@@ -1,29 +1,29 @@
-import { heightFieldComputeBindGroupLayout, heightFieldDataLayout, HeightFieldPipeline } from "./HeightFieldPipeline";
+import { HeightFieldPipeline } from "./HeightFieldPipeline";
 import { Project } from "../../project/Project";
 import R3Object from "../../project/R3Object";
 import { HeightFieldSelectionPipeline } from "./HeightFieldSelectionPipeline";
-import { gpuDevice } from "../../GPUX";
-import { resolveShader } from "../../rendering/Shader";
+import { resolveShader } from "../../rendering/ShaderUtils";
 import heightFieldComputeCode from "./heightFieldCompute.wgsl?raw";
 import { HeightFieldShadowPipeline as HeightFieldDepthPipeline } from "./HeightFieldShadowPipeline";
 
 export default class HeightFieldR3 extends R3Object {
-	pipeline: HeightFieldPipeline;
-	computePipeline: GPUComputePipeline;
 	private _xVerts: number;
 	private _yVerts: number;
+	pipeline: HeightFieldPipeline;
 	cacheTexture: GPUTexture;
+	computePipeline: GPUComputePipeline;
 	dataBuffer: GPUBuffer;
 	dataBindGroup: GPUBindGroup;
 	computeBindGroup: GPUBindGroup;
-	private _albedo: GPUTexture;
-	constructor(project: Project, albedo: GPUTexture, heightFunction: string, xVerts: number = 1000, yVerts: number = 1000,
+	project: Project;
+
+	constructor(project: Project, heightFunction: string, xVerts: number = 1000, yVerts: number = 1000,
 		geomMinX = 0, geomMinY = 0, geomSizeX = 1, geomSizeY = 1, domMinX = 0, domMinY = 0, domSizeX = 1, domSizeY = 1) {
 		super(project);
-		this._albedo = albedo;
+		this.project = project;
 		this._xVerts = xVerts;
 		this._yVerts = yVerts;
-		this.cacheTexture = gpuDevice.createTexture({
+		this.cacheTexture = this.project.gpux.gpuDevice.createTexture({
 			label: "Cache Texture for height field",
 			format: "rgba32float",
 			dimension: "2d",
@@ -31,7 +31,7 @@ export default class HeightFieldR3 extends R3Object {
 			usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING
 		});
 		this.pipeline = new HeightFieldPipeline(project, "Height Field Pipeline");
-		this.dataBuffer = gpuDevice.createBuffer({
+		this.dataBuffer = this.project.gpux.gpuDevice.createBuffer({
 			label: "height field data buffer",
 			size: 10 * 4,
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
@@ -46,13 +46,13 @@ export default class HeightFieldR3 extends R3Object {
 		this.floatData[7] = domSizeY;
 		this.uintData[0] = xVerts;
 		this.uintData[1] = yVerts;
-		gpuDevice.queue.writeBuffer(this.dataBuffer, 0, this.floatData);
-		gpuDevice.queue.writeBuffer(this.dataBuffer, this.floatData.byteLength, this.uintData);
+		this.project.gpux.gpuDevice.queue.writeBuffer(this.dataBuffer, 0, this.floatData);
+		this.project.gpux.gpuDevice.queue.writeBuffer(this.dataBuffer, this.floatData.byteLength, this.uintData);
 		this.dataBindGroup = this._createDataBindGroup();
-		this.computeBindGroup = gpuDevice.createBindGroup(
+		this.computeBindGroup = this.project.gpux.gpuDevice.createBindGroup(
 			{
 				label: "height field compute bind group",
-				layout: heightFieldComputeBindGroupLayout,
+				layout: HeightFieldPipeline.heightFieldComputeBindGroupLayout,
 				entries:
 					[
 						{
@@ -69,18 +69,18 @@ export default class HeightFieldR3 extends R3Object {
 						}
 					]
 			});
-		const computeModule = gpuDevice.createShaderModule(
+		const computeModule = this.project.gpux.gpuDevice.createShaderModule(
 			{
 				label: "height field compute shader module",
 				code: resolveShader(heightFieldComputeCode, { heightCode: heightFunction }),
 				compilationHints: [{ entryPoint: "computeHeight" }],
 			})
-		const computePipelineLayout = gpuDevice.createPipelineLayout(
+		const computePipelineLayout = this.project.gpux.gpuDevice.createPipelineLayout(
 			{
 				label: "height field compute pipeline layout",
-				bindGroupLayouts: [project.renderer.bindGroup0Layout, heightFieldComputeBindGroupLayout],
+				bindGroupLayouts: [project.renderer.bindGroup0Layout, HeightFieldPipeline.heightFieldComputeBindGroupLayout],
 			})
-		this.computePipeline = gpuDevice.createComputePipeline(
+		this.computePipeline = this.project.gpux.gpuDevice.createComputePipeline(
 			{
 				label: "Height field compute pipeline",
 				layout: computePipelineLayout,
@@ -91,10 +91,10 @@ export default class HeightFieldR3 extends R3Object {
 	}
 
 	private _createDataBindGroup() {
-		return gpuDevice.createBindGroup(
+		return this.project.gpux.gpuDevice.createBindGroup(
 			{
 				label: "height field data bind group",
-				layout: heightFieldDataLayout,
+				layout: HeightFieldPipeline.heightFieldDataLayout,
 				entries:
 					[
 						{
@@ -110,12 +110,8 @@ export default class HeightFieldR3 extends R3Object {
 							resource: this.cacheTexture.createView()
 						},
 						{
-							binding: 2,
-							resource: this._albedo.createView()
-						},
-						{
 							binding: 3,
-							resource: gpuDevice.createSampler(
+							resource: this.project.gpux.gpuDevice.createSampler(
 								{
 									addressModeU: "repeat",
 									addressModeV: "repeat",
@@ -128,11 +124,6 @@ export default class HeightFieldR3 extends R3Object {
 						}
 					]
 			});
-	}
-
-	public setAlbedo(texture: GPUTexture) {
-		this._albedo = texture;
-		this.dataBindGroup = this._createDataBindGroup();
 	}
 
 	static selectionPipeline: HeightFieldSelectionPipeline;
@@ -160,7 +151,7 @@ export default class HeightFieldR3 extends R3Object {
 
 	private renderWithPipeline(renderPassEncoder: GPURenderPassEncoder, pipeline: GPURenderPipeline) {
 		renderPassEncoder.setPipeline(pipeline);
-		this.updateUniforms();
+		this.updateUniforms(this.project.gpux.gpuDevice);
 		renderPassEncoder.setBindGroup(1, this.defaultBindGroup);
 		renderPassEncoder.setBindGroup(2, this.dataBindGroup);
 		renderPassEncoder.draw(this.getVerts());

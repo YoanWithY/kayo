@@ -1,31 +1,29 @@
-import { WSRole, WSFollowerReady, Identity, WSServerIceCandidateMessage, WSServerRTCOfferMessage, WSClientIceCandidate, RTMessage } from "../../../../shared/messageTypes";
+import { WSRole, WSFollowerReady, Identity, WSServerIceCandidateMessage, WSServerRTCOfferMessage, WSClientIceCandidate, RTMessage, RTString } from "../../../../shared/messageTypes";
+import { PTPBase } from "./PTPBase";
 import { Role } from "./Role";
-import { sendWS } from "./utils";
 
 export class Follower extends Role {
 	public readonly wsRole: WSRole = "Follower";
 	public readonly leaderConnection = new RTCPeerConnection();
-	public constructor(ws: WebSocket) {
-		super(ws);
+	public dataChannel!: RTCDataChannel;
+	public constructor(ptpBase: PTPBase) {
+		super(ptpBase);
 
 		this.leaderConnection.ondatachannel = (event: RTCDataChannelEvent) => {
 
-			const dataChannel = event.channel;
+			this.dataChannel = event.channel;
 
-			dataChannel.onopen = () => {
+			this.dataChannel.onopen = () => {
 				console.log("Data Channel to leader connected.");
 			};
 
 			let pendingFilename = "";
 			const dataArr: ArrayBuffer[] = [];
 
-			dataChannel.onmessage = (event: MessageEvent) => {
+			this.dataChannel.onmessage = (event: MessageEvent) => {
 
 				if (typeof event.data === "string") {
 					const message = JSON.parse(event.data) as RTMessage;
-					const text = document.createElement("p");
-					text.innerText = "RT: " + message.content;
-					document.body.appendChild(text);
 					switch (message.type) {
 
 						case "start of file": {
@@ -46,7 +44,7 @@ export class Follower extends Role {
 						}
 
 						case "string": {
-							console.log(message.content);
+							this.dispatchMessage(message.content);
 							break;
 						}
 					}
@@ -59,7 +57,7 @@ export class Follower extends Role {
 
 	}
 	public answerRoleIsReady(): void {
-		sendWS<WSFollowerReady>({ type: "follower ready", content: null });
+		this.base.sendWS<WSFollowerReady>({ type: "follower ready", content: null });
 	}
 
 	public async acceptOffer(offer: RTCSessionDescription, identity: Identity) {
@@ -68,7 +66,7 @@ export class Follower extends Role {
 			console.log("ICE connection state change:", e);
 		};
 		this.leaderConnection.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
-			sendWS<WSServerIceCandidateMessage>({
+			this.base.sendWS<WSServerIceCandidateMessage>({
 				type: "ice candidate",
 				content: {
 					targetIdentity: identity,
@@ -86,7 +84,7 @@ export class Follower extends Role {
 			console.error("Description is null.");
 			return;
 		}
-		sendWS<WSServerRTCOfferMessage>({
+		this.base.sendWS<WSServerRTCOfferMessage>({
 			type: "offer",
 			content: {
 				targetIdentity: { id: 0, origin: undefined },
@@ -96,5 +94,9 @@ export class Follower extends Role {
 	}
 	public addIceCandidate(wsICECandidate: WSClientIceCandidate) {
 		this.leaderConnection.addIceCandidate(wsICECandidate.candidate ? wsICECandidate.candidate : undefined);
+	}
+
+	public sendMessage(value: string): void {
+		this.base.sendRT<RTString>(this.dataChannel, { type: "string", content: value });
 	}
 }
