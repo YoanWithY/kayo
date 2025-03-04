@@ -128,7 +128,7 @@ export class SelectBox<T> extends HTMLElement {
 	constructor() {
 		super();
 		this._internals = this.attachInternals();
-		this.onclick = (e) => {
+		this.onclick = (_) => {
 			this._win.document.body.appendChild(this._optionWrapper);
 			const rect = this.getBoundingClientRect();
 			this._optionWrapper.style.top = rect.bottom + "px";

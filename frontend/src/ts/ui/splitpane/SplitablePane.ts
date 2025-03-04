@@ -1,7 +1,7 @@
 import { PageContext } from "../../PageContext";
 import { Project } from "../../project/Project";
 import { PaneStripe } from "../panes/PaneStripe";
-import { UIElement, UIPaneElement } from "../ui";
+import { UIPaneElement } from "../ui";
 import { WrappingPane } from "../Wrapping/WrappingPane";
 import { SplitButton, SplitButtonLL, SplitButtonLR, SplitButtonUL, SplitButtonUR } from "./SplitButton";
 import { SplitPaneContainer } from "./SplitPaneContainer";
