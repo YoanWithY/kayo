@@ -3,19 +3,24 @@ import svgLoader from 'vite-svg-loader';
 import fs from 'fs';
 import path from 'path';
 
-export default defineConfig({
-	plugins: [
-		svgLoader(),
-	],
-	build: {
-		target: 'ES2023'
-	},
-	server: {
-		https: {
-			key: fs.readFileSync(path.resolve(__dirname, '../local.key')),
-			cert: fs.readFileSync(path.resolve(__dirname, '../local.crt')),
+export default defineConfig(({ command }) => {
+	let obj = {
+		plugins: [
+			svgLoader(),
+		],
+		build: {
+			target: 'ES2023'
 		},
-		host: true,
-	},
-	base: '/kayo/'
+		base: '/kayo/'
+	}
+	if (command === "serve") {
+		obj["server"] = {
+			https: {
+				key: fs.readFileSync(path.resolve(__dirname, '../local.key')),
+				cert: fs.readFileSync(path.resolve(__dirname, '../local.crt')),
+			},
+			host: true,
+		}
+	}
+	return obj;
 });
