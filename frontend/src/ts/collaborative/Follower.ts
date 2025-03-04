@@ -1,13 +1,15 @@
 import { WSRole, WSFollowerReady, Identity, WSServerIceCandidateMessage, WSServerRTCOfferMessage, WSClientIceCandidate, RTMessage, RTString } from "../../../../shared/messageTypes";
 import { PTPBase } from "./PTPBase";
+import { PTPMessage } from "./PTPChatPannel";
 import { Role } from "./Role";
 
 export class Follower extends Role {
 	public readonly wsRole: WSRole = "Follower";
 	public readonly leaderConnection = new RTCPeerConnection();
+
 	public dataChannel!: RTCDataChannel;
-	public constructor(ptpBase: PTPBase) {
-		super(ptpBase);
+	public constructor(ptpBase: PTPBase, id: number) {
+		super(ptpBase, id);
 
 		this.leaderConnection.ondatachannel = (event: RTCDataChannelEvent) => {
 
@@ -96,7 +98,7 @@ export class Follower extends Role {
 		this.leaderConnection.addIceCandidate(wsICECandidate.candidate ? wsICECandidate.candidate : undefined);
 	}
 
-	public sendMessage(value: string): void {
-		this.base.sendRT<RTString>(this.dataChannel, { type: "string", content: value });
+	public sendMessage(value: PTPMessage): void {
+		this.base.sendRT<RTString>(this.dataChannel, { type: "string", content: JSON.stringify(value) });
 	}
 }

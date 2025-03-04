@@ -1,3 +1,4 @@
+state-select-box,
 select-box {
 	display: flex;
 	flex-direction: row;
@@ -7,9 +8,17 @@ select-box {
 	background-color: rgb(20, 20, 20);
 	border: 1px solid rgb(48, 48, 48);
 	border-radius: var(--radius);
-	padding: 3px 8px;
+	padding: var(--text-padding) calc(var(--text-padding) + 2px);
+	box-sizing: border-box;
 }
 
+select-box {
+	flex: 0;
+	background-color: rgba(0,0,0,0.2);
+	border: none;
+}
+
+state-select-box::after,
 select-box::after {
 	display: inline;
 	margin-left: 10px;
@@ -22,10 +31,12 @@ select-box::after {
 	transform: translateY(-40%) rotate(45deg);
 }
 
+state-select-box:hover,
 select-box:hover {
 	background-color: rgb(28, 28, 28);
 }
 
+state-select-box:state(open-down),
 select-box:state(open-down) {
 	border-radius: var(--radius) var(--radius) 0 0;
 }
@@ -47,7 +58,7 @@ select-option-wrapper:state(open-down) {
 
 select-option {
 	display: block;
-	padding: 5px;
+	padding: var(--text-padding) calc(var(--text-padding) + 2px);
 }
 
 select-option:hover {

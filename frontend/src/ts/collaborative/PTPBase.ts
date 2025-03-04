@@ -1,4 +1,4 @@
-import { Identity, WSClientMessageType, WSClientMessage, WSRole, WSClientOffer, WSClientIceCandidate, WSClientFileInfo, WSServerMessage, WSTarget, WSServerStartOfFileMessage, WSServerEndOfFileMessage, RTMessage, RTStartOfFile, RTEndOfFile } from "../../../../shared/messageTypes";
+import { Identity, WSClientMessageType, WSClientMessage, WSClientOffer, WSClientIceCandidate, WSClientFileInfo, WSServerMessage, WSTarget, WSServerStartOfFileMessage, WSServerEndOfFileMessage, RTMessage, RTStartOfFile, RTEndOfFile, WSRoleID } from "../../../../shared/messageTypes";
 import { Role } from "./Role";
 import { Follower } from "./Follower";
 import { Leader } from "./Leader";
@@ -19,7 +19,7 @@ export class PTPBase {
 	constructor(project: Project) {
 		this.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 		this.hostname = window.location.hostname;
-		this.wsPort = 4401;
+		this.wsPort = 81;
 		this.wsUrl = `${this.protocol}//${this.hostname}:${this.wsPort}`;
 		this.ws = new WebSocket(this.wsUrl);
 		this.ws.binaryType = 'arraybuffer';
@@ -38,10 +38,8 @@ export class PTPBase {
 
 		this.messageCallback = (value: string) => {
 			const log = project.state.ptpMessageLog;
-			log.value.push(value);
-			console.log(log);
+			log.value.push(JSON.parse(value));
 			log.fireChangeEvents();
-
 		}
 	}
 
@@ -57,7 +55,8 @@ export class PTPBase {
 		},
 
 		"role assignment": (content: any) => {
-			this.role = (content as WSRole) == "Follower" ? new Follower(this) : new Leader(this);
+			const roleID = content as WSRoleID;
+			this.role = (roleID.role) == "Follower" ? new Follower(this, roleID.id) : new Leader(this, roleID.id);
 			this.role.answerRoleIsReady();
 			this.role.addMessageListener(this.messageCallback);
 		},

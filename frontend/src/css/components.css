@@ -108,3 +108,92 @@ check-box:state(checked) {
 check-box:state(checked):hover {
 	background-color: var(--accent-color-hover);
 }
+
+ptp-chat-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 1px;
+	overflow: auto;
+	padding: 10px;
+	gap: 4px;
+}
+
+ptp-message-element {
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 0px;
+	overflow: visible;
+	gap: 2px;
+	width: calc(100% - 50px);
+	padding: 6px;
+	
+	border: 1px solid rgb(70, 70, 70);
+	border-radius: var(--radius);
+}
+
+ptp-message-element > h6 {
+	margin: 0;
+	padding: 0;
+}
+
+ptp-message-element > p {
+	margin: 0;
+	padding: 0;
+    user-select: all;
+}
+
+ptp-message-element:state(own) {
+	align-self: flex-end;
+	background-color: rgb(60, 60, 60);
+	border-bottom-right-radius: 0;
+}
+
+ptp-message-element:state(other) {
+	align-self: flex-start;
+	background-color: rgb(50, 50, 50);
+	border-bottom-left-radius: 0;
+}
+
+.ptp-text-input {
+	display: flex;
+	margin: 10px;
+	gap: 10px;
+	align-items: center;
+	flex: 0 0 1px;
+	box-sizing: border-box; 
+}
+
+
+.ptp-text-input > input[type="text"] {
+	flex: 1 1 1px;
+	padding: 6px;
+	color: var(--text-color);
+	background-color: rgb(50, 50, 50);
+	border: 1px solid rgb(70, 70, 70);
+	border-radius: var(--radius);
+	min-width: none;
+	width: 0px;
+}
+
+.ptp-text-input > input[type="text"]:hover {
+	background-color: rgb(60, 60, 60);
+
+}
+
+.ptp-text-input > input[type="text"]:focus {
+	outline: 1px solid rgb(70, 70, 70);
+}
+
+.ptp-text-input > input[type="submit"] {
+	padding: 6px;
+	margin: 0px;
+	border: 1px solid rgb(70, 70, 70);
+	border-radius: var(--radius);
+	color: var(--text-color);
+	background-color: rgb(50, 50, 50);
+}
+
+.ptp-text-input > input[type="submit"]:hover { 
+	background-color: rgb(60, 60, 60);
+	cursor: pointer;
+}

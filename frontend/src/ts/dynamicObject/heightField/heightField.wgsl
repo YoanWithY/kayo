@@ -103,7 +103,7 @@ struct Sun {
 fn getShadow(ws_pos: vec3f) -> f32 {
 	var shadowNDC = (sun.matrix * vec4f(ws_pos, 1.0));
 	var shadowUV =  shadowNDC.xy * vec2f(0.5, -0.5) + 0.5;
-	var shadow = textureSampleCompare(shadowMap, shadowSampler, shadowUV, shadowNDC.z - 0.0003);
+	var shadow = textureSampleCompare(shadowMap, shadowSampler, shadowUV, shadowNDC.z - 0.002);
 	if(any(shadowUV < vec2f(0)) || any(shadowUV > vec2f(1))) {
 		return 1;
 	}
@@ -125,8 +125,9 @@ fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOu
 	let uv = (vertexData.ws_pos.xy - 2) * 32;
 
 	// let albedo = sRGB_EOTF(virtualTextureSample(0, uv).rgb);
-	let albedo = sRGB_EOTF(textureSample(svt_physical_texture, svt_sampler000, uv * 0.01, 0).rgb);
-	let outColor = vec4f(createOutputFragment(albedo), 1);
+	// let albedo = sRGB_EOTF(textureSample(svt_physical_texture, svt_sampler_ansiotropic, uv * 0.005, 0).rgb);
+	let albedo = vec3f(1);
+	let outColor = clamp(vec4f(createOutputFragment(albedo * light), 1), vec4f(0), vec4f(1));
 	return R3FragmentOutput(outColor, fragmentUniform.id);
 }
 

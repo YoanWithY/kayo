@@ -55,6 +55,10 @@ export default class RessourcePane extends BasicPane {
 		return "ressource-pane";
 	}
 
+	public static getName() {
+		return "Ressources"
+	}
+
 	connectedCallback() {
 		this.buildCallback();
 		this._win.addEventListener("resize", this.buildCallback)

@@ -14,8 +14,26 @@
     --text-color: rgb(200, 200, 200);
     --font-size: 0.8rem;
 
+    --text-padding: 4px;
+
     --accent-color: rgb(0, 114, 220);
     --accent-color-hover: rgb(0, 130, 240);
+
+    --split-pane-grabber-size: 8px;
+    --split-button-size: 16px;
+}
+
+@media (pointer: coarse) {
+    :root {
+        --text-padding: 6px;
+        --font-size: 1.0rem;
+        --split-pane-grabber-size: 25px;
+        --split-button-size: 30px;
+    }
+}
+
+input {
+    font-size: var(--font-size);
 }
 
 body {

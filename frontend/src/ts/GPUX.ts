@@ -5,8 +5,8 @@ export type GPUX = {
 }
 
 let initialied = false;
-export async function gpuInit() : Promise<string | GPUX> {
-    if(initialied)
+export async function gpuInit(): Promise<string | GPUX> {
+    if (initialied)
         return "WebGPU is already initialized!";
 
     const gpu = window.navigator.gpu;
@@ -16,7 +16,7 @@ export async function gpuInit() : Promise<string | GPUX> {
     const adapterOptions: GPURequestAdapterOptions = {
         powerPreference: "high-performance",
         forceFallbackAdapter: false,
-        featureLevel: "core" };
+    };
     const gpuAdapter = await gpu.requestAdapter(adapterOptions);
 
     if (!gpuAdapter)
@@ -33,7 +33,7 @@ export async function gpuInit() : Promise<string | GPUX> {
     const gpuDevice = await gpuAdapter.requestDevice(devicei);
     if (!gpuDevice)
         return "Could not request GPU device!";
-    
+
     initialied = true;
     return { gpu, gpuAdapter, gpuDevice };
 }

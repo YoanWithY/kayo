@@ -90,7 +90,7 @@ export class SunLight extends R3Object implements Camera {
 						binding: 2,
 						resource: gpuDevice.createSampler(
 							{
-								compare: "less",
+								compare: "less-equal",
 								magFilter: "linear",
 							})
 					}

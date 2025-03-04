@@ -3,7 +3,7 @@ import * as Path from "path";
 import * as WS from "ws";
 import { fileURLToPath } from 'url';
 import { RawData } from "ws";
-import { WSClientMessage, WSServerMessage } from "../../../shared/messageTypes";
+import { WSClientMessage, WSServerMessage } from "../../shared/messageTypes";
 
 export const __filename = fileURLToPath(import.meta.url);
 export const __dirname = Path.dirname(__filename);
@@ -15,7 +15,7 @@ export const wsUUID: Map<number, WS.WebSocket> = new Map();
 function getWlanIPAddress() {
 	const interfaces = OS.networkInterfaces();
 	for (const iface of interfaces.WLAN || []) {
-		if (iface.family === 'IPv4' && !iface.internal && iface.address.startsWith('192.168.')) {
+		if (iface.family === 'IPv4' && !iface.internal) {
 			return iface.address;
 		}
 	}
@@ -32,8 +32,8 @@ export function findKeyByValue<K, V>(map: Map<K, V>, value: V): K | undefined {
 }
 
 export function listeningListener(): void {
-	console.log(`HTTP Server running at \t\thttp://${hostname}:${port}/`);
-	console.log(`WebSocket server is running at \tws://${hostname}:${port}/\n`);
+	console.log(`HTTP Server running at \t\thttps://${hostname}:${port}/`);
+	console.log(`WebSocket server is running at \twss://${hostname}:${port}/\n`);
 }
 
 export function parsRaw(data: RawData): WSServerMessage {

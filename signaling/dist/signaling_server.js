@@ -1,7 +1,11 @@
-import * as http from "http";
+import * as https from "https";
 import * as WS from "ws";
+import fs from 'fs';
 import { hostname, listeningListener, parsRaw, port, send, wsUUID } from "./utility.js";
-const server = http.createServer();
+const server = https.createServer({
+    key: fs.readFileSync('../local.key'),
+    cert: fs.readFileSync('../local.crt'),
+});
 const wss = new WS.WebSocketServer({
     server: server,
     maxPayload: 33554432
@@ -19,10 +23,14 @@ function webSocketServerConnect(ws, req) {
     ws.on('close', webSocketClose);
     ws.on("error", (err) => { console.log(err); });
     const role = (identity.id === 0) ? "Leader" : "Follower";
-    send(ws, { type: "role assignment", content: role });
+    send(ws, { type: "role assignment", content: { role, id: identity.id } });
     function webSocketClose(code, readon) {
         console.log("Close:", identity, "with code:", code);
         wsUUID.delete(identity.id);
+        if (wsUUID.size === 0) {
+            wsUUIDCounter = 0;
+            console.log("Rest");
+        }
     }
     let pendingFilename = undefined;
     let pendingTarget = undefined;

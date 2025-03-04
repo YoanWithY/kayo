@@ -30,7 +30,7 @@ export class SplitPaneGrabber extends HTMLElement {
 	isMouseDown = 0;
 	constructor() {
 		super();
-		const mouseMove = (e: MouseEvent) => {
+		const mouseMove = (e: PointerEvent) => {
 			e.preventDefault();
 			if (this.isMouseDown === 1) {
 				const divider = this.parentElement;
@@ -79,14 +79,14 @@ export class SplitPaneGrabber extends HTMLElement {
 		}
 		const end = () => {
 			this.isMouseDown = 0;
-			document.body.removeEventListener('mousemove', mouseMove);
-			document.body.removeEventListener('mouseup', end);
+			document.body.removeEventListener('pointermove', mouseMove);
+			document.body.removeEventListener('pointerup', end);
 		}
 
-		this.addEventListener("mousedown", () => {
+		this.addEventListener("pointerdown", () => {
 			this.isMouseDown = 1;
-			document.body.addEventListener('mousemove', mouseMove);
-			document.body.addEventListener('mouseup', end);
-		});
+			document.body.addEventListener('pointermove', mouseMove);
+			document.body.addEventListener('pointerup', end);
+		}, { capture: false });
 	}
 }

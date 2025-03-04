@@ -44,15 +44,17 @@ export class Project {
 		this.scene.background = new Background(this);
 
 		const arr = [[1, 0], [1, 1], [0, 1]];
-		for (let i = 0; i < 3; i++) {
+		for (let i = 0; i < 8; i++) {
 			const scale = Math.pow(2, i);
 			for (const a of arr) {
 				const h = new HeightFieldR3(
 					this,
 					`
-					let a = floor(arg / 10) * 10;
+					let a = arg;
+					let t = f32(view.frame[0]) / 100.0;
+					
 					return sin(a.x / 1000.0) * sin(a.y / 1000.0) * 500.0 + 
-					sin(a.x / 25.0) * sin(a.y / 25.0) * 25.0 + 
+					sin(a.x / 25.0 + t) * sin(a.y / 25.0 + t) * 25.0 + 
 					sin(a.x / 5.0) * sin(a.y / 5.0) * 5.0;`,
 					100,
 					100,

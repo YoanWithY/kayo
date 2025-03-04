@@ -12,7 +12,7 @@
 						"text": "MSAA"
 					},
 					{
-						"class": "select-box",
+						"class": "state-select-box",
 						"stateVariableURL": "state.output.render.msaa",
 						"options": [
 							{
@@ -39,7 +39,7 @@
 						"text": "Color Space"
 					},
 					{
-						"class": "select-box",
+						"class": "state-select-box",
 						"stateVariableURL": "state.output.display.swapChainColorSpace",
 						"options": [
 							{
@@ -57,7 +57,7 @@
 						"text": "Bit Depth"
 					},
 					{
-						"class": "select-box",
+						"class": "state-select-box",
 						"stateVariableURL": "state.output.display.swapChainBitDepth",
 						"options": [
 							{
@@ -75,7 +75,7 @@
 						"text": "Dynamic Range"
 					},
 					{
-						"class": "select-box",
+						"class": "state-select-box",
 						"stateVariableURL": "state.output.display.swapChainToneMappingMode",
 						"options": [
 							{

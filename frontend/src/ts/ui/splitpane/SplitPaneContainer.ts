@@ -1,9 +1,15 @@
+import { PTPChatPane } from "../../collaborative/PTPChatPannel";
 import { PageContext } from "../../PageContext";
 import { PaneStripe } from "../panes/PaneStripe";
 import { ViewportPane } from "../panes/ViewportPane";
 import { WrappingPane } from "../Wrapping/WrappingPane";
 import { SplitablePane } from "./SplitablePane";
 import { SplitPaneDivider } from "./SplitPaneDivider";
+
+function isMobile() {
+	const userAgent = navigator.userAgent.toLowerCase(); // Convert to lowercase for case-insensitivity
+	return userAgent.includes("mobile");
+}
 
 export class SplitPaneContainer extends HTMLElement {
 	static createSplitPaneContainer(win: Window, orientation: string, rect: DOMRect) {
@@ -22,7 +28,8 @@ export class SplitPaneContainer extends HTMLElement {
 		const c = win.document.createElement("split-pane-container");
 		c.setAttribute("split-pane-container-orientation", "none");
 		c.setAttribute("id", "wrapper");
-		c.appendChild(SplitablePane.createSplitablePane(win, pageContext, uiRoot, ViewportPane));
+
+		c.appendChild(SplitablePane.createSplitablePane(win, pageContext, uiRoot, isMobile() ? PTPChatPane : ViewportPane));
 		return c as SplitPaneContainer;
 	}
 

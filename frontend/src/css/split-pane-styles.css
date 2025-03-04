@@ -1,7 +1,3 @@
-:root {
-	--split-pane-grabber-size: 6px;
-}
-
 #wrapper {
 	flex: 1 1 0%;
 }
@@ -59,6 +55,7 @@ split-pane-grabber {
 	display: flex;
 	position: relative;
 	z-index: 2;
+	background-color: none;
 }
 
 split-pane-grabber[split-pane-divider-orientation="vertical"] {
@@ -76,19 +73,24 @@ split-pane-grabber[split-pane-divider-orientation="horizontal"] {
 }
 
 pane-stripe {
-	display: block;
-	min-height: var(--pane-stripe-hight);
-	flex: 0 0 0;
+	display: flex;
+	flex-direction: row;
+	flex: 0 0;
+	flex-basis: content;
+	align-items: center;
+	padding: 2px;
+	box-sizing: border-box;
 	background-color: var(--pane-stripe-color);
-	flex: 0 0 0;
+	overflow-x: auto;
+	overflow-y: visible;
 }
 
 split-button-ul,
 split-button-ur,
 split-button-ll,
 split-button-lr {
-	width: 16px;
-	height: 16px;
+	width: var(--split-button-size);
+	height: var(--split-button-size);
 	overflow: hidden;
 	background-color: gray;
 	opacity: 0;
@@ -127,6 +129,7 @@ split-button-lr {
 }
 
 split-button-ul:hover,
+split-button-ul:active,
 split-button-ur:hover,
 split-button-ll:hover,
 split-button-lr:hover {

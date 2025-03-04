@@ -1,5 +1,6 @@
 export type WSSharedMessageType = "string";
 export type WSRole = "Leader" | "Follower";
+export type WSRoleID = { role: WSRole, id: number };
 export type Identity = { id: number, origin: String | undefined };
 
 export type WSClientOffer = { originIdentity: Identity, targetIdentity: Identity, offer: RTCSessionDescription };
@@ -9,7 +10,7 @@ export type WSClientMessageType = WSSharedMessageType | "role assignment" | "new
 export type WSClientFileInfo = { fileName: string };
 export abstract type WSClientMessage = { type: WSClientMessageType; content: any; };
 export type WSStringMessage = WSClientMessage & { type: "string"; content: string; };
-export type WSRoleAssignementMessage = WSClientMessage & { type: "role assignment"; content: WSRole; };
+export type WSRoleAssignementMessage = WSClientMessage & { type: "role assignment"; content: WSRoleID };
 export type WSNewFollower = WSClientMessage & { type: "new follower", content: Identity }
 export type WSClientRTCOfferMessage = WSClientMessage & { type: "offer"; content: WSClientOffer; };
 export type WSClientStartOfFileMessage = WSServerMessage & { type: "start of file", content: WSClientFileInfo };

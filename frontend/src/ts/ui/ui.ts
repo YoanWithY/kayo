@@ -11,7 +11,7 @@ import Collapsible, { CollapsibleButton, CollapsibleContentContainer } from "./c
 import Tooltip from "./components/Tooltip";
 import Grid2Col from "./components/Grid2Col";
 import Checkbox from "./components/Checkbox";
-import { SelectBox, SelectOption, SelectOptionWrapper } from "./components/SelectBox";
+import { StateSelectBox, SelectOption, SelectOptionWrapper, SelectBox } from "./components/StateSelectBox";
 import { WrappingPane } from "./Wrapping/WrappingPane";
 import { Footer } from "./Wrapping/Footer";
 import { FullStretch } from "./components/FullStretch";
@@ -19,15 +19,18 @@ import { IconedToggleButton } from "./components/IconedToggleButton";
 import { PageContext } from "../PageContext";
 import OutputPane from "./panes/OutpuPane";
 import SpanElement from "./components/SpanElement";
-import { PTPChatContent, PTPChatPane } from "../collaborative/PTPChatPannel";
+import { PTPChatContent, PTPChatPane, PTPMessageElement, PTPTextInput } from "../collaborative/PTPChatPannel";
 
 export function initUI() {
 	window.customElements.define("tool-tip", Tooltip);
 	window.customElements.define(Grid2Col.getDomClass(), Grid2Col);
-	window.customElements.define("pane-stripe", PaneStripe);
+	window.customElements.define(PaneStripe.getDomClass(), PaneStripe);
 	window.customElements.define("check-box", Checkbox);
+	window.customElements.define(StateSelectBox.getDomClass(), StateSelectBox);
 	window.customElements.define(SelectBox.getDomClass(), SelectBox);
+	window.customElements.define(PTPTextInput.getDomClass(), PTPTextInput, { extends: "form" });
 	window.customElements.define(PTPChatContent.getDomClass(), PTPChatContent);
+	window.customElements.define(PTPMessageElement.getDomClass(), PTPMessageElement);
 	window.customElements.define("select-option-wrapper", SelectOptionWrapper);
 	window.customElements.define("select-option", SelectOption);
 	window.customElements.define("iconed-toggle-button", IconedToggleButton);
@@ -63,8 +66,9 @@ const nameClassMap: { [key: string]: UIElement } = {
 	[Collapsible.getDomClass()]: Collapsible,
 	[Grid2Col.getDomClass()]: Grid2Col,
 	[SpanElement.getDomClass()]: SpanElement,
-	[SelectBox.getDomClass()]: SelectBox,
+	[StateSelectBox.getDomClass()]: StateSelectBox,
 	[PTPChatContent.getDomClass()]: PTPChatContent,
+	[PTPTextInput.getDomClass()]: PTPTextInput,
 }
 
 export function buildUIElement(win: Window, pageContext: PageContext, obj: any): HTMLElement {
@@ -75,4 +79,8 @@ export interface UIElement {
 	new(): any;
 	createUIElement(win: Window, pageContext: PageContext, obj: any): HTMLElement;
 	getDomClass(): string;
+}
+
+export interface UIPaneElement extends UIElement {
+	getName(): string
 }

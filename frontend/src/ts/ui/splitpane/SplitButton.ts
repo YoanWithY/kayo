@@ -14,10 +14,15 @@ export abstract class SplitButton extends HTMLElement {
 	constructor() {
 		super();
 		this.ondragstart = () => { return false; };
-		this.onmousedown = e => {
+		// this.onmousedown = e => {
+		// 	this.clickX = e.screenX;
+		// 	this.clickY = e.screenY;
+		// }
+
+		this.addEventListener("pointerdown", (e) => {
 			this.clickX = e.screenX;
 			this.clickY = e.screenY;
-		}
+		})
 	}
 
 	static checkContainerForSingle(container: SplitPaneContainer, splitablePane: SplitablePane) {
@@ -57,7 +62,7 @@ export abstract class SplitButton extends HTMLElement {
 }
 
 export class SplitButtonUL extends SplitButton {
-	private left(e: MouseEvent) {
+	private left(e: PointerEvent) {
 		if (isNaN(this.clickX) || isNaN(this.clickY))
 			return;
 
@@ -106,7 +111,7 @@ export class SplitButtonUL extends SplitButton {
 
 	constructor() {
 		super();
-		this.onmouseleave = this.left;
+		this.onpointerleave = this.left;
 	}
 
 	static create(win: Window, pageContext: PageContext, uiRoot: WrappingPane): SplitButtonUL {
@@ -120,7 +125,7 @@ export class SplitButtonUL extends SplitButton {
 
 export class SplitButtonUR extends SplitButton {
 
-	private left(e: MouseEvent) {
+	private left(e: PointerEvent) {
 		if (isNaN(this.clickX) || isNaN(this.clickY))
 			return
 
@@ -181,7 +186,7 @@ export class SplitButtonUR extends SplitButton {
 
 	constructor() {
 		super();
-		this.onmouseleave = this.left;
+		this.onpointerleave = this.left;
 	}
 
 	static create(win: Window, pageContext: PageContext, uiRoot: WrappingPane): SplitButtonUR {
@@ -195,7 +200,7 @@ export class SplitButtonUR extends SplitButton {
 
 export class SplitButtonLL extends SplitButton {
 
-	private left(e: MouseEvent) {
+	private left(e: PointerEvent) {
 		if (isNaN(this.clickX) || isNaN(this.clickY))
 			return
 
@@ -256,7 +261,7 @@ export class SplitButtonLL extends SplitButton {
 
 	constructor() {
 		super();
-		this.onmouseleave = this.left;
+		this.onpointerleave = this.left;
 	}
 
 	static create(win: Window, pageContext: PageContext, uiRoot: WrappingPane): SplitButtonLL {
@@ -270,7 +275,7 @@ export class SplitButtonLL extends SplitButton {
 
 export class SplitButtonLR extends SplitButton {
 
-	private left(e: MouseEvent) {
+	private left(e: PointerEvent) {
 		if (isNaN(this.clickX) || isNaN(this.clickY))
 			return
 
@@ -319,7 +324,7 @@ export class SplitButtonLR extends SplitButton {
 
 	constructor() {
 		super();
-		this.onmouseleave = this.left;
+		this.onpointerleave = this.left;
 	}
 
 	static create(win: Window, pageContext: PageContext, uiRoot: WrappingPane): SplitButtonLR {

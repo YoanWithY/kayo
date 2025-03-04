@@ -1,5 +1,6 @@
 iconed-toggle-button {
 	display: flex;
+	align-items: center;
 	padding: 2px;
 	margin: 2px;
 	border-radius: var(--radius);

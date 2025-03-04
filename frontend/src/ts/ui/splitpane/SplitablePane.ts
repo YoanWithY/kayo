@@ -1,7 +1,7 @@
 import { PageContext } from "../../PageContext";
 import { Project } from "../../project/Project";
 import { PaneStripe } from "../panes/PaneStripe";
-import { UIElement } from "../ui";
+import { UIElement, UIPaneElement } from "../ui";
 import { WrappingPane } from "../Wrapping/WrappingPane";
 import { SplitButton, SplitButtonLL, SplitButtonLR, SplitButtonUL, SplitButtonUR } from "./SplitButton";
 import { SplitPaneContainer } from "./SplitPaneContainer";
@@ -23,28 +23,7 @@ export class SplitablePane extends HTMLElement {
 		this.dummy = document.createElement("div");
 		const keyListener = (e: KeyboardEvent) => {
 			if (e.ctrlKey && e.key === " " && !e.shiftKey) {
-				if (this.cachedBase) {
-					if (this.cachedHeight === undefined || this.cachedWidth === undefined)
-						return;
-
-					this.replaceWith(this.cachedBase);
-					this.cachedBase = undefined;
-
-					this.style.width = this.cachedWidth;
-					this.style.height = this.cachedHeight;
-					this.dummy.replaceWith(this);
-					this.installSplitButtons();
-				} else {
-					this.cachedBase = this.uiRoot.baseSplitPaneContainer;
-					this.replaceWith(this.dummy);
-					this.cachedWidth = this.style.width;
-					this.cachedHeight = this.style.height;
-					this.style.width = "";
-					this.style.height = "";
-					this.uiRoot.baseSplitPaneContainer.replaceWith(this);
-					this.uninstallSplitButtons();
-				}
-				this.project.fullRerender();
+				this.toggleSingleWindow();
 			}
 		};
 		this.addEventListener("mouseenter", () => {
@@ -53,6 +32,31 @@ export class SplitablePane extends HTMLElement {
 		this.addEventListener("mouseleave", () => {
 			window.removeEventListener("keydown", keyListener);
 		});
+	}
+
+	public toggleSingleWindow() {
+		if (this.cachedBase) {
+			if (this.cachedHeight === undefined || this.cachedWidth === undefined)
+				return;
+
+			this.replaceWith(this.cachedBase);
+			this.cachedBase = undefined;
+
+			this.style.width = this.cachedWidth;
+			this.style.height = this.cachedHeight;
+			this.dummy.replaceWith(this);
+			this.installSplitButtons();
+		} else {
+			this.cachedBase = this.uiRoot.baseSplitPaneContainer;
+			this.replaceWith(this.dummy);
+			this.cachedWidth = this.style.width;
+			this.cachedHeight = this.style.height;
+			this.style.width = "";
+			this.style.height = "";
+			this.uiRoot.baseSplitPaneContainer.replaceWith(this);
+			this.uninstallSplitButtons();
+		}
+		this.project.fullRerender();
 	}
 
 	installSplitButtons() {
@@ -66,19 +70,19 @@ export class SplitablePane extends HTMLElement {
 		this.removeChild(this.sp_lr);
 	}
 
-	static createSplitablePane(win: Window, pageContext: PageContext, uiRoot: WrappingPane, paneElement: UIElement, orientation?: string, rect?: DOMRect): SplitablePane {
+	static createSplitablePane(win: Window, pageContext: PageContext, uiRoot: WrappingPane, paneElement: UIPaneElement, orientation?: string, rect?: DOMRect): SplitablePane {
 		const newSplitablePane = win.document.createElement("splitable-pane") as SplitablePane;
 		newSplitablePane.uiRoot = uiRoot;
 		newSplitablePane.project = pageContext.project;
-		const strip = PaneStripe.createPaneStripe(win);
-		newSplitablePane.appendChild(strip);
-		const pane = paneElement.createUIElement(win, pageContext, {});
-		newSplitablePane.appendChild(pane);
 
 		newSplitablePane.sp_ul = SplitButtonUL.create(win, pageContext, uiRoot);
 		newSplitablePane.sp_ur = SplitButtonUR.create(win, pageContext, uiRoot);
 		newSplitablePane.sp_ll = SplitButtonLL.create(win, pageContext, uiRoot);
 		newSplitablePane.sp_lr = SplitButtonLR.create(win, pageContext, uiRoot);
+
+		newSplitablePane.recreateContetent(win, pageContext, paneElement);
+
+
 		newSplitablePane.installSplitButtons();
 
 		if (orientation && rect) {
@@ -89,6 +93,15 @@ export class SplitablePane extends HTMLElement {
 		}
 
 		return newSplitablePane as SplitablePane;
+	}
+
+	public recreateContetent(win: Window, pageContext: PageContext, paneElement: UIPaneElement) {
+		this.innerHTML = "";
+		const pane = paneElement.createUIElement(win, pageContext, {});
+		const strip = PaneStripe.createPaneStripe(win, pageContext, paneElement.getName());
+		this.appendChild(strip);
+		this.appendChild(pane);
+		this.installSplitButtons();
 	}
 
 	getPaneStripe() {

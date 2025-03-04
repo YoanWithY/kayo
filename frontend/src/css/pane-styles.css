@@ -10,15 +10,16 @@ outliner-pane {
 }
 
 ressource-pane {
-	display: block;
-	width: 100%;
-	height: 100%;
+	display: flex;
+	flex: 1 1 0px;
 	overflow: auto;
 	background-color: var(--pane-background-color);
 }
 
 ptp-chat {
-	display: block;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
 	width: 100%;
 	height: 100%;
 	overflow: auto;

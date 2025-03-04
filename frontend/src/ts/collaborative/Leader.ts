@@ -1,4 +1,5 @@
 import { WSRole, WSLeaderReady, Identity, WSServerIceCandidateMessage, WSServerRTCOfferMessage, WSClientIceCandidate, RTMessage, RTString } from "../../../../shared/messageTypes";
+import { PTPMessage } from "./PTPChatPannel";
 import { Role } from "./Role";
 
 export class Leader extends Role {
@@ -94,7 +95,7 @@ export class Leader extends Role {
 		connection.addIceCandidate(wsICECandidate.candidate ? wsICECandidate.candidate : undefined);
 	}
 
-	public sendMessage(value: string): void {
-		this.base.multicastRT<RTString>(Array.from(this.datachannelMap.values()), { type: "string", content: value });
+	public sendMessage(value: PTPMessage): void {
+		this.base.multicastRT<RTString>(Array.from(this.datachannelMap.values()), { type: "string", content: JSON.stringify(value) });
 	}
 }

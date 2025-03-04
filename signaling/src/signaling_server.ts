@@ -1,14 +1,14 @@
 import * as http from "http";
+import * as https from "https";
 import * as WS from "ws";
-import { hostname, listeningListener, parsRaw, port, send, staticDirectory, wsUUID } from "./utility.js";
-import {
-	WSClientIceCandidateMessage, WSClientRTCOfferMessage,
-	WSClientStartOfFileMessage, WSNewFollower, WSRole,
-	WSRoleAssignementMessage, WSServerIceCandidate,
-	WSServerMessageType, WSServerOffer, WSServerFileInfo, WSTarget, WSClientEndOfFileMessage
-} from "../../../shared/messageTypes.js";
+import fs from 'fs';
+import { hostname, listeningListener, parsRaw, port, send, wsUUID } from "./utility.js";
+import { WSClientEndOfFileMessage, WSClientIceCandidateMessage, WSClientRTCOfferMessage, WSClientStartOfFileMessage, WSNewFollower, WSRole, WSRoleAssignementMessage, WSServerFileInfo, WSServerIceCandidate, WSServerMessageType, WSServerOffer, WSTarget } from "../../shared/messageTypes.js"
 
-const server = http.createServer();
+const server = https.createServer({
+	key: fs.readFileSync('../local.key'),
+	cert: fs.readFileSync('../local.crt'),
+});
 const wss = new WS.WebSocketServer({
 	server: server,
 	maxPayload: 33554432
@@ -30,11 +30,15 @@ function webSocketServerConnect(ws: WS.WebSocket, req: http.IncomingMessage) {
 	ws.on("error", (err: Error) => { console.log(err); });
 
 	const role: WSRole = (identity.id === 0) ? "Leader" : "Follower";
-	send<WSRoleAssignementMessage>(ws, { type: "role assignment", content: role });
+	send<WSRoleAssignementMessage>(ws, { type: "role assignment", content: { role, id: identity.id } });
 
 	function webSocketClose(code: number, readon: Buffer) {
 		console.log("Close:", identity, "with code:", code);
 		wsUUID.delete(identity.id);
+		if (wsUUID.size === 0) {
+			wsUUIDCounter = 0;
+			console.log("Rest");
+		}
 	}
 
 	let pendingFilename: string | undefined = undefined;
@@ -63,7 +67,7 @@ function webSocketServerConnect(ws: WS.WebSocket, req: http.IncomingMessage) {
 		} else {
 			const messageObj = parsRaw(data);
 			console.log("Recived: ", messageObj, "\nfrom", identity, "\n");
-			const func = funcMap[messageObj.type];
+			const func = funcMap[messageObj.type as WSServerMessageType];
 			if (func)
 				func(messageObj.content);
 		}

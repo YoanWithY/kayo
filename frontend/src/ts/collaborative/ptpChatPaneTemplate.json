@@ -4,6 +4,10 @@
 		{
 			"class": "ptp-chat-content",
 			"stateVariableURL": "state.ptpMessageLog"
+		},
+		{
+			"class": "ptp-text-input",
+			"stateVariableURL": "state.ptpMessageLog"
 		}
 	]
 }

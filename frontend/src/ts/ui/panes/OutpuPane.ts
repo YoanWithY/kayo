@@ -12,4 +12,8 @@ export default class OutputPane extends BasicPane {
 	public static getDomClass() {
 		return "output-pane"
 	}
+
+	public static getName() {
+		return "Output Pane";
+	}
 }
