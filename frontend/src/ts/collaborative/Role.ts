@@ -30,4 +30,3 @@ export abstract class Role {
 		this.messageListener.forEach((c) => c(value));
 	}
 }
-

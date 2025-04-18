@@ -1,5 +1,15 @@
 import { PTPMessageLog } from "../collaborative/PTPMessageLog";
-import { MSAAOptions as MSAAOption, OutputConfig, OutputDeferredRenderConfig, OutputDisplayConfig, OutputForwardRenderConfig, OutputRenderConfig, ProjectConfig, RenderMode, SwapChainBitDepth } from "./Config";
+import {
+	MSAAOptions as MSAAOption,
+	OutputConfig,
+	OutputDeferredRenderConfig,
+	OutputDisplayConfig,
+	OutputForwardRenderConfig,
+	OutputRenderConfig,
+	ProjectConfig,
+	RenderMode,
+	SwapChainBitDepth,
+} from "./Config";
 import { Project } from "./Project";
 import StateVariable from "./StateVariable";
 
@@ -26,7 +36,7 @@ export class OutputState {
 	}
 }
 export class OutputDisplayState {
-	project: Project
+	project: Project;
 	swapChainColorSpace: StateVariable<PredefinedColorSpace>;
 	swapChainBitDepth: StateVariable<SwapChainBitDepth>;
 	swapChainToneMappingMode: StateVariable<GPUCanvasToneMappingMode>;
@@ -48,7 +58,6 @@ export class OutputDisplayState {
 			this.project.renderer.needsPipleineRebuild = true;
 		}, "deferred");
 		this.swapChainBitDepth.addChangeListener(() => this.project.fullRerender(), "immediate");
-
 
 		this.swapChainToneMappingMode = new StateVariable(project, display.swapChainToneMappingMode);
 		this.swapChainToneMappingMode.addChangeListener((value: GPUCanvasToneMappingMode) => {

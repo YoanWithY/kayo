@@ -1,8 +1,7 @@
 import { gpuInit as initGPU } from "./GPUX";
 import { initUI as initUIClasses } from "./ui/ui";
-import { wasmInstance } from "../c/wasmHello";
+import wasmInstance from "../c/KayoPPLoader";
 import { PageContext } from "./PageContext";
-
 
 initUIClasses();
 

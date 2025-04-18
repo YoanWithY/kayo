@@ -48,8 +48,7 @@ export class PhysicalTexture {
 		this.virtualTextureSystem = virtualTextureSystem;
 		if (Math.floor(gpux.gpuDevice.limits.maxTextureDimension2D / this.physicalTileSize) > 256)
 			this.size = this.physicalTileSize * 256;
-		else
-			this.size = gpux.gpuDevice.limits.maxTextureDimension2D;
+		else this.size = gpux.gpuDevice.limits.maxTextureDimension2D;
 		this.tilesPerDimension = Math.floor(this.size / this.physicalTileSize);
 		this.tilesPerLayer = this.tilesPerDimension * this.tilesPerDimension;
 		this.totalTiles = this.tilesPerLayer * this.layers;

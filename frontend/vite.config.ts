@@ -16,8 +16,8 @@ export default defineConfig(({ command }) => {
 	if (command === "serve") {
 		obj["server"] = {
 			https: {
-				key: fs.readFileSync(path.resolve(__dirname, '../local.key')),
-				cert: fs.readFileSync(path.resolve(__dirname, '../local.crt')),
+				key: fs.readFileSync(path.resolve(__dirname, 'private.key')),
+				cert: fs.readFileSync(path.resolve(__dirname, 'certificate.crt')),
 			},
 			host: true,
 		}

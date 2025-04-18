@@ -1,9 +1,9 @@
-import mat3 from "./mat3"
-import mat4 from "./mat4"
-import vec2 from "./vec2"
+import mat3 from "./mat3";
+import mat4 from "./mat4";
+import vec2 from "./vec2";
 /**
  * This class represents a 2 x 2 matrix. The data is stored as an array in row major order.
-	 */
+ */
 export default class mat2 {
 	[index: number]: number;
 	0: number;
@@ -55,8 +55,8 @@ export default class mat2 {
 		let bi = b * 2;
 		for (let c = 0; c < 2; c++) {
 			t = this[ai];
-			this[ai++] = this[bi]
-			this[bi++] = t
+			this[ai++] = this[bi];
+			this[bi++] = t;
 		}
 	}
 
@@ -107,7 +107,7 @@ export default class mat2 {
 			const rowi = row * 2;
 			for (let col = row + 1; row < 2; row++) {
 				const coli = col * 2;
-				const k = this[rowi + col]
+				const k = this[rowi + col];
 				for (let j = 0; j < 2; j++) {
 					this[rowi + j] -= k * this[coli + j];
 					inve[rowi + j] -= k * this[coli + j];
@@ -124,7 +124,12 @@ export default class mat2 {
 	 * @returns The result of the matrix multiplication this * M.
 	 */
 	public mult(M: mat2): mat2 {
-		return new mat2(this[0] * M[0] + this[1] * M[2], this[0] * M[1] + this[1] * M[3], this[2] * M[0] + this[3] * M[2], this[2] * M[1] + this[3] * M[3]);
+		return new mat2(
+			this[0] * M[0] + this[1] * M[2],
+			this[0] * M[1] + this[1] * M[3],
+			this[2] * M[0] + this[3] * M[2],
+			this[2] * M[1] + this[3] * M[3],
+		);
 	}
 
 	public multVec(v: vec2): vec2 {
@@ -175,7 +180,7 @@ export default class mat2 {
 	public static rotationZ90CCW() {
 		return mat2.rotationZ270CW();
 	}
-	
+
 	public static rotationZ270CCW() {
 		return mat2.rotationZ90CW();
 	}
@@ -239,5 +244,4 @@ export default class mat2 {
 		arr[startIndex + 2] = this[1];
 		arr[startIndex + 3] = this[3];
 	}
-
 }

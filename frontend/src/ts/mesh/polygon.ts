@@ -272,7 +272,6 @@
 //             }
 //         }
 
-
 //         // -> triangle is complicted enougth that we want to
 //         while (true) {
 //             if (P.isEar()) {

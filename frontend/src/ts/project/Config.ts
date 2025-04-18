@@ -29,4 +29,3 @@ export class OutputForwardRenderConfig extends OutputRenderConfig {
 export class OutputDeferredRenderConfig extends OutputRenderConfig {
 	mode: "deferred" = "deferred";
 }
-

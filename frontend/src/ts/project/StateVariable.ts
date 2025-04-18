@@ -35,16 +35,14 @@ export default class StateVariable<T> {
 	 * @param mode If ``immediate``, the callback will be executed immediately after the value changed.
 	 * If ``deferred``, the execution will be deferred to right befor the next rendering cycles.
 	 * @returns Returns whether or not the provided callback was added (because of set semantics).
-	 * 
+	 *
 	 */
 	public addChangeListener(callback: StateVariableChangeCallback<T>, mode: StateChangeExecutionMode): boolean {
 		if (mode === "immediate") {
-			if (this._immediateObserverFunctions.has(callback))
-				return false;
+			if (this._immediateObserverFunctions.has(callback)) return false;
 			this._immediateObserverFunctions.add(callback);
 		} else {
-			if (this._deferredObserverFunctions.has(callback))
-				return false;
+			if (this._deferredObserverFunctions.has(callback)) return false;
 			this._deferredObserverFunctions.add(callback);
 		}
 		return true;
@@ -59,8 +57,7 @@ export default class StateVariable<T> {
 	}
 
 	public bind(uiComponent: UIVariableComponent<T>) {
-		if (this._boundUIComponents.get(uiComponent) !== undefined)
-			return false;
+		if (this._boundUIComponents.get(uiComponent) !== undefined) return false;
 
 		const uiCallback: StateVariableChangeCallback<T> = (value: T) => {
 			uiComponent.setValue(value);
@@ -72,8 +69,7 @@ export default class StateVariable<T> {
 	}
 
 	public fireChangeEvents() {
-		for (const f of this._immediateObserverFunctions)
-			f(this._value);
+		for (const f of this._immediateObserverFunctions) f(this._value);
 		for (const f of this._deferredObserverFunctions)
 			this.project.renderer.preRenderFunctions.add({ val: this.value, f });
 	}

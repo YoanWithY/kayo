@@ -6,14 +6,18 @@ import { VirtualTextureSystem } from "./VirtualTextureSystem";
 export interface VirtualTextureSamplingDescriptor {
 	addressModeU: GPUAddressMode;
 	addressModeV: GPUAddressMode;
-	magFilter: GPUFilterMode,
-	minFilter: GPUFilterMode,
-	mipmapFilter: GPUMipmapFilterMode,
-	useAnisotropicFiltering: boolean
+	magFilter: GPUFilterMode;
+	minFilter: GPUFilterMode;
+	mipmapFilter: GPUMipmapFilterMode;
+	useAnisotropicFiltering: boolean;
 }
 
 export class VirtualTexture2D implements Texture2D {
-	static addressModeValueTable: { [key in GPUAddressMode]: number; } = { "clamp-to-edge": 0, "repeat": 1, "mirror-repeat": 2 };
+	static addressModeValueTable: { [key in GPUAddressMode]: number } = {
+		"clamp-to-edge": 0,
+		repeat: 1,
+		"mirror-repeat": 2,
+	};
 	virtualTextureSystem: VirtualTextureSystem;
 	uid: string;
 	width: number;
@@ -22,7 +26,19 @@ export class VirtualTexture2D implements Texture2D {
 	maxMipLevels: number;
 	firstAtlasedLevel: number;
 	virtualTextureID!: number;
-	constructor(virtualTextureSystem: VirtualTextureSystem, uid: string, vid: number, width: number, height: number, addressModeU: GPUAddressMode, addressModeV: GPUAddressMode, magFilter: GPUFilterMode, minFilter: GPUFilterMode, mipmapFilter: GPUMipmapFilterMode, useAnisotropicFiltering: boolean) {
+	constructor(
+		virtualTextureSystem: VirtualTextureSystem,
+		uid: string,
+		vid: number,
+		width: number,
+		height: number,
+		addressModeU: GPUAddressMode,
+		addressModeV: GPUAddressMode,
+		magFilter: GPUFilterMode,
+		minFilter: GPUFilterMode,
+		mipmapFilter: GPUMipmapFilterMode,
+		useAnisotropicFiltering: boolean,
+	) {
 		this.virtualTextureSystem = virtualTextureSystem;
 		this.uid = uid;
 		this.virtualTextureID = vid;
@@ -34,20 +50,21 @@ export class VirtualTexture2D implements Texture2D {
 			magFilter,
 			minFilter,
 			mipmapFilter,
-			useAnisotropicFiltering
+			useAnisotropicFiltering,
 		};
 		this.maxMipLevels = TextureUtils.getFullMipPyramidLevels(this.width, this.height);
 		this.firstAtlasedLevel = Math.max(
 			TextureUtils.getFirstAtlasedLevel(this.width, this.virtualTextureSystem.largestAtlasedMipSize),
-			TextureUtils.getFirstAtlasedLevel(this.height, this.virtualTextureSystem.largestAtlasedMipSize));
+			TextureUtils.getFirstAtlasedLevel(this.height, this.virtualTextureSystem.largestAtlasedMipSize),
+		);
 	}
 
 	/**
 	 * @todo implementation incompleate
-	 * @param image 
-	 * @param level 
-	 * @param xTile 
-	 * @param yTile 
+	 * @param image
+	 * @param level
+	 * @param xTile
+	 * @param yTile
 	 */
 	public makeResident(image: CPUTexture, level: number, _xTile: number, _yTile: number) {
 		if (level <= this.firstAtlasedLevel) {
@@ -57,7 +74,8 @@ export class VirtualTexture2D implements Texture2D {
 				{ texture: ph.gpuTexture, origin: [coord[0] * ph.physicalTileSize, coord[1] * ph.physicalTileSize, 0] },
 				image.data[0],
 				{ bytesPerRow: ph.physicalTileSize * 4 },
-				[ph.physicalTileSize, ph.physicalTileSize, 1]);
+				[ph.physicalTileSize, ph.physicalTileSize, 1],
+			);
 		}
 	}
 
@@ -90,9 +108,8 @@ export class VirtualTexture2D implements Texture2D {
 	}
 
 	public getFilteringValue(): number {
-		if (this.samplingDescriptor.useAnisotropicFiltering)
-			return 8;
-		return this.getMipmapFilterValue() << 2 | this.getMagFilterValue() << 1 | this.getMinFilterValue();
+		if (this.samplingDescriptor.useAnisotropicFiltering) return 8;
+		return (this.getMipmapFilterValue() << 2) | (this.getMagFilterValue() << 1) | this.getMinFilterValue();
 	}
 
 	public getUAddresModeValue(): number {
@@ -106,5 +123,4 @@ export class VirtualTexture2D implements Texture2D {
 	public isMipAtlasedOnly(): boolean {
 		return this.firstAtlasedLevel === 0;
 	}
-
 }

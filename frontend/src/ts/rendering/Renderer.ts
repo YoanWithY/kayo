@@ -13,8 +13,8 @@ import { ViewportPane } from "../ui/panes/ViewportPane";
 
 export default class Renderer {
 	project: Project;
-	viewportPanes = new Set<ViewportPane>;
-	preRenderFunctions = new Set<{ val: any, f: StateVariableChangeCallback<any> }>();
+	viewportPanes = new Set<ViewportPane>();
+	preRenderFunctions = new Set<{ val: any; f: StateVariableChangeCallback<any> }>();
 
 	private r3renderPassDescriptor: GPURenderPassDescriptor;
 	private overlayRenderPassDescriptor: GPURenderPassDescriptor;
@@ -68,10 +68,10 @@ export default class Renderer {
 					visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
 					buffer: {
 						type: "uniform",
-					}
+					},
 				},
-				...VirtualTextureSystem.bindGroupEntries
-			]
+				...VirtualTextureSystem.bindGroupEntries,
+			],
 		});
 		this.bindGroupR3Layout = this.gpuDevice.createBindGroupLayout({
 			label: "Default R3 bind group layout",
@@ -81,16 +81,16 @@ export default class Renderer {
 					visibility: GPUShaderStage.VERTEX,
 					buffer: {
 						type: "uniform",
-					}
+					},
 				},
 				{
 					binding: 1,
 					visibility: GPUShaderStage.FRAGMENT,
 					buffer: {
 						type: "uniform",
-					}
+					},
 				},
-			]
+			],
 		});
 		this.compositingBindGroupLayout = this.gpuDevice.createBindGroupLayout({
 			label: "Compositing bind group layout",
@@ -101,8 +101,8 @@ export default class Renderer {
 					texture: {
 						sampleType: "unfilterable-float",
 						multisampled: false,
-						viewDimension: "2d"
-					}
+						viewDimension: "2d",
+					},
 				},
 				{
 					binding: 1,
@@ -110,8 +110,8 @@ export default class Renderer {
 					texture: {
 						sampleType: "uint",
 						multisampled: false,
-						viewDimension: "2d"
-					}
+						viewDimension: "2d",
+					},
 				},
 				{
 					binding: 2,
@@ -119,10 +119,10 @@ export default class Renderer {
 					texture: {
 						sampleType: "uint",
 						multisampled: false,
-						viewDimension: "2d"
-					}
+						viewDimension: "2d",
+					},
 				},
-			]
+			],
 		});
 		this.r16ResolveBindGroupLayout = this.gpuDevice.createBindGroupLayout({
 			label: "R16u resolve bind group layout",
@@ -133,16 +133,16 @@ export default class Renderer {
 					texture: {
 						sampleType: "uint",
 						multisampled: true,
-						viewDimension: "2d"
-					}
+						viewDimension: "2d",
+					},
 				},
-			]
+			],
 		});
 		this.bindGroup0 = this.gpuDevice.createBindGroup({
 			label: "Global default bind group 0",
 			entries: [
 				{ binding: 0, resource: { buffer: this.viewUBO } },
-				...this.virtualTextureSystem.bindGroupEntries
+				...this.virtualTextureSystem.bindGroupEntries,
 			],
 			layout: this.bindGroup0Layout,
 		});
@@ -150,7 +150,7 @@ export default class Renderer {
 			label: "Global default shadow bind group 0",
 			entries: [
 				{ binding: 0, resource: { buffer: this.shadowViewUBO } },
-				...this.virtualTextureSystem.bindGroupEntries
+				...this.virtualTextureSystem.bindGroupEntries,
 			],
 			layout: this.bindGroup0Layout,
 		});
@@ -168,7 +168,7 @@ export default class Renderer {
 					storeOp: "store",
 					clearValue: [0, 0, 0, 0],
 					view: null as unknown as GPUTextureView,
-				}
+				},
 			],
 			depthStencilAttachment: {
 				depthClearValue: 1.0,
@@ -179,7 +179,7 @@ export default class Renderer {
 			timestampWrites: {
 				querySet: null as unknown as GPUQuerySet,
 				beginningOfPassWriteIndex: 0,
-				endOfPassWriteIndex: 1
+				endOfPassWriteIndex: 1,
 			},
 		};
 		this.r16ResolveRenderPassDescriptor = {
@@ -190,12 +190,12 @@ export default class Renderer {
 					clearValue: [0, 0, 0, 0],
 					storeOp: "store",
 					view: null as unknown as GPUTextureView,
-				}
+				},
 			],
 			timestampWrites: {
 				querySet: null as unknown as GPUQuerySet,
 				beginningOfPassWriteIndex: 2,
-				endOfPassWriteIndex: 3
+				endOfPassWriteIndex: 3,
 			},
 		};
 		this.selectionRenderPassDescriptor = {
@@ -206,7 +206,7 @@ export default class Renderer {
 					storeOp: "store",
 					clearValue: [0, 0, 0, 0],
 					view: null as unknown as GPUTextureView,
-				}
+				},
 			],
 			depthStencilAttachment: {
 				depthLoadOp: "clear",
@@ -217,7 +217,7 @@ export default class Renderer {
 			timestampWrites: {
 				querySet: null as unknown as GPUQuerySet,
 				beginningOfPassWriteIndex: 4,
-				endOfPassWriteIndex: 5
+				endOfPassWriteIndex: 5,
 			},
 		};
 		this.overlayRenderPassDescriptor = {
@@ -228,7 +228,7 @@ export default class Renderer {
 					storeOp: "store",
 					clearValue: [0, 0, 0, 0],
 					view: null as unknown as GPUTextureView,
-				}
+				},
 			],
 			depthStencilAttachment: {
 				depthLoadOp: "load",
@@ -238,9 +238,9 @@ export default class Renderer {
 			timestampWrites: {
 				querySet: null as unknown as GPUQuerySet,
 				beginningOfPassWriteIndex: 6,
-				endOfPassWriteIndex: 7
+				endOfPassWriteIndex: 7,
 			},
-		}
+		};
 		this.compositingRenderPassDescriptor = {
 			label: "compositing render pass",
 			colorAttachments: [
@@ -248,17 +248,17 @@ export default class Renderer {
 					loadOp: "load",
 					storeOp: "store",
 					view: null as unknown as GPUTextureView,
-				}
+				},
 			],
 			timestampWrites: {
 				querySet: null as unknown as GPUQuerySet,
 				beginningOfPassWriteIndex: 8,
-				endOfPassWriteIndex: 9
+				endOfPassWriteIndex: 9,
 			},
 		};
 		this.heightFieldComputePassDescriptor = {
-			label: "height field compute pass"
-		}
+			label: "height field compute pass",
+		};
 	}
 
 	reconfigureContext() {
@@ -279,13 +279,11 @@ export default class Renderer {
 			componentTransfere: outConsts.componentTranfere,
 			msaa: msaa,
 			format: format,
-		}
-		for (const hf of this.project.scene.heightFieldObjects)
-			hf.pipeline.updateDisplayProperties(surfaceInfo);
+		};
+		for (const hf of this.project.scene.heightFieldObjects) hf.pipeline.updateDisplayProperties(surfaceInfo);
 
-		const gp = this.project.scene.gridPipeline
-		if (gp)
-			gp.updateDisplayProperties(surfaceInfo);
+		const gp = this.project.scene.gridPipeline;
+		if (gp) gp.updateDisplayProperties(surfaceInfo);
 
 		const background = this.project.scene.background.pipeline;
 		background.updateDisplayProperties(surfaceInfo);
@@ -310,20 +308,21 @@ export default class Renderer {
 
 		this.requestedAnimationFrame.set(window, false);
 
-		for (const o of this.preRenderFunctions)
-			o.f(o.val);
+		for (const o of this.preRenderFunctions) o.f(o.val);
 
 		this.preRenderFunctions.clear();
 
-		if (this.needsContextReconfiguration)
-			this.reconfigureContext();
+		if (this.needsContextReconfiguration) this.reconfigureContext();
 
-		if (this.needsPipleineRebuild)
-			this.rebuildDisplayOutputPipelines();
+		if (this.needsPipleineRebuild) this.rebuildDisplayOutputPipelines();
 
 		for (const viewport of this.viewportsToUpdate) {
 			viewport.updateView(this.viewUBO, this.frame);
-			if (viewport.canvasContext && viewport.canvasContext.canvas.width === 0 && viewport.canvasContext.canvas.height === 0) {
+			if (
+				viewport.canvasContext &&
+				viewport.canvasContext.canvas.width === 0 &&
+				viewport.canvasContext.canvas.height === 0
+			) {
 				continue;
 			}
 			const viewportCache = this.viewportCache.get(viewport);
@@ -339,7 +338,8 @@ export default class Renderer {
 				this.selectionRenderPassDescriptor,
 				this.overlayRenderPassDescriptor,
 				this.compositingRenderPassDescriptor,
-				config);
+				config,
+			);
 
 			const w = viewport.getCurrentTexture().width;
 			const h = viewport.getCurrentTexture().height;
@@ -380,7 +380,9 @@ export default class Renderer {
 
 			if (viewport.useOverlays) {
 				if (config.msaa > 1) {
-					const r16ResolveRenderPassEncode = commandEncoder.beginRenderPass(this.r16ResolveRenderPassDescriptor);
+					const r16ResolveRenderPassEncode = commandEncoder.beginRenderPass(
+						this.r16ResolveRenderPassDescriptor,
+					);
 					r16ResolveRenderPassEncode.setViewport(0, 0, w, h, 0, 1);
 					r16ResolveRenderPassEncode.setBindGroup(0, viewportCache.r16ResolveBindGroup0);
 					r16ResolveRenderPassEncode.setPipeline(this.r16ResolvePipeline.gpuPipeline);
@@ -393,11 +395,9 @@ export default class Renderer {
 				selectionRenderPassEncoder.setBindGroup(0, this.bindGroup0);
 
 				for (const hf of this.project.scene.heightFieldObjects) {
-					if (hf.isActive || hf.isSelected)
-						hf.renderSelection(selectionRenderPassEncoder);
+					if (hf.isActive || hf.isSelected) hf.renderSelection(selectionRenderPassEncoder);
 				}
 				selectionRenderPassEncoder.end();
-
 
 				const overlayRenderPassEncoder = commandEncoder.beginRenderPass(this.overlayRenderPassDescriptor);
 				overlayRenderPassEncoder.setViewport(0, 0, w, h, 0, 1);
@@ -407,13 +407,14 @@ export default class Renderer {
 
 				overlayRenderPassEncoder.end();
 
-				const compositingRenderPassEncoder = commandEncoder.beginRenderPass(this.compositingRenderPassDescriptor);
+				const compositingRenderPassEncoder = commandEncoder.beginRenderPass(
+					this.compositingRenderPassDescriptor,
+				);
 				compositingRenderPassEncoder.setViewport(0, 0, w, h, 0, 1);
 				compositingRenderPassEncoder.setBindGroup(0, viewportCache.compositingBindGroup0);
 				compositingRenderPassEncoder.setPipeline(this.compositingPipeline.gpuPipeline);
 				compositingRenderPassEncoder.draw(4);
 				compositingRenderPassEncoder.end();
-
 			}
 
 			viewportCache.resolvePerformanceQueryCommand(commandEncoder);
@@ -426,7 +427,7 @@ export default class Renderer {
 		this.frame++;
 		// for(const v of this.registeredViewports)
 		// 	this.requestAnimationFrameWith(v);
-	}
+	};
 
 	requestAnimationFrameWith(viewport: Viewport) {
 		if (!this.registeredViewports.has(viewport)) {
@@ -434,62 +435,58 @@ export default class Renderer {
 			return;
 		}
 		this.viewportsToUpdate.add(viewport);
-		if (this.requestedAnimationFrame.get(viewport.window) === true)
-			return;
+		if (this.requestedAnimationFrame.get(viewport.window) === true) return;
 
 		this.requestedAnimationFrame.set(viewport.window, true);
-		viewport.window.requestAnimationFrame((ts: number) => { this.loop(ts, viewport.window) });
+		viewport.window.requestAnimationFrame((ts: number) => {
+			this.loop(ts, viewport.window);
+		});
 	}
 
 	registerViewport(viewport: Viewport) {
-		if (this.registeredViewports.has(viewport))
-			return;
+		if (this.registeredViewports.has(viewport)) return;
 
 		this.registeredViewports.add(viewport);
 		this.viewportCache.set(viewport, new ViewportCache(this.project, viewport));
 	}
 
 	unregisterViewport(viewport: Viewport) {
-		if (!this.registeredViewports.has(viewport))
-			return;
+		if (!this.registeredViewports.has(viewport)) return;
 
 		this.registeredViewports.delete(viewport);
 		const cache = this.viewportCache.get(viewport);
-		if (cache)
-			cache.destroy();
+		if (cache) cache.destroy();
 		this.viewportCache.delete(viewport);
 	}
 
-	getNew3RData(): { vertexUniformBuffer: GPUBuffer, fragmentUniformBuffer: GPUBuffer, bindGroup: GPUBindGroup } {
+	getNew3RData(): { vertexUniformBuffer: GPUBuffer; fragmentUniformBuffer: GPUBuffer; bindGroup: GPUBindGroup } {
 		const vertexUniformBuffer = this.gpuDevice.createBuffer({
 			label: "R3 default vertex uniforms buffer",
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
-			size: 16 * 4
+			size: 16 * 4,
 		});
 		const fragmentUniformBuffer = this.gpuDevice.createBuffer({
 			label: "R3 default fragment uniforms buffer",
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
-			size: 4 * 4
+			size: 4 * 4,
 		});
 		const bindGroup = this.gpuDevice.createBindGroup({
 			label: "R3 Bind Group",
 			entries: [
 				{
 					binding: 0,
-					resource:
-					{
+					resource: {
 						label: "R3 bind group vertex uniform resource",
-						buffer: vertexUniformBuffer
-					}
+						buffer: vertexUniformBuffer,
+					},
 				},
 				{
 					binding: 1,
-					resource:
-					{
+					resource: {
 						label: "R3 bind group fragment uniform resource",
-						buffer: fragmentUniformBuffer
-					}
-				}
+						buffer: fragmentUniformBuffer,
+					},
+				},
 			],
 			layout: this.bindGroupR3Layout,
 		});

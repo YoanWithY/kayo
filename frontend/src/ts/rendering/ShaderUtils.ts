@@ -17,7 +17,7 @@ const snippets: { [key: string]: string } = {
 	"utility/fullScreenQuadVertex": fullScreenQuad,
 	"utility/r3": r3,
 	"utility/targetColorSpace": targetColorSpace,
-	"virtualTexture": virtualTexture,
+	virtualTexture: virtualTexture,
 };
 
 export function resolveIncludes(code: string): string {
@@ -32,8 +32,7 @@ export function resolveIncludes(code: string): string {
 }
 
 export function resolveVariables(code: string, map: { [key: string]: string }): string {
-	for (const key in map)
-		code = code.replaceAll(`#${key}`, map[key]);
+	for (const key in map) code = code.replaceAll(`#${key}`, map[key]);
 	return code;
 }
 

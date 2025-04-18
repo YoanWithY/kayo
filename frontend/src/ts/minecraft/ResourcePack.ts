@@ -42,6 +42,7 @@ export class ResourcePack {
 			namespacename = parts[0];
 			path = parts[1];
 		}
+
 		const resPath = path.split("/");
 		const namespaceRes = this.getNamespace(namespacename);
 		let ret: ParsedBlockModel | undefined = namespaceRes.models[resPath[0]][resPath[1]];
@@ -67,8 +68,7 @@ export class ResourcePack {
 		}
 		const resPath = path.split("/");
 		let ret: MinecraftTexture | undefined = this.getNamespace(namespacename).textures[resPath[0]][resPath[1]];
-		if (!ret && this.fallback !== undefined)
-			ret = this.fallback.getTextureByURL(rl);
+		if (!ret && this.fallback !== undefined) ret = this.fallback.getTextureByURL(rl);
 		return ret;
 	}
 
@@ -120,7 +120,14 @@ export class ResourcePack {
 		virtualTextureSystem.physicalTexture.generateAllMips();
 	}
 
-	static parse(zip: ZipInfo, name: string, fallback: ResourcePack | undefined, fb: VirtualTexture2D, onDone: () => void, onProgress: (total: number, pending: number, name: string) => void): ResourcePack {
+	static parse(
+		zip: ZipInfo,
+		name: string,
+		fallback: ResourcePack | undefined,
+		fb: VirtualTexture2D,
+		onDone: () => void,
+		onProgress: (total: number, pending: number, name: string) => void,
+	): ResourcePack {
 		const r = new ResourcePack(name, fallback);
 		const entries = zip.entries;
 		let pending = 0;
@@ -129,24 +136,21 @@ export class ResourcePack {
 		const update = (key: string) => {
 			pending--;
 			onProgress(total, pending, key);
-			if (pending === 0)
-				onDone();
+			if (pending === 0) onDone();
 		};
 
 		for (const key in entries) {
 			const nameParts = key.split("/");
 			const type = nameParts[2];
 
-
 			switch (type) {
 				case "blockstates": {
 					const filename = nameParts[3];
-					if (!filename || !filename.endsWith(".json"))
-						continue;
+					if (!filename || !filename.endsWith(".json")) continue;
 					pending++;
 
 					const namespace = r.getNamespace(nameParts[1]);
-					entries[key].json().then(object => {
+					entries[key].json().then((object) => {
 						namespace.blockstates[filename.substring(0, filename.length - 5)] = object;
 						update(key);
 					});
@@ -156,8 +160,7 @@ export class ResourcePack {
 				case "models": {
 					const modelType = nameParts[3];
 					const filename = nameParts[4];
-					if (!filename || !filename.endsWith(".json"))
-						continue;
+					if (!filename || !filename.endsWith(".json")) continue;
 					pending++;
 
 					const namespace = r.getNamespace(nameParts[1]);
@@ -167,18 +170,17 @@ export class ResourcePack {
 						namespace.models[modelType] = typeContainer;
 					}
 
-					entries[key].json().then(object => {
+					entries[key].json().then((object) => {
 						const blockName = filename.substring(0, filename.length - 5);
 						typeContainer[blockName] = new ParsedBlockModel(blockName, object);
 						update(key);
-					})
+					});
 					break;
 				}
 				case "textures": {
 					const modelType = nameParts[3];
 					const filename = nameParts[4];
-					if (!filename || !filename.endsWith(".png"))
-						continue;
+					if (!filename || !filename.endsWith(".png")) continue;
 					pending++;
 					const namespace = r.getNamespace(nameParts[1]);
 					let typeContainer = namespace.textures[modelType];
@@ -187,13 +189,13 @@ export class ResourcePack {
 						namespace.textures[modelType] = typeContainer;
 					}
 
-					entries[key].blob('image/png').then(blob => {
-						createImageBitmap(blob, { colorSpaceConversion: 'none' }).then(image => {
+					entries[key].blob("image/png").then((blob) => {
+						createImageBitmap(blob, { colorSpaceConversion: "none" }).then((image) => {
 							const textureName = filename.substring(0, filename.length - 4);
 							typeContainer[textureName] = new MinecraftTexture(textureName, image, fb);
 							update(key);
-						})
-					})
+						});
+					});
 					break;
 				}
 			}
@@ -201,5 +203,4 @@ export class ResourcePack {
 		total = pending;
 		return r;
 	}
-
 }

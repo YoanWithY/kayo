@@ -1,6 +1,6 @@
-import vec from "./vec"
-import vec3 from "./vec3"
-import vec4 from "./vec4"
+import vec from "./vec";
+import vec3 from "./vec3";
+import vec4 from "./vec4";
 export default class vec2 implements vec<vec2> {
 	[n: number]: number;
 	0: number;
@@ -117,7 +117,8 @@ export default class vec2 implements vec<vec2> {
 	}
 
 	public static sum(...v: vec2[]): vec2 {
-		let x = 0, y = 0;
+		let x = 0,
+			y = 0;
 		for (const vec of v) {
 			x += vec[0];
 			y += vec[1];
@@ -283,5 +284,4 @@ export default class vec2 implements vec<vec2> {
 		this[1] = v[0];
 		this[0] = v[1];
 	}
-
 }

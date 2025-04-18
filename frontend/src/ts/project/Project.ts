@@ -43,7 +43,11 @@ export class Project {
 		this.scene = new Scene();
 		this.scene.background = new Background(this);
 
-		const arr = [[1, 0], [1, 1], [0, 1]];
+		const arr = [
+			[1, 0],
+			[1, 1],
+			[0, 1],
+		];
 		for (let i = 0; i < 8; i++) {
 			const scale = Math.pow(2, i);
 			for (const a of arr) {
@@ -65,7 +69,8 @@ export class Project {
 					a[0] * scale,
 					a[1] * scale,
 					scale,
-					scale);
+					scale,
+				);
 				this.scene.heightFieldObjects.add(h);
 			}
 		}
@@ -84,14 +89,12 @@ export class Project {
 	getVariableFromURL(stateVariableURL: string): StateVariable<any> | undefined {
 		const names = stateVariableURL.split(".");
 		let obj: any = this[names[0] as keyof Project];
-		for (let i = 1; i < names.length && obj !== undefined; i++)
-			obj = obj[names[i]];
-		return obj
+		for (let i = 1; i < names.length && obj !== undefined; i++) obj = obj[names[i]];
+		return obj;
 	}
 
 	fullRerender() {
-		for (const vp of this.renderer.viewportPanes)
-			this.renderer.requestAnimationFrameWith(vp);
+		for (const vp of this.renderer.viewportPanes) this.renderer.requestAnimationFrameWith(vp);
 	}
 
 	getTargetColorspaceConstants(): Record<string, number> {
@@ -100,7 +103,7 @@ export class Project {
 		};
 	}
 
-	getDisplayFragmentOutputConstants(): { targetColorSpace: number, componentTranfere: number } {
+	getDisplayFragmentOutputConstants(): { targetColorSpace: number; componentTranfere: number } {
 		return {
 			targetColorSpace: this.config.output.display.swapChainColorSpace == "srgb" ? 0 : 1,
 			componentTranfere: this.config.output.render.mode === "deferred" ? 0 : 1,
@@ -108,15 +111,11 @@ export class Project {
 	}
 
 	getSwapChainFormat(): GPUTextureFormat {
-		if (this.config.output.display.swapChainBitDepth === "8bpc")
-			return this.gpux.gpu.getPreferredCanvasFormat();
+		if (this.config.output.display.swapChainBitDepth === "8bpc") return this.gpux.gpu.getPreferredCanvasFormat();
 		return "rgba16float";
 	}
 
 	getFragmentTargets(): GPUColorTargetState[] {
-		return [
-			{ format: this.getSwapChainFormat() },
-			{ format: "r16uint" }
-		];
+		return [{ format: this.getSwapChainFormat() }, { format: "r16uint" }];
 	}
 }

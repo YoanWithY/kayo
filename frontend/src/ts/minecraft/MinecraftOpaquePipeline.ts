@@ -40,7 +40,7 @@ export class MinecraftOpaquePipeline extends AbstractDisplayOutputRenderingPipel
 					{ shaderLocation: 1, offset: 3 * 4, format: "float32x3" },
 					{ shaderLocation: 2, offset: 6 * 4, format: "float32x3" },
 				],
-				stepMode: "instance"
+				stepMode: "instance",
 			},
 			{
 				arrayStride: 6 * 4,
@@ -49,7 +49,7 @@ export class MinecraftOpaquePipeline extends AbstractDisplayOutputRenderingPipel
 					{ shaderLocation: 4, offset: 2 * 4, format: "float32x2" },
 					{ shaderLocation: 5, offset: 4 * 4, format: "float32x2" },
 				],
-				stepMode: "instance"
+				stepMode: "instance",
 			},
 			{
 				arrayStride: 8,
@@ -57,8 +57,8 @@ export class MinecraftOpaquePipeline extends AbstractDisplayOutputRenderingPipel
 					{ shaderLocation: 6, offset: 0, format: "uint32" },
 					{ shaderLocation: 7, offset: 4, format: "uint32" },
 				],
-				stepMode: "instance"
-			}
+				stepMode: "instance",
+			},
 		];
 		this.fragmentConstants = project.getDisplayFragmentOutputConstants();
 		this.topology = "triangle-strip";
@@ -68,15 +68,11 @@ export class MinecraftOpaquePipeline extends AbstractDisplayOutputRenderingPipel
 		this.depthStencilFormat = Renderer.getDepthStencilFormat();
 		this.fragmentTargets = project.getFragmentTargets();
 
-		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule(
-			{
-				label: `${label} shader module`,
-				code: this.preProzessedShaderCoder,
-				compilationHints: [
-					{ entryPoint: this.vertexEntryPoint },
-					{ entryPoint: this.fragmentEntryPoint },
-				]
-			});
+		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule({
+			label: `${label} shader module`,
+			code: this.preProzessedShaderCoder,
+			compilationHints: [{ entryPoint: this.vertexEntryPoint }, { entryPoint: this.fragmentEntryPoint }],
+		});
 		this.gpuPipeline = this.buildPipeline(this.project.gpux.gpuDevice);
 	}
 
@@ -90,22 +86,18 @@ export class MinecraftOpaquePipeline extends AbstractDisplayOutputRenderingPipel
 
 	static pipeline: MinecraftOpaquePipeline;
 	static init(project: Project) {
-		this.minecraftBindgroup1Layout = project.gpux.gpuDevice.createBindGroupLayout(
-			{
-				label: "minecraft bind group 1 layout",
-				entries:
-					[
-						{
-							binding: 0,
-							visibility: GPUShaderStage.VERTEX,
-							buffer:
-							{
-								type: "uniform"
-							}
-						},
-					]
-			});
+		this.minecraftBindgroup1Layout = project.gpux.gpuDevice.createBindGroupLayout({
+			label: "minecraft bind group 1 layout",
+			entries: [
+				{
+					binding: 0,
+					visibility: GPUShaderStage.VERTEX,
+					buffer: {
+						type: "uniform",
+					},
+				},
+			],
+		});
 		this.pipeline = new MinecraftOpaquePipeline(project, "Minecraft Opaque Pipeline");
 	}
-
 }

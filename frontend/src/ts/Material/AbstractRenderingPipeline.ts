@@ -38,12 +38,12 @@ export abstract class AbstractRenderingPipeline {
 		depthFailOp: "keep",
 		passOp: "keep",
 	};
-	readonly stencilReadMask: GPUStencilValue = 0xFFFFFFFF;
-	readonly stencilWriteMask: GPUStencilValue = 0xFFFFFFFF;
+	readonly stencilReadMask: GPUStencilValue = 0xffffffff;
+	readonly stencilWriteMask: GPUStencilValue = 0xffffffff;
 
 	readonly multisample: GPUMultisampleState = {
 		count: 1,
-		mask: 0xFFFFFFFF,
+		mask: 0xffffffff,
 		alphaToCoverageEnabled: false,
 	};
 
@@ -61,18 +61,17 @@ export abstract class AbstractRenderingPipeline {
 			module: this.shaderModule,
 			entryPoint: this.vertexEntryPoint,
 			constants: this.vertexConstants,
-			buffers: this.vertexBufferLayout
+			buffers: this.vertexBufferLayout,
 		};
 	}
 
 	protected createFragmentState(): GPUFragmentState | undefined {
-		if (!this.fragmentEntryPoint)
-			return undefined;
+		if (!this.fragmentEntryPoint) return undefined;
 		return {
 			module: this.shaderModule,
 			entryPoint: this.fragmentEntryPoint,
 			constants: this.fragmentConstants,
-			targets: this.fragmentTargets
+			targets: this.fragmentTargets,
 		};
 	}
 
@@ -87,7 +86,7 @@ export abstract class AbstractRenderingPipeline {
 			stencilBack: this.stencilBack,
 			stencilFront: this.stencilFront,
 			stencilReadMask: this.stencilReadMask,
-			stencilWriteMask: this.stencilWriteMask
+			stencilWriteMask: this.stencilWriteMask,
 		};
 	}
 
@@ -116,11 +115,11 @@ export abstract class AbstractRenderingPipeline {
 }
 
 export interface DisplayInfo {
-	gpuDevice: GPUDevice,
-	targetColorSpace: number,
-	componentTransfere: number,
-	format: GPUTextureFormat,
-	msaa: number,
+	gpuDevice: GPUDevice;
+	targetColorSpace: number;
+	componentTransfere: number;
+	format: GPUTextureFormat;
+	msaa: number;
 }
 
 export abstract class AbstractMSAwareRenderingPipeline extends AbstractRenderingPipeline {

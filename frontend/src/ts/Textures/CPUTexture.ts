@@ -6,21 +6,27 @@ function mod(a: number, b: number): number {
 }
 type AddressMode = (x: number, d: number) => number;
 const addressFunctions: { [key in GPUAddressMode]: AddressMode } = {
-	"clamp-to-edge": (x: number, d: number) => { return Math.max(Math.min(x, d - 1), 0); },
-	"repeat": (x: number, d: number) => { return mod(x, d); },
-	"mirror-repeat": (x: number, d: number) => { return d === 0 ? 0 : d - Math.abs(mod(x + 0.5, 2 * d) - d) - 0.5 },
-}
+	"clamp-to-edge": (x: number, d: number) => {
+		return Math.max(Math.min(x, d - 1), 0);
+	},
+	repeat: (x: number, d: number) => {
+		return mod(x, d);
+	},
+	"mirror-repeat": (x: number, d: number) => {
+		return d === 0 ? 0 : d - Math.abs(mod(x + 0.5, 2 * d) - d) - 0.5;
+	},
+};
 export class CPUTexture {
 	data: Uint8ClampedArray[];
 	widthAt: number[];
 	heightAt: number[];
 	/**
-	 * 
+	 *
 	 * @param width The width of the image in texels at mip 0
 	 * @param height The height of the image in texels at mip 0
 	 * @param levels The number of mipmap levels to use, 0 for all.
 	 * @param data The data of the image at mip 0.
-	*/
+	 */
 	constructor(width: number, height: number, levels = 1, data?: Uint8ClampedArray) {
 		const mips = levels === 0 ? TextureUtils.getFullMipPyramidLevels(width, height) : levels;
 		this.widthAt = new Array(mips);
@@ -30,11 +36,9 @@ export class CPUTexture {
 			this.heightAt[i] = TextureUtils.getResolutionOfMip(height, i);
 		}
 		this.data = new Array(mips);
-		if (data === undefined)
-			data = new Uint8ClampedArray(this.widthAt[0] * this.heightAt[0] * 4);
+		if (data === undefined) data = new Uint8ClampedArray(this.widthAt[0] * this.heightAt[0] * 4);
 		this.data[0] = data;
-		for (let i = 1; i < this.data.length; i++)
-			this.generateMip(i);
+		for (let i = 1; i < this.data.length; i++) this.generateMip(i);
 	}
 
 	private generateMip(level: number) {
@@ -51,9 +55,9 @@ export class CPUTexture {
 					this.readDirect(x2, y2, prevLevel),
 					this.readDirect(x2 + 1, y2, prevLevel),
 					this.readDirect(x2 + 1, y2 + 1, prevLevel),
-					this.readDirect(x2, y2 + 1, prevLevel)];
-				for (let c = 0; c < 4; c++)
-					p[c] = (ps[0][c] + ps[1][c] + ps[2][c] + ps[3][c]) / 4;
+					this.readDirect(x2, y2 + 1, prevLevel),
+				];
+				for (let c = 0; c < 4; c++) p[c] = (ps[0][c] + ps[1][c] + ps[2][c] + ps[3][c]) / 4;
 				this.write(x, y, level, p);
 			}
 		}
@@ -70,7 +74,8 @@ export class CPUTexture {
 		y: number,
 		level: number,
 		au: AddressMode = addressFunctions["clamp-to-edge"],
-		av: AddressMode = addressFunctions["clamp-to-edge"]): [number, number, number, number] {
+		av: AddressMode = addressFunctions["clamp-to-edge"],
+	): [number, number, number, number] {
 		x = au(x, this.widthAt[level]);
 		y = av(y, this.heightAt[level]);
 		return this.readDirect(x, y, level);
@@ -80,7 +85,15 @@ export class CPUTexture {
 		this.data[level].set(value, (y * this.widthAt[level] + x) * 4);
 	}
 
-	public copyFrom(t: CPUTexture, level: number, offsetX: number, offsetY: number, dstLevel: number, border: number, sampling: VirtualTextureSamplingDescriptor) {
+	public copyFrom(
+		t: CPUTexture,
+		level: number,
+		offsetX: number,
+		offsetY: number,
+		dstLevel: number,
+		border: number,
+		sampling: VirtualTextureSamplingDescriptor,
+	) {
 		const au = addressFunctions[sampling.addressModeU];
 		const av = addressFunctions[sampling.addressModeV];
 		for (let y = -border; y < t.heightAt[level] + border; y++) {

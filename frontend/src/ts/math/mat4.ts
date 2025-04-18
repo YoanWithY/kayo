@@ -1,10 +1,10 @@
-import mat2 from "./mat2"
-import mat3 from "./mat3"
-import vec3 from "./vec3"
-import vec4 from "./vec4"
+import mat2 from "./mat2";
+import mat3 from "./mat3";
+import vec3 from "./vec3";
+import vec4 from "./vec4";
 /**
  * This class represents a 4 x 4 matrix. The data is stored as an array in row major order.
-	 */
+ */
 export default class mat4 {
 	[index: number]: number;
 	0: number;
@@ -33,7 +33,24 @@ export default class mat4 {
 	 * m  n  o  p
 	 * ```
 	 */
-	constructor(a: number = 0, b: number = 0, c: number = 0, d: number = 0, e: number = 0, f: number = 0, g: number = 0, h: number = 0, i: number = 0, j: number = 0, k: number = 0, l: number = 0, m: number = 0, n: number = 0, o: number = 0, p: number = 0) {
+	constructor(
+		a: number = 0,
+		b: number = 0,
+		c: number = 0,
+		d: number = 0,
+		e: number = 0,
+		f: number = 0,
+		g: number = 0,
+		h: number = 0,
+		i: number = 0,
+		j: number = 0,
+		k: number = 0,
+		l: number = 0,
+		m: number = 0,
+		n: number = 0,
+		o: number = 0,
+		p: number = 0,
+	) {
 		this[0] = a;
 		this[1] = b;
 		this[2] = c;
@@ -61,7 +78,24 @@ export default class mat4 {
 	 * x3  y3  z3  w3
 	 * ```
 	 */
-	public static fromColumnMajor(x0: number = 0, x1: number = 0, x2: number = 0, x3: number = 0, y0: number = 0, y1: number = 0, y2: number = 0, y3: number = 0, z0: number = 0, z1: number = 0, z2: number = 0, z3: number = 0, w0: number = 0, w1: number = 0, w2: number = 0, w3: number = 0): mat4 {
+	public static fromColumnMajor(
+		x0: number = 0,
+		x1: number = 0,
+		x2: number = 0,
+		x3: number = 0,
+		y0: number = 0,
+		y1: number = 0,
+		y2: number = 0,
+		y3: number = 0,
+		z0: number = 0,
+		z1: number = 0,
+		z2: number = 0,
+		z3: number = 0,
+		w0: number = 0,
+		w1: number = 0,
+		w2: number = 0,
+		w3: number = 0,
+	): mat4 {
 		return new mat4(x0, y0, z0, w0, x1, y1, z1, w1, x2, y2, z2, w2, x3, y3, z3, w3);
 	}
 
@@ -74,7 +108,24 @@ export default class mat4 {
 	}
 
 	public transpose(): mat4 {
-		return new mat4(this[0], this[4], this[8], this[12], this[1], this[5], this[9], this[13], this[2], this[6], this[10], this[14], this[3], this[7], this[11], this[15]);
+		return new mat4(
+			this[0],
+			this[4],
+			this[8],
+			this[12],
+			this[1],
+			this[5],
+			this[9],
+			this[13],
+			this[2],
+			this[6],
+			this[10],
+			this[14],
+			this[3],
+			this[7],
+			this[11],
+			this[15],
+		);
 	}
 
 	/**
@@ -88,8 +139,8 @@ export default class mat4 {
 		let bi = b * 4;
 		for (let c = 0; c < 4; c++) {
 			t = this[ai];
-			this[ai++] = this[bi]
-			this[bi++] = t
+			this[ai++] = this[bi];
+			this[bi++] = t;
 		}
 	}
 
@@ -140,7 +191,7 @@ export default class mat4 {
 			const rowi = row * 4;
 			for (let col = row + 1; row < 4; row++) {
 				const coli = col * 4;
-				const k = this[rowi + col]
+				const k = this[rowi + col];
 				for (let j = 0; j < 4; j++) {
 					this[rowi + j] -= k * this[coli + j];
 					inve[rowi + j] -= k * this[coli + j];
@@ -157,11 +208,33 @@ export default class mat4 {
 	 * @returns The result of the matrix multiplication this * M.
 	 */
 	public mult(M: mat4): mat4 {
-		return new mat4(this[0] * M[0] + this[1] * M[4] + this[2] * M[8] + this[3] * M[12], this[0] * M[1] + this[1] * M[5] + this[2] * M[9] + this[3] * M[13], this[0] * M[2] + this[1] * M[6] + this[2] * M[10] + this[3] * M[14], this[0] * M[3] + this[1] * M[7] + this[2] * M[11] + this[3] * M[15], this[4] * M[0] + this[5] * M[4] + this[6] * M[8] + this[7] * M[12], this[4] * M[1] + this[5] * M[5] + this[6] * M[9] + this[7] * M[13], this[4] * M[2] + this[5] * M[6] + this[6] * M[10] + this[7] * M[14], this[4] * M[3] + this[5] * M[7] + this[6] * M[11] + this[7] * M[15], this[8] * M[0] + this[9] * M[4] + this[10] * M[8] + this[11] * M[12], this[8] * M[1] + this[9] * M[5] + this[10] * M[9] + this[11] * M[13], this[8] * M[2] + this[9] * M[6] + this[10] * M[10] + this[11] * M[14], this[8] * M[3] + this[9] * M[7] + this[10] * M[11] + this[11] * M[15], this[12] * M[0] + this[13] * M[4] + this[14] * M[8] + this[15] * M[12], this[12] * M[1] + this[13] * M[5] + this[14] * M[9] + this[15] * M[13], this[12] * M[2] + this[13] * M[6] + this[14] * M[10] + this[15] * M[14], this[12] * M[3] + this[13] * M[7] + this[14] * M[11] + this[15] * M[15]);
+		return new mat4(
+			this[0] * M[0] + this[1] * M[4] + this[2] * M[8] + this[3] * M[12],
+			this[0] * M[1] + this[1] * M[5] + this[2] * M[9] + this[3] * M[13],
+			this[0] * M[2] + this[1] * M[6] + this[2] * M[10] + this[3] * M[14],
+			this[0] * M[3] + this[1] * M[7] + this[2] * M[11] + this[3] * M[15],
+			this[4] * M[0] + this[5] * M[4] + this[6] * M[8] + this[7] * M[12],
+			this[4] * M[1] + this[5] * M[5] + this[6] * M[9] + this[7] * M[13],
+			this[4] * M[2] + this[5] * M[6] + this[6] * M[10] + this[7] * M[14],
+			this[4] * M[3] + this[5] * M[7] + this[6] * M[11] + this[7] * M[15],
+			this[8] * M[0] + this[9] * M[4] + this[10] * M[8] + this[11] * M[12],
+			this[8] * M[1] + this[9] * M[5] + this[10] * M[9] + this[11] * M[13],
+			this[8] * M[2] + this[9] * M[6] + this[10] * M[10] + this[11] * M[14],
+			this[8] * M[3] + this[9] * M[7] + this[10] * M[11] + this[11] * M[15],
+			this[12] * M[0] + this[13] * M[4] + this[14] * M[8] + this[15] * M[12],
+			this[12] * M[1] + this[13] * M[5] + this[14] * M[9] + this[15] * M[13],
+			this[12] * M[2] + this[13] * M[6] + this[14] * M[10] + this[15] * M[14],
+			this[12] * M[3] + this[13] * M[7] + this[14] * M[11] + this[15] * M[15],
+		);
 	}
 
 	public multVec(v: vec4): vec4 {
-		return new vec4(this[0] * v[0] + this[1] * v[1] + this[2] * v[2] + this[3] * v[3], this[4] * v[0] + this[5] * v[1] + this[6] * v[2] + this[7] * v[3], this[8] * v[0] + this[9] * v[1] + this[10] * v[2] + this[11] * v[3], this[12] * v[0] + this[13] * v[1] + this[14] * v[2] + this[15] * v[3]);
+		return new vec4(
+			this[0] * v[0] + this[1] * v[1] + this[2] * v[2] + this[3] * v[3],
+			this[4] * v[0] + this[5] * v[1] + this[6] * v[2] + this[7] * v[3],
+			this[8] * v[0] + this[9] * v[1] + this[10] * v[2] + this[11] * v[3],
+			this[12] * v[0] + this[13] * v[1] + this[14] * v[2] + this[15] * v[3],
+		);
 	}
 
 	/**
@@ -292,16 +365,36 @@ export default class mat4 {
 	 * @param n The distance of the near clipping plane.
 	 * @param f The distance to the far clipping plane.
 	 */
-	public static perspective(r: number = 0.1, l: number = -0.1, t: number = 0.1, b: number = -0.1, n: number = 0.1, f: number = 1000): mat4 {
+	public static perspective(
+		r: number = 0.1,
+		l: number = -0.1,
+		t: number = 0.1,
+		b: number = -0.1,
+		n: number = 0.1,
+		f: number = 1000,
+	): mat4 {
 		const n2 = 2 * n;
 		const rml = r - l;
 		const tmb = t - b;
 		const fmn = f - n;
 		return new mat4(
-			n2 / rml, 0, (r + l) / rml, 0,
-			0, n2 / tmb, (t + b) / tmb, 0,
-			0, 0, -(f) / fmn, -n * f / fmn,
-			0, 0, -1, 0);
+			n2 / rml,
+			0,
+			(r + l) / rml,
+			0,
+			0,
+			n2 / tmb,
+			(t + b) / tmb,
+			0,
+			0,
+			0,
+			-f / fmn,
+			(-n * f) / fmn,
+			0,
+			0,
+			-1,
+			0,
+		);
 	}
 
 	/**
@@ -313,11 +406,35 @@ export default class mat4 {
 	 * @param n The distance of the near clipping plane.
 	 * @param f The distance to the far clipping plane.
 	 */
-	public static orthographic(r: number = 1, l: number = -1, t: number = 1, b: number = -1, n: number = 0, f: number = 1000): mat4 {
+	public static orthographic(
+		r: number = 1,
+		l: number = -1,
+		t: number = 1,
+		b: number = -1,
+		n: number = 0,
+		f: number = 1000,
+	): mat4 {
 		const rml = r - l;
 		const tmb = t - b;
 		const fmn = f - n;
-		return new mat4(2 / rml, 0, 0, -(r + l) / rml, 0, 2 / tmb, 0, -(t + b) / tmb, 0, 0, -1 / fmn, -(n) / fmn, 0, 0, 0, 1);
+		return new mat4(
+			2 / rml,
+			0,
+			0,
+			-(r + l) / rml,
+			0,
+			2 / tmb,
+			0,
+			-(t + b) / tmb,
+			0,
+			0,
+			-1 / fmn,
+			-n / fmn,
+			0,
+			0,
+			0,
+			1,
+		);
 	}
 
 	/**
@@ -338,7 +455,24 @@ export default class mat4 {
 	 * Pushes the values of this matrix in the given array in row major layout.
 	 */
 	public pushInArrayRowMajor(arr: number[]): void {
-		arr.push(this[0], this[1], this[2], this[3], this[4], this[5], this[6], this[7], this[8], this[9], this[10], this[11], this[12], this[13], this[14], this[15]);
+		arr.push(
+			this[0],
+			this[1],
+			this[2],
+			this[3],
+			this[4],
+			this[5],
+			this[6],
+			this[7],
+			this[8],
+			this[9],
+			this[10],
+			this[11],
+			this[12],
+			this[13],
+			this[14],
+			this[15],
+		);
 	}
 
 	/**
@@ -369,7 +503,24 @@ export default class mat4 {
 	 * Pushes the values of this matrix in the given array in column major layout.
 	 */
 	public pushInArrayColumnMajor(arr: number[]): void {
-		arr.push(this[0], this[4], this[8], this[12], this[1], this[5], this[9], this[13], this[2], this[6], this[10], this[14], this[3], this[7], this[11], this[15]);
+		arr.push(
+			this[0],
+			this[4],
+			this[8],
+			this[12],
+			this[1],
+			this[5],
+			this[9],
+			this[13],
+			this[2],
+			this[6],
+			this[10],
+			this[14],
+			this[3],
+			this[7],
+			this[11],
+			this[15],
+		);
 	}
 
 	/**
@@ -395,5 +546,4 @@ export default class mat4 {
 		arr[startIndex + 14] = this[11];
 		arr[startIndex + 15] = this[15];
 	}
-
 }

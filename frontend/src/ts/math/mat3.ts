@@ -1,10 +1,10 @@
-import mat2 from "./mat2"
-import mat4 from "./mat4"
-import vec2 from "./vec2"
-import vec3 from "./vec3"
+import mat2 from "./mat2";
+import mat4 from "./mat4";
+import vec2 from "./vec2";
+import vec3 from "./vec3";
 /**
  * This class represents a 3 x 3 matrix. The data is stored as an array in row major order.
-	 */
+ */
 export default class mat3 {
 	[index: number]: number;
 	0: number;
@@ -25,7 +25,17 @@ export default class mat3 {
 	 * g  h  i
 	 * ```
 	 */
-	constructor(a: number = 0, b: number = 0, c: number = 0, d: number = 0, e: number = 0, f: number = 0, g: number = 0, h: number = 0, i: number = 0) {
+	constructor(
+		a: number = 0,
+		b: number = 0,
+		c: number = 0,
+		d: number = 0,
+		e: number = 0,
+		f: number = 0,
+		g: number = 0,
+		h: number = 0,
+		i: number = 0,
+	) {
 		this[0] = a;
 		this[1] = b;
 		this[2] = c;
@@ -45,7 +55,17 @@ export default class mat3 {
 	 * x2  y2  z2
 	 * ```
 	 */
-	public static fromColumnMajor(x0: number = 0, x1: number = 0, x2: number = 0, y0: number = 0, y1: number = 0, y2: number = 0, z0: number = 0, z1: number = 0, z2: number = 0): mat3 {
+	public static fromColumnMajor(
+		x0: number = 0,
+		x1: number = 0,
+		x2: number = 0,
+		y0: number = 0,
+		y1: number = 0,
+		y2: number = 0,
+		z0: number = 0,
+		z1: number = 0,
+		z2: number = 0,
+	): mat3 {
 		return new mat3(x0, y0, z0, x1, y1, z1, x2, y2, z2);
 	}
 
@@ -56,11 +76,11 @@ export default class mat3 {
 	public static rotationX90(): mat3 {
 		return mat3.fromColumnMajor(1, 0, 0, 0, 0, -1, 0, 1, 0);
 	}
-	
+
 	public static rotationX180(): mat3 {
 		return mat3.fromColumnMajor(1, 0, 0, 0, -1, 0, 0, 0, -1);
 	}
-	
+
 	public static rotationX270(): mat3 {
 		return mat3.fromColumnMajor(1, 0, 0, 0, 0, 1, 0, -1, 0);
 	}
@@ -68,11 +88,11 @@ export default class mat3 {
 	public static rotationY90(): mat3 {
 		return mat3.fromColumnMajor(0, 0, 1, 0, 1, 0, -1, 0, 0);
 	}
-	
+
 	public static rotationY180(): mat3 {
 		return mat3.fromColumnMajor(-1, 0, 0, 0, 1, 0, 0, 0, -1);
 	}
-	
+
 	public static rotationY270(): mat3 {
 		return mat3.fromColumnMajor(0, 0, -1, 0, 1, 0, 1, 0, 0);
 	}
@@ -92,8 +112,8 @@ export default class mat3 {
 		let bi = b * 3;
 		for (let c = 0; c < 3; c++) {
 			t = this[ai];
-			this[ai++] = this[bi]
-			this[bi++] = t
+			this[ai++] = this[bi];
+			this[bi++] = t;
 		}
 	}
 
@@ -144,7 +164,7 @@ export default class mat3 {
 			const rowi = row * 3;
 			for (let col = row + 1; row < 3; row++) {
 				const coli = col * 3;
-				const k = this[rowi + col]
+				const k = this[rowi + col];
 				for (let j = 0; j < 3; j++) {
 					this[rowi + j] -= k * this[coli + j];
 					inve[rowi + j] -= k * this[coli + j];
@@ -161,11 +181,25 @@ export default class mat3 {
 	 * @returns The result of the matrix multiplication this * M.
 	 */
 	public mult(M: mat3): mat3 {
-		return new mat3(this[0] * M[0] + this[1] * M[3] + this[2] * M[6], this[0] * M[1] + this[1] * M[4] + this[2] * M[7], this[0] * M[2] + this[1] * M[5] + this[2] * M[8], this[3] * M[0] + this[4] * M[3] + this[5] * M[6], this[3] * M[1] + this[4] * M[4] + this[5] * M[7], this[3] * M[2] + this[4] * M[5] + this[5] * M[8], this[6] * M[0] + this[7] * M[3] + this[8] * M[6], this[6] * M[1] + this[7] * M[4] + this[8] * M[7], this[6] * M[2] + this[7] * M[5] + this[8] * M[8]);
+		return new mat3(
+			this[0] * M[0] + this[1] * M[3] + this[2] * M[6],
+			this[0] * M[1] + this[1] * M[4] + this[2] * M[7],
+			this[0] * M[2] + this[1] * M[5] + this[2] * M[8],
+			this[3] * M[0] + this[4] * M[3] + this[5] * M[6],
+			this[3] * M[1] + this[4] * M[4] + this[5] * M[7],
+			this[3] * M[2] + this[4] * M[5] + this[5] * M[8],
+			this[6] * M[0] + this[7] * M[3] + this[8] * M[6],
+			this[6] * M[1] + this[7] * M[4] + this[8] * M[7],
+			this[6] * M[2] + this[7] * M[5] + this[8] * M[8],
+		);
 	}
 
 	public multVec(v: vec3): vec3 {
-		return new vec3(this[0] * v[0] + this[1] * v[1] + this[2] * v[2], this[3] * v[0] + this[4] * v[1] + this[5] * v[2], this[6] * v[0] + this[7] * v[1] + this[8] * v[2]);
+		return new vec3(
+			this[0] * v[0] + this[1] * v[1] + this[2] * v[2],
+			this[3] * v[0] + this[4] * v[1] + this[5] * v[2],
+			this[6] * v[0] + this[7] * v[1] + this[8] * v[2],
+		);
 	}
 
 	/**
@@ -294,7 +328,24 @@ export default class mat3 {
 	 * Expands the matrix to a 4x4 matrix by placing 1 in the augmented diagonal position and 0 else.
 	 */
 	public toMat4(): mat4 {
-		return new mat4(this[0], this[1], this[2], 0, this[3], this[4], this[5], 0, this[6], this[7], this[8], 0, 0, 0, 0, 1);
+		return new mat4(
+			this[0],
+			this[1],
+			this[2],
+			0,
+			this[3],
+			this[4],
+			this[5],
+			0,
+			this[6],
+			this[7],
+			this[8],
+			0,
+			0,
+			0,
+			0,
+			1,
+		);
 	}
 
 	/**
@@ -344,5 +395,4 @@ export default class mat3 {
 		arr[startIndex + 7] = this[5];
 		arr[startIndex + 8] = this[8];
 	}
-
 }

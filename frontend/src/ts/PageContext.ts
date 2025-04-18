@@ -3,7 +3,7 @@ import { Project } from "./project/Project";
 
 export class PageContext {
 	private _gpux: GPUX;
-	private _project: Project
+	private _project: Project;
 	constructor(gpux: GPUX) {
 		this._gpux = gpux;
 		this._project = new Project(this);

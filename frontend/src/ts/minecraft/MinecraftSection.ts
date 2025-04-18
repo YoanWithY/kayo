@@ -24,7 +24,8 @@ export class MinecraftSection {
 		y: number,
 		z: number,
 		palette: PaletteEntry[],
-		yzxIndices: Uint16Array) {
+		yzxIndices: Uint16Array,
+	) {
 		this._minecraftWorld = minecraftWorld;
 		this._dimension = dimension;
 		this._x = x;
@@ -34,19 +35,19 @@ export class MinecraftSection {
 		this._geomBuffer = this.gpuDevice.createBuffer({
 			label: "section geom buffer",
 			size: 0,
-			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 		});
 
 		this._texBuffer = this.gpuDevice.createBuffer({
 			label: "section tex buffer",
 			size: 0,
-			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 		});
 
 		this._texIndexBuffer = this.gpuDevice.createBuffer({
 			label: "section tex index buffer",
 			size: 0,
-			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 		});
 
 		this._sectionBuffer = this.gpuDevice.createBuffer({
@@ -54,12 +55,16 @@ export class MinecraftSection {
 			size: 4 * 4,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 		});
-		this.gpuDevice.queue.writeBuffer(this._sectionBuffer, 0, new Float32Array([this._x * 16, this._y * 16, this._z * 16]));
+		this.gpuDevice.queue.writeBuffer(
+			this._sectionBuffer,
+			0,
+			new Float32Array([this._x * 16, this._y * 16, this._z * 16]),
+		);
 
 		this._bindGroup1 = this.gpuDevice.createBindGroup({
 			label: "section bind group 1",
 			entries: [{ binding: 0, resource: { buffer: this._sectionBuffer } }],
-			layout: MinecraftOpaquePipeline.minecraftBindgroup1Layout
+			layout: MinecraftOpaquePipeline.minecraftBindgroup1Layout,
 		});
 
 		let i = 0;
@@ -67,21 +72,21 @@ export class MinecraftSection {
 			this.getBlock = () => undefined;
 		}
 
-		this._blocks = Array(16).fill(undefined).map(() =>
-			Array(16).fill(undefined).map(() =>
-				Array(16).fill(undefined)
-			)
-		);
+		this._blocks = Array(16)
+			.fill(undefined)
+			.map(() =>
+				Array(16)
+					.fill(undefined)
+					.map(() => Array(16).fill(undefined)),
+			);
 
 		if (palette.length === 1) {
 			const paletteEntry = palette[0];
 			const blockState = this._minecraftWorld.ressourcePack.getBlockStateByURL(paletteEntry.Name);
-			if (!blockState)
-				throw new Error(`Blockstate of Block ${paletteEntry} is unknown.`);
+			if (!blockState) throw new Error(`Blockstate of Block ${paletteEntry} is unknown.`);
 			const blockStateModels = blockState.getBlockStateModelByProperties(paletteEntry.Properties);
 
-			if (!blockStateModels)
-				return;
+			if (!blockStateModels) return;
 			for (let y = 0; y < 16; y++) {
 				for (let z = 0; z < 16; z++) {
 					for (let x = 0; x < 16; x++) {
@@ -96,15 +101,12 @@ export class MinecraftSection {
 						const paletteIndex = yzxIndices[i++];
 						const paletteEntry = palette[paletteIndex];
 						const blockState = this._minecraftWorld.ressourcePack.getBlockStateByURL(paletteEntry.Name);
-						if (!blockState)
-							throw new Error(`Blockstate of Block ${paletteEntry} is unknown.`);
+						if (!blockState) throw new Error(`Blockstate of Block ${paletteEntry} is unknown.`);
 						const blockStateModels = blockState.getBlockStateModelByProperties(paletteEntry.Properties);
 
-						if (!blockStateModels)
-							continue
+						if (!blockStateModels) continue;
 
 						this._blocks[z][y][x] = new MinecraftBlock(paletteEntry.Name, blockStateModels);
-
 					}
 				}
 			}
@@ -125,8 +127,7 @@ export class MinecraftSection {
 			for (let y = 0; y < 16; y++) {
 				for (let x = 0; x < 16; x++) {
 					const block = this.getBlock(x, y, z);
-					if (!block)
-						continue
+					if (!block) continue;
 
 					const n = this._minecraftWorld.getNeighborhoodOf(this._x, this._y, this._z, x, y, z);
 					this._faceNumber += block.build(geom, tex, texIndex, x, y, z, n);
@@ -141,7 +142,7 @@ export class MinecraftSection {
 		this._geomBuffer = this.gpuDevice.createBuffer({
 			label: `section (${this._x}, ${this._y}, ${this._z}) geom buffer`,
 			size: geomData.byteLength,
-			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 		});
 		this.gpuDevice.queue.writeBuffer(this._geomBuffer, 0, geomData);
 
@@ -150,7 +151,7 @@ export class MinecraftSection {
 		this._texBuffer = this.gpuDevice.createBuffer({
 			label: `section (${this._x}, ${this._y}, ${this._z}) tex buffer`,
 			size: texData.byteLength,
-			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 		});
 		this.gpuDevice.queue.writeBuffer(this._texBuffer, 0, texData);
 
@@ -159,7 +160,7 @@ export class MinecraftSection {
 		this._texIndexBuffer = this.gpuDevice.createBuffer({
 			label: `section (${this._x}, ${this._y}, ${this._z}) tex index buffer`,
 			size: texIndexData.byteLength,
-			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+			usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
 		});
 		this.gpuDevice.queue.writeBuffer(this._texIndexBuffer, 0, texIndexData);
 
@@ -169,18 +170,21 @@ export class MinecraftSection {
 			size: 4 * 4,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 		});
-		this.gpuDevice.queue.writeBuffer(this._sectionBuffer, 0, new Float32Array([this._x * 16, this._y * 16, this._z * 16]));
+		this.gpuDevice.queue.writeBuffer(
+			this._sectionBuffer,
+			0,
+			new Float32Array([this._x * 16, this._y * 16, this._z * 16]),
+		);
 
 		this._bindGroup1 = this.gpuDevice.createBindGroup({
 			label: `section (${this._x}, ${this._y}, ${this._z}) bind group 1`,
 			entries: [{ binding: 0, resource: { buffer: this._sectionBuffer } }],
-			layout: MinecraftOpaquePipeline.minecraftBindgroup1Layout
+			layout: MinecraftOpaquePipeline.minecraftBindgroup1Layout,
 		});
 	}
 
 	public render(renderPassEncoder: GPURenderPassEncoder | GPURenderBundleEncoder) {
-		if (this._faceNumber === 0)
-			return 0;
+		if (this._faceNumber === 0) return 0;
 		renderPassEncoder.setVertexBuffer(0, this._geomBuffer);
 		renderPassEncoder.setVertexBuffer(1, this._texBuffer);
 		renderPassEncoder.setVertexBuffer(2, this._texIndexBuffer);

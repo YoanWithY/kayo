@@ -32,7 +32,7 @@ export class ViewportCache {
 		this.gpuDevice = project.gpux.gpuDevice;
 		this.querySet = this.gpuDevice.createQuerySet({
 			label: `time stamp query set for ${viewport.lable}`,
-			type: 'timestamp',
+			type: "timestamp",
 			count: 10,
 		});
 		this.timeStempBufferResolve = this.gpuDevice.createBuffer({
@@ -54,70 +54,69 @@ export class ViewportCache {
 		const h = this.viewport.getCurrentTexture().height;
 		this.conditionalColorAttachmentUpdate(w, h, config.msaa);
 		this.conditionalOverlayAttachmentUpdate(w, h, config);
-		if (w === this.prevWidth && h === this.prevHeight && config.msaa === this.prevMSAA && this.prevUseOverlays === this.viewport.useOverlays)
+		if (
+			w === this.prevWidth &&
+			h === this.prevHeight &&
+			config.msaa === this.prevMSAA &&
+			this.prevUseOverlays === this.viewport.useOverlays
+		)
 			return;
 
-		if (this.depthTextureSS)
-			this.depthTextureSS.destroy();
+		if (this.depthTextureSS) this.depthTextureSS.destroy();
 
 		this.depthTextureSS = this.gpuDevice.createTexture({
 			size: [w, h, 1],
-			format: 'depth24plus',
+			format: "depth24plus",
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
 			label: "single sample render depth attachment texture",
-			sampleCount: 1
+			sampleCount: 1,
 		});
 
-		if (this.selectionRT)
-			this.selectionRT.destroy();
+		if (this.selectionRT) this.selectionRT.destroy();
 		this.selectionRT = this.gpuDevice.createTexture({
 			size: [w, h, 1],
-			format: 'r8uint',
+			format: "r8uint",
 			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 			label: "Selection Attachment",
-			sampleCount: 1
+			sampleCount: 1,
 		});
 
-		if (this.selectionDepthRT)
-			this.selectionDepthRT.destroy();
+		if (this.selectionDepthRT) this.selectionDepthRT.destroy();
 		this.selectionDepthRT = this.gpuDevice.createTexture({
 			size: [w, h, 1],
-			format: 'depth24plus',
+			format: "depth24plus",
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
 			label: "Selection Depth Attachment",
-			sampleCount: 1
+			sampleCount: 1,
 		});
 
-		if (this.idTextureSS)
-			this.idTextureSS.destroy();
+		if (this.idTextureSS) this.idTextureSS.destroy();
 		this.idTextureSS = this.gpuDevice.createTexture({
 			label: "single sample matte attachment",
 			size: [w, h, 1],
 			format: "r16uint",
 			sampleCount: 1,
-			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 		});
 
 		if (config.msaa > 1) {
-			if (this.idTextureMS)
-				this.idTextureMS.destroy();
+			if (this.idTextureMS) this.idTextureMS.destroy();
 			this.idTextureMS = this.gpuDevice.createTexture({
 				label: "multisample id attachment texture",
 				size: [w, h, 1],
 				format: "r16uint",
 				sampleCount: config.msaa,
-				usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+				usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 			});
 
-			if (this.depthTextureMS)
-				this.depthTextureMS.destroy();
+			if (this.depthTextureMS) this.depthTextureMS.destroy();
 
 			this.depthTextureMS = this.gpuDevice.createTexture({
 				size: [w, h, 1],
-				format: 'depth24plus',
+				format: "depth24plus",
 				usage: GPUTextureUsage.RENDER_ATTACHMENT,
 				label: "multisample render depth Attachment texture",
-				sampleCount: config.msaa
+				sampleCount: config.msaa,
 			});
 		}
 
@@ -142,9 +141,7 @@ export class ViewportCache {
 				}
 				this.r16ResolveBindGroup0 = this.gpuDevice.createBindGroup({
 					label: "R16u resolve bind group 0",
-					entries: [
-						{ binding: 0, resource: this.idTextureMS.createView() },
-					],
+					entries: [{ binding: 0, resource: this.idTextureMS.createView() }],
 					layout: this.project.renderer.r16ResolveBindGroupLayout,
 				});
 			}
@@ -158,10 +155,16 @@ export class ViewportCache {
 
 	private conditionalColorAttachmentUpdate(w: number, h: number, msaa: MSAAOptions) {
 		const currentFormat = this.project.getSwapChainFormat();
-		if (w === this.prevWidth && h === this.prevHeight && msaa === this.prevMSAA && currentFormat === this.prevTargetFormat)
+		if (
+			w === this.prevWidth &&
+			h === this.prevHeight &&
+			msaa === this.prevMSAA &&
+			currentFormat === this.prevTargetFormat
+		)
 			return;
 
-		if (msaa === 1) { // No MSAA
+		if (msaa === 1) {
+			// No MSAA
 			if (this.colorTextureMS) {
 				this.colorTextureMS.destroy();
 				this.colorTextureMS = undefined;
@@ -169,15 +172,14 @@ export class ViewportCache {
 			return;
 		}
 		// Use MSAA
-		if (this.colorTextureMS)
-			this.colorTextureMS.destroy();
+		if (this.colorTextureMS) this.colorTextureMS.destroy();
 
 		this.colorTextureMS = this.gpuDevice.createTexture({
 			size: [w, h, 1],
 			format: currentFormat,
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
 			label: "Render Color Attachment",
-			sampleCount: msaa
+			sampleCount: msaa,
 		});
 	}
 
@@ -192,21 +194,25 @@ export class ViewportCache {
 				this.overlayTextureSS.destroy();
 				this.overlayTextureSS = undefined;
 			}
-			return
+			return;
 		}
 		// Use overlay
-		if (w === this.prevWidth && h === this.prevHeight && this.overlayTextureSS && (config.msaa === 1 || this.overlayTextureMS))
+		if (
+			w === this.prevWidth &&
+			h === this.prevHeight &&
+			this.overlayTextureSS &&
+			(config.msaa === 1 || this.overlayTextureMS)
+		)
 			return;
 
-		if (this.overlayTextureSS)
-			this.overlayTextureSS.destroy();
+		if (this.overlayTextureSS) this.overlayTextureSS.destroy();
 
 		this.overlayTextureSS = this.gpuDevice.createTexture({
 			label: "Overlay Attachment",
 			size: [w, h, 1],
 			format: "rgba8unorm",
 			sampleCount: 1,
-			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 		});
 
 		if (this.overlayTextureMS) {
@@ -220,15 +226,14 @@ export class ViewportCache {
 				size: [w, h, 1],
 				format: "rgba8unorm",
 				sampleCount: config.msaa,
-				usage: GPUTextureUsage.RENDER_ATTACHMENT
+				usage: GPUTextureUsage.RENDER_ATTACHMENT,
 			});
 		}
 	}
 
 	public reconfigureContext() {
 		const context = this.viewport.canvasContext;
-		if (!context)
-			return;
+		if (!context) return;
 		const displayConfig = this.project.config.output.display;
 		context.unconfigure();
 		context.configure({
@@ -247,14 +252,22 @@ export class ViewportCache {
 		selectionRenderPassDescriptor: GPURenderPassDescriptor,
 		overlayRenderPassDescriptor: GPURenderPassDescriptor,
 		compositingRenderPassDescriptor: GPURenderPassDescriptor,
-		config: OutputForwardRenderConfig) {
+		config: OutputForwardRenderConfig,
+	) {
 		const colorAttachment = getElement(r3renderPassDescriptor.colorAttachments, 0);
 		const idAttachment = getElement(r3renderPassDescriptor.colorAttachments, 1);
 		const idResolveAttachment = getElement(r16ResolveRenderPassDescriptor.colorAttachments, 0);
 		const selectionAttachment = getElement(selectionRenderPassDescriptor.colorAttachments, 0);
 		const overlayColorAttachment = getElement(overlayRenderPassDescriptor.colorAttachments, 0);
 		const compositingAttachment = getElement(compositingRenderPassDescriptor.colorAttachments, 0);
-		if (!colorAttachment || !overlayColorAttachment || !compositingAttachment || !idAttachment || !idResolveAttachment || !selectionAttachment) {
+		if (
+			!colorAttachment ||
+			!overlayColorAttachment ||
+			!compositingAttachment ||
+			!idAttachment ||
+			!idResolveAttachment ||
+			!selectionAttachment
+		) {
 			console.error("Could not find attachment.");
 			return;
 		}
@@ -275,8 +288,7 @@ export class ViewportCache {
 			}
 			selectionAttachment.view = this.selectionRT.createView();
 			const selectionDepthAttachment = selectionRenderPassDescriptor.depthStencilAttachment;
-			if (selectionDepthAttachment)
-				selectionDepthAttachment.view = this.selectionDepthRT.createView();
+			if (selectionDepthAttachment) selectionDepthAttachment.view = this.selectionDepthRT.createView();
 		}
 
 		if (config.msaa === 1) {
@@ -294,7 +306,6 @@ export class ViewportCache {
 				overlayColorAttachment.view = this.overlayTextureSS.createView();
 				overlayColorAttachment.resolveTarget = undefined;
 			}
-
 		} else {
 			idResolveAttachment.view = this.idTextureSS.createView();
 			if (this.colorTextureMS && this.idTextureMS) {
@@ -336,7 +347,6 @@ export class ViewportCache {
 				r3depthAttachment.view = this.depthTextureMS.createView();
 				overlayDepthAttachment.view = this.depthTextureMS.createView();
 			}
-
 		}
 
 		const r3TimestampWrites = r3renderPassDescriptor.timestampWrites;
@@ -344,7 +354,13 @@ export class ViewportCache {
 		const selectionTimestampWrites = selectionRenderPassDescriptor.timestampWrites;
 		const overlayTimestampWrites = overlayRenderPassDescriptor.timestampWrites;
 		const compositingTimestampWrites = compositingRenderPassDescriptor.timestampWrites;
-		if (r3TimestampWrites && overlayTimestampWrites && compositingTimestampWrites && r16ResolveTimestampWrites && selectionTimestampWrites) {
+		if (
+			r3TimestampWrites &&
+			overlayTimestampWrites &&
+			compositingTimestampWrites &&
+			r16ResolveTimestampWrites &&
+			selectionTimestampWrites
+		) {
 			r3TimestampWrites.querySet = this.querySet;
 			r16ResolveTimestampWrites.querySet = this.querySet;
 			overlayTimestampWrites.querySet = this.querySet;
@@ -357,9 +373,12 @@ export class ViewportCache {
 		commandEncoder.resolveQuerySet(this.querySet, 0, this.querySet.count, this.timeStempBufferResolve, 0);
 		if (this.timeStempMapBuffer.mapState === "unmapped") {
 			commandEncoder.copyBufferToBuffer(
-				this.timeStempBufferResolve, 0,
-				this.timeStempMapBuffer, 0,
-				this.timeStempBufferResolve.size);
+				this.timeStempBufferResolve,
+				0,
+				this.timeStempMapBuffer,
+				0,
+				this.timeStempBufferResolve.size,
+			);
 		}
 	}
 	private resetBuffer = new BigInt64Array(10);
@@ -381,13 +400,17 @@ export class ViewportCache {
 				// 	"total:", (r3Time + r16Time + selectionTime + overlayTime + compositingTime) / 1000000);
 
 				this.timeStempMapBuffer.unmap();
-				this.gpuDevice.queue.writeBuffer(this.timeStempBufferResolve, 0, this.resetBuffer, 0, this.resetBuffer.length)
+				this.gpuDevice.queue.writeBuffer(
+					this.timeStempBufferResolve,
+					0,
+					this.resetBuffer,
+					0,
+					this.resetBuffer.length,
+				);
 				this.viewport.setGPUTime(r3Time, r16Time, selectionTime, overlayTime, compositingTime);
 			});
 		}
 	}
 
-	public destroy() {
-
-	}
+	public destroy() {}
 }

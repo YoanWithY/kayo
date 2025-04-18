@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "emscripten",
+      "generator": "Unix Makefiles",
+      "toolchainFile": "${env:EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    }
+  ]
+}

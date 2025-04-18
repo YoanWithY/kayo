@@ -22,7 +22,13 @@ export class ResolvePipeline extends AbstractRenderingPipeline {
 	depthWriteEnabled: boolean;
 	project: Project;
 
-	constructor(project: Project, label: string, textureFormat: GPUTextureFormat, vectorFormat: string, vectorSelector: "x" | "xy" | "xyz" | "xyzw") {
+	constructor(
+		project: Project,
+		label: string,
+		textureFormat: GPUTextureFormat,
+		vectorFormat: string,
+		vectorSelector: "x" | "xy" | "xyz" | "xyzw",
+	) {
 		super(label);
 		this.project = project;
 		this.shaderCode = shaderCode;
@@ -36,12 +42,11 @@ export class ResolvePipeline extends AbstractRenderingPipeline {
 		this.depthWriteEnabled = false;
 		this.fragmentTargets = [{ format: textureFormat }];
 
-		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule(
-			{
-				label: `${label} shader module`,
-				code: this.preProzessedShaderCoder,
-				compilationHints: [{ entryPoint: vertexEntryPoint }, { entryPoint: fragmentEntryPoint }]
-			});
+		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule({
+			label: `${label} shader module`,
+			code: this.preProzessedShaderCoder,
+			compilationHints: [{ entryPoint: vertexEntryPoint }, { entryPoint: fragmentEntryPoint }],
+		});
 		this.gpuPipeline = this.buildPipeline(this.project.gpux.gpuDevice);
 	}
 

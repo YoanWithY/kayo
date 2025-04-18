@@ -7,8 +7,8 @@ import TransformationStack from "../transformation/TransformationStack";
  * A minimal interface that describes the functionality of a camera.
  */
 export default interface Camera {
-    transformationStack: TransformationStack;
-    getProjection(): Projection;
-    getViewMatrix(): mat4;
-    getWorldLocation(): vec3;
+	transformationStack: TransformationStack;
+	getProjection(): Projection;
+	getViewMatrix(): mat4;
+	getWorldLocation(): vec3;
 }

@@ -1,6 +1,6 @@
-import vec from "./vec"
-import vec2 from "./vec2"
-import vec3 from "./vec3"
+import vec from "./vec";
+import vec2 from "./vec2";
+import vec3 from "./vec3";
 export default class vec4 implements vec<vec4> {
 	[n: number]: number;
 	0: number;
@@ -134,7 +134,16 @@ export default class vec4 implements vec<vec4> {
 		return v.sub(this).norm();
 	}
 
-	public static distance(x1: number, y1: number, z1: number, w1: number, x2: number, y2: number, z2: number, w2: number): number {
+	public static distance(
+		x1: number,
+		y1: number,
+		z1: number,
+		w1: number,
+		x2: number,
+		y2: number,
+		z2: number,
+		w2: number,
+	): number {
 		const d0 = x2 - x1;
 		const d1 = y2 - y1;
 		const d2 = z2 - z1;
@@ -143,7 +152,10 @@ export default class vec4 implements vec<vec4> {
 	}
 
 	public static sum(...v: vec4[]): vec4 {
-		let x = 0, y = 0, z = 0, w = 0;
+		let x = 0,
+			y = 0,
+			z = 0,
+			w = 0;
 		for (const vec of v) {
 			x += vec[0];
 			y += vec[1];
@@ -1923,5 +1935,4 @@ export default class vec4 implements vec<vec4> {
 		this[1] = v[2];
 		this[0] = v[3];
 	}
-
 }

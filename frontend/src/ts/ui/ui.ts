@@ -46,7 +46,7 @@ export function initUI() {
 	window.customElements.define("full-strech", FullStretch);
 	window.customElements.define("footer-element", Footer);
 
-	window.customElements.define("outliner-element", OutlinerElement)
+	window.customElements.define("outliner-element", OutlinerElement);
 	window.customElements.define("split-button-ul", SplitButtonUL);
 	window.customElements.define("split-button-ur", SplitButtonUR);
 	window.customElements.define("split-button-ll", SplitButtonLL);
@@ -69,18 +69,18 @@ const nameClassMap: { [key: string]: UIElement } = {
 	[StateSelectBox.getDomClass()]: StateSelectBox,
 	[PTPChatContent.getDomClass()]: PTPChatContent,
 	[PTPTextInput.getDomClass()]: PTPTextInput,
-}
+};
 
 export function buildUIElement(win: Window, pageContext: PageContext, obj: any): HTMLElement {
 	return nameClassMap[obj.class].createUIElement(win, pageContext, obj);
 }
 
 export interface UIElement {
-	new(): any;
+	new (): any;
 	createUIElement(win: Window, pageContext: PageContext, obj: any): HTMLElement;
 	getDomClass(): string;
 }
 
 export interface UIPaneElement extends UIElement {
-	getName(): string
+	getName(): string;
 }

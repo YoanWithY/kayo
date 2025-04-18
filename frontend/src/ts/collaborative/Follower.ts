@@ -1,4 +1,13 @@
-import { WSRole, WSFollowerReady, Identity, WSServerIceCandidateMessage, WSServerRTCOfferMessage, WSClientIceCandidate, RTMessage, RTString } from "../../../../shared/messageTypes";
+import {
+	WSRole,
+	WSFollowerReady,
+	Identity,
+	WSServerIceCandidateMessage,
+	WSServerRTCOfferMessage,
+	WSClientIceCandidate,
+	RTMessage,
+	RTString,
+} from "../../../../shared/messageTypes";
 import { PTPBase } from "./PTPBase";
 import { PTPMessage } from "./PTPChatPannel";
 import { Role } from "./Role";
@@ -12,7 +21,6 @@ export class Follower extends Role {
 		super(ptpBase, id);
 
 		this.leaderConnection.ondatachannel = (event: RTCDataChannelEvent) => {
-
 			this.dataChannel = event.channel;
 
 			this.dataChannel.onopen = () => {
@@ -23,11 +31,9 @@ export class Follower extends Role {
 			const dataArr: ArrayBuffer[] = [];
 
 			this.dataChannel.onmessage = (event: MessageEvent) => {
-
 				if (typeof event.data === "string") {
 					const message = JSON.parse(event.data) as RTMessage;
 					switch (message.type) {
-
 						case "start of file": {
 							pendingFilename = message.content;
 							break;
@@ -35,7 +41,7 @@ export class Follower extends Role {
 
 						case "end of file": {
 							const receivedBlob = new Blob(dataArr);
-							const downloadLink = document.createElement('a');
+							const downloadLink = document.createElement("a");
 							downloadLink.href = URL.createObjectURL(receivedBlob);
 							downloadLink.download = pendingFilename; // Set the filename here
 
@@ -55,8 +61,6 @@ export class Follower extends Role {
 				}
 			};
 		};
-
-
 	}
 	public answerRoleIsReady(): void {
 		this.base.sendWS<WSFollowerReady>({ type: "follower ready", content: null });
@@ -72,8 +76,8 @@ export class Follower extends Role {
 				type: "ice candidate",
 				content: {
 					targetIdentity: identity,
-					candidate: event.candidate
-				}
+					candidate: event.candidate,
+				},
 			});
 		};
 
@@ -90,8 +94,8 @@ export class Follower extends Role {
 			type: "offer",
 			content: {
 				targetIdentity: { id: 0, origin: undefined },
-				offer: backOffer
-			}
+				offer: backOffer,
+			},
 		});
 	}
 	public addIceCandidate(wsICECandidate: WSClientIceCandidate) {

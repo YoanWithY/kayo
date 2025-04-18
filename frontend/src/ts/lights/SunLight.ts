@@ -6,7 +6,7 @@ import Projection from "../projection/Projection";
 import Camera from "../Viewport/Camera";
 
 export class SunLight extends R3Object implements Camera {
-	projection: OrthographicProjection
+	projection: OrthographicProjection;
 	shadowMap: GPUTexture;
 	renderPass: GPURenderPassDescriptor;
 	resolution: number;
@@ -23,7 +23,7 @@ export class SunLight extends R3Object implements Camera {
 				{
 					binding: 0,
 					visibility: GPUShaderStage.FRAGMENT,
-					buffer: { type: "uniform" }
+					buffer: { type: "uniform" },
 				},
 				{
 					binding: 1,
@@ -31,17 +31,17 @@ export class SunLight extends R3Object implements Camera {
 					texture: {
 						multisampled: false,
 						sampleType: "depth",
-						viewDimension: "2d"
-					}
+						viewDimension: "2d",
+					},
 				},
 				{
 					binding: 2,
 					visibility: GPUShaderStage.FRAGMENT,
 					sampler: {
-						type: "comparison"
-					}
+						type: "comparison",
+					},
 				},
-			]
+			],
 		});
 	}
 
@@ -55,47 +55,44 @@ export class SunLight extends R3Object implements Camera {
 			label: "Sun Light shadow map",
 			format: "depth24plus",
 			size: [resolution, resolution, 1],
-			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
+			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 		});
 		this.renderPass = {
 			label: "sun shadow render pass descriptor",
 			colorAttachments: [],
-			depthStencilAttachment:
-			{
+			depthStencilAttachment: {
 				view: this.shadowMap.createView(),
 				depthClearValue: 1.0,
 				depthLoadOp: "clear",
 				depthStoreOp: "store",
-			}
+			},
 		};
 		this.buffer = gpuDevice.createBuffer({
 			label: "sun buffer",
 			size: 20 * 4,
-			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM
-		})
-		this.bindGroup = gpuDevice.createBindGroup(
-			{
-				label: "sun bind group",
-				layout: SunLight.sunBindGroupLayout,
-				entries: [
-					{
-						binding: 0,
-						resource: { buffer: this.buffer }
-					},
-					{
-						binding: 1,
-						resource: this.shadowMap.createView()
-					},
-					{
-						binding: 2,
-						resource: gpuDevice.createSampler(
-							{
-								compare: "less-equal",
-								magFilter: "linear",
-							})
-					}
-				]
-			});
+			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+		});
+		this.bindGroup = gpuDevice.createBindGroup({
+			label: "sun bind group",
+			layout: SunLight.sunBindGroupLayout,
+			entries: [
+				{
+					binding: 0,
+					resource: { buffer: this.buffer },
+				},
+				{
+					binding: 1,
+					resource: this.shadowMap.createView(),
+				},
+				{
+					binding: 2,
+					resource: gpuDevice.createSampler({
+						compare: "less-equal",
+						magFilter: "linear",
+					}),
+				},
+			],
+		});
 	}
 	getProjection(): Projection {
 		return this.projection;
@@ -115,7 +112,10 @@ export class SunLight extends R3Object implements Camera {
 	floatData = new Float32Array(20);
 	updateSunUniforms(gpuDevice: GPUDevice) {
 		const mat = this.transformationStack.getTransformationMatrix();
-		this.projection.getProjectionMatrix(this.resolution, this.resolution).mult(this.getViewMatrix()).pushInFloat32ArrayColumnMajor(this.floatData);
+		this.projection
+			.getProjectionMatrix(this.resolution, this.resolution)
+			.mult(this.getViewMatrix())
+			.pushInFloat32ArrayColumnMajor(this.floatData);
 		this.floatData.set([mat[2], mat[6], mat[10], 1], 16);
 		gpuDevice.queue.writeBuffer(this.buffer, 0, this.floatData);
 	}

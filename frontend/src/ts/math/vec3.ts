@@ -1,6 +1,6 @@
-import vec from "./vec"
-import vec2 from "./vec2"
-import vec4 from "./vec4"
+import vec from "./vec";
+import vec2 from "./vec2";
+import vec4 from "./vec4";
 export default class vec3 implements vec<vec3> {
 	[n: number]: number;
 	0: number;
@@ -130,7 +130,9 @@ export default class vec3 implements vec<vec3> {
 	}
 
 	public static sum(...v: vec3[]): vec3 {
-		let x = 0, y = 0, z = 0;
+		let x = 0,
+			y = 0,
+			z = 0;
 		for (const vec of v) {
 			x += vec[0];
 			y += vec[1];
@@ -171,7 +173,7 @@ export default class vec3 implements vec<vec3> {
 
 	/**
 	 * (θ, φ, r) → (x, y, z) following ISO/IEC 80000:
-	 * 
+	 *
 	 * (θ, φ, r) ↦ (r · sin(θ) · cos(φ), r · sin(θ) · cos(φ), r · cos(θ))
 	 * @param theta θ the polar angle from +Z in radiance
 	 * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
@@ -185,7 +187,7 @@ export default class vec3 implements vec<vec3> {
 
 	/**
 	 * (θ, φ) → (x, y, z) following ISO/IEC 80000:
-	 * 
+	 *
 	 * (θ, φ) ↦ (cos(θ) · cos(φ), cos(θ) · sin(φ), -sin(θ))
 	 * @param theta θ the polar angle from +Z in radiance
 	 * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
@@ -198,7 +200,7 @@ export default class vec3 implements vec<vec3> {
 
 	/**
 	 * φ → (x, y, z) following ISO/IEC 80000:
-	 * 
+	 *
 	 * φ ↦ (-sin(φ), cos(φ), 0)
 	 * @param phi φ the azimuthal angle from +X in the XY-plane in radiance
 	 * @returns The Euclidean unit tangent on the latitude circle from the azimuthal angle towards the increasing azimuthal angle direction.
@@ -764,5 +766,4 @@ export default class vec3 implements vec<vec3> {
 		this[1] = v[1];
 		this[0] = v[2];
 	}
-
 }

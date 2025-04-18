@@ -1,4 +1,4 @@
-declare module '*.wgsl?raw' {
+declare module "*.wgsl?raw" {
 	const content: string;
 	export default content;
 }

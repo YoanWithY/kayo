@@ -3,7 +3,6 @@ import TextureUtils from "./TextureUtils";
 import { VirtualTexture2D } from "./VirtualTexture2D";
 import { VirtualTextureSystem } from "./VirtualTextureSystem";
 
-
 export class IndirectionTableAtlas {
 	public static readonly components = 4;
 	/**

@@ -2,9 +2,9 @@ import { PageContext } from "../PageContext";
 import StateVariable from "../project/StateVariable";
 import UIVariableComponent from "../ui/components/UIComponent";
 import BasicPane from "../ui/panes/BasicPane";
-import ptpChatTemplate from "./ptpChatPaneTemplate.json"
+import ptpChatTemplate from "./ptpChatPaneTemplate.json";
 
-export type PTPMessage = { text: string, sender: number };
+export type PTPMessage = { text: string; sender: number };
 
 export class PTPMessageElement extends HTMLElement {
 	_internals: ElementInternals = this.attachInternals();
@@ -20,10 +20,9 @@ export class PTPMessageElement extends HTMLElement {
 export class PTPChatContent extends UIVariableComponent<PTPMessage[]> {
 	private _win!: Window;
 	private _pageContext!: PageContext;
-	texts: PTPMessageElement[] = []
+	texts: PTPMessageElement[] = [];
 	rebuild(value: PTPMessage[]) {
-		for (const t of this.texts)
-			this.removeChild(t);
+		for (const t of this.texts) this.removeChild(t);
 		this.texts.length = 0;
 		for (const v of value) {
 			const p = PTPMessageElement.createUIElement(this._win);
@@ -42,14 +41,16 @@ export class PTPChatContent extends UIVariableComponent<PTPMessage[]> {
 	setValue(value: PTPMessage[]): void {
 		this.rebuild(value);
 		const newMessage = value[value.length - 1];
-		if (newMessage === undefined)
-			return;
+		if (newMessage === undefined) return;
 
-		if (newMessage.sender === this._pageContext.project.ptpBase.role.id)
-			return
-		Notification.requestPermission().then(permission => {
-			if (permission === 'granted') {
-				new Notification(`${newMessage.sender}:`, { body: newMessage.text, icon: "./favicon.ico", badge: "./favicon.ico" });
+		if (newMessage.sender === this._pageContext.project.ptpBase.role.id) return;
+		Notification.requestPermission().then((permission) => {
+			if (permission === "granted") {
+				new Notification(`${newMessage.sender}:`, {
+					body: newMessage.text,
+					icon: "./favicon.ico",
+					badge: "./favicon.ico",
+				});
 			}
 		});
 	}
@@ -69,7 +70,6 @@ export class PTPChatContent extends UIVariableComponent<PTPMessage[]> {
 }
 
 export class PTPTextInput extends HTMLFormElement {
-
 	constructor() {
 		super();
 		this.classList.add(PTPTextInput.getDomClass());
@@ -82,8 +82,8 @@ export class PTPTextInput extends HTMLFormElement {
 		textInput.setAttribute("placeholder", "Message");
 		p.appendChild(textInput);
 		const sendButton = win.document.createElement("input");
-		sendButton.setAttribute("type", "submit")
-		sendButton.setAttribute("value", "Send")
+		sendButton.setAttribute("type", "submit");
+		sendButton.setAttribute("value", "Send");
 		p.appendChild(sendButton);
 		const msgLog = pageContext.project.getVariableFromURL(obj.stateVariableURL) as StateVariable<PTPMessage[]>;
 		p.addEventListener("submit", (e: SubmitEvent) => {
@@ -100,11 +100,9 @@ export class PTPTextInput extends HTMLFormElement {
 	public static getDomClass() {
 		return "ptp-text-input";
 	}
-
 }
 
 export class PTPChatPane extends BasicPane {
-
 	public static createUIElement(win: Window, pageContext: PageContext): PTPChatPane {
 		return super.createUIElement(win, pageContext, ptpChatTemplate) as PTPChatPane;
 	}

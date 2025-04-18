@@ -13,7 +13,17 @@ export class MinecraftTexture {
 
 		this.scan(image);
 
-		const vt = fallback.virtualTextureSystem.allocateVirtualTexture(name, image.width, image.height, "clamp-to-edge", "clamp-to-edge", "linear", "nearest", "linear", true);
+		const vt = fallback.virtualTextureSystem.allocateVirtualTexture(
+			name,
+			image.width,
+			image.height,
+			"clamp-to-edge",
+			"clamp-to-edge",
+			"linear",
+			"nearest",
+			"linear",
+			true,
+		);
 		if (vt === undefined) {
 			this.virtualTexture = fallback;
 			return;
@@ -26,8 +36,7 @@ export class MinecraftTexture {
 	private scan(image: ImageBitmap) {
 		const data = TextureUtils.getImagePixels(image);
 		for (let i = 3; i < data.length; i += 4) {
-			if (this.hasSemiTransparent && this.hasSemiTransparent)
-				return;
+			if (this.hasSemiTransparent && this.hasSemiTransparent) return;
 
 			const alpha = data[i];
 			if (alpha === 0) {

@@ -6,24 +6,23 @@ export interface Texture2D {
 	/**
 	 * The unique id of the texture.
 	 */
-	uid: string,
+	uid: string;
 	/**
 	 * The width of the texture in texels.
 	 */
-	width: number,
+	width: number;
 	/**
 	 * The height of the texture in texels.
 	 */
-	height: number,
+	height: number;
 	/**
 	 * The sampling properies of the texture.
 	 */
-	samplingDescriptor: GPUSamplerDescriptor
+	samplingDescriptor: GPUSamplerDescriptor;
 }
 
-
 export class TextureLoader {
-	allTextures: { [i: string]: Texture2D }
+	allTextures: { [i: string]: Texture2D };
 	project: Project;
 
 	constructor(project: Project) {
@@ -35,8 +34,7 @@ export class TextureLoader {
 		const bitmap = await TextureUtils.loadImageBitmap(url);
 		const vtSystem = this.project.renderer.virtualTextureSystem;
 		const virtualTexture = vtSystem.allocateVirtualTexture(url, bitmap.width, bitmap.height);
-		if (virtualTexture === undefined)
-			return undefined;
+		if (virtualTexture === undefined) return undefined;
 
 		this.allTextures[url] = virtualTexture;
 		return virtualTexture;

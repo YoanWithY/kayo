@@ -6,7 +6,7 @@ interface IndexBlock {
 	/**
 	 * Inclusiv
 	 */
-	start: number,
+	start: number;
 	/**
 	 * Inclusiv
 	 */
@@ -74,7 +74,9 @@ export class IndirectionIndexTable {
 		this.tilesPerLayer = this.size * this.size;
 
 		this.infoData = new Uint16Array(this.tilesPerLayer * IndirectionIndexTable.infoComponents);
-		this.indirectionIndexData = new Uint8Array(this.tilesPerLayer * IndirectionIndexTable.indirectionIndexComponents);
+		this.indirectionIndexData = new Uint8Array(
+			this.tilesPerLayer * IndirectionIndexTable.indirectionIndexComponents,
+		);
 
 		const indirectionIndexTableTextureDescriptor: GPUTextureDescriptor = {
 			label: "SVT indirection index table texture",
@@ -102,8 +104,7 @@ export class IndirectionIndexTable {
 	}
 
 	public allocateVirtualTextureID(): number | undefined {
-		if (this.allocatedTextures >= this.maxTextures)
-			return undefined;
+		if (this.allocatedTextures >= this.maxTextures) return undefined;
 		const firstBlock = this.indexBlocks[0];
 		const nextBlock = this.indexBlocks[1];
 		const nextFree = firstBlock.end + 1;
@@ -123,8 +124,7 @@ export class IndirectionIndexTable {
 	public freeVirtualTextureID(id: number) {
 		for (let i = 0; i < this.indexBlocks.length; i++) {
 			const indexBlock = this.indexBlocks[i];
-			if (!(id >= indexBlock.start && id <= indexBlock.end))
-				continue;
+			if (!(id >= indexBlock.start && id <= indexBlock.end)) continue;
 
 			if (indexBlock.start === indexBlock.end) {
 				this.indexBlocks.splice(i, 1);
@@ -149,26 +149,37 @@ export class IndirectionIndexTable {
 
 	public getValuesAtTile(id: number, layer: number): Uint8Array {
 		const srcOffset = (id + layer * this.tilesPerLayer) * IndirectionIndexTable.indirectionIndexComponents;
-		return this.indirectionIndexData.subarray(srcOffset, srcOffset + IndirectionIndexTable.indirectionIndexComponents);
+		return this.indirectionIndexData.subarray(
+			srcOffset,
+			srcOffset + IndirectionIndexTable.indirectionIndexComponents,
+		);
 	}
 
 	public setDataOf(vt: VirtualTexture2D, flushToGPU: boolean = false) {
 		const id = vt.virtualTextureID;
 		const y = Math.floor(id / this.size);
 		const x = id % this.size;
-		this.infoData.set([
-			vt.width,
-			vt.height,
-			vt.maxMipLevels << 8 | vt.firstAtlasedLevel,
-			0 | // @todo: table atlas layer
-			(vt.getFilteringValue() << 4) |
-			(vt.getUAddresModeValue() << 2) |
-			(vt.getVAddresModeValue())
-		], id * IndirectionIndexTable.infoComponents);
+		this.infoData.set(
+			[
+				vt.width,
+				vt.height,
+				(vt.maxMipLevels << 8) | vt.firstAtlasedLevel,
+				0 | // @todo: table atlas layer
+					(vt.getFilteringValue() << 4) |
+					(vt.getUAddresModeValue() << 2) |
+					vt.getVAddresModeValue(),
+			],
+			id * IndirectionIndexTable.infoComponents,
+		);
 
 		if (flushToGPU) {
 			const queue = this.virtualTextureSystem.gpux.gpuDevice.queue;
-			queue.writeTexture({ texture: this.imageInfoGPUTexture, origin: [x, y, 0] }, this.infoData.subarray(id * IndirectionIndexTable.infoComponents), {}, [1, 1, 1]);
+			queue.writeTexture(
+				{ texture: this.imageInfoGPUTexture, origin: [x, y, 0] },
+				this.infoData.subarray(id * IndirectionIndexTable.infoComponents),
+				{},
+				[1, 1, 1],
+			);
 		}
 	}
 }
