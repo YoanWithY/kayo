@@ -3,8 +3,6 @@ import { initUI as initUIClasses } from "./ui/ui";
 import wasmInstance from "../c/KayoPPLoader";
 import { PageContext } from "./PageContext";
 
-alert("Hi");
-
 initUIClasses();
 
 if (window.opener === null) {
