@@ -18,6 +18,9 @@ add_executable(KayoPP ${SRC_FILES})
 # Compile‑time flags
 target_compile_options(KayoPP PRIVATE
   -Wall
+  -Wextra
+  -pedantic
+  -O2
 )
 
 # Link‑time flags (moved here)

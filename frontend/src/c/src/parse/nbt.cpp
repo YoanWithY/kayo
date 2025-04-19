@@ -93,7 +93,7 @@ IntArrayTag* createIntArrayTag(const uint8_t* data, std::string name, size_t& pr
 	data += 4;
 	progress += 4 + size * 4;
 	tag->value.resize(size);
-	for (int i = 0; i < size; i++) {
+	for (uint32_t i = 0; i < size; i++) {
 		tag->value[i] = readI32AsBigEndian(data, 4);
 		data += 4;
 	}
@@ -108,7 +108,7 @@ LongArrayTag* createLongArrayTag(const uint8_t* data, std::string name, size_t& 
 	data += 4;
 	progress += 4 + size * 8;
 	tag->value.resize(size);
-	for (int i = 0; i < size; i++) {
+	for (uint32_t i = 0; i < size; i++) {
 		tag->value[i] = readI64AsBigEndian(data, 8);
 		data += 8;
 	}
@@ -293,7 +293,7 @@ void EndTag::display(std::ostream& os) const {
 	os << "End Tag";
 }
 
-void EndTag::displayContent(std::ostream& os) const {
+void EndTag::displayContent(std::ostream&) const {
 }
 
 // ByteTag class implementation
@@ -427,7 +427,7 @@ void ListTag::displayContent(std::ostream& os) const {
 		return;
 	}
 	os << "[";
-	int i = 0;
+	size_t i = 0;
 	size_t max = this->value.size() - 1;
 	for (NBTBase* nbt : this->value) {
 		nbt->displayContent(os);
@@ -453,7 +453,7 @@ void CompoundTag::displayContent(std::ostream& os) const {
 		return;
 	}
 	os << "\n{\n";
-	int i = 0;
+	size_t i = 0;
 	size_t max = this->value.size() - 1;
 	for (NBTBase* nbt : this->value) {
 		nbt->display(os);
@@ -479,7 +479,7 @@ void IntArrayTag::displayContent(std::ostream& os) const {
 		return;
 	}
 	os << "[";
-	int i = 0;
+	size_t i = 0;
 	size_t max = this->value.size() - 1;
 	for (int32_t value : this->value) {
 		os << value << ", ";
@@ -505,7 +505,7 @@ void LongArrayTag::displayContent(std::ostream& os) const {
 		return;
 	}
 	os << "[";
-	int i = 0;
+	size_t i = 0;
 	size_t max = this->value.size() - 1;
 	for (int64_t value : this->value) {
 		os << value;

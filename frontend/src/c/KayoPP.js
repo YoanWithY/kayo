@@ -2143,7 +2143,6 @@ async function createWasm() {
       });
     };
 
-
   
   
   
@@ -5547,8 +5546,6 @@ var wasmImports = {
   _embind_register_std_wstring: __embind_register_std_wstring,
   /** @export */
   _embind_register_void: __embind_register_void,
-  /** @export */
-  _emval_decref: __emval_decref,
   /** @export */
   _emval_take_value: __emval_take_value,
   /** @export */

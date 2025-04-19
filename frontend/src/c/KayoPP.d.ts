@@ -1,21 +1,11 @@
 // TypeScript bindings for emscripten-generated code.  Automatically generated at compile time.
-interface WasmModule {}
+interface WasmModule {
+}
 
-type EmbindString =
-  | ArrayBuffer
-  | Uint8Array
-  | Uint8ClampedArray
-  | Int8Array
-  | string;
+type EmbindString = ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string;
 interface EmbindModule {
   helloWorld(): void;
-  openRegion(
-    _0: EmbindString,
-    _1: number,
-    _2: number,
-    _3: number,
-    _4: EmbindString
-  ): void;
+  openRegion(_0: EmbindString, _1: number, _2: number, _3: number, _4: EmbindString): void;
   setActiveChunk(_0: EmbindString, _1: number, _2: number, _3: number): number;
   getByte(_0: EmbindString): number;
   getShort(_0: EmbindString): number;
@@ -29,16 +19,8 @@ interface EmbindModule {
   buildChunk(_0: EmbindString, _1: number, _2: number, _3: number): number;
   getPalette(_0: number): string;
   getByteArray(_0: EmbindString): any;
-  getSectionView(
-    _0: EmbindString,
-    _1: number,
-    _2: number,
-    _3: number,
-    _4: number
-  ): any;
+  getSectionView(_0: EmbindString, _1: number, _2: number, _3: number, _4: number): any;
 }
 
 export type MainModule = WasmModule & EmbindModule;
-export default function MainModuleFactory(
-  options?: unknown
-): Promise<MainModule>;
+export default function MainModuleFactory (options?: unknown): Promise<MainModule>;

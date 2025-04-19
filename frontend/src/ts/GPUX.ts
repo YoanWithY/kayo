@@ -14,6 +14,7 @@ export async function gpuInit(): Promise<string | GPUX> {
 	const adapterOptions: GPURequestAdapterOptions = {
 		powerPreference: "high-performance",
 		forceFallbackAdapter: false,
+		// featureLevel: "core",
 	};
 	const gpuAdapter = await gpu.requestAdapter(adapterOptions);
 
