@@ -1,6 +1,3 @@
-[submodule "zlib"]
-	path = zlib
-	url = git@github.com:madler/zlib.git
 [submodule "frontend/src/c/zlib"]
 	path = frontend/src/c/zlib
 	url = git@github.com:madler/zlib.git
