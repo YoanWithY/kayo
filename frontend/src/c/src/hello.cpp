@@ -1,4 +1,7 @@
 #include "numerics/fixed.hpp"
+#include "numerics/mat2.hpp"
+#include "numerics/vec2.hpp"
+#include "numerics/vec3.hpp"
 #include "parse/minecraftWorld.hpp"
 #include "parse/nbt.hpp"
 #include "parse/parse.hpp"
@@ -16,10 +19,11 @@
 void helloWorld() {
 	using namespace FixedPoint;
 	std::cout << "Hello from WASM!" << std::endl;
-	Number a = Number(1ULL << 10) + 0.25;
-	Number b = -1;
-	Number c = -a;
-	std::cout << a.toString() << ", " << b.toString() << ", " << float(abs(c)) << std::endl;
+	vec2 a = Number(3) / vec2(3);
+	mat2f m1 = 2.0f * mat2f::scaleX(2);
+	vec2 p = vec2(1);
+	vec2 r = mat2(m1) * p;
+	std::cout << a << ", " << r << std::endl;
 }
 
 std::map<std::string, MinecraftWorld*> minecraftWorlds;

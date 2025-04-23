@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <iomanip>
 #include <sstream>
 #include <string>
 
@@ -10,21 +11,24 @@
 
 namespace FixedPoint {
 
-inline constexpr __int128_t max_Q_rep = (__int128_t(1) << (FIXED_POINT_DECIMAL_BITS + FIXED_POINT_INTEGER_BITS)) - __int128_t(1);
-inline constexpr __int128_t min_Q_rep = -max_Q_rep;
+constexpr __int128_t max_Q_rep = (__int128_t(1) << (FIXED_POINT_DECIMAL_BITS + FIXED_POINT_INTEGER_BITS)) - __int128_t(1);
+constexpr __int128_t min_Q_rep = -max_Q_rep;
 
 constexpr __int128_t saturate(const __int128_t& a) {
 	return (a > max_Q_rep) ? max_Q_rep : (a < min_Q_rep ? min_Q_rep : a);
 }
+
+constexpr double pi = 3.14159265358979323846;
 
 /**
  * A Q63.32 signed fixed point number.
  * @note The implementation relies on the GCC `__int128_t`.
  */
 class Number {
-  public:
+  private:
 	__int128_t n;
 
+  public:
 	// ----- CONSTRUCTORS ----- //
 
 	constexpr Number(__int128_t n) : n{saturate(n)} {}
@@ -38,21 +42,14 @@ class Number {
 	constexpr Number(uint32_t a) : n(static_cast<__int128_t>(a) * FIXED_POINT_DECIMAL_FACTOR) {}
 	constexpr Number(uint64_t a) : n(saturate(static_cast<__int128_t>(a) * FIXED_POINT_DECIMAL_FACTOR)) {}
 
-	inline Number(float a) : n(0) {
-		int32_t i = static_cast<int>(a);
-		float f = a - static_cast<float>(i);
-		this->n = saturate(
-			(static_cast<__int128_t>(i) * FIXED_POINT_DECIMAL_FACTOR) |
-			static_cast<__int128_t>(f * float(FIXED_POINT_DECIMAL_FACTOR)));
+	constexpr Number(float a) : n((a < 0 ? -1 : 1) * saturate(
+														 (static_cast<__int128_t>(std::abs(a)) * FIXED_POINT_DECIMAL_FACTOR) |
+														 (static_cast<__int128_t>((std::abs(a) - static_cast<float>(static_cast<__int128_t>(std::abs(a)))) * float(FIXED_POINT_DECIMAL_FACTOR))))) {
 	}
 
-	inline Number(double a) {
-		int32_t i = static_cast<int>(a);
-		double f = a - static_cast<float>(i);
-		this->n = saturate(
-			(static_cast<__int128_t>(i) * FIXED_POINT_DECIMAL_FACTOR) |
-			static_cast<__int128_t>(f * double(FIXED_POINT_DECIMAL_FACTOR)));
-	}
+	constexpr Number(double a) : n((a < 0 ? -1 : 1) * saturate(
+														  (static_cast<__int128_t>(std::abs(a)) * FIXED_POINT_DECIMAL_FACTOR) |
+														  (static_cast<__int128_t>((std::abs(a) - static_cast<double>(static_cast<__int128_t>(std::abs(a)))) * double(FIXED_POINT_DECIMAL_FACTOR))))) {}
 
 	// ----- COMPARISON ----- //
 
@@ -106,8 +103,6 @@ class Number {
 		return double(this->n) / double(FIXED_POINT_DECIMAL_FACTOR);
 	}
 
-	std::string toString() const;
-
 	// ----- MATH ----- //
 
 	constexpr int32_t sign() const {
@@ -118,13 +113,22 @@ class Number {
 		return (*this) < 0 ? -1 : 1;
 	}
 
+	constexpr Number floor() const {
+		int64_t i = static_cast<int64_t>(*this);
+		return (*this < 0 && *this != i) ? i - 1 : i;
+	}
+
+	constexpr Number ceil() const {
+		int64_t i = static_cast<int64_t>(*this);
+		return (*this >= 0 && *this != i) ? i + 1 : i;
+	}
+
 	constexpr double fract() const {
-		double d = (this->n & FIXED_POINT_DECIMAL_MASK) / double(FIXED_POINT_DECIMAL_FACTOR);
-		return (this->sign2() == 1) ? d : 1.0 - d;
+		return static_cast<double>(*this - this->floor());
 	}
 
 	constexpr int64_t integer() const {
-		return static_cast<int64_t>(*this);
+		return static_cast<int64_t>(this->floor());
 	}
 
 	constexpr Number abs() const {
@@ -154,7 +158,7 @@ class Number {
 	}
 
 	constexpr Number operator-() const {
-		return *this * -1;
+		return Number(this->n * -1);
 	}
 
 	// ----- MULTIPLICATION ----- //
@@ -169,6 +173,36 @@ class Number {
 		if (other == 0)
 			return Number(max_Q_rep) * other.sign2();
 		return Number((this->n * __int128_t(FIXED_POINT_DECIMAL_FACTOR)) / other.n);
+	}
+
+	// ----- MATH ----- //
+
+	constexpr Number mod(const Number& b) const {
+		return *this - (b * (*this / b).floor());
+	}
+
+	constexpr double sin() const {
+		return std::sin(static_cast<double>(this->mod(2.0 * pi)));
+	}
+
+	constexpr double cos() const {
+		return std::cos(static_cast<double>(this->mod(2.0 * pi)));
+	}
+
+	constexpr double tan() const {
+		return std::tan(static_cast<double>(this->mod(pi)));
+	}
+
+	inline friend std::ostream& operator<<(std::ostream& os, const Number& number) {
+		std::ostringstream oss;
+		Number a = number.abs();
+		double f = a.fract();
+		oss << std::setprecision(FIXED_POINT_DECIMAL_BITS) << f;
+		std::string frac = std::floor(f) == f ? "0" : oss.str().substr(2);
+		oss = std::ostringstream();
+		oss << (number < 0 ? "-" : "") << a.integer() << "." << frac;
+		os << oss.str();
+		return os;
 	}
 };
 
@@ -192,6 +226,36 @@ constexpr int64_t integer(const Number& number) {
 
 constexpr Number abs(const Number& number) {
 	return number.abs();
+}
+
+template <class T>
+constexpr double sin(const T& number) {
+	return std::sin(number);
+}
+
+template <class T>
+constexpr double cos(const T& number) {
+	return std::cos(number);
+}
+
+template <class T>
+constexpr double tan(const T& number) {
+	return std::tan(number);
+}
+
+template <>
+constexpr double sin(const Number& number) {
+	return number.sin();
+}
+
+template <>
+constexpr double cos(const Number& number) {
+	return number.cos();
+}
+
+template <>
+constexpr double tan(const Number& number) {
+	return number.tan();
 }
 
 // ----- ADDITION ----- //
@@ -228,11 +292,11 @@ constexpr Number operator+(const uint64_t& first, const Number& second) {
 	return Number(first) + second;
 }
 
-inline Number operator+(const float& first, const Number& second) {
+constexpr Number operator+(const float& first, const Number& second) {
 	return Number(first) + second;
 }
 
-inline Number operator+(const double& first, const Number& second) {
+constexpr Number operator+(const double& first, const Number& second) {
 	return Number(first) + second;
 }
 
@@ -270,11 +334,11 @@ constexpr Number operator-(const uint64_t& first, const Number& second) {
 	return Number(first) - second;
 }
 
-inline Number operator-(const float& first, const Number& second) {
+constexpr Number operator-(const float& first, const Number& second) {
 	return Number(first) - second;
 }
 
-inline Number operator-(const double& first, const Number& second) {
+constexpr Number operator-(const double& first, const Number& second) {
 	return Number(first) - second;
 }
 
@@ -312,11 +376,11 @@ constexpr Number operator*(const uint64_t& first, const Number& second) {
 	return Number(first) * second;
 }
 
-inline Number operator*(const float& first, const Number& second) {
+constexpr Number operator*(const float& first, const Number& second) {
 	return Number(first) * second;
 }
 
-inline Number operator*(const double& first, const Number& second) {
+constexpr Number operator*(const double& first, const Number& second) {
 	return Number(first) * second;
 }
 
@@ -354,11 +418,11 @@ constexpr Number operator/(const uint64_t& first, const Number& second) {
 	return Number(first) / second;
 }
 
-inline Number operator/(const float& first, const Number& second) {
+constexpr Number operator/(const float& first, const Number& second) {
 	return Number(first) / second;
 }
 
-inline Number operator/(const double& first, const Number& second) {
+constexpr Number operator/(const double& first, const Number& second) {
 	return Number(first) / second;
 }
 
