@@ -1,9 +1,11 @@
-#include "minecraftWorld.hpp"
+#include "world.hpp"
 
 #include <cstdint>
 #include <map>
 
-std::map<std::tuple<int, int>, const uint8_t*>& MinecraftWorld::getRegionsByDimension(int8_t id) {
+namespace minecraft {
+
+RegionsRawData& World::getRegionsByDimension(int8_t id) {
 	switch (id) {
 	case 0:
 		return this->overWorldRegions;
@@ -16,7 +18,7 @@ std::map<std::tuple<int, int>, const uint8_t*>& MinecraftWorld::getRegionsByDime
 	}
 }
 
-std::map<std::tuple<uint8_t, uint8_t>, const NBT::CompoundTag*>& MinecraftWorld::getChunksByDimension(int8_t id) {
+Chunks& World::getChunksByDimension(int8_t id) {
 	switch (id) {
 	case 0:
 		return this->overWorldChunks;
@@ -29,7 +31,7 @@ std::map<std::tuple<uint8_t, uint8_t>, const NBT::CompoundTag*>& MinecraftWorld:
 	}
 }
 
-std::map<std::tuple<int, int8_t, int>, const uint16_t*>& MinecraftWorld::getSectionsByDimension(int8_t id) {
+SectionBlockIndices& World::getSectionsByDimension(int8_t id) {
 	switch (id) {
 	case 0:
 		return this->overWorldSections;
@@ -41,3 +43,4 @@ std::map<std::tuple<int, int8_t, int>, const uint16_t*>& MinecraftWorld::getSect
 		return this->overWorldSections;
 	}
 }
+} // namespace minecraft

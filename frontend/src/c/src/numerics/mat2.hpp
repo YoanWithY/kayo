@@ -1,10 +1,14 @@
 #pragma once
+#include "fixed.hpp"
 #include "mat2_forward.hpp"
 #include "vec2.hpp"
-#include <cmath>
 #include <string>
 
 namespace FixedPoint {
+
+/**
+ * An effectively POD class that stores a 2x2 matrix in column major layout.
+ */
 template <class T>
 class Mat2 {
   public:
@@ -16,7 +20,14 @@ class Mat2 {
 	constexpr Mat2(const Mat2<K>& mat) : v0(Vec2<K>(mat.v0)), v1(Vec2<K>(mat.v1)){};
 
 	constexpr const Vec2<T>& operator[](uint32_t n) const {
-		return reinterpret_cast<const Vec2<T>*>(this)[n];
+		switch (n) {
+		case 0:
+			return this->v0;
+		case 1:
+			return this->v1;
+		default:
+			throw std::range_error("Mat2 index out of range [0, 1]!");
+		}
 	}
 
 	constexpr Vec2<T> row(uint32_t n) const {
@@ -40,14 +51,6 @@ class Mat2 {
 	static constexpr Mat2<T> rotationZ(const T& rad) {
 		Vec2<T> x = Vec2<T>(cos(rad), sin(rad));
 		return Mat2<T>(x, x.positveNormal());
-	}
-
-	static constexpr Mat2<T> scaleX(const T& x) {
-		return Mat2<T>(Vec2<T>(x, 0), Vec2<T>(0, 1));
-	}
-
-	static constexpr Mat2<T> scaleY(const T& y) {
-		return Mat2<T>(Vec2<T>(1, 0), Vec2<T>(0, y));
 	}
 
 	static constexpr Mat2<T> scaleXY(const T& x, const T& y) {

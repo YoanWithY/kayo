@@ -4,7 +4,7 @@ interface WasmModule {
 
 type EmbindString = ArrayBuffer|Uint8Array|Uint8ClampedArray|Int8Array|string;
 interface EmbindModule {
-  helloWorld(): void;
+  wasmHello(): void;
   openRegion(_0: EmbindString, _1: number, _2: number, _3: number, _4: EmbindString): void;
   setActiveChunk(_0: EmbindString, _1: number, _2: number, _3: number): number;
   getByte(_0: EmbindString): number;

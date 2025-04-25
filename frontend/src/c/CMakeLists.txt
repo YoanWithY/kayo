@@ -20,7 +20,7 @@ target_compile_options(KayoPP PRIVATE
   -Wall
   -Wextra
   -pedantic
-  -O2
+  -O0
 )
 
 # Link‑time flags (moved here)

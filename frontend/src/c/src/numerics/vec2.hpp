@@ -16,7 +16,7 @@ class Vec2 {
 	constexpr Vec2(const T& a) : x(a), y(a) {}
 	constexpr Vec2(const T& x, const T& y) : x(x), y(y) {}
 	template <class K>
-	constexpr Vec2(const Vec2<K>& v) : x(K(v.x)), y(K(v.y)) {}
+	constexpr Vec2(const Vec2<K>& v) : x(T(v.x)), y(T(v.y)) {}
 
 	constexpr Vec2<T> operator+(const Vec2<T>& other) const {
 		return Vec2<T>(this->x + other.x, this->y + other.y);
@@ -51,7 +51,14 @@ class Vec2 {
 	}
 
 	constexpr T operator[](uint32_t n) const {
-		return reinterpret_cast<const T*>(this)[n];
+		switch (n) {
+		case 0:
+			return this->x;
+		case 1:
+			return this->y;
+		default:
+			throw std::range_error("Vec2 index out of range [0, 1]!");
+		}
 	}
 
 	constexpr T dot(const Vec2<T>& other) const {

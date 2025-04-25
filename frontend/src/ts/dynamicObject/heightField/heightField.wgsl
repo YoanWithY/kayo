@@ -103,15 +103,23 @@ struct Sun {
 fn getShadow(ws_pos: vec3f) -> f32 {
 	var shadowNDC = (sun.matrix * vec4f(ws_pos, 1.0));
 	var shadowUV =  shadowNDC.xy * vec2f(0.5, -0.5) + 0.5;
-	var shadow = textureSampleCompare(shadowMap, shadowSampler, shadowUV, shadowNDC.z - 0.002);
+	var shadow = 0.0;
+	for(var y = -4; y<=4; y++) {
+		for(var x = -4; x<=4; x++) {
+			shadow += textureSampleCompare(shadowMap, shadowSampler, shadowUV + vec2f(f32(x), f32(y)) / 4096, shadowNDC.z - 0.003);
+		}
+	}
 	if(any(shadowUV < vec2f(0)) || any(shadowUV > vec2f(1))) {
 		return 1;
 	}
-	return shadow;
+	return shadow / 81;
 }
 
 #include<virtualTexture>
 
+fn toneMap(linear: vec3f) -> vec3f {
+	return linear / (linear + 1);
+}
 
 @fragment
 fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOut) -> R3FragmentOutput {
@@ -127,7 +135,7 @@ fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOu
 	// let albedo = sRGB_EOTF(virtualTextureSample(0, uv).rgb);
 	// let albedo = sRGB_EOTF(textureSample(svt_physical_texture, svt_sampler_ansiotropic, uv * 0.005, 0).rgb);
 	let albedo = vec3f(1);
-	let outColor = clamp(vec4f(createOutputFragment(albedo * light), 1), vec4f(0), vec4f(1));
+	let outColor = clamp(vec4f(createOutputFragment(toneMap(albedo * light)), 1), vec4f(0), vec4f(1));
 	return R3FragmentOutput(outColor, fragmentUniform.id);
 }
 

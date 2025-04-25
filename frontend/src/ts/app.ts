@@ -12,7 +12,7 @@ if (window.opener === null) {
 		alert(`Could not initialize WebGPU with reason: ${gpux}`);
 		throw new Error("Could not initialize WebGPU!", { cause: gpux });
 	}
-	wasmInstance.helloWorld();
+	wasmInstance.wasmHello();
 	(window as any).pageContext = new PageContext(gpux);
 } else {
 	window.name = "Kayo Sub";

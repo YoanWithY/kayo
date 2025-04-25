@@ -1,5 +1,5 @@
 #include "nbt.hpp"
-#include "../parse/parse.hpp"
+#include "parse.hpp"
 #include <cstdlib>
 #include <iostream>
 #include <string>

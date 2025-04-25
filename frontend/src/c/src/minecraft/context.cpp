@@ -1,32 +1,22 @@
-#include "numerics/fixed.hpp"
-#include "numerics/mat2.hpp"
-#include "numerics/vec2.hpp"
-#include "numerics/vec3.hpp"
-#include "parse/minecraftWorld.hpp"
-#include "parse/nbt.hpp"
-#include "parse/parse.hpp"
-#include "zlibUtil/zlibUtil.hpp"
+#include "context.hpp"
+#include "../numerics/fixedMath.hpp"
+#include "../utils/zlibUtil.hpp"
+#include "nbt.hpp"
+#include "parse.hpp"
+#include "world.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
-#include <emscripten/bind.h>
 #include <iostream>
 #include <map>
 #include <tuple>
 #include <vector>
 
-void helloWorld() {
-	using namespace FixedPoint;
-	std::cout << "Hello from WASM!" << std::endl;
-	vec2 a = Number(3) / vec2(3);
-	mat2f m1 = 2.0f * mat2f::scaleX(2);
-	vec2 p = vec2(1);
-	vec2 r = mat2(m1) * p;
-	std::cout << a << ", " << r << std::endl;
-}
+namespace minecraft {
 
-std::map<std::string, MinecraftWorld*> minecraftWorlds;
+std::map<std::string, World*> minecraftWorlds;
+const NBT::CompoundTag* activeChunk = nullptr;
 
 struct ChunkDescription {
 	uint32_t offset;
@@ -119,7 +109,6 @@ int buildChunk(std::string world, int dimension, int chunkX, int chunkZ) {
 	return 0;
 }
 
-const NBT::CompoundTag* activeChunk = nullptr;
 int setActiveChunk(std::string world, int dimension, int chunkX, int chunkZ) {
 	auto minecraftWorld = minecraftWorlds[world];
 	if (!minecraftWorld)
@@ -216,29 +205,11 @@ void openRegion(std::string world, int dimension, int x, int y, std::string file
 	std::memcpy(data, file.data(), file.size());
 	auto minecraftWorld = minecraftWorlds[world];
 	if (!minecraftWorld) {
-		minecraftWorld = new MinecraftWorld();
+		minecraftWorld = new World();
 		minecraftWorlds[world] = minecraftWorld;
 	}
 	auto& regionMap = minecraftWorld->getRegionsByDimension(dimension);
 	regionMap[std::tuple<int, int>(x, y)] = data;
 }
 
-using namespace emscripten;
-EMSCRIPTEN_BINDINGS(my_module) {
-	function("helloWorld", &helloWorld);
-	function("openRegion", &openRegion);
-	function("setActiveChunk", &setActiveChunk);
-	function("getByte", &getByte);
-	function("getShort", &getShort);
-	function("getInt", &getInt);
-	function("getLong", &getLong);
-	function("getFloat", &getFloat);
-	function("getDouble", &getDouble);
-	function("getByteArray", &getByteArray);
-	function("getString", &getString);
-	function("getList", &getList);
-	function("getCompound", &getCompound);
-	function("buildChunk", &buildChunk);
-	function("getSectionView", &getSectionView);
-	function("getPalette", &getPalette);
-}
+} // namespace minecraft
