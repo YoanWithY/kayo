@@ -5,9 +5,7 @@
 
 void wasmHello() {
 	std::cout << "Hello from Kayo C++ WASM." << std::endl;
-	using namespace FixedPoint;
-	mat2f m(3.0f);
-	std::cout << reinterpret_cast<float*>(&m)[3] << std::endl;
+	throw std::runtime_error("Test error.");
 }
 
 using namespace emscripten;

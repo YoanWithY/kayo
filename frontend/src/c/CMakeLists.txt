@@ -21,6 +21,7 @@ target_compile_options(KayoPP PRIVATE
   -Wextra
   -pedantic
   -O0
+  -gsource-map
 )
 
 # Link‑time flags (moved here)
@@ -34,6 +35,8 @@ target_link_options(KayoPP PRIVATE
   -sALLOW_MEMORY_GROWTH
   --emit-tsd KayoPP.d.ts
   -gsource-map
+  --emit-symbol-map
+  -g3
 )
 
 # Link static zlib and embind
