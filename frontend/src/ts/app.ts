@@ -1,7 +1,7 @@
 import { gpuInit as initGPU } from "./GPUX";
 import { initUI as initUIClasses } from "./ui/ui";
-import wasmInstance from "../c/KayoPPLoader";
 import { PageContext } from "./PageContext";
+import wasmx from "../c/KayoPPLoader";
 
 initUIClasses();
 
@@ -12,7 +12,9 @@ if (window.opener === null) {
 		alert(`Could not initialize WebGPU with reason: ${gpux}`);
 		throw new Error("Could not initialize WebGPU!", { cause: gpux });
 	}
-	wasmInstance.wasmHello();
+
+	wasmx;
+
 	(window as any).pageContext = new PageContext(gpux);
 } else {
 	window.name = "Kayo Sub";

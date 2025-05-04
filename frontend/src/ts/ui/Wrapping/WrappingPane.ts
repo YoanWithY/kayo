@@ -11,6 +11,7 @@ import { MinecraftSection } from "../../minecraft/MinecraftSection";
 import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
 import TextureUtils from "../../Textures/TextureUtils";
 import { PageContext } from "../../PageContext";
+import wasmx from "../../../c/KayoPPLoader";
 
 export class WrappingPane extends HTMLElement {
 	project!: Project;
@@ -92,21 +93,22 @@ export class WrappingPane extends HTMLElement {
 					if (file.name.endsWith(".mca")) {
 						console.log(".msc");
 						try {
-							wasmInstance.openRegion("World", 0, 0, 0, content);
+							const world = wasmx.minecraftModule.createWorld("My World");
+							const dimension = world.createDimension("Overworld", 0);
+							dimension.openRegion(0, 0, content);
+							console.log(dimension);
 							const mWorld = new MinecraftWorld("World", res, 8);
 							project.scene.minecraftWorld = mWorld;
 							for (let x = 0; x < 8; x++) {
 								for (let z = 0; z < 8; z++) {
-									const status = wasmInstance.buildChunk("World", 0, x, z);
+									const status = dimension.buildChunk(x, z);
 									if (status !== 0) continue;
 
-									wasmInstance.setActiveChunk("World", 0, x, z);
 									for (let y = -4; y < 15; y++) {
-										const palette = JSON.parse(wasmInstance.getPalette(y)) as PaletteEntry[];
+										const palette = JSON.parse(dimension.getPalette(x, y, z)) as PaletteEntry[];
 										let section: MinecraftSection;
 										let sectionDataView: any = undefined;
-										if (palette.length > 1)
-											sectionDataView = wasmInstance.getSectionView("World", 0, x, y, z);
+										if (palette.length > 1) sectionDataView = dimension.getSectionView(x, y, z);
 										else if (palette.length === 1 && palette[0].Name == "minecraft:air") continue;
 										section = new MinecraftSection(
 											project,

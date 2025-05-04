@@ -12,9 +12,9 @@ export async function gpuInit(): Promise<string | GPUX> {
 	if (!gpu) return "WebGPU is not supported!";
 
 	const adapterOptions: GPURequestAdapterOptions = {
-		powerPreference: "high-performance",
+		// powerPreference: "high-performance",
 		forceFallbackAdapter: false,
-		featureLevel: "core",
+		// featureLevel: "core",
 	};
 	const gpuAdapter = await gpu.requestAdapter(adapterOptions);
 

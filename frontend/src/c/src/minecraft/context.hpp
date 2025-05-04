@@ -1,20 +1,50 @@
 #pragma once
+#include "../kayoCore/core/kayoCore.hpp"
+#include "nbt.hpp"
 #include <emscripten/bind.h>
 
+namespace kayo {
 namespace minecraft {
-int setActiveChunk(std::string world, int dimension, int chunkX, int chunkZ);
-int buildChunk(std::string world, int dimension, int chunkX, int chunkZ);
-std::string getPalette(int8_t y);
-emscripten::val getSectionView(std::string world, int dimension, int sectionX, int8_t sectionY, int sectionZ);
-int8_t getByte(std::string name);
-int16_t getShort(std::string name);
-int32_t getInt(std::string name);
-int64_t getLong(std::string name);
-float getFloat(std::string name);
-double getDouble(std::string name);
-emscripten::val getByteArray(std::string name);
-std::string getString(std::string name);
-std::string getList(std::string name);
-std::string getCompound(std::string name);
-void openRegion(std::string world, int dimension, int x, int y, std::string file);
+
+typedef std::map<std::tuple<int, int>, const uint8_t*> RegionsRawData;
+typedef std::map<std::tuple<uint8_t, uint8_t>, const NBT::CompoundTag*> Chunks;
+typedef std::map<std::tuple<int, int8_t, int>, const uint16_t*> SectionBlockIndices;
+
+class Dimension {
+  public:
+	const std::string name;
+	const int32_t index;
+	Dimension(std::string name, int32_t index);
+	RegionsRawData regionsRawData;
+	Chunks nbtChunks;
+	SectionBlockIndices sectionBlockIndices;
+	const NBT::CompoundTag* getChunk(int32_t chunk_x, int32_t chunkZ);
+	void openRegion(int32_t region_x, int32_t region_z, std::string file);
+	int buildChunk(int32_t chunk_x, int32_t chunk_z);
+	std::string getPalette(int32_t chunk_x, int8_t section_y, int32_t chunk_z);
+	emscripten::val getSectionView(int32_t chunk_x, int8_t section_y, int8_t chunk_z);
+};
+
+class World {
+  private:
+	std::map<int32_t, Dimension> dimensions;
+
+  public:
+	std::string name;
+	World(std::string name);
+	Dimension& createDimension(std::string name, int32_t index);
+};
+
+class WASMMinecraftModule : kayo::WASMModule {
+	std::map<std::string, World> worlds;
+
+  public:
+	WASMMinecraftModule(WASMInstance& instance);
+	World& createWorld(std::string name);
+	int32_t pre_registration() override;
+	int32_t post_registration() override;
+	~WASMMinecraftModule() override;
+};
+
 } // namespace minecraft
+} // namespace kayo

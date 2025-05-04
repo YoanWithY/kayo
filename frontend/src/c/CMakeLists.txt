@@ -1,22 +1,22 @@
 cmake_minimum_required(VERSION 3.13)
 project(KayoWASM LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXECUTABLE_SUFFIX ".js")
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Gather sources
-file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE KAYO_CORE_SRC_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
 # Create executable
-add_executable(KayoPP ${SRC_FILES})
+add_executable(KayoCorePP ${KAYO_CORE_SRC_FILES})
 
 # Compile‑time flags
-target_compile_options(KayoPP PRIVATE
+target_compile_options(KayoCorePP PRIVATE
   -Wall
   -Wextra
   -pedantic
@@ -25,7 +25,7 @@ target_compile_options(KayoPP PRIVATE
 )
 
 # Link‑time flags (moved here)
-target_link_options(KayoPP PRIVATE
+target_link_options(KayoCorePP PRIVATE
   -sWASM_BIGINT
   --no-entry
   -sNO_DISABLE_EXCEPTION_CATCHING
@@ -33,14 +33,13 @@ target_link_options(KayoPP PRIVATE
   -sEXPORT_ES6
   -sENVIRONMENT=web
   -sALLOW_MEMORY_GROWTH
-  --emit-tsd KayoPP.d.ts
+  --emit-tsd KayoCorePP.d.ts
+  -O0
   -gsource-map
-  --emit-symbol-map
-  -g3
 )
 
 # Link static zlib and embind
-target_link_libraries(KayoPP PRIVATE
-  ${CMAKE_SOURCE_DIR}/src/libz.a
+target_link_libraries(KayoCorePP PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/libz.a
   embind
 )
