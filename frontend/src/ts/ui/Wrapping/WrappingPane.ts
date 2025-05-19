@@ -4,7 +4,6 @@ import fullScreenOnIcon from "../../../svg/fullscreenOn.svg?raw";
 import fullScreenOffIcon from "../../../svg/fullscreenOff.svg?raw";
 import { IconedToggleButton } from "../components/IconedToggleButton";
 import { Project } from "../../project/Project";
-import wasmInstance from "../../../c/KayoPPLoader";
 import { unzip } from "unzipit";
 import { ResourcePack } from "../../minecraft/ResourcePack";
 import { MinecraftSection } from "../../minecraft/MinecraftSection";
@@ -93,10 +92,9 @@ export class WrappingPane extends HTMLElement {
 					if (file.name.endsWith(".mca")) {
 						console.log(".msc");
 						try {
-							const world = wasmx.minecraftModule.createWorld("My World");
-							const dimension = world.createDimension("Overworld", 0);
+							const world = wasmx.minecraftModule.createWorldData("My World");
+							const dimension = world.createDimensionData("Overworld", 0);
 							dimension.openRegion(0, 0, content);
-							console.log(dimension);
 							const mWorld = new MinecraftWorld("World", res, 8);
 							project.scene.minecraftWorld = mWorld;
 							for (let x = 0; x < 8; x++) {

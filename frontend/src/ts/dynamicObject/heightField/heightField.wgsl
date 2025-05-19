@@ -117,8 +117,15 @@ fn getShadow(ws_pos: vec3f) -> f32 {
 
 #include<virtualTexture>
 
+fn toneMapVal(linear: f32) -> f32 {
+	if (linear <= 1.0) {
+		return 2 * linear / (linear + 1.0);
+	}
+	return linear / (linear + 1.0) + 0.5;
+}
+
 fn toneMap(linear: vec3f) -> vec3f {
-	return linear / (linear + 1);
+	return vec3f(toneMapVal(linear.r), toneMapVal(linear.g), toneMapVal(linear.b));
 }
 
 @fragment
@@ -134,8 +141,8 @@ fn fragment_main(@builtin(front_facing) front_facing: bool, vertexData: VertexOu
 
 	// let albedo = sRGB_EOTF(virtualTextureSample(0, uv).rgb);
 	// let albedo = sRGB_EOTF(textureSample(svt_physical_texture, svt_sampler_ansiotropic, uv * 0.005, 0).rgb);
-	let albedo = vec3f(1);
-	let outColor = clamp(vec4f(createOutputFragment(toneMap(albedo * light)), 1), vec4f(0), vec4f(1));
+	let albedo = vec3f(3);
+	let outColor = vec4f(createOutputFragment(toneMap(albedo * light)), 1);
 	return R3FragmentOutput(outColor, fragmentUniform.id);
 }
 

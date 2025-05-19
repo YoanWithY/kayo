@@ -1,26 +1,28 @@
-import { defineConfig } from 'vite';
-import svgLoader from 'vite-svg-loader';
-import fs from 'fs';
-import path from 'path';
+import { defineConfig } from "vite";
+import svgLoader from "vite-svg-loader";
+import fs from "fs";
+import path from "path";
 
 export default defineConfig(({ command }) => {
-	let obj = {
-		plugins: [
-			svgLoader(),
-		],
-		build: {
-			target: 'ES2023'
-		},
-		base: '/kayo/'
-	}
+	const common = {
+		plugins: [svgLoader()],
+		build: { target: "ES2023" },
+		base: "/kayo/",
+	};
+
 	if (command === "serve") {
-		obj["server"] = {
+		common["server"] = {
 			https: {
-				key: fs.readFileSync(path.resolve(__dirname, 'private.key')),
-				cert: fs.readFileSync(path.resolve(__dirname, 'certificate.crt')),
+				key: fs.readFileSync(path.resolve(__dirname, "private.key")),
+				cert: fs.readFileSync(path.resolve(__dirname, "certificate.crt")),
 			},
 			host: true,
-		}
+			headers: {
+				"Cross-Origin-Opener-Policy": "same-origin",
+				"Cross-Origin-Embedder-Policy": "require-corp",
+			},
+		};
 	}
-	return obj;
+
+	return common;
 });

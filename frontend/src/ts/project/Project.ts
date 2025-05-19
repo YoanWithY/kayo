@@ -48,7 +48,7 @@ export class Project {
 			[1, 1],
 			[0, 1],
 		];
-		for (let i = 0; i < 0; i++) {
+		for (let i = 0; i < 8; i++) {
 			const scale = Math.pow(2, i);
 			for (const a of arr) {
 				const h = new HeightFieldR3(

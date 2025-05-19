@@ -19,7 +19,7 @@ class R3Manager {
 
   public:
 	int64_t alloc();
-	void set(uint64_t id, const mat4f& transformation, const vec4f& boundingSphere);
-	void free(uint64_t id);
+	void set(int32_t id, const mat4f& transformation, const vec4f& boundingSphere);
+	void free(int32_t id);
 	emscripten::val getTransformationsView() const;
 };

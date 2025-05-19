@@ -32,15 +32,15 @@ int64_t R3Manager::alloc() {
 	return i;
 }
 
-void R3Manager::set(uint64_t id, const mat4f& transformation, const vec4f& boundingSphere) {
-	this->transformations[id] = transformation;
-	this->boundingSpheres[id] = boundingSphere;
+void R3Manager::set(int32_t id, const mat4f& transformation, const vec4f& boundingSphere) {
+	this->transformations[size_t(id)] = transformation;
+	this->boundingSpheres[size_t(id)] = boundingSphere;
 }
 
-void R3Manager::free(uint64_t id) {
-	for (uint64_t i = 0; i < this->indexBlocks.size(); i++) {
-		IndexBlock& indexBlock = this->indexBlocks[i];
-		if (!(id >= uint64_t(indexBlock.start) && id <= uint64_t(indexBlock.end)))
+void R3Manager::free(int32_t id) {
+	for (int32_t i = 0; i < int32_t(this->indexBlocks.size()); i++) {
+		IndexBlock& indexBlock = this->indexBlocks[size_t(i)];
+		if (!(id >= indexBlock.start && id <= indexBlock.end))
 			continue;
 
 		if (indexBlock.start == indexBlock.end) {
@@ -48,17 +48,17 @@ void R3Manager::free(uint64_t id) {
 			return;
 		}
 
-		if (id == uint64_t(indexBlock.start)) {
+		if (id == indexBlock.start) {
 			indexBlock.start++;
 			return;
 		}
 
-		if (id == uint64_t(indexBlock.end)) {
+		if (id == indexBlock.end) {
 			indexBlock.end--;
 			return;
 		}
 
-		this->indexBlocks.insert(this->indexBlocks.begin() + i, IndexBlock{int64_t(id + 1), indexBlock.end});
+		this->indexBlocks.insert(this->indexBlocks.begin() + i, IndexBlock{id + 1, indexBlock.end});
 		indexBlock.end = id - 1;
 		return;
 	}

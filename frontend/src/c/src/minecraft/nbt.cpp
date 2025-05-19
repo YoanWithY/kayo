@@ -11,19 +11,19 @@ ByteTag*
 createByteTag(const uint8_t* data, std::string name, size_t& progress) {
 	progress = 0;
 	progress += 1;
-	return new ByteTag(name, data[0]);
+	return new ByteTag(name, reinterpret_cast<const int8_t*>(data)[0]);
 }
 
 ShortTag* createShortTag(const uint8_t* data, std::string name, size_t& progress) {
 	progress = 0;
 	progress += 2;
-	return new ShortTag(name, readU16AsBigEndian(data, 2));
+	return new ShortTag(name, readI16AsBigEndian(data, 2));
 }
 
 IntTag* createIntTag(const uint8_t* data, std::string name, size_t& progress) {
 	progress = 0;
 	progress += 4;
-	return new IntTag(name, readU32AsBigEndian(data, 4));
+	return new IntTag(name, readI32AsBigEndian(data, 4));
 }
 
 LongTag* createLongTag(const uint8_t* data, std::string name, size_t& progress) {
@@ -188,7 +188,7 @@ NBTBase* NBT::parseNamedNBT(const uint8_t* data, size_t& progress) {
 	data++;
 	progress++;
 
-	uint16_t nameLength = readU32AsBigEndian(data, 2);
+	uint16_t nameLength = readU16AsBigEndian(data, 2);
 	data += 2;
 	progress += 2;
 

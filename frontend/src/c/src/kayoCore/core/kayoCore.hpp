@@ -1,4 +1,6 @@
 #pragma once
+#include "../r3/R3Manager.hpp"
+#include "webgpu/webgpu.h"
 #include <cstdint>
 #include <iostream>
 #include <map>
@@ -22,24 +24,13 @@ class WASMModule {
 };
 
 class WASMInstance {
+	R3Manager r3manager;
 	std::map<std::string, WASMModule*> modules;
 
   public:
-	inline WASMInstance() {
-		std::cout << "Hello from the Kayo C++ WASM instance." << std::endl;
-	};
-	inline int32_t registerModule(WASMModule& module) {
-		if (this->modules.contains(module.name))
-			return 1;
-
-		module.pre_registration();
-		this->modules.insert({module.name, &module});
-		module.post_registration();
-		return 0;
-	}
-	inline const std::map<std::string, WASMModule*>& getModules() const {
-		return this->modules;
-	}
+	WASMInstance();
+	int32_t registerModule(WASMModule& module);
+	const std::map<std::string, WASMModule*>& getModules() const;
 };
 
 } // namespace kayo

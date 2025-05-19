@@ -20,8 +20,17 @@ target_compile_options(KayoCorePP PRIVATE
   -Wall
   -Wextra
   -pedantic
+  -Wconversion
+  -Wsign-conversion
+  -Wshadow
+  -Wuninitialized
+  -Wunreachable-code
+  -Wnull-dereference
+  -Wold-style-cast
+  -Woverloaded-virtual
   -O0
   -gsource-map
+  -sWASM_WORKERS  
 )
 
 # Link‑time flags (moved here)
@@ -30,12 +39,14 @@ target_link_options(KayoCorePP PRIVATE
   --no-entry
   -sNO_DISABLE_EXCEPTION_CATCHING
   -sMODULARIZE
-  -sEXPORT_ES6
-  -sENVIRONMENT=web
+  -sEXPORT_NAME="KayoWASM"
+  -sENVIRONMENT=web,worker
   -sALLOW_MEMORY_GROWTH
+  -sWASM_WORKERS  
   --emit-tsd KayoCorePP.d.ts
   -O0
   -gsource-map
+  --js-library ${CMAKE_CURRENT_SOURCE_DIR}/src/libKayo.js
 )
 
 # Link static zlib and embind

@@ -13,6 +13,8 @@ uint16_t readU16AsBigEndian(const uint8_t* data, uint8_t num);
 
 uint32_t readU32AsBigEndian(const uint8_t* data, uint8_t num);
 
+int16_t readI16AsBigEndian(const uint8_t* data, uint8_t num);
+
 int32_t readI32AsBigEndian(const uint8_t* data, uint8_t num);
 
 int64_t readI64AsBigEndian(const uint8_t* data, uint8_t num);

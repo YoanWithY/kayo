@@ -51,6 +51,24 @@ class Number {
 														  (static_cast<__int128_t>(std::abs(a)) * FIXED_POINT_DECIMAL_FACTOR) |
 														  (static_cast<__int128_t>((std::abs(a) - static_cast<double>(static_cast<__int128_t>(std::abs(a)))) * double(FIXED_POINT_DECIMAL_FACTOR))))) {}
 
+	/**
+	 * Reinterprets the bytes of the pointer to as Number.
+	 */
+	Number(const void* ptr, size_t size);
+
+	/**
+	 * Must be of format `-?d+\.d+`
+	 */
+	Number(const std::string& value);
+
+	static std::string fromDouble(double d);
+	static std::string fromString(std::string d);
+	static double toDouble(std::string d);
+	static std::string toString(std::string d);
+	friend std::ostream& operator<<(std::ostream& os, const Number& number);
+	std::string toString() const;
+	std::string observeValue() const;
+
 	// ----- COMPARISON ----- //
 
 	constexpr bool operator==(const Number& other) const {
@@ -191,18 +209,6 @@ class Number {
 
 	constexpr double tan() const {
 		return std::tan(static_cast<double>(this->mod(pi)));
-	}
-
-	inline friend std::ostream& operator<<(std::ostream& os, const Number& number) {
-		std::ostringstream oss;
-		Number a = number.abs();
-		double f = a.fract();
-		oss << std::setprecision(FIXED_POINT_DECIMAL_BITS) << f;
-		std::string frac = std::floor(f) == f ? "0" : oss.str().substr(2);
-		oss = std::ostringstream();
-		oss << (number < 0 ? "-" : "") << a.integer() << "." << frac;
-		os << oss.str();
-		return os;
 	}
 };
 

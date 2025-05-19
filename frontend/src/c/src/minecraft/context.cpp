@@ -38,7 +38,7 @@ static void buildChunkSections(std::map<std::tuple<int, int8_t, int>, const uint
 		if (!block_states)
 			continue;
 		NBT::ListTag* palette = block_states->getTag<NBT::ListTag>("palette");
-		int paletteSize = palette->value.size();
+		size_t paletteSize = palette->value.size();
 		if (paletteSize <= 1)
 			continue;
 
@@ -49,7 +49,7 @@ static void buildChunkSections(std::map<std::tuple<int, int8_t, int>, const uint
 		NBT::LongArrayTag* data = block_states->getTag<NBT::LongArrayTag>("data");
 
 		uint16_t* sectionIndices = new uint16_t[4096];
-		int longIndex = 0;
+		size_t longIndex = 0;
 		uint8_t indexInLong = 0;
 		int64_t currentLong = data->value[longIndex];
 		for (int i = 0; i < 4096; i++) {
@@ -79,7 +79,7 @@ static NBT::CompoundTag* readChunk(const Bytef* data, ChunkDescription chunkDesc
 	return t;
 }
 
-int Dimension::buildChunk(int chunk_x, int chunk_z) {
+int DimensionData::buildChunk(int chunk_x, int chunk_z) {
 	int region_x = chunk_x >> 5;
 	int region_z = chunk_z >> 5;
 	const uint8_t* region;
@@ -91,8 +91,8 @@ int Dimension::buildChunk(int chunk_x, int chunk_z) {
 		return -1;
 	}
 
-	int inner_chunk_x = modulus(chunk_x, 32);
-	int inner_chunk_z = modulus(chunk_z, 32);
+	uint8_t inner_chunk_x = uint8_t(modulus(chunk_x, 32));
+	uint8_t inner_chunk_z = uint8_t(modulus(chunk_z, 32));
 	NBT::CompoundTag* chunk = readChunk(region, getChunkDescription(region, inner_chunk_x, inner_chunk_z));
 	if (!chunk) {
 		std::cerr << "Read chunk is NULL." << std::endl;
@@ -104,7 +104,7 @@ int Dimension::buildChunk(int chunk_x, int chunk_z) {
 	return 0;
 }
 
-const NBT::CompoundTag* Dimension::getChunk(int32_t chunk_x, int32_t chunk_z) {
+const NBT::CompoundTag* DimensionData::getChunk(int32_t chunk_x, int32_t chunk_z) {
 	try {
 		return this->nbtChunks.at(std::make_tuple(chunk_x, chunk_z));
 	} catch (const std::out_of_range& e) {
@@ -112,7 +112,7 @@ const NBT::CompoundTag* Dimension::getChunk(int32_t chunk_x, int32_t chunk_z) {
 	}
 }
 
-std::string Dimension::getPalette(int32_t chunk_x, int8_t y, int32_t chunk_z) {
+std::string DimensionData::getPalette(int32_t chunk_x, int8_t y, int32_t chunk_z) {
 	auto chunk = this->nbtChunks[std::make_tuple(chunk_x, chunk_z)];
 	auto sections = chunk->getTag<NBT::ListTag>("sections");
 	for (auto sectionBase : sections->value) {
@@ -127,7 +127,7 @@ std::string Dimension::getPalette(int32_t chunk_x, int8_t y, int32_t chunk_z) {
 	return "";
 }
 
-emscripten::val Dimension::getSectionView(int32_t chunk_x, int8_t section_y, int8_t chunk_z) {
+emscripten::val DimensionData::getSectionView(int32_t chunk_x, int8_t section_y, int8_t chunk_z) {
 	const uint16_t* section;
 	try {
 		section = this->sectionBlockIndices.at(std::make_tuple(chunk_x, section_y, chunk_z));
@@ -140,24 +140,19 @@ emscripten::val Dimension::getSectionView(int32_t chunk_x, int8_t section_y, int
 	return emscripten::val(emscripten::typed_memory_view(4096 * 2, section));
 }
 
-void Dimension::openRegion(int32_t region_x, int32_t region_z, std::string file) {
+void DimensionData::openRegion(int32_t region_x, int32_t region_z, std::string file) {
 	uint8_t* data = new Bytef[file.size()];
 	std::memcpy(data, file.data(), file.size());
 	this->regionsRawData[std::tuple<int, int>(region_x, region_z)] = data;
 }
 
-Dimension::Dimension(std::string name, int32_t index) : name(name), index(index) {}
+DimensionData::DimensionData(std::string name, int32_t index) : name(name), index(index) {}
 
-World::World(std::string name) : name(name) {}
+WorldData::WorldData(std::string name) : name(name) {}
 
-Dimension& World::createDimension(std::string name, int32_t index) {
-	this->dimensions.emplace(std::make_pair(index, Dimension(name, index)));
+DimensionData& WorldData::createDimensionData(std::string dimension_name, int32_t index) {
+	this->dimensions.emplace(std::make_pair(index, DimensionData(dimension_name, index)));
 	return this->dimensions.at(index);
-}
-
-World& kayo::minecraft::WASMMinecraftModule::createWorld(std::string name) {
-	this->worlds.emplace(std::make_pair(name, World(name)));
-	return this->worlds.at(name);
 }
 
 WASMMinecraftModule::WASMMinecraftModule(WASMInstance& instance) : kayo::WASMModule(instance) {}
@@ -170,6 +165,12 @@ int32_t WASMMinecraftModule::post_registration() {
 }
 
 WASMMinecraftModule::~WASMMinecraftModule() {}
+
+WorldData& kayo::minecraft::WASMMinecraftModule::createWorldData(std::string name) {
+	this->worlds.emplace(std::make_pair(name, WorldData(name)));
+	return this->worlds.at(name);
+}
+
 } // namespace minecraft
 } // namespace kayo
 
@@ -177,12 +178,12 @@ using namespace emscripten;
 EMSCRIPTEN_BINDINGS(KayoWasmMinecraft) {
 	class_<kayo::minecraft::WASMMinecraftModule>("KayoWASMMinecraftModule")
 		.constructor<kayo::WASMInstance&>()
-		.function("createWorld", &kayo::minecraft::WASMMinecraftModule::createWorld);
-	class_<kayo::minecraft::World>("KayoWASMMinecraftWorld")
-		.function("createDimension", &kayo::minecraft::World::createDimension);
-	class_<kayo::minecraft::Dimension>("KayoWASMMinecraftDimension")
-		.function("openRegion", &kayo::minecraft::Dimension::openRegion)
-		.function("buildChunk", &kayo::minecraft::Dimension::buildChunk)
-		.function("getPalette", &kayo::minecraft::Dimension::getPalette)
-		.function("getSectionView", &kayo::minecraft::Dimension::getSectionView);
+		.function("createWorldData", &kayo::minecraft::WASMMinecraftModule::createWorldData);
+	class_<kayo::minecraft::WorldData>("KayoWASMMinecraftWorld")
+		.function("createDimensionData", &kayo::minecraft::WorldData::createDimensionData);
+	class_<kayo::minecraft::DimensionData>("KayoWASMMinecraftDimension")
+		.function("openRegion", &kayo::minecraft::DimensionData::openRegion)
+		.function("buildChunk", &kayo::minecraft::DimensionData::buildChunk)
+		.function("getPalette", &kayo::minecraft::DimensionData::getPalette)
+		.function("getSectionView", &kayo::minecraft::DimensionData::getSectionView);
 }

@@ -2,6 +2,6 @@
 #include <cstdint>
 
 struct IndexBlock {
-	int64_t start;
-	int64_t end;
+	int32_t start;
+	int32_t end;
 };

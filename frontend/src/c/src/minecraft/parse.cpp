@@ -29,6 +29,15 @@ uint32_t readU32AsBigEndian(const uint8_t* data, uint8_t num) {
 	return res;
 }
 
+int16_t readI16AsBigEndian(const uint8_t* data, uint8_t num) {
+	int16_t res = 0;
+	uint8_t maxShift = num - 1;
+	for (uint8_t i = 0; i < num; i++) {
+		res |= CHAR_TO_U32(data[i]) << ((maxShift - i) * 8);
+	}
+	return res;
+}
+
 int32_t readI32AsBigEndian(const uint8_t* data, uint8_t num) {
 	int32_t res = 0;
 	uint8_t maxShift = num - 1;
@@ -75,5 +84,5 @@ std::vector<std::string> splitByDot(const std::string& str) {
 }
 
 uint16_t extractIndex(int64_t data, uint8_t shift, uint64_t mask) {
-	return static_cast<uint16_t>((data >> shift) & mask);
+	return static_cast<uint16_t>((uint64_t(data) >> shift) & mask);
 }

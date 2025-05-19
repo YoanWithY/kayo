@@ -157,8 +157,8 @@ T* getTag(const NBTContainer* active, const std::string& name) {
 	if (!active)
 		throw std::runtime_error("Active is NULL.");
 	auto selector = splitByDot(name);
-	int selectorBound = selector.size() - 1;
-	for (auto i = 0; i < selectorBound; i++) {
+	size_t selectorBound = selector.size() - 1;
+	for (size_t i = 0; i < selectorBound; i++) {
 		active = active->getTag<NBTContainer>(selector[i]);
 	}
 	return active->getTag<T>(selector[selectorBound]);
