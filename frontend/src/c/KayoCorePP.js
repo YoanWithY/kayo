@@ -1,5 +1,5 @@
 var KayoWASM = (() => {
-  var _scriptName = typeof document != 'undefined' ? document.currentScript?.src : undefined;
+  var _scriptName = import.meta.url;
   
   return (
 async function(moduleArg = {}) {
@@ -42,7 +42,18 @@ var ENVIRONMENT_IS_NODE = typeof process == "object" && typeof process.versions 
 
 var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
 
-var ENVIRONMENT_IS_WASM_WORKER = !!Module["$ww"];
+// Three configurations we can be running in:
+// 1) We could be the application main() thread running in the main JS UI thread. (ENVIRONMENT_IS_WORKER == false and ENVIRONMENT_IS_PTHREAD == false)
+// 2) We could be the application main() thread proxied to worker. (with Emscripten -sPROXY_TO_WORKER) (ENVIRONMENT_IS_WORKER == true, ENVIRONMENT_IS_PTHREAD == false)
+// 3) We could be an application pthread running in a worker. (ENVIRONMENT_IS_WORKER == true and ENVIRONMENT_IS_PTHREAD == true)
+// The way we signal to a worker that it is hosting a pthread is to construct
+// it with a specific name.
+var ENVIRONMENT_IS_PTHREAD = ENVIRONMENT_IS_WORKER && self.name?.startsWith("em-pthread");
+
+if (ENVIRONMENT_IS_PTHREAD) {
+  assert(!globalThis.moduleLoaded, "module should only be loaded once on each pthread worker");
+  globalThis.moduleLoaded = true;
+}
 
 // --pre-jses are emitted after the Module integration code, so that they can
 // refer to Module (if they choose; they can also define Module)
@@ -145,6 +156,8 @@ var NODEFS = "NODEFS is no longer included by default; build with -lnodefs.js";
 
 // perform assertions in shell.js after we set up out() and err(), as otherwise
 // if an assertion fails it cannot print the message
+assert(ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER || ENVIRONMENT_IS_NODE, "Pthreads do not work in this environment yet (need Web Workers, or an alternative to them)");
+
 assert(!ENVIRONMENT_IS_NODE, "node environment detected but not enabled at build time.  Add `node` to `-sENVIRONMENT` to enable.");
 
 assert(!ENVIRONMENT_IS_SHELL, "shell environment detected but not enabled at build time.  Add `shell` to `-sENVIRONMENT` to enable.");
@@ -300,7 +313,17 @@ function isExportedByForceFilesystem(name) {
  * Intercept access to a global symbol.  This enables us to give informative
  * warnings/errors when folks attempt to use symbols they did not include in
  * their build, or no symbols that no longer exist.
- */ function hookGlobalSymbolAccess(sym, func) {}
+ */ function hookGlobalSymbolAccess(sym, func) {
+  if (typeof globalThis != "undefined" && !Object.getOwnPropertyDescriptor(globalThis, sym)) {
+    Object.defineProperty(globalThis, sym, {
+      configurable: true,
+      get() {
+        func();
+        return undefined;
+      }
+    });
+  }
+}
 
 function missingGlobal(sym, msg) {
   hookGlobalSymbolAccess(sym, () => {
@@ -336,6 +359,9 @@ function missingLibrarySymbol(sym) {
 }
 
 function unexportedRuntimeSymbol(sym) {
+  if (ENVIRONMENT_IS_PTHREAD) {
+    return;
+  }
   if (!Object.getOwnPropertyDescriptor(Module, sym)) {
     Object.defineProperty(Module, sym, {
       configurable: true,
@@ -424,6 +450,120 @@ function GROWABLE_HEAP_F64() {
 }
 
 // end include: growableHeap.js
+// include: runtime_pthread.js
+// Pthread Web Worker handling code.
+// This code runs only on pthread web workers and handles pthread setup
+// and communication with the main thread via postMessage.
+// Unique ID of the current pthread worker (zero on non-pthread-workers
+// including the main thread).
+var workerID = 0;
+
+if (ENVIRONMENT_IS_PTHREAD) {
+  var wasmModuleReceived;
+  // Thread-local guard variable for one-time init of the JS state
+  var initializedJS = false;
+  // Turn unhandled rejected promises into errors so that the main thread will be
+  // notified about them.
+  self.onunhandledrejection = e => {
+    throw e.reason || e;
+  };
+  function handleMessage(e) {
+    try {
+      var msgData = e["data"];
+      //dbg('msgData: ' + Object.keys(msgData));
+      var cmd = msgData.cmd;
+      if (cmd === "load") {
+        // Preload command that is called once per worker to parse and load the Emscripten code.
+        workerID = msgData.workerID;
+        // Until we initialize the runtime, queue up any further incoming messages.
+        let messageQueue = [];
+        self.onmessage = e => messageQueue.push(e);
+        // And add a callback for when the runtime is initialized.
+        self.startWorker = instance => {
+          // Notify the main thread that this thread has loaded.
+          postMessage({
+            cmd: "loaded"
+          });
+          // Process any messages that were queued before the thread was ready.
+          for (let msg of messageQueue) {
+            handleMessage(msg);
+          }
+          // Restore the real message handler.
+          self.onmessage = handleMessage;
+        };
+        // Use `const` here to ensure that the variable is scoped only to
+        // that iteration, allowing safe reference from a closure.
+        for (const handler of msgData.handlers) {
+          // The the main module has a handler for a certain even, but no
+          // handler exists on the pthread worker, then proxy that handler
+          // back to the main thread.
+          if (!Module[handler] || Module[handler].proxy) {
+            Module[handler] = (...args) => {
+              postMessage({
+                cmd: "callHandler",
+                handler,
+                args
+              });
+            };
+            // Rebind the out / err handlers if needed
+            if (handler == "print") out = Module[handler];
+            if (handler == "printErr") err = Module[handler];
+          }
+        }
+        wasmMemory = msgData.wasmMemory;
+        updateMemoryViews();
+        wasmModuleReceived(msgData.wasmModule);
+      } else if (cmd === "run") {
+        assert(msgData.pthread_ptr);
+        // Call inside JS module to set up the stack frame for this pthread in JS module scope.
+        // This needs to be the first thing that we do, as we cannot call to any C/C++ functions
+        // until the thread stack is initialized.
+        establishStackSpace(msgData.pthread_ptr);
+        // Pass the thread address to wasm to store it for fast access.
+        __emscripten_thread_init(msgData.pthread_ptr, /*is_main=*/ 0, /*is_runtime=*/ 0, /*can_block=*/ 1, 0, 0);
+        PThread.threadInitTLS();
+        // Await mailbox notifications with `Atomics.waitAsync` so we can start
+        // using the fast `Atomics.notify` notification path.
+        __emscripten_thread_mailbox_await(msgData.pthread_ptr);
+        if (!initializedJS) {
+          // Embind must initialize itself on all threads, as it generates support JS.
+          // We only do this once per worker since they get reused
+          __embind_initialize_bindings();
+          initializedJS = true;
+        }
+        try {
+          invokeEntryPoint(msgData.start_routine, msgData.arg);
+        } catch (ex) {
+          if (ex != "unwind") {
+            // The pthread "crashed".  Do not call `_emscripten_thread_exit` (which
+            // would make this thread joinable).  Instead, re-throw the exception
+            // and let the top level handler propagate it back to the main thread.
+            throw ex;
+          }
+        }
+      } else if (msgData.target === "setimmediate") {} else if (cmd === "checkMailbox") {
+        if (initializedJS) {
+          checkMailbox();
+        }
+      } else if (cmd) {
+        // The received message looks like something that should be handled by this message
+        // handler, (since there is a cmd field present), but is not one of the
+        // recognized commands:
+        err(`worker: received unknown command ${cmd}`);
+        err(msgData);
+      }
+    } catch (ex) {
+      err(`worker: onmessage() captured an uncaught exception: ${ex}`);
+      if (ex?.stack) err(ex.stack);
+      __emscripten_thread_crashed();
+      throw ex;
+    }
+  }
+  self.onmessage = handleMessage;
+}
+
+// ENVIRONMENT_IS_PTHREAD
+// end include: runtime_pthread.js
 function updateMemoryViews() {
   var b = wasmMemory.buffer;
   HEAP8 = new Int8Array(b);
@@ -446,6 +586,7 @@ assert(typeof Int32Array != "undefined" && typeof Float64Array !== "undefined" &
 // Create the wasm memory. (Note: this only applies if IMPORTED_MEMORY is defined)
 // check for full engine support (use string 'subarray' to avoid closure compiler confusion)
 function initMemory() {
+  if (ENVIRONMENT_IS_PTHREAD) return;
   if (Module["wasmMemory"]) {
     wasmMemory = Module["wasmMemory"];
   } else {
@@ -467,6 +608,8 @@ function initMemory() {
 
 // end include: runtime_init_memory.js
 function preRun() {
+  assert(!ENVIRONMENT_IS_PTHREAD);
+  // PThreads reuse the runtime from the main thread.
   if (Module["preRun"]) {
     if (typeof Module["preRun"] == "function") Module["preRun"] = [ Module["preRun"] ];
     while (Module["preRun"].length) {
@@ -481,7 +624,7 @@ function preRun() {
 function initRuntime() {
   assert(!runtimeInitialized);
   runtimeInitialized = true;
-  if (ENVIRONMENT_IS_WASM_WORKER) return _wasmWorkerInitializeRuntime();
+  if (ENVIRONMENT_IS_PTHREAD) return startWorker(Module);
   checkStackCookie();
   // Begin ATINITS hooks
   if (!Module["noFSInit"] && !FS.initialized) FS.init();
@@ -494,6 +637,8 @@ function initRuntime() {
 
 function postRun() {
   checkStackCookie();
+  if (ENVIRONMENT_IS_PTHREAD) return;
+  // PThreads reuse the runtime from the main thread.
   if (Module["postRun"]) {
     if (typeof Module["postRun"] == "function") Module["postRun"] = [ Module["postRun"] ];
     while (Module["postRun"].length) {
@@ -624,7 +769,11 @@ function createExportWrapper(name, nargs) {
 var wasmBinaryFile;
 
 function findWasmBinary() {
-  return locateFile("KayoCorePP.wasm");
+  if (Module["locateFile"]) {
+    return locateFile("KayoCorePP.wasm");
+  }
+  // Use bundler-friendly `new URL(..., import.meta.url)` pattern; works in browsers too.
+  return new URL("KayoCorePP.wasm", import.meta.url).href;
 }
 
 function getBinarySync(file) {
@@ -684,6 +833,7 @@ async function instantiateAsync(binary, binaryFile, imports) {
 }
 
 function getWasmImports() {
+  assignWasmImports();
   // prepare imports
   return {
     "env": wasmImports,
@@ -699,6 +849,7 @@ async function createWasm() {
   // performing other necessary setup
   /** @param {WebAssembly.Module=} module*/ function receiveInstance(instance, module) {
     wasmExports = instance.exports;
+    registerTLSInit(wasmExports["_emscripten_tls_init"]);
     wasmTable = wasmExports["__indirect_function_table"];
     assert(wasmTable, "table not found in wasm exports");
     // We now have the Wasm module loaded up, keep a reference to the compiled module so we can post it to the workers.
@@ -739,6 +890,16 @@ async function createWasm() {
       }
     });
   }
+  if (ENVIRONMENT_IS_PTHREAD) {
+    return new Promise(resolve => {
+      wasmModuleReceived = module => {
+        // Instantiate from the module posted from the main thread.
+        // We can just use sync instantiation in the worker.
+        var instance = new WebAssembly.Instance(module, getWasmImports());
+        resolve(receiveInstance(instance, module));
+      };
+    });
+  }
   wasmBinaryFile ??= findWasmBinary();
   try {
     var result = await instantiateAsync(wasmBinary, wasmBinaryFile, info);
@@ -761,42 +922,139 @@ class ExitStatus {
   }
 }
 
-var _wasmWorkerDelayedMessageQueue = [];
+var terminateWorker = worker => {
+  worker.terminate();
+  // terminate() can be asynchronous, so in theory the worker can continue
+  // to run for some amount of time after termination.  However from our POV
+  // the worker now dead and we don't want to hear from it again, so we stub
+  // out its message handler here.  This avoids having to check in each of
+  // the onmessage handlers if the message was coming from valid worker.
+  worker.onmessage = e => {
+    var cmd = e["data"].cmd;
+    err(`received "${cmd}" command from terminated worker: ${worker.workerID}`);
+  };
+};
 
-var handleException = e => {
-  // Certain exception types we do not treat as errors since they are used for
-  // internal control flow.
-  // 1. ExitStatus, which is thrown by exit()
-  // 2. "unwind", which is thrown by emscripten_unwind_to_js_event_loop() and others
-  //    that wish to return to JS event loop.
-  if (e instanceof ExitStatus || e == "unwind") {
-    return EXITSTATUS;
+var cleanupThread = pthread_ptr => {
+  assert(!ENVIRONMENT_IS_PTHREAD, "Internal Error! cleanupThread() can only ever be called from main application thread!");
+  assert(pthread_ptr, "Internal Error! Null pthread_ptr in cleanupThread!");
+  var worker = PThread.pthreads[pthread_ptr];
+  assert(worker);
+  PThread.returnWorkerToPool(worker);
+};
+
+var callRuntimeCallbacks = callbacks => {
+  while (callbacks.length > 0) {
+    // Pass the module as the first argument.
+    callbacks.shift()(Module);
   }
-  checkStackCookie();
-  if (e instanceof WebAssembly.RuntimeError) {
-    if (_emscripten_stack_get_current() <= 0) {
-      err("Stack overflow detected.  You can try increasing -sSTACK_SIZE (currently set to 65536)");
-    }
+};
+
+var onPreRuns = [];
+
+var addOnPreRun = cb => onPreRuns.push(cb);
+
+var spawnThread = threadParams => {
+  assert(!ENVIRONMENT_IS_PTHREAD, "Internal Error! spawnThread() can only ever be called from main application thread!");
+  assert(threadParams.pthread_ptr, "Internal error, no pthread ptr!");
+  var worker = PThread.getNewWorker();
+  if (!worker) {
+    // No available workers in the PThread pool.
+    return 6;
   }
-  quit_(1, e);
+  assert(!worker.pthread_ptr, "Internal error!");
+  PThread.runningWorkers.push(worker);
+  // Add to pthreads map
+  PThread.pthreads[threadParams.pthread_ptr] = worker;
+  worker.pthread_ptr = threadParams.pthread_ptr;
+  var msg = {
+    cmd: "run",
+    start_routine: threadParams.startRoutine,
+    arg: threadParams.arg,
+    pthread_ptr: threadParams.pthread_ptr
+  };
+  // Ask the worker to start executing its pthread entry point function.
+  worker.postMessage(msg, threadParams.transferList);
+  return 0;
 };
 
 var runtimeKeepaliveCounter = 0;
 
 var keepRuntimeAlive = () => noExitRuntime || runtimeKeepaliveCounter > 0;
 
-var _proc_exit = code => {
+var stackSave = () => _emscripten_stack_get_current();
+
+var stackRestore = val => __emscripten_stack_restore(val);
+
+var stackAlloc = sz => __emscripten_stack_alloc(sz);
+
+/** @type{function(number, (number|boolean), ...number)} */ var proxyToMainThread = (funcIndex, emAsmAddr, sync, ...callArgs) => {
+  // EM_ASM proxying is done by passing a pointer to the address of the EM_ASM
+  // content as `emAsmAddr`.  JS library proxying is done by passing an index
+  // into `proxiedJSCallArgs` as `funcIndex`. If `emAsmAddr` is non-zero then
+  // `funcIndex` will be ignored.
+  // Additional arguments are passed after the first three are the actual
+  // function arguments.
+  // The serialization buffer contains the number of call params, and then
+  // all the args here.
+  // We also pass 'sync' to C separately, since C needs to look at it.
+  // Allocate a buffer, which will be copied by the C code.
+  // First passed parameter specifies the number of arguments to the function.
+  // When BigInt support is enabled, we must handle types in a more complex
+  // way, detecting at runtime if a value is a BigInt or not (as we have no
+  // type info here). To do that, add a "prefix" before each value that
+  // indicates if it is a BigInt, which effectively doubles the number of
+  // values we serialize for proxying. TODO: pack this?
+  var serializedNumCallArgs = callArgs.length * 2;
+  var sp = stackSave();
+  var args = stackAlloc(serializedNumCallArgs * 8);
+  var b = ((args) >> 3);
+  for (var i = 0; i < callArgs.length; i++) {
+    var arg = callArgs[i];
+    if (typeof arg == "bigint") {
+      // The prefix is non-zero to indicate a bigint.
+      HEAP64[b + 2 * i] = 1n;
+      HEAP64[b + 2 * i + 1] = arg;
+    } else {
+      // The prefix is zero to indicate a JS Number.
+      HEAP64[b + 2 * i] = 0n;
+      GROWABLE_HEAP_F64()[b + 2 * i + 1] = arg;
+    }
+  }
+  var rtn = __emscripten_run_on_main_thread_js(funcIndex, emAsmAddr, serializedNumCallArgs, args, sync);
+  stackRestore(sp);
+  return rtn;
+};
+
+function _proc_exit(code) {
+  if (ENVIRONMENT_IS_PTHREAD) return proxyToMainThread(0, 0, 1, code);
   EXITSTATUS = code;
   if (!keepRuntimeAlive()) {
+    PThread.terminateAllThreads();
     Module["onExit"]?.(code);
     ABORT = true;
   }
   quit_(code, new ExitStatus(code));
-};
+}
+
+function exitOnMainThread(returnCode) {
+  if (ENVIRONMENT_IS_PTHREAD) return proxyToMainThread(1, 0, 0, returnCode);
+  _exit(returnCode);
+}
 
 /** @suppress {duplicate } */ /** @param {boolean|number=} implicit */ var exitJS = (status, implicit) => {
   EXITSTATUS = status;
   checkUnflushedContent();
+  if (ENVIRONMENT_IS_PTHREAD) {
+    // implicit exit can never happen on a pthread
+    assert(!implicit);
+    // When running in a pthread we propagate the exit back to the main thread
+    // where it can decide if the whole process should be shut down or not.
+    // The pthread may have decided not to exit its own runtime, for example
+    // because it runs a main loop, but that doesn't affect the main thread.
+    exitOnMainThread(status);
+    throw "unwind";
+  }
   // if exit() was called explicitly, warn the user if the runtime isn't actually being shut down
   if (keepRuntimeAlive() && !implicit) {
     var msg = `program exited (with status: ${status}), but keepRuntimeAlive() is set (counter=${runtimeKeepaliveCounter}) due to an async operation, so halting execution but not exiting the runtime or preventing further async execution (you can use emscripten_force_exit, if you want to force a true shutdown)`;
@@ -808,81 +1066,205 @@ var _proc_exit = code => {
 
 var _exit = exitJS;
 
-var maybeExit = () => {
-  if (!keepRuntimeAlive()) {
-    try {
-      _exit(EXITSTATUS);
-    } catch (e) {
-      handleException(e);
+var ptrToString = ptr => {
+  assert(typeof ptr === "number");
+  // With CAN_ADDRESS_2GB or MEMORY64, pointers are already unsigned.
+  ptr >>>= 0;
+  return "0x" + ptr.toString(16).padStart(8, "0");
+};
+
+var PThread = {
+  unusedWorkers: [],
+  runningWorkers: [],
+  tlsInitFunctions: [],
+  pthreads: {},
+  nextWorkerID: 1,
+  debugInit() {
+    function pthreadLogPrefix() {
+      var t = 0;
+      if (runtimeInitialized && typeof _pthread_self != "undefined") {
+        t = _pthread_self();
+      }
+      return `w:${workerID},t:${ptrToString(t)}: `;
     }
-  }
-};
-
-var callUserCallback = func => {
-  if (ABORT) {
-    err("user callback triggered after runtime exited or application aborted.  Ignoring.");
-    return;
-  }
-  try {
-    func();
-    maybeExit();
-  } catch (e) {
-    handleException(e);
-  }
-};
-
-var wasmTableMirror = [];
-
-/** @type {WebAssembly.Table} */ var wasmTable;
-
-var getWasmTableEntry = funcPtr => {
-  var func = wasmTableMirror[funcPtr];
-  if (!func) {
-    /** @suppress {checkTypes} */ wasmTableMirror[funcPtr] = func = wasmTable.get(funcPtr);
-  }
-  /** @suppress {checkTypes} */ assert(wasmTable.get(funcPtr) == func, "JavaScript-side Wasm function table mirror is out of date!");
-  return func;
-};
-
-var _wasmWorkerRunPostMessage = e => {
-  // '_wsc' is short for 'wasm call', trying to use an identifier name that
-  // will never conflict with user code
-  let data = e.data;
-  let wasmCall = data["_wsc"];
-  wasmCall && callUserCallback(() => getWasmTableEntry(wasmCall)(...data["x"]));
-};
-
-var _wasmWorkerAppendToQueue = e => {
-  _wasmWorkerDelayedMessageQueue.push(e);
-};
-
-var _wasmWorkerInitializeRuntime = () => {
-  let m = Module;
-  assert(m["sb"] % 16 == 0);
-  assert(m["sz"] % 16 == 0);
-  // Wasm workers basically never exit their runtime
-  noExitRuntime = 1;
-  // Run the C side Worker initialization for stack and TLS.
-  __emscripten_wasm_worker_initialize(m["sb"], m["sz"]);
-  // Write the stack cookie last, after we have set up the proper bounds and
-  // current position of the stack.
-  writeStackCookie();
-  // The Wasm Worker runtime is now up, so we can start processing
-  // any postMessage function calls that have been received. Drop the temp
-  // message handler that queued any pending incoming postMessage function calls ...
-  removeEventListener("message", _wasmWorkerAppendToQueue);
-  // ... then flush whatever messages we may have already gotten in the queue,
-  //     and clear _wasmWorkerDelayedMessageQueue to undefined ...
-  _wasmWorkerDelayedMessageQueue = _wasmWorkerDelayedMessageQueue.forEach(_wasmWorkerRunPostMessage);
-  // ... and finally register the proper postMessage handler that immediately
-  // dispatches incoming function calls without queueing them.
-  addEventListener("message", _wasmWorkerRunPostMessage);
-};
-
-var callRuntimeCallbacks = callbacks => {
-  while (callbacks.length > 0) {
-    // Pass the module as the first argument.
-    callbacks.shift()(Module);
+    // Prefix all err()/dbg() messages with the calling thread ID.
+    var origDbg = dbg;
+    dbg = (...args) => origDbg(pthreadLogPrefix() + args.join(" "));
+  },
+  init() {
+    PThread.debugInit();
+    if ((!(ENVIRONMENT_IS_PTHREAD))) {
+      PThread.initMainThread();
+    }
+  },
+  initMainThread() {
+    var pthreadPoolSize = 1;
+    // Start loading up the Worker pool, if requested.
+    while (pthreadPoolSize--) {
+      PThread.allocateUnusedWorker();
+    }
+    // MINIMAL_RUNTIME takes care of calling loadWasmModuleToAllWorkers
+    // in postamble_minimal.js
+    addOnPreRun(() => {
+      addRunDependency("loading-workers");
+      PThread.loadWasmModuleToAllWorkers(() => removeRunDependency("loading-workers"));
+    });
+  },
+  terminateAllThreads: () => {
+    assert(!ENVIRONMENT_IS_PTHREAD, "Internal Error! terminateAllThreads() can only ever be called from main application thread!");
+    // Attempt to kill all workers.  Sadly (at least on the web) there is no
+    // way to terminate a worker synchronously, or to be notified when a
+    // worker in actually terminated.  This means there is some risk that
+    // pthreads will continue to be executing after `worker.terminate` has
+    // returned.  For this reason, we don't call `returnWorkerToPool` here or
+    // free the underlying pthread data structures.
+    for (var worker of PThread.runningWorkers) {
+      terminateWorker(worker);
+    }
+    for (var worker of PThread.unusedWorkers) {
+      terminateWorker(worker);
+    }
+    PThread.unusedWorkers = [];
+    PThread.runningWorkers = [];
+    PThread.pthreads = {};
+  },
+  returnWorkerToPool: worker => {
+    // We don't want to run main thread queued calls here, since we are doing
+    // some operations that leave the worker queue in an invalid state until
+    // we are completely done (it would be bad if free() ends up calling a
+    // queued pthread_create which looks at the global data structures we are
+    // modifying). To achieve that, defer the free() til the very end, when
+    // we are all done.
+    var pthread_ptr = worker.pthread_ptr;
+    delete PThread.pthreads[pthread_ptr];
+    // Note: worker is intentionally not terminated so the pool can
+    // dynamically grow.
+    PThread.unusedWorkers.push(worker);
+    PThread.runningWorkers.splice(PThread.runningWorkers.indexOf(worker), 1);
+    // Not a running Worker anymore
+    // Detach the worker from the pthread object, and return it to the
+    // worker pool as an unused worker.
+    worker.pthread_ptr = 0;
+    // Finally, free the underlying (and now-unused) pthread structure in
+    // linear memory.
+    __emscripten_thread_free_data(pthread_ptr);
+  },
+  threadInitTLS() {
+    // Call thread init functions (these are the _emscripten_tls_init for each
+    // module loaded.
+    PThread.tlsInitFunctions.forEach(f => f());
+  },
+  loadWasmModuleToWorker: worker => new Promise(onFinishedLoading => {
+    worker.onmessage = e => {
+      var d = e["data"];
+      var cmd = d.cmd;
+      // If this message is intended to a recipient that is not the main
+      // thread, forward it to the target thread.
+      if (d.targetThread && d.targetThread != _pthread_self()) {
+        var targetWorker = PThread.pthreads[d.targetThread];
+        if (targetWorker) {
+          targetWorker.postMessage(d, d.transferList);
+        } else {
+          err(`Internal error! Worker sent a message "${cmd}" to target pthread ${d.targetThread}, but that thread no longer exists!`);
+        }
+        return;
+      }
+      if (cmd === "checkMailbox") {
+        checkMailbox();
+      } else if (cmd === "spawnThread") {
+        spawnThread(d);
+      } else if (cmd === "cleanupThread") {
+        cleanupThread(d.thread);
+      } else if (cmd === "loaded") {
+        worker.loaded = true;
+        onFinishedLoading(worker);
+      } else if (d.target === "setimmediate") {
+        // Worker wants to postMessage() to itself to implement setImmediate()
+        // emulation.
+        worker.postMessage(d);
+      } else if (cmd === "callHandler") {
+        Module[d.handler](...d.args);
+      } else if (cmd) {
+        // The received message looks like something that should be handled by this message
+        // handler, (since there is a e.data.cmd field present), but is not one of the
+        // recognized commands:
+        err(`worker sent an unknown command ${cmd}`);
+      }
+    };
+    worker.onerror = e => {
+      var message = "worker sent an error!";
+      if (worker.pthread_ptr) {
+        message = `Pthread ${ptrToString(worker.pthread_ptr)} sent an error!`;
+      }
+      err(`${message} ${e.filename}:${e.lineno}: ${e.message}`);
+      throw e;
+    };
+    assert(wasmMemory instanceof WebAssembly.Memory, "WebAssembly memory should have been loaded by now!");
+    assert(wasmModule instanceof WebAssembly.Module, "WebAssembly Module should have been loaded by now!");
+    // When running on a pthread, none of the incoming parameters on the module
+    // object are present. Proxy known handlers back to the main thread if specified.
+    var handlers = [];
+    var knownHandlers = [ "onExit", "onAbort", "print", "printErr" ];
+    for (var handler of knownHandlers) {
+      if (Module.propertyIsEnumerable(handler)) {
+        handlers.push(handler);
+      }
+    }
+    // Ask the new worker to load up the Emscripten-compiled page. This is a heavy operation.
+    worker.postMessage({
+      cmd: "load",
+      handlers,
+      wasmMemory,
+      wasmModule,
+      "workerID": worker.workerID
+    });
+  }),
+  loadWasmModuleToAllWorkers(onMaybeReady) {
+    // Instantiation is synchronous in pthreads.
+    if (ENVIRONMENT_IS_PTHREAD) {
+      return onMaybeReady();
+    }
+    let pthreadPoolReady = Promise.all(PThread.unusedWorkers.map(PThread.loadWasmModuleToWorker));
+    pthreadPoolReady.then(onMaybeReady);
+  },
+  allocateUnusedWorker() {
+    var worker;
+    // If we're using module output, use bundler-friendly pattern.
+    if (Module["mainScriptUrlOrBlob"]) {
+      var pthreadMainJs = Module["mainScriptUrlOrBlob"];
+      if (typeof pthreadMainJs != "string") {
+        pthreadMainJs = URL.createObjectURL(pthreadMainJs);
+      }
+      worker = new Worker(pthreadMainJs, {
+        "type": "module",
+        // This is the way that we signal to the Web Worker that it is hosting
+        // a pthread.
+        "name": "em-pthread-" + PThread.nextWorkerID
+      });
+    } else // We need to generate the URL with import.meta.url as the base URL of the JS file
+    // instead of just using new URL(import.meta.url) because bundler's only recognize
+    // the first case in their bundling step. The latter ends up producing an invalid
+    // URL to import from the server (e.g., for webpack the file:// path).
+    // See https://github.com/webpack/webpack/issues/12638
+    worker = new Worker(new URL("KayoCorePP.js", import.meta.url), {
+      "type": "module",
+      // This is the way that we signal to the Web Worker that it is hosting
+      // a pthread.
+      "name": "em-pthread-" + PThread.nextWorkerID
+    });
+    worker.workerID = PThread.nextWorkerID++;
+    PThread.unusedWorkers.push(worker);
+  },
+  getNewWorker() {
+    if (PThread.unusedWorkers.length == 0) {
+      // PTHREAD_POOL_SIZE_STRICT should show a warning and, if set to level `2`, return from the function.
+      // However, if we're in Node.js, then we can create new workers on the fly and PTHREAD_POOL_SIZE_STRICT
+      // should be ignored altogether.
+      err("Tried to spawn a new thread, but the thread pool is exhausted.\n" + "This might result in a deadlock unless some threads eventually exit or the code explicitly breaks out to the event loop.\n" + "If you want to increase the pool size, use setting `-sPTHREAD_POOL_SIZE=...`." + "\nIf you want to throw an explicit error instead of the risk of deadlocking in those cases, use setting `-sPTHREAD_POOL_SIZE_STRICT=2`.");
+      PThread.allocateUnusedWorker();
+      PThread.loadWasmModuleToWorker(PThread.unusedWorkers[0]);
+    }
+    return PThread.unusedWorkers.pop();
   }
 };
 
@@ -890,9 +1272,25 @@ var onPostRuns = [];
 
 var addOnPostRun = cb => onPostRuns.push(cb);
 
-var onPreRuns = [];
-
-var addOnPreRun = cb => onPreRuns.push(cb);
+var establishStackSpace = pthread_ptr => {
+  // If memory growth is enabled, the memory views may have gotten out of date,
+  // so resync them before accessing the pthread ptr below.
+  updateMemoryViews();
+  var stackHigh = GROWABLE_HEAP_U32()[(((pthread_ptr) + (52)) >> 2)];
+  var stackSize = GROWABLE_HEAP_U32()[(((pthread_ptr) + (56)) >> 2)];
+  var stackLow = stackHigh - stackSize;
+  assert(stackHigh != 0);
+  assert(stackLow != 0);
+  assert(stackHigh > stackLow, "stackHigh must be higher then stackLow");
+  // Set stack limits used by `emscripten/stack.h` function.  These limits are
+  // cached in wasm-side globals to make checks as fast as possible.
+  _emscripten_stack_set_limits(stackHigh, stackLow);
+  // Call inside wasm module to set up the stack frame for this pthread in wasm module scope
+  stackRestore(stackHigh);
+  // Write the stack cookie last, after we have set up the proper bounds and
+  // current position of the stack.
+  writeStackCookie();
+};
 
 /**
      * @param {number} ptr
@@ -929,14 +1327,55 @@ var addOnPreRun = cb => onPreRuns.push(cb);
   }
 }
 
+var wasmTableMirror = [];
+
+/** @type {WebAssembly.Table} */ var wasmTable;
+
+var getWasmTableEntry = funcPtr => {
+  var func = wasmTableMirror[funcPtr];
+  if (!func) {
+    /** @suppress {checkTypes} */ wasmTableMirror[funcPtr] = func = wasmTable.get(funcPtr);
+  }
+  /** @suppress {checkTypes} */ assert(wasmTable.get(funcPtr) == func, "JavaScript-side Wasm function table mirror is out of date!");
+  return func;
+};
+
+var invokeEntryPoint = (ptr, arg) => {
+  // An old thread on this worker may have been canceled without returning the
+  // `runtimeKeepaliveCounter` to zero. Reset it now so the new thread won't
+  // be affected.
+  runtimeKeepaliveCounter = 0;
+  // Same for noExitRuntime.  The default for pthreads should always be false
+  // otherwise pthreads would never complete and attempts to pthread_join to
+  // them would block forever.
+  // pthreads can still choose to set `noExitRuntime` explicitly, or
+  // call emscripten_unwind_to_js_event_loop to extend their lifetime beyond
+  // their main function.  See comment in src/runtime_pthread.js for more.
+  noExitRuntime = 0;
+  // pthread entry points are always of signature 'void *ThreadMain(void *arg)'
+  // Native codebases sometimes spawn threads with other thread entry point
+  // signatures, such as void ThreadMain(void *arg), void *ThreadMain(), or
+  // void ThreadMain().  That is not acceptable per C/C++ specification, but
+  // x86 compiler ABI extensions enable that to work. If you find the
+  // following line to crash, either change the signature to "proper" void
+  // *ThreadMain(void *arg) form, or try linking with the Emscripten linker
+  // flag -sEMULATE_FUNCTION_POINTER_CASTS to add in emulation for this x86
+  // ABI extension.
+  var result = getWasmTableEntry(ptr)(arg);
+  checkStackCookie();
+  function finish(result) {
+    if (keepRuntimeAlive()) {
+      EXITSTATUS = result;
+    } else {
+      __emscripten_thread_exit(result);
+    }
+  }
+  finish(result);
+};
+
 var noExitRuntime = true;
 
-var ptrToString = ptr => {
-  assert(typeof ptr === "number");
-  // With CAN_ADDRESS_2GB or MEMORY64, pointers are already unsigned.
-  ptr >>>= 0;
-  return "0x" + ptr.toString(16).padStart(8, "0");
-};
+var registerTLSInit = tlsInitFunc => PThread.tlsInitFunctions.push(tlsInitFunc);
 
 /**
      * @param {number} ptr
@@ -981,10 +1420,6 @@ var ptrToString = ptr => {
     abort(`invalid type for setValue: ${type}`);
   }
 }
-
-var stackRestore = val => __emscripten_stack_restore(val);
-
-var stackSave = () => _emscripten_stack_get_current();
 
 var warnOnce = text => {
   warnOnce.shown ||= {};
@@ -1214,6 +1649,51 @@ var ___cxa_throw = (ptr, type, destructor) => {
 };
 
 var ___cxa_uncaught_exceptions = () => uncaughtExceptionCount;
+
+function pthreadCreateProxied(pthread_ptr, attr, startRoutine, arg) {
+  if (ENVIRONMENT_IS_PTHREAD) return proxyToMainThread(2, 0, 1, pthread_ptr, attr, startRoutine, arg);
+  return ___pthread_create_js(pthread_ptr, attr, startRoutine, arg);
+}
+
+var _emscripten_has_threading_support = () => typeof SharedArrayBuffer != "undefined";
+
+var ___pthread_create_js = (pthread_ptr, attr, startRoutine, arg) => {
+  if (!_emscripten_has_threading_support()) {
+    dbg("pthread_create: environment does not support SharedArrayBuffer, pthreads are not available");
+    return 6;
+  }
+  // List of JS objects that will transfer ownership to the Worker hosting the thread
+  var transferList = [];
+  var error = 0;
+  // Synchronously proxy the thread creation to main thread if possible. If we
+  // need to transfer ownership of objects, then proxy asynchronously via
+  // postMessage.
+  if (ENVIRONMENT_IS_PTHREAD && (transferList.length === 0 || error)) {
+    return pthreadCreateProxied(pthread_ptr, attr, startRoutine, arg);
+  }
+  // If on the main thread, and accessing Canvas/OffscreenCanvas failed, abort
+  // with the detected error.
+  if (error) return error;
+  var threadParams = {
+    startRoutine,
+    pthread_ptr,
+    arg,
+    transferList
+  };
+  if (ENVIRONMENT_IS_PTHREAD) {
+    // The prepopulated pool of web workers that can host pthreads is stored
+    // in the main JS thread. Therefore if a pthread is attempting to spawn a
+    // new thread, the thread creation must be deferred to the main JS thread.
+    threadParams.cmd = "spawnThread";
+    postMessage(threadParams, transferList);
+    // When we defer thread creation this way, we have no way to detect thread
+    // creation synchronously today, so we have to assume success and return 0.
+    return 0;
+  }
+  // We are the main thread, so we have the pthread warmup pool in this
+  // thread and can fire off JS thread creation directly ourselves.
+  return spawnThread(threadParams);
+};
 
 var ___resumeException = ptr => {
   if (!exceptionLast) {
@@ -2932,34 +3412,149 @@ var __embind_register_void = (rawType, name) => {
   });
 };
 
-var _wasmWorkers = {};
-
-var _wasmWorkersID = 1;
-
-var _emscripten_has_threading_support = () => typeof SharedArrayBuffer != "undefined";
-
-var __emscripten_create_wasm_worker = (stackLowestAddress, stackSize) => {
-  if (!_emscripten_has_threading_support()) {
-    err("create_wasm_worker: environment does not support SharedArrayBuffer, wasm workers are not available");
-    return 0;
-  }
-  let worker;
-  worker = _wasmWorkers[_wasmWorkersID] = new Worker(locateFile("KayoCorePP.ww.js"));
-  // Craft the Module object for the Wasm Worker scope:
-  worker.postMessage({
-    // Signal with a non-zero value that this Worker will be a Wasm Worker,
-    // and not the main browser thread.
-    "$ww": _wasmWorkersID,
-    "wasm": wasmModule,
-    "js": Module["mainScriptUrlOrBlob"] || _scriptName,
-    "wasmMemory": wasmMemory,
-    "sb": stackLowestAddress,
-    // sb = stack bottom (lowest stack address, SP points at this when stack is full)
-    "sz": stackSize
-  });
-  worker.onmessage = _wasmWorkerRunPostMessage;
-  return _wasmWorkersID++;
+var __emscripten_init_main_thread_js = tb => {
+  // Pass the thread address to the native code where they stored in wasm
+  // globals which act as a form of TLS. Global constructors trying
+  // to access this value will read the wrong value, but that is UB anyway.
+  __emscripten_thread_init(tb, /*is_main=*/ !ENVIRONMENT_IS_WORKER, /*is_runtime=*/ 1, /*can_block=*/ !ENVIRONMENT_IS_WEB, /*default_stacksize=*/ 65536, /*start_profiling=*/ false);
+  PThread.threadInitTLS();
 };
+
+var handleException = e => {
+  // Certain exception types we do not treat as errors since they are used for
+  // internal control flow.
+  // 1. ExitStatus, which is thrown by exit()
+  // 2. "unwind", which is thrown by emscripten_unwind_to_js_event_loop() and others
+  //    that wish to return to JS event loop.
+  if (e instanceof ExitStatus || e == "unwind") {
+    return EXITSTATUS;
+  }
+  checkStackCookie();
+  if (e instanceof WebAssembly.RuntimeError) {
+    if (_emscripten_stack_get_current() <= 0) {
+      err("Stack overflow detected.  You can try increasing -sSTACK_SIZE (currently set to 65536)");
+    }
+  }
+  quit_(1, e);
+};
+
+var maybeExit = () => {
+  if (!keepRuntimeAlive()) {
+    try {
+      if (ENVIRONMENT_IS_PTHREAD) __emscripten_thread_exit(EXITSTATUS); else _exit(EXITSTATUS);
+    } catch (e) {
+      handleException(e);
+    }
+  }
+};
+
+var callUserCallback = func => {
+  if (ABORT) {
+    err("user callback triggered after runtime exited or application aborted.  Ignoring.");
+    return;
+  }
+  try {
+    func();
+    maybeExit();
+  } catch (e) {
+    handleException(e);
+  }
+};
+
+var __emscripten_thread_mailbox_await = pthread_ptr => {
+  if (typeof Atomics.waitAsync === "function") {
+    // Wait on the pthread's initial self-pointer field because it is easy and
+    // safe to access from sending threads that need to notify the waiting
+    // thread.
+    // TODO: How to make this work with wasm64?
+    var wait = Atomics.waitAsync(GROWABLE_HEAP_I32(), ((pthread_ptr) >> 2), pthread_ptr);
+    assert(wait.async);
+    wait.value.then(checkMailbox);
+    var waitingAsync = pthread_ptr + 128;
+    Atomics.store(GROWABLE_HEAP_I32(), ((waitingAsync) >> 2), 1);
+  }
+};
+
+var checkMailbox = () => {
+  // Only check the mailbox if we have a live pthread runtime. We implement
+  // pthread_self to return 0 if there is no live runtime.
+  var pthread_ptr = _pthread_self();
+  if (pthread_ptr) {
+    // If we are using Atomics.waitAsync as our notification mechanism, wait
+    // for a notification before processing the mailbox to avoid missing any
+    // work that could otherwise arrive after we've finished processing the
+    // mailbox and before we're ready for the next notification.
+    __emscripten_thread_mailbox_await(pthread_ptr);
+    callUserCallback(__emscripten_check_mailbox);
+  }
+};
+
+var __emscripten_notify_mailbox_postmessage = (targetThread, currThreadId) => {
+  if (targetThread == currThreadId) {
+    setTimeout(checkMailbox);
+  } else if (ENVIRONMENT_IS_PTHREAD) {
+    postMessage({
+      targetThread,
+      cmd: "checkMailbox"
+    });
+  } else {
+    var worker = PThread.pthreads[targetThread];
+    if (!worker) {
+      err(`Cannot send message to thread with ID ${targetThread}, unknown thread ID!`);
+      return;
+    }
+    worker.postMessage({
+      cmd: "checkMailbox"
+    });
+  }
+};
+
+var proxiedJSCallArgs = [];
+
+var __emscripten_receive_on_main_thread_js = (funcIndex, emAsmAddr, callingThread, numCallArgs, args) => {
+  // Sometimes we need to backproxy events to the calling thread (e.g.
+  // HTML5 DOM events handlers such as
+  // emscripten_set_mousemove_callback()), so keep track in a globally
+  // accessible variable about the thread that initiated the proxying.
+  numCallArgs /= 2;
+  proxiedJSCallArgs.length = numCallArgs;
+  var b = ((args) >> 3);
+  for (var i = 0; i < numCallArgs; i++) {
+    if (HEAP64[b + 2 * i]) {
+      // It's a BigInt.
+      proxiedJSCallArgs[i] = HEAP64[b + 2 * i + 1];
+    } else {
+      // It's a Number.
+      proxiedJSCallArgs[i] = GROWABLE_HEAP_F64()[b + 2 * i + 1];
+    }
+  }
+  // Proxied JS library funcs use funcIndex and EM_ASM functions use emAsmAddr
+  var func = emAsmAddr ? ASM_CONSTS[emAsmAddr] : proxiedFunctionTable[funcIndex];
+  assert(!(funcIndex && emAsmAddr));
+  assert(func.length == numCallArgs, "Call args mismatch in _emscripten_receive_on_main_thread_js");
+  PThread.currentProxiedOperationCallerThread = callingThread;
+  var rtn = func(...proxiedJSCallArgs);
+  PThread.currentProxiedOperationCallerThread = 0;
+  // Proxied functions can return any type except bigint.  All other types
+  // cooerce to f64/double (the return type of this function in C) but not
+  // bigint.
+  assert(typeof rtn != "bigint");
+  return rtn;
+};
+
+var __emscripten_thread_cleanup = thread => {
+  // Called when a thread needs to be cleaned up so it can be reused.
+  // A thread is considered reusable when it either returns from its
+  // entry point, calls pthread_exit, or acts upon a cancellation.
+  // Detached threads are responsible for calling this themselves,
+  // otherwise pthread_join is responsible for calling this.
+  if (!ENVIRONMENT_IS_PTHREAD) cleanupThread(thread); else postMessage({
+    cmd: "cleanupThread",
+    thread
+  });
+};
+
+var __emscripten_thread_set_strongref = thread => {};
 
 var requireRegisteredType = (rawType, humanName) => {
   var impl = registeredTypes[rawType];
@@ -3021,6 +3616,40 @@ var __tzset_js = (timezone, daylight, std_name, dst_name) => {
   }
 };
 
+var _emscripten_get_now = () => performance.timeOrigin + performance.now();
+
+var _emscripten_date_now = () => Date.now();
+
+var nowIsMonotonic = 1;
+
+var checkWasiClock = clock_id => clock_id >= 0 && clock_id <= 3;
+
+var INT53_MAX = 9007199254740992;
+
+var INT53_MIN = -9007199254740992;
+
+var bigintToI53Checked = num => (num < INT53_MIN || num > INT53_MAX) ? NaN : Number(num);
+
+function _clock_time_get(clk_id, ignored_precision, ptime) {
+  ignored_precision = bigintToI53Checked(ignored_precision);
+  if (!checkWasiClock(clk_id)) {
+    return 28;
+  }
+  var now;
+  // all wasi clocks but realtime are monotonic
+  if (clk_id === 0) {
+    now = _emscripten_date_now();
+  } else if (nowIsMonotonic) {
+    now = _emscripten_get_now();
+  } else {
+    return 52;
+  }
+  // "now" is in ms, and wasi times are in ns.
+  var nsec = Math.round(now * 1e3 * 1e3);
+  HEAP64[((ptime) >> 3)] = BigInt(nsec);
+  return 0;
+}
+
 var readEmAsmArgsArray = [];
 
 var readEmAsmArgs = (sigPtr, buf) => {
@@ -3050,15 +3679,40 @@ var readEmAsmArgs = (sigPtr, buf) => {
   return readEmAsmArgsArray;
 };
 
-var runEmAsmFunction = (code, sigPtr, argbuf) => {
+var runMainThreadEmAsm = (emAsmAddr, sigPtr, argbuf, sync) => {
   var args = readEmAsmArgs(sigPtr, argbuf);
-  assert(ASM_CONSTS.hasOwnProperty(code), `No EM_ASM constant found at address ${code}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
-  return ASM_CONSTS[code](...args);
+  if (ENVIRONMENT_IS_PTHREAD) {
+    // EM_ASM functions are variadic, receiving the actual arguments as a buffer
+    // in memory. the last parameter (argBuf) points to that data. We need to
+    // always un-variadify that, *before proxying*, as in the async case this
+    // is a stack allocation that LLVM made, which may go away before the main
+    // thread gets the message. For that reason we handle proxying *after* the
+    // call to readEmAsmArgs, and therefore we do that manually here instead
+    // of using __proxy. (And dor simplicity, do the same in the sync
+    // case as well, even though it's not strictly necessary, to keep the two
+    // code paths as similar as possible on both sides.)
+    return proxyToMainThread(0, emAsmAddr, sync, ...args);
+  }
+  assert(ASM_CONSTS.hasOwnProperty(emAsmAddr), `No EM_ASM constant found at address ${emAsmAddr}.  The loaded WebAssembly file is likely out of sync with the generated JavaScript.`);
+  return ASM_CONSTS[emAsmAddr](...args);
 };
 
-var _emscripten_asm_const_int = (code, sigPtr, argbuf) => runEmAsmFunction(code, sigPtr, argbuf);
+var _emscripten_asm_const_async_on_main_thread = (emAsmAddr, sigPtr, argbuf) => runMainThreadEmAsm(emAsmAddr, sigPtr, argbuf, 0);
 
-var _emscripten_get_now = () => performance.now();
+var _emscripten_check_blocking_allowed = () => {
+  if (ENVIRONMENT_IS_WORKER) return;
+  // Blocking in a worker/pthread is fine.
+  warnOnce("Blocking on the main thread is very dangerous, see https://emscripten.org/docs/porting/pthreads.html#blocking-on-the-main-browser-thread");
+};
+
+var runtimeKeepalivePush = () => {
+  runtimeKeepaliveCounter += 1;
+};
+
+var _emscripten_exit_with_live_runtime = () => {
+  runtimeKeepalivePush();
+  throw "unwind";
+};
 
 var getHeapMax = () => // Stay one Wasm page short of 4GB: while e.g. Chrome is able to allocate
 // full 4GB Wasm memories, the size will wrap back to 0 bytes in Wasm side
@@ -3135,13 +3789,6 @@ var _emscripten_resize_heap = requestedSize => {
   return false;
 };
 
-var _emscripten_wasm_worker_post_function_v = (id, funcPtr) => {
-  _wasmWorkers[id].postMessage({
-    "_wsc": funcPtr,
-    "x": []
-  });
-};
-
 var ENV = {};
 
 var getExecutableName = () => thisProgram || "./this.program";
@@ -3176,7 +3823,8 @@ var getEnvStrings = () => {
   return getEnvStrings.strings;
 };
 
-var _environ_get = (__environ, environ_buf) => {
+function _environ_get(__environ, environ_buf) {
+  if (ENVIRONMENT_IS_PTHREAD) return proxyToMainThread(3, 0, 1, __environ, environ_buf);
   var bufSize = 0;
   var envp = 0;
   for (var string of getEnvStrings()) {
@@ -3186,9 +3834,10 @@ var _environ_get = (__environ, environ_buf) => {
     envp += 4;
   }
   return 0;
-};
+}
 
-var _environ_sizes_get = (penviron_count, penviron_buf_size) => {
+function _environ_sizes_get(penviron_count, penviron_buf_size) {
+  if (ENVIRONMENT_IS_PTHREAD) return proxyToMainThread(4, 0, 1, penviron_count, penviron_buf_size);
   var strings = getEnvStrings();
   GROWABLE_HEAP_U32()[((penviron_count) >> 2)] = strings.length;
   var bufSize = 0;
@@ -3197,7 +3846,7 @@ var _environ_sizes_get = (penviron_count, penviron_buf_size) => {
   }
   GROWABLE_HEAP_U32()[((penviron_buf_size) >> 2)] = bufSize;
   return 0;
-};
+}
 
 var PATH = {
   isAbs: path => path.charAt(0) === "/",
@@ -5757,6 +6406,7 @@ var SYSCALLS = {
 };
 
 function _fd_close(fd) {
+  if (ENVIRONMENT_IS_PTHREAD) return proxyToMainThread(5, 0, 1, fd);
   try {
     var stream = SYSCALLS.getStreamFromFD(fd);
     FS.close(stream);
@@ -5786,6 +6436,7 @@ function _fd_close(fd) {
 };
 
 function _fd_read(fd, iov, iovcnt, pnum) {
+  if (ENVIRONMENT_IS_PTHREAD) return proxyToMainThread(6, 0, 1, fd, iov, iovcnt, pnum);
   try {
     var stream = SYSCALLS.getStreamFromFD(fd);
     var num = doReadv(stream, iov, iovcnt);
@@ -5797,13 +6448,8 @@ function _fd_read(fd, iov, iovcnt, pnum) {
   }
 }
 
-var INT53_MAX = 9007199254740992;
-
-var INT53_MIN = -9007199254740992;
-
-var bigintToI53Checked = num => (num < INT53_MIN || num > INT53_MAX) ? NaN : Number(num);
-
 function _fd_seek(fd, offset, whence, newOffset) {
+  if (ENVIRONMENT_IS_PTHREAD) return proxyToMainThread(7, 0, 1, fd, offset, whence, newOffset);
   offset = bigintToI53Checked(offset);
   try {
     if (isNaN(offset)) return 61;
@@ -5840,6 +6486,7 @@ function _fd_seek(fd, offset, whence, newOffset) {
 };
 
 function _fd_write(fd, iov, iovcnt, pnum) {
+  if (ENVIRONMENT_IS_PTHREAD) return proxyToMainThread(8, 0, 1, fd, iov, iovcnt, pnum);
   try {
     var stream = SYSCALLS.getStreamFromFD(fd);
     var num = doWritev(stream, iov, iovcnt);
@@ -5861,8 +6508,6 @@ var incrementExceptionRefcount = ptr => ___cxa_increment_exception_refcount(ptr)
 
 var decrementExceptionRefcount = ptr => ___cxa_decrement_exception_refcount(ptr);
 
-var stackAlloc = sz => __emscripten_stack_alloc(sz);
-
 var getExceptionMessageCommon = ptr => {
   var sp = stackSave();
   var type_addr_addr = stackAlloc(4);
@@ -5883,6 +6528,8 @@ var getExceptionMessageCommon = ptr => {
 
 var getExceptionMessage = ptr => getExceptionMessageCommon(ptr);
 
+PThread.init();
+
 embind_init_charCodes();
 
 init_ClassHandle();
@@ -5890,11 +6537,6 @@ init_ClassHandle();
 init_RegisteredPointer();
 
 init_emval();
-
-if (ENVIRONMENT_IS_WASM_WORKER) {
-  _wasmWorkers[0] = this;
-  addEventListener("message", _wasmWorkerAppendToQueue);
-}
 
 FS.createPreloadedFile = FS_createPreloadedFile;
 
@@ -5931,11 +6573,11 @@ FS.staticInit();
 }
 
 // Begin runtime exports
-var missingLibrarySymbols = [ "writeI53ToI64", "writeI53ToI64Clamped", "writeI53ToI64Signaling", "writeI53ToU64Clamped", "writeI53ToU64Signaling", "readI53FromI64", "readI53FromU64", "convertI32PairToI53", "convertI32PairToI53Checked", "convertU32PairToI53", "getTempRet0", "zeroMemory", "inetPton4", "inetNtop4", "inetPton6", "inetNtop6", "readSockaddr", "writeSockaddr", "emscriptenLog", "runMainThreadEmAsm", "jstoi_q", "listenOnce", "autoResumeAudioContext", "getDynCaller", "dynCall", "runtimeKeepalivePush", "runtimeKeepalivePop", "asmjsMangle", "HandleAllocator", "getNativeTypeSize", "addOnInit", "addOnPostCtor", "addOnPreMain", "addOnExit", "STACK_SIZE", "STACK_ALIGN", "POINTER_SIZE", "ASSERTIONS", "getCFunc", "ccall", "cwrap", "uleb128Encode", "sigToWasmTypes", "generateFuncType", "convertJsFunctionToWasm", "getEmptyTableSlot", "updateTableMap", "getFunctionAddress", "addFunction", "removeFunction", "reallyNegative", "unSign", "strLen", "reSign", "formatString", "intArrayToString", "AsciiToString", "stringToAscii", "stringToNewUTF8", "stringToUTF8OnStack", "writeArrayToMemory", "registerKeyEventCallback", "maybeCStringToJsString", "findEventTarget", "getBoundingClientRect", "fillMouseEventData", "registerMouseEventCallback", "registerWheelEventCallback", "registerUiEventCallback", "registerFocusEventCallback", "fillDeviceOrientationEventData", "registerDeviceOrientationEventCallback", "fillDeviceMotionEventData", "registerDeviceMotionEventCallback", "screenOrientation", "fillOrientationChangeEventData", "registerOrientationChangeEventCallback", "fillFullscreenChangeEventData", "registerFullscreenChangeEventCallback", "JSEvents_requestFullscreen", "JSEvents_resizeCanvasForFullscreen", "registerRestoreOldStyle", "hideEverythingExceptGivenElement", "restoreHiddenElements", "setLetterbox", "softFullscreenResizeWebGLRenderTarget", "doRequestFullscreen", "fillPointerlockChangeEventData", "registerPointerlockChangeEventCallback", "registerPointerlockErrorEventCallback", "requestPointerLock", "fillVisibilityChangeEventData", "registerVisibilityChangeEventCallback", "registerTouchEventCallback", "fillGamepadEventData", "registerGamepadEventCallback", "registerBeforeUnloadEventCallback", "fillBatteryEventData", "battery", "registerBatteryEventCallback", "setCanvasElementSize", "getCanvasElementSize", "jsStackTrace", "getCallstack", "convertPCtoSourceLocation", "checkWasiClock", "wasiRightsToMuslOFlags", "wasiOFlagsToMuslOFlags", "safeSetTimeout", "setImmediateWrapped", "safeRequestAnimationFrame", "clearImmediateWrapped", "registerPostMainLoop", "registerPreMainLoop", "getPromise", "makePromise", "idsToPromises", "makePromiseCallback", "Browser_asyncPrepareDataCounter", "isLeapYear", "ydayFromDate", "arraySum", "addDays", "getSocketFromFD", "getSocketAddress", "FS_unlink", "FS_mkdirTree", "_setNetworkCallback", "heapObjectForWebGLType", "toTypedArrayIndex", "webgl_enable_ANGLE_instanced_arrays", "webgl_enable_OES_vertex_array_object", "webgl_enable_WEBGL_draw_buffers", "webgl_enable_WEBGL_multi_draw", "webgl_enable_EXT_polygon_offset_clamp", "webgl_enable_EXT_clip_control", "webgl_enable_WEBGL_polygon_mode", "emscriptenWebGLGet", "computeUnpackAlignedImageSize", "colorChannelsInGlTextureFormat", "emscriptenWebGLGetTexPixelData", "emscriptenWebGLGetUniform", "webglGetUniformLocation", "webglPrepareUniformLocationsBeforeFirstUse", "webglGetLeftBracePos", "emscriptenWebGLGetVertexAttrib", "__glGetActiveAttribOrUniform", "writeGLArray", "registerWebGlEventCallback", "runAndAbortIfError", "ALLOC_NORMAL", "ALLOC_STACK", "allocate", "writeStringToMemory", "writeAsciiToMemory", "demangle", "stackTrace", "_wasmWorkerPostFunction1", "_wasmWorkerPostFunction2", "_wasmWorkerPostFunction3", "getFunctionArgsName", "createJsInvokerSignature", "PureVirtualError", "registerInheritedInstance", "unregisterInheritedInstance", "getInheritedInstanceCount", "getLiveInheritedInstances", "enumReadValueFromPointer", "setDelayFunction", "getStringOrSymbol", "emval_get_global", "emval_returnValue", "emval_lookupTypes", "emval_addMethodCaller" ];
+var missingLibrarySymbols = [ "writeI53ToI64", "writeI53ToI64Clamped", "writeI53ToI64Signaling", "writeI53ToU64Clamped", "writeI53ToU64Signaling", "readI53FromI64", "readI53FromU64", "convertI32PairToI53", "convertI32PairToI53Checked", "convertU32PairToI53", "getTempRet0", "zeroMemory", "inetPton4", "inetNtop4", "inetPton6", "inetNtop6", "readSockaddr", "writeSockaddr", "emscriptenLog", "runEmAsmFunction", "jstoi_q", "listenOnce", "autoResumeAudioContext", "getDynCaller", "dynCall", "runtimeKeepalivePop", "asmjsMangle", "HandleAllocator", "getNativeTypeSize", "addOnInit", "addOnPostCtor", "addOnPreMain", "addOnExit", "STACK_SIZE", "STACK_ALIGN", "POINTER_SIZE", "ASSERTIONS", "getCFunc", "ccall", "cwrap", "uleb128Encode", "sigToWasmTypes", "generateFuncType", "convertJsFunctionToWasm", "getEmptyTableSlot", "updateTableMap", "getFunctionAddress", "addFunction", "removeFunction", "reallyNegative", "unSign", "strLen", "reSign", "formatString", "intArrayToString", "AsciiToString", "stringToAscii", "stringToNewUTF8", "stringToUTF8OnStack", "writeArrayToMemory", "registerKeyEventCallback", "maybeCStringToJsString", "findEventTarget", "getBoundingClientRect", "fillMouseEventData", "registerMouseEventCallback", "registerWheelEventCallback", "registerUiEventCallback", "registerFocusEventCallback", "fillDeviceOrientationEventData", "registerDeviceOrientationEventCallback", "fillDeviceMotionEventData", "registerDeviceMotionEventCallback", "screenOrientation", "fillOrientationChangeEventData", "registerOrientationChangeEventCallback", "fillFullscreenChangeEventData", "registerFullscreenChangeEventCallback", "JSEvents_requestFullscreen", "JSEvents_resizeCanvasForFullscreen", "registerRestoreOldStyle", "hideEverythingExceptGivenElement", "restoreHiddenElements", "setLetterbox", "softFullscreenResizeWebGLRenderTarget", "doRequestFullscreen", "fillPointerlockChangeEventData", "registerPointerlockChangeEventCallback", "registerPointerlockErrorEventCallback", "requestPointerLock", "fillVisibilityChangeEventData", "registerVisibilityChangeEventCallback", "registerTouchEventCallback", "fillGamepadEventData", "registerGamepadEventCallback", "registerBeforeUnloadEventCallback", "fillBatteryEventData", "battery", "registerBatteryEventCallback", "setCanvasElementSizeCallingThread", "setCanvasElementSizeMainThread", "setCanvasElementSize", "getCanvasSizeCallingThread", "getCanvasSizeMainThread", "getCanvasElementSize", "jsStackTrace", "getCallstack", "convertPCtoSourceLocation", "wasiRightsToMuslOFlags", "wasiOFlagsToMuslOFlags", "safeSetTimeout", "setImmediateWrapped", "safeRequestAnimationFrame", "clearImmediateWrapped", "registerPostMainLoop", "registerPreMainLoop", "getPromise", "makePromise", "idsToPromises", "makePromiseCallback", "Browser_asyncPrepareDataCounter", "isLeapYear", "ydayFromDate", "arraySum", "addDays", "getSocketFromFD", "getSocketAddress", "FS_unlink", "FS_mkdirTree", "_setNetworkCallback", "heapObjectForWebGLType", "toTypedArrayIndex", "webgl_enable_ANGLE_instanced_arrays", "webgl_enable_OES_vertex_array_object", "webgl_enable_WEBGL_draw_buffers", "webgl_enable_WEBGL_multi_draw", "webgl_enable_EXT_polygon_offset_clamp", "webgl_enable_EXT_clip_control", "webgl_enable_WEBGL_polygon_mode", "emscriptenWebGLGet", "computeUnpackAlignedImageSize", "colorChannelsInGlTextureFormat", "emscriptenWebGLGetTexPixelData", "emscriptenWebGLGetUniform", "webglGetUniformLocation", "webglPrepareUniformLocationsBeforeFirstUse", "webglGetLeftBracePos", "emscriptenWebGLGetVertexAttrib", "__glGetActiveAttribOrUniform", "writeGLArray", "emscripten_webgl_destroy_context_before_on_calling_thread", "registerWebGlEventCallback", "runAndAbortIfError", "ALLOC_NORMAL", "ALLOC_STACK", "allocate", "writeStringToMemory", "writeAsciiToMemory", "demangle", "stackTrace", "getFunctionArgsName", "createJsInvokerSignature", "PureVirtualError", "registerInheritedInstance", "unregisterInheritedInstance", "getInheritedInstanceCount", "getLiveInheritedInstances", "enumReadValueFromPointer", "setDelayFunction", "getStringOrSymbol", "emval_get_global", "emval_returnValue", "emval_lookupTypes", "emval_addMethodCaller" ];
 
 missingLibrarySymbols.forEach(missingLibrarySymbol);
 
-var unexportedSymbols = [ "run", "addRunDependency", "removeRunDependency", "out", "err", "callMain", "abort", "wasmMemory", "wasmExports", "HEAPF32", "HEAPF64", "HEAP8", "HEAPU8", "HEAP16", "HEAPU16", "HEAP32", "HEAPU32", "HEAP64", "HEAPU64", "writeStackCookie", "checkStackCookie", "INT53_MAX", "INT53_MIN", "bigintToI53Checked", "stackSave", "stackRestore", "stackAlloc", "setTempRet0", "ptrToString", "exitJS", "getHeapMax", "growMemory", "ENV", "ERRNO_CODES", "strError", "DNS", "Protocols", "Sockets", "timers", "warnOnce", "readEmAsmArgsArray", "readEmAsmArgs", "runEmAsmFunction", "jstoi_s", "getExecutableName", "handleException", "keepRuntimeAlive", "callUserCallback", "maybeExit", "asyncLoad", "alignMemory", "mmapAlloc", "wasmTable", "noExitRuntime", "addOnPreRun", "addOnPostRun", "freeTableIndexes", "functionsInTableMap", "setValue", "getValue", "PATH", "PATH_FS", "UTF8Decoder", "UTF8ArrayToString", "UTF8ToString", "stringToUTF8Array", "stringToUTF8", "lengthBytesUTF8", "intArrayFromString", "UTF16Decoder", "UTF16ToString", "stringToUTF16", "lengthBytesUTF16", "UTF32ToString", "stringToUTF32", "lengthBytesUTF32", "JSEvents", "specialHTMLTargets", "findCanvasEventTarget", "currentFullscreenStrategy", "restoreOldWindowedStyle", "UNWIND_CACHE", "ExitStatus", "getEnvStrings", "doReadv", "doWritev", "initRandomFill", "randomFill", "emSetImmediate", "emClearImmediate_deps", "emClearImmediate", "promiseMap", "uncaughtExceptionCount", "exceptionLast", "exceptionCaught", "ExceptionInfo", "findMatchingCatch", "getExceptionMessageCommon", "Browser", "getPreloadedImageData__data", "wget", "MONTH_DAYS_REGULAR", "MONTH_DAYS_LEAP", "MONTH_DAYS_REGULAR_CUMULATIVE", "MONTH_DAYS_LEAP_CUMULATIVE", "SYSCALLS", "preloadPlugins", "FS_createPreloadedFile", "FS_modeStringToFlags", "FS_getMode", "FS_stdin_getChar_buffer", "FS_stdin_getChar", "FS_createPath", "FS_createDevice", "FS_readFile", "FS", "FS_createDataFile", "FS_createLazyFile", "MEMFS", "TTY", "PIPEFS", "SOCKFS", "tempFixedLengthArray", "miniTempWebGLFloatBuffers", "miniTempWebGLIntBuffers", "GL", "AL", "GLUT", "EGL", "GLEW", "IDBStore", "SDL", "SDL_gfx", "allocateUTF8", "allocateUTF8OnStack", "print", "printErr", "_wasmWorkers", "_wasmWorkersID", "_wasmWorkerDelayedMessageQueue", "_wasmWorkerAppendToQueue", "_wasmWorkerRunPostMessage", "_wasmWorkerInitializeRuntime", "InternalError", "BindingError", "throwInternalError", "throwBindingError", "registeredTypes", "awaitingDependencies", "typeDependencies", "tupleRegistrations", "structRegistrations", "sharedRegisterType", "whenDependentTypesAreResolved", "embind_charCodes", "embind_init_charCodes", "readLatin1String", "getTypeName", "getFunctionName", "heap32VectorToArray", "requireRegisteredType", "usesDestructorStack", "checkArgCount", "getRequiredArgCount", "createJsInvoker", "UnboundTypeError", "GenericWireTypeSize", "EmValType", "EmValOptionalType", "throwUnboundTypeError", "ensureOverloadTable", "exposePublicSymbol", "replacePublicSymbol", "createNamedFunction", "embindRepr", "registeredInstances", "getBasestPointer", "getInheritedInstance", "registeredPointers", "registerType", "integerReadValueFromPointer", "floatReadValueFromPointer", "readPointer", "runDestructors", "craftInvokerFunction", "embind__requireFunction", "genericPointerToWireType", "constNoSmartPtrRawPointerToWireType", "nonConstNoSmartPtrRawPointerToWireType", "init_RegisteredPointer", "RegisteredPointer", "RegisteredPointer_fromWireType", "runDestructor", "releaseClassHandle", "finalizationRegistry", "detachFinalizer_deps", "detachFinalizer", "attachFinalizer", "makeClassHandle", "init_ClassHandle", "ClassHandle", "throwInstanceAlreadyDeleted", "deletionQueue", "flushPendingDeletes", "delayFunction", "RegisteredClass", "shallowCopyInternalPointer", "downcastPointer", "upcastPointer", "validateThis", "char_0", "char_9", "makeLegalFunctionName", "emval_freelist", "emval_handles", "emval_symbols", "init_emval", "count_emval_handles", "Emval", "emval_methodCallers", "reflectConstruct" ];
+var unexportedSymbols = [ "run", "addRunDependency", "removeRunDependency", "out", "err", "callMain", "abort", "wasmMemory", "wasmExports", "HEAPF32", "HEAPF64", "HEAP8", "HEAPU8", "HEAP16", "HEAPU16", "HEAP32", "HEAPU32", "HEAP64", "HEAPU64", "GROWABLE_HEAP_I8", "GROWABLE_HEAP_U8", "GROWABLE_HEAP_I16", "GROWABLE_HEAP_U16", "GROWABLE_HEAP_I32", "GROWABLE_HEAP_U32", "GROWABLE_HEAP_F32", "GROWABLE_HEAP_F64", "writeStackCookie", "checkStackCookie", "INT53_MAX", "INT53_MIN", "bigintToI53Checked", "stackSave", "stackRestore", "stackAlloc", "setTempRet0", "ptrToString", "exitJS", "getHeapMax", "growMemory", "ENV", "ERRNO_CODES", "strError", "DNS", "Protocols", "Sockets", "timers", "warnOnce", "readEmAsmArgsArray", "readEmAsmArgs", "runMainThreadEmAsm", "jstoi_s", "getExecutableName", "handleException", "keepRuntimeAlive", "runtimeKeepalivePush", "callUserCallback", "maybeExit", "asyncLoad", "alignMemory", "mmapAlloc", "wasmTable", "noExitRuntime", "addOnPreRun", "addOnPostRun", "freeTableIndexes", "functionsInTableMap", "setValue", "getValue", "PATH", "PATH_FS", "UTF8Decoder", "UTF8ArrayToString", "UTF8ToString", "stringToUTF8Array", "stringToUTF8", "lengthBytesUTF8", "intArrayFromString", "UTF16Decoder", "UTF16ToString", "stringToUTF16", "lengthBytesUTF16", "UTF32ToString", "stringToUTF32", "lengthBytesUTF32", "JSEvents", "specialHTMLTargets", "findCanvasEventTarget", "currentFullscreenStrategy", "restoreOldWindowedStyle", "UNWIND_CACHE", "ExitStatus", "getEnvStrings", "checkWasiClock", "doReadv", "doWritev", "initRandomFill", "randomFill", "emSetImmediate", "emClearImmediate_deps", "emClearImmediate", "promiseMap", "uncaughtExceptionCount", "exceptionLast", "exceptionCaught", "ExceptionInfo", "findMatchingCatch", "getExceptionMessageCommon", "Browser", "getPreloadedImageData__data", "wget", "MONTH_DAYS_REGULAR", "MONTH_DAYS_LEAP", "MONTH_DAYS_REGULAR_CUMULATIVE", "MONTH_DAYS_LEAP_CUMULATIVE", "SYSCALLS", "preloadPlugins", "FS_createPreloadedFile", "FS_modeStringToFlags", "FS_getMode", "FS_stdin_getChar_buffer", "FS_stdin_getChar", "FS_createPath", "FS_createDevice", "FS_readFile", "FS", "FS_createDataFile", "FS_createLazyFile", "MEMFS", "TTY", "PIPEFS", "SOCKFS", "tempFixedLengthArray", "miniTempWebGLFloatBuffers", "miniTempWebGLIntBuffers", "GL", "AL", "GLUT", "EGL", "GLEW", "IDBStore", "SDL", "SDL_gfx", "allocateUTF8", "allocateUTF8OnStack", "print", "printErr", "PThread", "terminateWorker", "cleanupThread", "registerTLSInit", "spawnThread", "exitOnMainThread", "proxyToMainThread", "proxiedJSCallArgs", "invokeEntryPoint", "checkMailbox", "InternalError", "BindingError", "throwInternalError", "throwBindingError", "registeredTypes", "awaitingDependencies", "typeDependencies", "tupleRegistrations", "structRegistrations", "sharedRegisterType", "whenDependentTypesAreResolved", "embind_charCodes", "embind_init_charCodes", "readLatin1String", "getTypeName", "getFunctionName", "heap32VectorToArray", "requireRegisteredType", "usesDestructorStack", "checkArgCount", "getRequiredArgCount", "createJsInvoker", "UnboundTypeError", "GenericWireTypeSize", "EmValType", "EmValOptionalType", "throwUnboundTypeError", "ensureOverloadTable", "exposePublicSymbol", "replacePublicSymbol", "createNamedFunction", "embindRepr", "registeredInstances", "getBasestPointer", "getInheritedInstance", "registeredPointers", "registerType", "integerReadValueFromPointer", "floatReadValueFromPointer", "readPointer", "runDestructors", "craftInvokerFunction", "embind__requireFunction", "genericPointerToWireType", "constNoSmartPtrRawPointerToWireType", "nonConstNoSmartPtrRawPointerToWireType", "init_RegisteredPointer", "RegisteredPointer", "RegisteredPointer_fromWireType", "runDestructor", "releaseClassHandle", "finalizationRegistry", "detachFinalizer_deps", "detachFinalizer", "attachFinalizer", "makeClassHandle", "init_ClassHandle", "ClassHandle", "throwInstanceAlreadyDeleted", "deletionQueue", "flushPendingDeletes", "delayFunction", "RegisteredClass", "shallowCopyInternalPointer", "downcastPointer", "upcastPointer", "validateThis", "char_0", "char_9", "makeLegalFunctionName", "emval_freelist", "emval_handles", "emval_symbols", "init_emval", "count_emval_handles", "Emval", "emval_methodCallers", "reflectConstruct" ];
 
 unexportedSymbols.forEach(unexportedRuntimeSymbol);
 
@@ -5949,82 +6591,101 @@ Module["getExceptionMessage"] = getExceptionMessage;
 
 // End JS library exports
 // end include: postlibrary.js
+// proxiedFunctionTable specifies the list of functions that can be called
+// either synchronously or asynchronously from other threads in postMessage()d
+// or internally queued events. This way a pthread in a Worker can synchronously
+// access e.g. the DOM on the main thread.
+var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied, _environ_get, _environ_sizes_get, _fd_close, _fd_read, _fd_seek, _fd_write ];
+
 function checkIncomingModuleAPI() {
   ignoredModuleProp("fetchSettings");
 }
 
 var ASM_CONSTS = {
-  120636: () => {
-    console.log("Hello via EM_ASM");
+  121936: () => {
+    console.log("Hello from proxied JS");
   }
 };
 
-var wasmImports = {
-  /** @export */ __assert_fail: ___assert_fail,
-  /** @export */ __cxa_begin_catch: ___cxa_begin_catch,
-  /** @export */ __cxa_end_catch: ___cxa_end_catch,
-  /** @export */ __cxa_find_matching_catch_2: ___cxa_find_matching_catch_2,
-  /** @export */ __cxa_find_matching_catch_3: ___cxa_find_matching_catch_3,
-  /** @export */ __cxa_rethrow: ___cxa_rethrow,
-  /** @export */ __cxa_throw: ___cxa_throw,
-  /** @export */ __cxa_uncaught_exceptions: ___cxa_uncaught_exceptions,
-  /** @export */ __resumeException: ___resumeException,
-  /** @export */ _abort_js: __abort_js,
-  /** @export */ _embind_register_bigint: __embind_register_bigint,
-  /** @export */ _embind_register_bool: __embind_register_bool,
-  /** @export */ _embind_register_class: __embind_register_class,
-  /** @export */ _embind_register_class_class_function: __embind_register_class_class_function,
-  /** @export */ _embind_register_class_constructor: __embind_register_class_constructor,
-  /** @export */ _embind_register_class_function: __embind_register_class_function,
-  /** @export */ _embind_register_class_property: __embind_register_class_property,
-  /** @export */ _embind_register_emval: __embind_register_emval,
-  /** @export */ _embind_register_float: __embind_register_float,
-  /** @export */ _embind_register_integer: __embind_register_integer,
-  /** @export */ _embind_register_memory_view: __embind_register_memory_view,
-  /** @export */ _embind_register_std_string: __embind_register_std_string,
-  /** @export */ _embind_register_std_wstring: __embind_register_std_wstring,
-  /** @export */ _embind_register_void: __embind_register_void,
-  /** @export */ _emscripten_create_wasm_worker: __emscripten_create_wasm_worker,
-  /** @export */ _emval_decref: __emval_decref,
-  /** @export */ _emval_take_value: __emval_take_value,
-  /** @export */ _tzset_js: __tzset_js,
-  /** @export */ emscripten_asm_const_int: _emscripten_asm_const_int,
-  /** @export */ emscripten_get_now: _emscripten_get_now,
-  /** @export */ emscripten_resize_heap: _emscripten_resize_heap,
-  /** @export */ emscripten_wasm_worker_post_function_v: _emscripten_wasm_worker_post_function_v,
-  /** @export */ environ_get: _environ_get,
-  /** @export */ environ_sizes_get: _environ_sizes_get,
-  /** @export */ fd_close: _fd_close,
-  /** @export */ fd_read: _fd_read,
-  /** @export */ fd_seek: _fd_seek,
-  /** @export */ fd_write: _fd_write,
-  /** @export */ invoke_diii,
-  /** @export */ invoke_fiii,
-  /** @export */ invoke_i,
-  /** @export */ invoke_ii,
-  /** @export */ invoke_iii,
-  /** @export */ invoke_iiii,
-  /** @export */ invoke_iiiii,
-  /** @export */ invoke_iiiiid,
-  /** @export */ invoke_iiiiii,
-  /** @export */ invoke_iiiiiii,
-  /** @export */ invoke_iiiiiiii,
-  /** @export */ invoke_iiiiiiiiiii,
-  /** @export */ invoke_iiiiiiiiiiii,
-  /** @export */ invoke_iiiiiiiiiiiii,
-  /** @export */ invoke_iiiiij,
-  /** @export */ invoke_jiiii,
-  /** @export */ invoke_v,
-  /** @export */ invoke_vi,
-  /** @export */ invoke_vii,
-  /** @export */ invoke_viii,
-  /** @export */ invoke_viiii,
-  /** @export */ invoke_viiiiiii,
-  /** @export */ invoke_viiiiiiiiii,
-  /** @export */ invoke_viiiiiiiiiiiiiii,
-  /** @export */ kayoDispatchToObserver: _kayoDispatchToObserver,
-  /** @export */ memory: wasmMemory
-};
+var wasmImports;
+
+function assignWasmImports() {
+  wasmImports = {
+    /** @export */ __assert_fail: ___assert_fail,
+    /** @export */ __cxa_begin_catch: ___cxa_begin_catch,
+    /** @export */ __cxa_end_catch: ___cxa_end_catch,
+    /** @export */ __cxa_find_matching_catch_2: ___cxa_find_matching_catch_2,
+    /** @export */ __cxa_find_matching_catch_3: ___cxa_find_matching_catch_3,
+    /** @export */ __cxa_rethrow: ___cxa_rethrow,
+    /** @export */ __cxa_throw: ___cxa_throw,
+    /** @export */ __cxa_uncaught_exceptions: ___cxa_uncaught_exceptions,
+    /** @export */ __pthread_create_js: ___pthread_create_js,
+    /** @export */ __resumeException: ___resumeException,
+    /** @export */ _abort_js: __abort_js,
+    /** @export */ _embind_register_bigint: __embind_register_bigint,
+    /** @export */ _embind_register_bool: __embind_register_bool,
+    /** @export */ _embind_register_class: __embind_register_class,
+    /** @export */ _embind_register_class_class_function: __embind_register_class_class_function,
+    /** @export */ _embind_register_class_constructor: __embind_register_class_constructor,
+    /** @export */ _embind_register_class_function: __embind_register_class_function,
+    /** @export */ _embind_register_class_property: __embind_register_class_property,
+    /** @export */ _embind_register_emval: __embind_register_emval,
+    /** @export */ _embind_register_float: __embind_register_float,
+    /** @export */ _embind_register_integer: __embind_register_integer,
+    /** @export */ _embind_register_memory_view: __embind_register_memory_view,
+    /** @export */ _embind_register_std_string: __embind_register_std_string,
+    /** @export */ _embind_register_std_wstring: __embind_register_std_wstring,
+    /** @export */ _embind_register_void: __embind_register_void,
+    /** @export */ _emscripten_init_main_thread_js: __emscripten_init_main_thread_js,
+    /** @export */ _emscripten_notify_mailbox_postmessage: __emscripten_notify_mailbox_postmessage,
+    /** @export */ _emscripten_receive_on_main_thread_js: __emscripten_receive_on_main_thread_js,
+    /** @export */ _emscripten_thread_cleanup: __emscripten_thread_cleanup,
+    /** @export */ _emscripten_thread_mailbox_await: __emscripten_thread_mailbox_await,
+    /** @export */ _emscripten_thread_set_strongref: __emscripten_thread_set_strongref,
+    /** @export */ _emval_decref: __emval_decref,
+    /** @export */ _emval_take_value: __emval_take_value,
+    /** @export */ _tzset_js: __tzset_js,
+    /** @export */ clock_time_get: _clock_time_get,
+    /** @export */ emscripten_asm_const_async_on_main_thread: _emscripten_asm_const_async_on_main_thread,
+    /** @export */ emscripten_check_blocking_allowed: _emscripten_check_blocking_allowed,
+    /** @export */ emscripten_exit_with_live_runtime: _emscripten_exit_with_live_runtime,
+    /** @export */ emscripten_get_now: _emscripten_get_now,
+    /** @export */ emscripten_resize_heap: _emscripten_resize_heap,
+    /** @export */ environ_get: _environ_get,
+    /** @export */ environ_sizes_get: _environ_sizes_get,
+    /** @export */ exit: _exit,
+    /** @export */ fd_close: _fd_close,
+    /** @export */ fd_read: _fd_read,
+    /** @export */ fd_seek: _fd_seek,
+    /** @export */ fd_write: _fd_write,
+    /** @export */ invoke_diii,
+    /** @export */ invoke_fiii,
+    /** @export */ invoke_i,
+    /** @export */ invoke_ii,
+    /** @export */ invoke_iii,
+    /** @export */ invoke_iiii,
+    /** @export */ invoke_iiiii,
+    /** @export */ invoke_iiiiid,
+    /** @export */ invoke_iiiiii,
+    /** @export */ invoke_iiiiiii,
+    /** @export */ invoke_iiiiiiii,
+    /** @export */ invoke_iiiiiiiiiii,
+    /** @export */ invoke_iiiiiiiiiiii,
+    /** @export */ invoke_iiiiiiiiiiiii,
+    /** @export */ invoke_iiiiij,
+    /** @export */ invoke_jiiii,
+    /** @export */ invoke_v,
+    /** @export */ invoke_vi,
+    /** @export */ invoke_vii,
+    /** @export */ invoke_viii,
+    /** @export */ invoke_viiii,
+    /** @export */ invoke_viiiiiii,
+    /** @export */ invoke_viiiiiiiiii,
+    /** @export */ invoke_viiiiiiiiiiiiiii,
+    /** @export */ kayoDispatchToObserver: _kayoDispatchToObserver,
+    /** @export */ memory: wasmMemory
+  };
+}
 
 var wasmExports = await createWasm();
 
@@ -6032,31 +6693,51 @@ var ___wasm_call_ctors = createExportWrapper("__wasm_call_ctors", 0);
 
 var _malloc = createExportWrapper("malloc", 1);
 
+var _pthread_self = () => (_pthread_self = wasmExports["pthread_self"])();
+
 var _free = createExportWrapper("free", 1);
 
 var ___getTypeName = createExportWrapper("__getTypeName", 1);
 
+var __embind_initialize_bindings = createExportWrapper("_embind_initialize_bindings", 0);
+
+var __emscripten_tls_init = createExportWrapper("_emscripten_tls_init", 0);
+
+var __emscripten_thread_init = createExportWrapper("_emscripten_thread_init", 6);
+
+var __emscripten_thread_crashed = createExportWrapper("_emscripten_thread_crashed", 0);
+
 var _fflush = createExportWrapper("fflush", 1);
 
-var _emscripten_stack_get_end = wasmExports["emscripten_stack_get_end"];
+var __emscripten_run_on_main_thread_js = createExportWrapper("_emscripten_run_on_main_thread_js", 5);
 
-var _emscripten_stack_get_base = wasmExports["emscripten_stack_get_base"];
+var __emscripten_thread_free_data = createExportWrapper("_emscripten_thread_free_data", 1);
+
+var __emscripten_thread_exit = createExportWrapper("_emscripten_thread_exit", 1);
+
+var _emscripten_stack_get_base = () => (_emscripten_stack_get_base = wasmExports["emscripten_stack_get_base"])();
+
+var _emscripten_stack_get_end = () => (_emscripten_stack_get_end = wasmExports["emscripten_stack_get_end"])();
 
 var _strerror = createExportWrapper("strerror", 1);
+
+var __emscripten_check_mailbox = createExportWrapper("_emscripten_check_mailbox", 0);
 
 var _setThrew = createExportWrapper("setThrew", 2);
 
 var __emscripten_tempret_set = createExportWrapper("_emscripten_tempret_set", 1);
 
-var _emscripten_stack_init = wasmExports["emscripten_stack_init"];
+var _emscripten_stack_init = () => (_emscripten_stack_init = wasmExports["emscripten_stack_init"])();
 
-var _emscripten_stack_get_free = wasmExports["emscripten_stack_get_free"];
+var _emscripten_stack_set_limits = (a0, a1) => (_emscripten_stack_set_limits = wasmExports["emscripten_stack_set_limits"])(a0, a1);
 
-var __emscripten_stack_restore = wasmExports["_emscripten_stack_restore"];
+var _emscripten_stack_get_free = () => (_emscripten_stack_get_free = wasmExports["emscripten_stack_get_free"])();
 
-var __emscripten_stack_alloc = wasmExports["_emscripten_stack_alloc"];
+var __emscripten_stack_restore = a0 => (__emscripten_stack_restore = wasmExports["_emscripten_stack_restore"])(a0);
 
-var _emscripten_stack_get_current = wasmExports["emscripten_stack_get_current"];
+var __emscripten_stack_alloc = a0 => (__emscripten_stack_alloc = wasmExports["_emscripten_stack_alloc"])(a0);
+
+var _emscripten_stack_get_current = () => (_emscripten_stack_get_current = wasmExports["emscripten_stack_get_current"])();
 
 var ___cxa_decrement_exception_refcount = createExportWrapper("__cxa_decrement_exception_refcount", 1);
 
@@ -6069,8 +6750,6 @@ var ___get_exception_message = createExportWrapper("__get_exception_message", 3)
 var ___cxa_can_catch = createExportWrapper("__cxa_can_catch", 3);
 
 var ___cxa_get_exception_ptr = createExportWrapper("__cxa_get_exception_ptr", 1);
-
-var __emscripten_wasm_worker_initialize = createExportWrapper("_emscripten_wasm_worker_initialize", 2);
 
 function invoke_ii(index, a1) {
   var sp = stackSave();
@@ -6345,6 +7024,8 @@ function stackCheckInit() {
   // This is normally called automatically during __wasm_call_ctors but need to
   // get these values before even running any of the ctors so we call it redundantly
   // here.
+  // See $establishStackSpace for the equivalent code that runs on a thread
+  assert(!ENVIRONMENT_IS_PTHREAD);
   _emscripten_stack_init();
   // TODO(sbc): Move writeStackCookie to native to to avoid this.
   writeStackCookie();
@@ -6355,7 +7036,7 @@ function run() {
     dependenciesFulfilled = run;
     return;
   }
-  if ((ENVIRONMENT_IS_WASM_WORKER)) {
+  if ((ENVIRONMENT_IS_PTHREAD)) {
     readyPromiseResolve(Module);
     initRuntime();
     return;
@@ -6476,10 +7157,7 @@ for (const prop of Object.keys(Module)) {
 }
 );
 })();
-if (typeof exports === 'object' && typeof module === 'object') {
-  module.exports = KayoWASM;
-  // This default export looks redundant, but it allows TS to import this
-  // commonjs style module.
-  module.exports.default = KayoWASM;
-} else if (typeof define === 'function' && define['amd'])
-  define([], () => KayoWASM);
+export default KayoWASM;
+var isPthread = globalThis.self?.name?.startsWith('em-pthread');
+// When running as a pthread, construct a new instance on startup
+isPthread && KayoWASM();

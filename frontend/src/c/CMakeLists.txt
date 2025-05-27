@@ -30,7 +30,7 @@ target_compile_options(KayoCorePP PRIVATE
   -Woverloaded-virtual
   -O0
   -gsource-map
-  -sWASM_WORKERS  
+  -pthread   
 )
 
 # Link‑time flags (moved here)
@@ -38,11 +38,13 @@ target_link_options(KayoCorePP PRIVATE
   -sWASM_BIGINT
   --no-entry
   -sNO_DISABLE_EXCEPTION_CATCHING
-  -sMODULARIZE
+  -sMODULARIZE=1
+  -sEXPORT_ES6=1
   -sEXPORT_NAME="KayoWASM"
   -sENVIRONMENT=web,worker
   -sALLOW_MEMORY_GROWTH
-  -sWASM_WORKERS  
+  -pthread
+  -sPTHREAD_POOL_SIZE=1   
   --emit-tsd KayoCorePP.d.ts
   -O0
   -gsource-map

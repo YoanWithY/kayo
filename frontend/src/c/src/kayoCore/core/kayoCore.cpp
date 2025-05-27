@@ -1,16 +1,25 @@
 #include "kayoCore.hpp"
 #include <emscripten/bind.h>
 #include <emscripten/em_asm.h>
-#include <emscripten/wasm_worker.h>
+#include <pthread.h>
 
-void run_in_worker() {
-	EM_ASM({ console.log('Hello via EM_ASM'); });
+void* run_in_worker(void*) {
+	std::cout << "Hi from worker pthread." << std::endl;
+
+	MAIN_THREAD_ASYNC_EM_ASM({
+		console.log("Hello from proxied JS");
+	});
+	return nullptr;
 }
 
 namespace kayo {
 KayoInstance::KayoInstance() {
-	emscripten_wasm_worker_t worker = emscripten_malloc_wasm_worker(/*stackSize: */ 10240);
-	emscripten_wasm_worker_post_function_v(worker, run_in_worker);
+	pthread_t thread;
+	int result = pthread_create(&thread, nullptr, run_in_worker, nullptr);
+	if (result != 0) {
+		std::cerr << "Error: Unable to create thread, " << result << std::endl;
+	}
+
 	std::cout << "Hello from the Kayo C++ WASM instance." << std::endl;
 	this->mirrorStateToConfig();
 }
