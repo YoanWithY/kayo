@@ -1,11 +1,12 @@
 #pragma once
 
 #include "../../numerics/fixedMath.hpp"
+#include <iostream>
 #include <stdint.h>
 #include <string>
 
 extern "C" {
-extern void kayoDispatchToObserver(uint32_t id, std::string value);
+extern void kayoDispatchToObserver(uint32_t id);
 }
 
 namespace kayo {
@@ -13,31 +14,37 @@ namespace kayo {
 uint32_t allocViewControlledID();
 
 template <typename T>
-concept JSViewControllable = requires(T t, const void* ptr, size_t size) {
-	{ t.observeValue() } -> std::same_as<std::string>;
-	T{ptr, size};
-};
+concept JSViewControllable =
+	requires(const char* cstr, std::size_t len, T t) {
+		T{cstr, len};
+		static_cast<std::string>(t);
+	};
 
 template <JSViewControllable T>
 class JSViewControlled {
-  private:
   public:
 	T value;
-	const uint32_t observation_id;
+	uint32_t observation_id;
 	JSViewControlled(T value) : value(value), observation_id(allocViewControlledID()) {}
 	void dispatchToObservers() {
-		kayoDispatchToObserver(this->observation_id, this->value.observeValue());
-	};
+		kayoDispatchToObserver(this->observation_id);
+	}
 
 	std::string getValueJS() {
-		return value.observeValue();
-	};
+		return static_cast<std::string>(value);
+	}
+
 	void setValueJS(std::string str_value) {
-		value = T(reinterpret_cast<const void*>(str_value.c_str()), str_value.length());
+		value = T(reinterpret_cast<const char*>(str_value.c_str()), str_value.length());
 		dispatchToObservers();
-	};
+	}
+
+	uint32_t getObservationID() const {
+		return this->observation_id;
+	}
 };
 
 typedef JSViewControlled<FixedPoint::Number> JSVCNumber;
+typedef JSViewControlled<std::string> JSVCString;
 
 } // namespace kayo

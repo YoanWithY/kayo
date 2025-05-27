@@ -1,16 +1,15 @@
-import { PageContext } from "../../PageContext";
+import { Kayo } from "../../Kayo";
 import BasicPane from "./BasicPane";
 
-import outputPaneTemplate from "./OutputPaneTemplate.json"
+import outputPaneTemplate from "./OutputPaneTemplate.json";
 
 export default class OutputPane extends BasicPane {
-
-	public static createUIElement(win: Window, pageContext: PageContext): OutputPane {
-		return super.createUIElement(win, pageContext, outputPaneTemplate);
+	public static createUIElement(win: Window, kayo: Kayo): OutputPane {
+		return super.createUIElement(win, kayo, outputPaneTemplate);
 	}
 
 	public static getDomClass() {
-		return "output-pane"
+		return "output-pane";
 	}
 
 	public static getName() {

@@ -30,7 +30,7 @@ export class PTPBase {
 	dataArr: any[] = [];
 	messageCallback: (value: string) => void;
 
-	constructor(project: Project) {
+	constructor(_: Project) {
 		this.protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 		this.hostname = window.location.hostname;
 		this.wsPort = 81;
@@ -49,11 +49,7 @@ export class PTPBase {
 			}
 		};
 
-		this.messageCallback = (value: string) => {
-			const log = project.state.ptpMessageLog;
-			log.value.push(JSON.parse(value));
-			log.fireChangeEvents();
-		};
+		this.messageCallback = (_1: string) => {};
 	}
 
 	wsFuncMap: { [K in WSClientMessageType]: (content: any) => void } = {

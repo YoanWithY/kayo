@@ -1,4 +1,4 @@
-import { PageContext } from "../../PageContext";
+import { Kayo } from "../../Kayo";
 import PaneSelectorPane from "../panes/PaneSelectorPane";
 import { WrappingPane } from "../Wrapping/WrappingPane";
 import { SplitablePane } from "./SplitablePane";
@@ -6,14 +6,16 @@ import { SplitPaneContainer } from "./SplitPaneContainer";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 export abstract class SplitButton extends HTMLElement {
-	pageContext!: PageContext;
-	win!: Window
+	kayo!: Kayo;
+	win!: Window;
 	uiRoot!: WrappingPane;
 	clickX = NaN;
 	clickY = NaN;
 	constructor() {
 		super();
-		this.ondragstart = () => { return false; };
+		this.ondragstart = () => {
+			return false;
+		};
 		// this.onmousedown = e => {
 		// 	this.clickX = e.screenX;
 		// 	this.clickY = e.screenY;
@@ -22,7 +24,7 @@ export abstract class SplitButton extends HTMLElement {
 		this.addEventListener("pointerdown", (e) => {
 			this.clickX = e.screenX;
 			this.clickY = e.screenY;
-		})
+		});
 	}
 
 	static checkContainerForSingle(container: SplitPaneContainer, splitablePane: SplitablePane) {
@@ -63,8 +65,7 @@ export abstract class SplitButton extends HTMLElement {
 
 export class SplitButtonUL extends SplitButton {
 	private left(e: PointerEvent) {
-		if (isNaN(this.clickX) || isNaN(this.clickY))
-			return;
+		if (isNaN(this.clickX) || isNaN(this.clickY)) return;
 
 		const dx = e.screenX - this.clickX;
 		const dy = e.screenY - this.clickY;
@@ -73,8 +74,7 @@ export class SplitButtonUL extends SplitButton {
 		this.clickY = NaN;
 
 		const splitablePane = this.parentElement;
-		if (!(splitablePane instanceof SplitablePane))
-			throw new Error("splitable pane has no parent");
+		if (!(splitablePane instanceof SplitablePane)) throw new Error("splitable pane has no parent");
 
 		const container = splitablePane.parentElement;
 		if (!(container instanceof SplitPaneContainer))
@@ -82,11 +82,19 @@ export class SplitButtonUL extends SplitButton {
 
 		let spo = container.getAttribute("split-pane-container-orientation");
 
-		if (dx >= 0 && Math.abs(dy) <= dx || dy >= 0 && Math.abs(dx) <= dy) { // create new window
+		if ((dx >= 0 && Math.abs(dy) <= dx) || (dy >= 0 && Math.abs(dx) <= dy)) {
+			// create new window
 			const orientation = dx >= dy ? "vertical" : "horizontal";
 
 			const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-			const newSplitablePane = SplitablePane.createSplitablePane(this.win, this.pageContext, this.uiRoot, PaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
+			const newSplitablePane = SplitablePane.createSplitablePane(
+				this.win,
+				this.kayo,
+				this.uiRoot,
+				PaneSelectorPane,
+				orientation,
+				splitablePane.getBoundingClientRect(),
+			);
 			const bb = splitablePane.getBoundingClientRect();
 			SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -95,14 +103,17 @@ export class SplitButtonUL extends SplitButton {
 				spo = orientation;
 			}
 
-			if (spo == orientation) { // append to splitpane container
+			if (spo == orientation) {
+				// append to splitpane container
 				splitablePane.before(newSplitablePane, spDivider);
-			} else { // insert new splitpane container
+			} else {
+				// insert new splitpane container
 				const newContainer = SplitPaneContainer.createSplitPaneContainer(this.win, orientation, bb);
 				container.insertBefore(newContainer, splitablePane);
 				newContainer.append(newSplitablePane, spDivider, splitablePane);
 			}
-		} else if (dx <= dy && spo == "vertical" || dy <= dx && spo == "horizontal") { // remove window
+		} else if ((dx <= dy && spo == "vertical") || (dy <= dx && spo == "horizontal")) {
+			// remove window
 			splitablePane.removePrevious(container, spo);
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
@@ -114,9 +125,9 @@ export class SplitButtonUL extends SplitButton {
 		this.onpointerleave = this.left;
 	}
 
-	static create(win: Window, pageContext: PageContext, uiRoot: WrappingPane): SplitButtonUL {
+	static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonUL {
 		const p = win.document.createElement("split-button-UL") as SplitButtonUL;
-		p.pageContext = pageContext;
+		p.kayo = kayo;
 		p.uiRoot = uiRoot;
 		p.win = win;
 		return p;
@@ -124,10 +135,8 @@ export class SplitButtonUL extends SplitButton {
 }
 
 export class SplitButtonUR extends SplitButton {
-
 	private left(e: PointerEvent) {
-		if (isNaN(this.clickX) || isNaN(this.clickY))
-			return
+		if (isNaN(this.clickX) || isNaN(this.clickY)) return;
 
 		const dx = e.screenX - this.clickX;
 		const dy = e.screenY - this.clickY;
@@ -136,8 +145,7 @@ export class SplitButtonUR extends SplitButton {
 		this.clickY = NaN;
 
 		const splitablePane = this.parentElement;
-		if (!(splitablePane instanceof SplitablePane))
-			throw new Error("splitable pane has no parent");
+		if (!(splitablePane instanceof SplitablePane)) throw new Error("splitable pane has no parent");
 
 		const container = splitablePane.parentElement;
 		if (!(container instanceof SplitPaneContainer))
@@ -145,11 +153,19 @@ export class SplitButtonUR extends SplitButton {
 
 		let spo = container.getAttribute("split-pane-container-orientation");
 
-		if (dx <= 0 && Math.abs(dy) <= Math.abs(dx) || dy >= 0 && Math.abs(dx) <= dy) { // create new window
+		if ((dx <= 0 && Math.abs(dy) <= Math.abs(dx)) || (dy >= 0 && Math.abs(dx) <= dy)) {
+			// create new window
 			const orientation = Math.abs(dx) >= dy ? "vertical" : "horizontal";
 
 			const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-			const newSplitablePane = SplitablePane.createSplitablePane(this.win, this.pageContext, this.uiRoot, PaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
+			const newSplitablePane = SplitablePane.createSplitablePane(
+				this.win,
+				this.kayo,
+				this.uiRoot,
+				PaneSelectorPane,
+				orientation,
+				splitablePane.getBoundingClientRect(),
+			);
 			const bb = splitablePane.getBoundingClientRect();
 			SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -158,22 +174,22 @@ export class SplitButtonUR extends SplitButton {
 				spo = orientation;
 			}
 
-			if (spo == orientation) {// append to splitpane container
+			if (spo == orientation) {
+				// append to splitpane container
 				if (spo == "vertical") {
 					splitablePane.after(spDivider, newSplitablePane);
 				} else {
 					splitablePane.before(newSplitablePane, spDivider);
 				}
-			} else { // insert new splitpane container
+			} else {
+				// insert new splitpane container
 				const newContainer = SplitPaneContainer.createSplitPaneContainer(this.win, orientation, bb);
 				container.insertBefore(newContainer, splitablePane);
-				if (orientation == "vertical")
-					newContainer.append(splitablePane, spDivider, newSplitablePane);
-				else
-					newContainer.append(newSplitablePane, spDivider, splitablePane);
-
+				if (orientation == "vertical") newContainer.append(splitablePane, spDivider, newSplitablePane);
+				else newContainer.append(newSplitablePane, spDivider, splitablePane);
 			}
-		} else { // remove window
+		} else {
+			// remove window
 			if (dx >= Math.abs(dy) && spo == "vertical") {
 				splitablePane.removeNext(container, spo);
 			} else if (dy <= Math.abs(dx) && spo == "horizontal") {
@@ -189,9 +205,9 @@ export class SplitButtonUR extends SplitButton {
 		this.onpointerleave = this.left;
 	}
 
-	static create(win: Window, pageContext: PageContext, uiRoot: WrappingPane): SplitButtonUR {
+	static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonUR {
 		const p = win.document.createElement("split-button-ur") as SplitButtonUR;
-		p.pageContext = pageContext;
+		p.kayo = kayo;
 		p.uiRoot = uiRoot;
 		p.win = win;
 		return p;
@@ -199,10 +215,8 @@ export class SplitButtonUR extends SplitButton {
 }
 
 export class SplitButtonLL extends SplitButton {
-
 	private left(e: PointerEvent) {
-		if (isNaN(this.clickX) || isNaN(this.clickY))
-			return
+		if (isNaN(this.clickX) || isNaN(this.clickY)) return;
 
 		const dx = e.screenX - this.clickX;
 		const dy = e.screenY - this.clickY;
@@ -211,8 +225,7 @@ export class SplitButtonLL extends SplitButton {
 		this.clickY = NaN;
 
 		const splitablePane = this.parentElement;
-		if (!(splitablePane instanceof SplitablePane))
-			throw new Error("splitable pane has no parent");
+		if (!(splitablePane instanceof SplitablePane)) throw new Error("splitable pane has no parent");
 
 		const container = splitablePane.parentElement;
 		if (!(container instanceof SplitPaneContainer))
@@ -220,11 +233,19 @@ export class SplitButtonLL extends SplitButton {
 
 		let spo = container.getAttribute("split-pane-container-orientation");
 
-		if (dx >= 0 && Math.abs(dy) <= dx || dy <= 0 && Math.abs(dx) <= Math.abs(dy)) { // create new window
+		if ((dx >= 0 && Math.abs(dy) <= dx) || (dy <= 0 && Math.abs(dx) <= Math.abs(dy))) {
+			// create new window
 			const orientation = Math.abs(dx) >= Math.abs(dy) ? "vertical" : "horizontal";
 
 			const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-			const newSplitablePane = SplitablePane.createSplitablePane(this.win, this.pageContext, this.uiRoot, PaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
+			const newSplitablePane = SplitablePane.createSplitablePane(
+				this.win,
+				this.kayo,
+				this.uiRoot,
+				PaneSelectorPane,
+				orientation,
+				splitablePane.getBoundingClientRect(),
+			);
 			const bb = splitablePane.getBoundingClientRect();
 			SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -233,23 +254,23 @@ export class SplitButtonLL extends SplitButton {
 				spo = orientation;
 			}
 
-			if (spo == orientation) { // append to splitpane container
+			if (spo == orientation) {
+				// append to splitpane container
 				if (spo == "vertical") {
 					splitablePane.before(newSplitablePane, spDivider);
 				} else {
 					splitablePane.after(spDivider, newSplitablePane);
 				}
-			} else { // insert new splitpane container
+			} else {
+				// insert new splitpane container
 				const newContainer = SplitPaneContainer.createSplitPaneContainer(this.win, orientation, bb);
 				container.replaceChild(newContainer, splitablePane);
-				if (orientation == "vertical")
-					newContainer.append(newSplitablePane, spDivider, splitablePane);
-				else
-					newContainer.append(splitablePane, spDivider, newSplitablePane);
-
+				if (orientation == "vertical") newContainer.append(newSplitablePane, spDivider, splitablePane);
+				else newContainer.append(splitablePane, spDivider, newSplitablePane);
 			}
 		} else {
-			if (dx <= Math.abs(dy) && spo == "vertical") { // remove window
+			if (dx <= Math.abs(dy) && spo == "vertical") {
+				// remove window
 				splitablePane.removePrevious(container, spo);
 			} else if (dy >= Math.abs(dx) && spo == "horizontal") {
 				splitablePane.removeNext(container, spo);
@@ -264,9 +285,9 @@ export class SplitButtonLL extends SplitButton {
 		this.onpointerleave = this.left;
 	}
 
-	static create(win: Window, pageContext: PageContext, uiRoot: WrappingPane): SplitButtonLL {
+	static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonLL {
 		const p = win.document.createElement("split-button-ll") as SplitButtonLL;
-		p.pageContext = pageContext;
+		p.kayo = kayo;
 		p.uiRoot = uiRoot;
 		p.win = win;
 		return p;
@@ -274,10 +295,8 @@ export class SplitButtonLL extends SplitButton {
 }
 
 export class SplitButtonLR extends SplitButton {
-
 	private left(e: PointerEvent) {
-		if (isNaN(this.clickX) || isNaN(this.clickY))
-			return
+		if (isNaN(this.clickX) || isNaN(this.clickY)) return;
 
 		const dx = e.screenX - this.clickX;
 		const dy = e.screenY - this.clickY;
@@ -286,20 +305,26 @@ export class SplitButtonLR extends SplitButton {
 		this.clickY = NaN;
 
 		const splitablePane = this.parentElement;
-		if (!(splitablePane instanceof SplitablePane))
-			throw new Error("splitable pane has no parent");
+		if (!(splitablePane instanceof SplitablePane)) throw new Error("splitable pane has no parent");
 
 		const container = splitablePane.parentElement;
-		if (!(container instanceof SplitPaneContainer))
-			throw new Error("splitable panes parent is null");
+		if (!(container instanceof SplitPaneContainer)) throw new Error("splitable panes parent is null");
 
 		let spo = container.getAttribute("split-pane-container-orientation");
 
-		if (dx <= 0 && Math.abs(dy) <= Math.abs(dx) || dy <= 0 && Math.abs(dx) <= Math.abs(dy)) { // create new window
+		if ((dx <= 0 && Math.abs(dy) <= Math.abs(dx)) || (dy <= 0 && Math.abs(dx) <= Math.abs(dy))) {
+			// create new window
 			const orientation = Math.abs(dx) >= Math.abs(dy) ? "vertical" : "horizontal";
 
 			const spDivider = SplitPaneDivider.createSplitPaneDivider(orientation);
-			const newSplitablePane = SplitablePane.createSplitablePane(this.win, this.pageContext, this.uiRoot, PaneSelectorPane, orientation, splitablePane.getBoundingClientRect());
+			const newSplitablePane = SplitablePane.createSplitablePane(
+				this.win,
+				this.kayo,
+				this.uiRoot,
+				PaneSelectorPane,
+				orientation,
+				splitablePane.getBoundingClientRect(),
+			);
 			const bb = splitablePane.getBoundingClientRect();
 			SplitButton.prepSplitablePanes(orientation, splitablePane, newSplitablePane, bb);
 
@@ -308,14 +333,17 @@ export class SplitButtonLR extends SplitButton {
 				spo = orientation;
 			}
 
-			if (spo == orientation) { // append to splitpane container
+			if (spo == orientation) {
+				// append to splitpane container
 				splitablePane.after(spDivider, newSplitablePane);
-			} else { // insert new splitpane container
+			} else {
+				// insert new splitpane container
 				const newContainer = SplitPaneContainer.createSplitPaneContainer(this.win, orientation, bb);
 				container.insertBefore(newContainer, splitablePane);
 				newContainer.append(splitablePane, spDivider, newSplitablePane);
 			}
-		} else if (dx >= dy && spo == "vertical" || dy >= dx && spo == "horizontal") { // remove window
+		} else if ((dx >= dy && spo == "vertical") || (dy >= dx && spo == "horizontal")) {
+			// remove window
 			splitablePane.removeNext(container, spo);
 			SplitButton.checkContainerForSingle(container, splitablePane);
 		}
@@ -327,9 +355,9 @@ export class SplitButtonLR extends SplitButton {
 		this.onpointerleave = this.left;
 	}
 
-	static create(win: Window, pageContext: PageContext, uiRoot: WrappingPane): SplitButtonLR {
+	static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonLR {
 		const p = win.document.createElement("split-button-lr") as SplitButtonLR;
-		p.pageContext = pageContext;
+		p.kayo = kayo;
 		p.uiRoot = uiRoot;
 		p.win = win;
 		return p;

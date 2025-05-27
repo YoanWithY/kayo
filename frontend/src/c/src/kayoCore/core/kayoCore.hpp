@@ -1,5 +1,7 @@
 #pragma once
 #include "../r3/R3Manager.hpp"
+#include "config.hpp"
+#include "state.hpp"
 #include "webgpu/webgpu.h"
 #include <cstdint>
 #include <iostream>
@@ -8,29 +10,33 @@
 
 namespace kayo {
 
-class WASMModule;
-class WASMInstance;
+class KayoModule;
+class KayoInstance;
 
-class WASMModule {
+class KayoModule {
   private:
-	[[maybe_unused]] WASMInstance const& instance;
+	[[maybe_unused]] KayoInstance const& instance;
 
   public:
 	const std::string name;
-	inline WASMModule(WASMInstance& instance) : instance(instance) {};
+	inline KayoModule(KayoInstance& instance) : instance(instance) {};
 	virtual int32_t pre_registration() = 0;
 	virtual int32_t post_registration() = 0;
-	inline virtual ~WASMModule() {};
+	inline virtual ~KayoModule() {};
 };
 
-class WASMInstance {
+class KayoInstance {
 	R3Manager r3manager;
-	std::map<std::string, WASMModule*> modules;
+	std::map<std::string, KayoModule*>
+		modules;
 
   public:
-	WASMInstance();
-	int32_t registerModule(WASMModule& module);
-	const std::map<std::string, WASMModule*>& getModules() const;
+	KayoInstance();
+	config::Project projectConfig;
+	state::Project project;
+	void mirrorStateToConfig();
+	int32_t registerModule(KayoModule& module);
+	const std::map<std::string, KayoModule*>& getModules() const;
 };
 
 } // namespace kayo

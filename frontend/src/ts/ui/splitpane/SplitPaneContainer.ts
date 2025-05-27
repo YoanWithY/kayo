@@ -1,5 +1,5 @@
 import { PTPChatPane } from "../../collaborative/PTPChatPannel";
-import { PageContext } from "../../PageContext";
+import { Kayo } from "../../Kayo";
 import { PaneStripe } from "../panes/PaneStripe";
 import { ViewportPane } from "../panes/ViewportPane";
 import { WrappingPane } from "../Wrapping/WrappingPane";
@@ -24,12 +24,12 @@ export class SplitPaneContainer extends HTMLElement {
 		return c;
 	}
 
-	static createRoot(win: Window, pageContext: PageContext, uiRoot: WrappingPane) {
+	static createRoot(win: Window, kayo: Kayo, uiRoot: WrappingPane) {
 		const c = win.document.createElement("split-pane-container");
 		c.setAttribute("split-pane-container-orientation", "none");
 		c.setAttribute("id", "wrapper");
 
-		c.appendChild(SplitablePane.createSplitablePane(win, pageContext, uiRoot, isMobile() ? PTPChatPane : ViewportPane));
+		c.appendChild(SplitablePane.createSplitablePane(win, kayo, uiRoot, isMobile() ? PTPChatPane : ViewportPane));
 		return c as SplitPaneContainer;
 	}
 
@@ -62,8 +62,7 @@ export class SplitPaneContainer extends HTMLElement {
 					} else {
 						sp.style.width = sp.getBoundingClientRect().width + "px";
 					}
-					if (sp instanceof SplitPaneContainer)
-						sp.updateSizesRecursively();
+					if (sp instanceof SplitPaneContainer) sp.updateSizesRecursively();
 
 					minHeight = Math.max(minHeight, sp.minHeight());
 					minWidth += sp.minWidth();
@@ -73,7 +72,6 @@ export class SplitPaneContainer extends HTMLElement {
 			});
 			this.style.minWidth = minWidth + "px";
 			this.style.minHeight = minHeight + "px";
-
 		} else {
 			let minWidth = 0;
 			let minHeight = 0;
@@ -86,8 +84,7 @@ export class SplitPaneContainer extends HTMLElement {
 					} else {
 						sp.style.height = sp.getBoundingClientRect().height + "px";
 					}
-					if (sp instanceof SplitPaneContainer)
-						sp.updateSizesRecursively();
+					if (sp instanceof SplitPaneContainer) sp.updateSizesRecursively();
 
 					minHeight += sp.minHeight();
 					minWidth = Math.max(minWidth, sp.minWidth());

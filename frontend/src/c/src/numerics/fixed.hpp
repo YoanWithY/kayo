@@ -52,7 +52,7 @@ class Number {
 														  (static_cast<__int128_t>((std::abs(a) - static_cast<double>(static_cast<__int128_t>(std::abs(a)))) * double(FIXED_POINT_DECIMAL_FACTOR))))) {}
 
 	/**
-	 * Reinterprets the bytes of the pointer to as Number.
+	 * Reinterprets the bytes of the pointer as Number.
 	 */
 	Number(const void* ptr, size_t size);
 
@@ -62,12 +62,11 @@ class Number {
 	Number(const std::string& value);
 
 	static std::string fromDouble(double d);
-	static std::string fromString(std::string d);
+	static std::string fromBytes(std::string d);
 	static double toDouble(std::string d);
 	static std::string toString(std::string d);
 	friend std::ostream& operator<<(std::ostream& os, const Number& number);
 	std::string toString() const;
-	std::string observeValue() const;
 
 	// ----- COMPARISON ----- //
 
@@ -120,6 +119,8 @@ class Number {
 	constexpr explicit operator double() const {
 		return double(this->n) / double(FIXED_POINT_DECIMAL_FACTOR);
 	}
+
+	explicit operator std::string() const;
 
 	// ----- MATH ----- //
 

@@ -1,7 +1,7 @@
 import { gpuInit as initGPU } from "./GPUX";
 import { initUI as initUIClasses } from "./ui/ui";
-import { PageContext } from "./PageContext";
-import wasmx from "../c/KayoPPLoader";
+import { Kayo } from "./Kayo";
+import wasmx from "./KayoWasmLoader";
 
 initUIClasses();
 
@@ -13,11 +13,9 @@ if (window.opener === null) {
 		throw new Error("Could not initialize WebGPU!", { cause: gpux });
 	}
 
-	wasmx;
-
-	(window as any).pageContext = new PageContext(gpux);
+	(window as any).kayo = new Kayo(gpux, wasmx);
 } else {
 	window.name = "Kayo Sub";
-	const pageContext = window.opener.pageContext as PageContext;
-	pageContext.project.requestUI(window);
+	const kayo = window.opener.kayo as Kayo;
+	kayo.project.requestUI(window);
 }

@@ -16,7 +16,7 @@ import { WrappingPane } from "./Wrapping/WrappingPane";
 import { Footer } from "./Wrapping/Footer";
 import { FullStretch } from "./components/FullStretch";
 import { IconedToggleButton } from "./components/IconedToggleButton";
-import { PageContext } from "../PageContext";
+import { Kayo } from "../Kayo";
 import OutputPane from "./panes/OutpuPane";
 import SpanElement from "./components/SpanElement";
 import { PTPChatContent, PTPChatPane, PTPMessageElement, PTPTextInput } from "../collaborative/PTPChatPannel";
@@ -71,13 +71,13 @@ const nameClassMap: { [key: string]: UIElement } = {
 	[PTPTextInput.getDomClass()]: PTPTextInput,
 };
 
-export function buildUIElement(win: Window, pageContext: PageContext, obj: any): HTMLElement {
-	return nameClassMap[obj.class].createUIElement(win, pageContext, obj);
+export function buildUIElement(win: Window, kayo: Kayo, obj: any): HTMLElement {
+	return nameClassMap[obj.class].createUIElement(win, kayo, obj);
 }
 
 export interface UIElement {
 	new (): any;
-	createUIElement(win: Window, pageContext: PageContext, obj: any): HTMLElement;
+	createUIElement(win: Window, kayo: Kayo, obj: any): HTMLElement;
 	getDomClass(): string;
 }
 

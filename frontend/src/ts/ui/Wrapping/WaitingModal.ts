@@ -1,7 +1,7 @@
-import { PageContext } from "../../PageContext";
+import { Kayo } from "../../Kayo";
 
 export default class ProgressModal extends HTMLElement {
-	public pageContext!: PageContext;
+	public kayo!: Kayo;
 	public modal!: HTMLDivElement;
 	public modalContent!: HTMLDivElement;
 	public window!: Window;
@@ -9,10 +9,10 @@ export default class ProgressModal extends HTMLElement {
 	public static getDomClass() {
 		return "progress-modal";
 	}
-	public static createUIElement(win: Window, pageContext: PageContext, title: string) {
+	public static createUIElement(win: Window, kayo: Kayo, title: string) {
 		const p = win.document.createElement(this.getDomClass()) as ProgressModal;
 		p.window = win;
-		p.pageContext = pageContext;
+		p.kayo = kayo;
 		p.modal = win.document.createElement("div");
 
 		const titleElement = win.document.createElement("h1");

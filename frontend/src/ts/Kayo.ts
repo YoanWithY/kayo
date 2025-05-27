@@ -1,10 +1,13 @@
 import { GPUX } from "./GPUX";
 import { Project } from "./project/Project";
+import WASMX from "./WASMX";
 
-export class PageContext {
+export class Kayo {
 	private _gpux: GPUX;
 	private _project: Project;
-	constructor(gpux: GPUX) {
+	private _wasmx: WASMX;
+	constructor(gpux: GPUX, wasmx: WASMX) {
+		this._wasmx = wasmx;
 		this._gpux = gpux;
 		this._project = new Project(this);
 		this._project.requestUI(window);
@@ -16,5 +19,9 @@ export class PageContext {
 
 	get gpux(): GPUX {
 		return this._gpux;
+	}
+
+	get wasmx(): WASMX {
+		return this._wasmx;
 	}
 }

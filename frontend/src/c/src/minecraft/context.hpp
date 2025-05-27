@@ -35,11 +35,11 @@ class WorldData {
 	DimensionData& createDimensionData(std::string dimension_name, int32_t index);
 };
 
-class WASMMinecraftModule : kayo::WASMModule {
+class WASMMinecraftModule : kayo::KayoModule {
 	std::map<std::string, WorldData> worlds;
 
   public:
-	WASMMinecraftModule(WASMInstance& instance);
+	WASMMinecraftModule(KayoInstance& instance);
 	WorldData& createWorldData(std::string name);
 	int32_t pre_registration() override;
 	int32_t post_registration() override;

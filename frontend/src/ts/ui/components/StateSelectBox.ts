@@ -1,17 +1,16 @@
-import { PageContext } from "../../PageContext";
+import { Kayo } from "../../Kayo";
 import UIVariableComponent from "./UIComponent";
 
-interface ISelectBox<T> {
-	setOption: (optionValue: SelectOptionValue<T>) => void;
+interface ISelectBox {
+	setOption: (optionValue: SelectOptionValue) => void;
 }
 
-export type SelectOptionValue<T> = { value: T, text: string };
-export class StateSelectBox<T> extends UIVariableComponent<any> implements ISelectBox<T> {
+export type SelectOptionValue = { value: string; text: string };
+export class StateSelectBox extends UIVariableComponent implements ISelectBox {
+	private _win!: Window;
 	private _optionWrapper!: SelectOptionWrapper;
 	private _internals: ElementInternals;
-	private _valueNameMap: Map<T, string> = new Map();
-	private _win!: Window;
-	private _value!: T;
+	private _valueNameMap: Map<string, string> = new Map();
 
 	constructor() {
 		super();
@@ -24,7 +23,7 @@ export class StateSelectBox<T> extends UIVariableComponent<any> implements ISele
 			this._optionWrapper.style.width = rect.width + "px";
 			this._optionWrapper._internals.states.add("open-down");
 			this._internals.states.add("open-down");
-			this._optionWrapper.updateSelectedState(this._valueNameMap.get(this._value) as string);
+			this._optionWrapper.updateSelectedState(this.textContent as string);
 			this._win.addEventListener("mousedown", this.hidingClosure);
 		};
 	}
@@ -36,32 +35,34 @@ export class StateSelectBox<T> extends UIVariableComponent<any> implements ISele
 		this._win.removeEventListener("mousedown", this.hidingClosure);
 	};
 
-	setOption(optionValue: SelectOptionValue<T>) {
-		this.stateVariable.value = optionValue.value;
+	setOption(optionValue: SelectOptionValue) {
+		this.setModelValue(optionValue.value);
 		this.hidingClosure();
 	}
 
-	private addOption(win: Window, optionValue: SelectOptionValue<T>) {
+	private addOption(win: Window, optionValue: SelectOptionValue) {
 		const selectOption = SelectOption.createSelectOption(win, optionValue, this);
 		this._optionWrapper.appendChild(selectOption);
 		this._valueNameMap.set(optionValue.value, optionValue.text);
 	}
 
-	setValue(value: any): void {
-		this._value = value;
-		this.textContent = this._valueNameMap.get(this._value) as string;
+	setUiValue(wasmValue: string): void {
+		this.textContent = this._valueNameMap.get(wasmValue) as string;
 	}
 
-	public static createUIElement<T>(win: Window, pageContext: PageContext, obj: any): StateSelectBox<T> {
-		const selectBox = win.document.createElement(this.getDomClass()) as StateSelectBox<T>;
+	public static createUIElement(win: Window, kayo: Kayo, obj: any): StateSelectBox {
+		const selectBox = win.document.createElement(this.getDomClass()) as StateSelectBox;
+		selectBox.wasmx = kayo.wasmx;
 		selectBox._win = win;
 		selectBox._optionWrapper = SelectOptionWrapper.createSelectOptionWrapper(win);
 		const options = obj.options;
-		for (const option of options)
-			selectBox.addOption(win, option as SelectOptionValue<T>);
-		const stateVariable = pageContext.project.getVariableFromURL(obj.stateVariableURL);
-		if (stateVariable)
-			selectBox.bind(stateVariable);
+		for (const option of options as SelectOptionValue[]) {
+			if (typeof option.value == "number") {
+				option.value = kayo.wasmx.Number.fromDouble(option.value);
+			}
+			selectBox.addOption(win, option);
+		}
+		selectBox.bind(obj.stateVariableURL);
 		return selectBox;
 	}
 
@@ -90,9 +91,9 @@ export class SelectOptionWrapper extends HTMLElement {
 	}
 }
 
-export class SelectOption<T> extends HTMLElement {
-	optionValue!: SelectOptionValue<T>;
-	selectBox!: ISelectBox<T>;
+export class SelectOption extends HTMLElement {
+	optionValue!: SelectOptionValue;
+	selectBox!: ISelectBox;
 	_internals = this.attachInternals();
 	constructor() {
 		super();
@@ -101,10 +102,10 @@ export class SelectOption<T> extends HTMLElement {
 		};
 		this.onmousedown = (e) => {
 			e.stopImmediatePropagation();
-		}
+		};
 	}
-	static createSelectOption<T>(win: Window, optionValue: SelectOptionValue<T>, selectBox: ISelectBox<T>): SelectOption<T> {
-		const selectOption = win.document.createElement(this.getDomClass()) as SelectOption<T>;
+	static createSelectOption(win: Window, optionValue: SelectOptionValue, selectBox: ISelectBox): SelectOption {
+		const selectOption = win.document.createElement(this.getDomClass()) as SelectOption;
 		selectOption.optionValue = optionValue;
 		selectOption.textContent = optionValue.text;
 		selectOption.selectBox = selectBox;
@@ -114,16 +115,13 @@ export class SelectOption<T> extends HTMLElement {
 	static getDomClass() {
 		return "select-option";
 	}
-
 }
 
-export class SelectBox<T> extends HTMLElement {
-
+export class SelectBox extends HTMLElement {
 	private _optionWrapper!: SelectOptionWrapper;
 	private _internals: ElementInternals;
-	private _valueNameMap: Map<T, string> = new Map();
+	private _valueNameMap: Map<string, string> = new Map();
 	private _win!: Window;
-	private _value!: T;
 
 	constructor() {
 		super();
@@ -136,7 +134,7 @@ export class SelectBox<T> extends HTMLElement {
 			this._optionWrapper.style.width = rect.width + "px";
 			this._optionWrapper._internals.states.add("open-down");
 			this._internals.states.add("open-down");
-			this._optionWrapper.updateSelectedState(this._valueNameMap.get(this._value) as string);
+			this._optionWrapper.updateSelectedState(this.textContent as string);
 			this._win.addEventListener("mousedown", this.hidingClosure);
 		};
 	}
@@ -148,22 +146,24 @@ export class SelectBox<T> extends HTMLElement {
 		this._win.removeEventListener("mousedown", this.hidingClosure);
 	};
 
-	onValueChange = (value: SelectOptionValue<T>) => { value; };
+	onValueChange = (value: SelectOptionValue) => {
+		value;
+	};
 
-	setOption(optionValue: SelectOptionValue<T>) {
+	setOption(optionValue: SelectOptionValue) {
 		this.textContent = optionValue.text;
 		this.hidingClosure();
 		this.onValueChange(optionValue);
 	}
 
-	addOption(win: Window, optionValue: SelectOptionValue<T>) {
+	addOption(win: Window, optionValue: SelectOptionValue) {
 		const selectOption = SelectOption.createSelectOption(win, optionValue, this);
 		this._optionWrapper.appendChild(selectOption);
 		this._valueNameMap.set(optionValue.value, optionValue.text);
 	}
 
-	public static createUIElement<T>(win: Window): SelectBox<T> {
-		const selectBox = win.document.createElement(this.getDomClass()) as SelectBox<T>;
+	public static createUIElement(win: Window): SelectBox {
+		const selectBox = win.document.createElement(this.getDomClass()) as SelectBox;
 		selectBox._win = win;
 		selectBox._optionWrapper = SelectOptionWrapper.createSelectOptionWrapper(win);
 		return selectBox;

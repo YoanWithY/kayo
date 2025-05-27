@@ -13,7 +13,7 @@
 					},
 					{
 						"class": "state-select-box",
-						"stateVariableURL": "state.output.render.msaa",
+						"stateVariableURL": "output.antialiasing.msaa",
 						"options": [
 							{
 								"value": 1,
@@ -40,7 +40,7 @@
 					},
 					{
 						"class": "state-select-box",
-						"stateVariableURL": "state.output.display.swapChainColorSpace",
+						"stateVariableURL": "output.swapChain.colorSpace",
 						"options": [
 							{
 								"value": "display-p3",
@@ -58,14 +58,14 @@
 					},
 					{
 						"class": "state-select-box",
-						"stateVariableURL": "state.output.display.swapChainBitDepth",
+						"stateVariableURL": "output.swapChain.bitDepth",
 						"options": [
 							{
-								"value": "8bpc",
+								"value": 8,
 								"text": "8 bpc"
 							},
 							{
-								"value": "16bpc",
+								"value": 16,
 								"text": "16 bpc"
 							}
 						]
@@ -76,7 +76,7 @@
 					},
 					{
 						"class": "state-select-box",
-						"stateVariableURL": "state.output.display.swapChainToneMappingMode",
+						"stateVariableURL": "output.swapChain.toneMappingMode",
 						"options": [
 							{
 								"value": "standard",

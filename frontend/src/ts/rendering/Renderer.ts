@@ -1,8 +1,6 @@
-import { StateVariableChangeCallback } from "../project/StateVariable";
 import { Project } from "../project/Project";
 import { Viewport } from "./Viewport";
 import { ViewportCache } from "./ViewportCache";
-import { OutputForwardRenderConfig } from "../project/Config";
 import { CompositingPipeline } from "./CompositingPipeline";
 import { ResolvePipeline } from "./ResolvePipeline";
 import Camera from "../Viewport/Camera";
@@ -14,16 +12,12 @@ import { ViewportPane } from "../ui/panes/ViewportPane";
 export default class Renderer {
 	project: Project;
 	viewportPanes = new Set<ViewportPane>();
-	preRenderFunctions = new Set<{ val: any; f: StateVariableChangeCallback<any> }>();
 
 	private r3renderPassDescriptor: GPURenderPassDescriptor;
 	private overlayRenderPassDescriptor: GPURenderPassDescriptor;
 	private selectionRenderPassDescriptor: GPURenderPassDescriptor;
 	private r16ResolveRenderPassDescriptor: GPURenderPassDescriptor;
 	private compositingRenderPassDescriptor: GPURenderPassDescriptor;
-
-	public needsPipleineRebuild = true;
-	public needsContextReconfiguration = true;
 
 	private requestedAnimationFrame: Map<Window, boolean> = new Map<Window, boolean>();
 	private viewportsToUpdate = new Set<Viewport>();
@@ -262,16 +256,13 @@ export default class Renderer {
 	}
 
 	reconfigureContext() {
-		for (const [, viewportCache] of this.viewportCache) {
-			viewportCache.reconfigureContext();
-		}
-		this.needsContextReconfiguration = false;
+		for (const [, viewportCache] of this.viewportCache) viewportCache.reconfigureContext();
 	}
 
 	rebuildDisplayOutputPipelines() {
 		const outConsts = this.project.getDisplayFragmentOutputConstants();
 		const format = this.project.getSwapChainFormat();
-		const msaa = (this.project.config.output.render as OutputForwardRenderConfig).msaa;
+		const msaa = this.project.wasmx.kayoInstance.projectConfig.output.antialiasing.msaa;
 
 		const surfaceInfo: DisplayInfo = {
 			gpuDevice: this.gpuDevice,
@@ -293,7 +284,6 @@ export default class Renderer {
 
 		this.compositingPipeline.fragmentTargets[0].format = format;
 		this.compositingPipeline.buildPipeline(this.gpuDevice);
-		this.needsPipleineRebuild = false;
 	}
 
 	init() {
@@ -305,16 +295,14 @@ export default class Renderer {
 	frame = 0;
 	loop = (_: number, window: Window) => {
 		const start = performance.now();
+		this.project.wasmx.kayoInstance.mirrorStateToConfig();
+		const config = this.project.wasmx.kayoInstance.projectConfig;
 
 		this.requestedAnimationFrame.set(window, false);
 
-		for (const o of this.preRenderFunctions) o.f(o.val);
+		if (config.needsContextReconfiguration) this.reconfigureContext();
 
-		this.preRenderFunctions.clear();
-
-		if (this.needsContextReconfiguration) this.reconfigureContext();
-
-		if (this.needsPipleineRebuild) this.rebuildDisplayOutputPipelines();
+		if (config.needsPipelineRebuild) this.rebuildDisplayOutputPipelines();
 
 		for (const viewport of this.viewportsToUpdate) {
 			viewport.updateView(this.viewUBO, this.frame);
@@ -331,7 +319,7 @@ export default class Renderer {
 				continue;
 			}
 			const commandEncoder = this.gpuDevice.createCommandEncoder();
-			const config = this.project.config.output.render as OutputForwardRenderConfig;
+			const config = this.project.wasmx.kayoInstance.projectConfig.output;
 			viewportCache.setupRenderPasses(
 				this.r3renderPassDescriptor,
 				this.r16ResolveRenderPassDescriptor,
@@ -379,7 +367,7 @@ export default class Renderer {
 			r3renderPassEncoder.end();
 
 			if (viewport.useOverlays) {
-				if (config.msaa > 1) {
+				if (config.antialiasing.msaa > 1) {
 					const r16ResolveRenderPassEncode = commandEncoder.beginRenderPass(
 						this.r16ResolveRenderPassDescriptor,
 					);

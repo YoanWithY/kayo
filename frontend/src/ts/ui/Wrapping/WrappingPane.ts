@@ -9,19 +9,19 @@ import { ResourcePack } from "../../minecraft/ResourcePack";
 import { MinecraftSection } from "../../minecraft/MinecraftSection";
 import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
 import TextureUtils from "../../Textures/TextureUtils";
-import { PageContext } from "../../PageContext";
-import wasmx from "../../../c/KayoPPLoader";
+import { Kayo } from "../../Kayo";
+import wasmx from "../../KayoWasmLoader";
 
 export class WrappingPane extends HTMLElement {
 	project!: Project;
 	baseSplitPaneContainer!: SplitPaneContainer;
 	header!: HTMLDivElement;
 	footer!: Footer;
-	static createWrappingPane(win: Window, pageContext: PageContext): WrappingPane {
+	static createWrappingPane(win: Window, kayo: Kayo): WrappingPane {
 		const p = win.document.createElement("wrapping-pane") as WrappingPane;
-		const project = pageContext.project;
+		const project = kayo.project;
 		p.project = project;
-		p.baseSplitPaneContainer = SplitPaneContainer.createRoot(win, pageContext, p);
+		p.baseSplitPaneContainer = SplitPaneContainer.createRoot(win, kayo, p);
 		p.header = win.document.createElement("div");
 
 		const fullScreenButton = IconedToggleButton.createIconedToggleButton(

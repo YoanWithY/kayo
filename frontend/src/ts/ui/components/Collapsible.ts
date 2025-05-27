@@ -1,4 +1,4 @@
-import { PageContext } from "../../PageContext";
+import { Kayo } from "../../Kayo";
 import { buildUIElement } from "../ui";
 import Tooltip from "./Tooltip";
 
@@ -16,7 +16,7 @@ export default class Collapsible extends HTMLElement {
 		}
 	}
 
-	public static createUIElement(win: Window, pageContext: PageContext, obj: any) {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any) {
 		const p = win.document.createElement(this.getDomClass()) as Collapsible;
 
 		p.collapsibleButton = CollapsibleButton.createCollapsibleButton(win);
@@ -24,11 +24,12 @@ export default class Collapsible extends HTMLElement {
 		p.collapsibleButton.textContent = obj.text;
 		p.appendChild(p.collapsibleButton);
 
-		p.collapsibleContentContainer = win.document.createElement(CollapsibleContentContainer.getDomClass()) as CollapsibleContentContainer;
+		p.collapsibleContentContainer = win.document.createElement(
+			CollapsibleContentContainer.getDomClass(),
+		) as CollapsibleContentContainer;
 
 		const content = obj.content;
-		if (content !== undefined)
-			p.collapsibleContentContainer.appendChild(buildUIElement(win, pageContext, obj.content))
+		if (content !== undefined) p.collapsibleContentContainer.appendChild(buildUIElement(win, kayo, obj.content));
 
 		const tooltip = obj.tooltip;
 		if (tooltip !== undefined) {
@@ -48,7 +49,7 @@ export class CollapsibleButton extends HTMLElement {
 		super();
 		this.addEventListener("click", () => {
 			this.collapsible.toggleCollaps();
-			this.setAttribute("state", this.collapsible.opend ? "open" : "closed")
+			this.setAttribute("state", this.collapsible.opend ? "open" : "closed");
 		});
 	}
 
@@ -59,14 +60,12 @@ export class CollapsibleButton extends HTMLElement {
 	}
 
 	public static getDomClass() {
-		return "collapsible-button"
+		return "collapsible-button";
 	}
 }
 
 export class CollapsibleContentContainer extends HTMLElement {
-
 	public static getDomClass() {
-		return "collapsible-content-container"
+		return "collapsible-content-container";
 	}
 }
-

@@ -1,5 +1,3 @@
-import { ProjectConfig } from "./Config";
-import { ProjectState } from "./State";
 import Renderer from "../rendering/Renderer";
 import Scene from "./Scene";
 import { WrappingPane } from "../ui/Wrapping/WrappingPane";
@@ -11,24 +9,22 @@ import { MinecraftOpaquePipeline } from "../minecraft/MinecraftOpaquePipeline";
 import Background from "../lights/Background";
 import { HeightFieldPipeline } from "../dynamicObject/heightField/HeightFieldPipeline";
 import TextureUtils from "../Textures/TextureUtils";
-import { PageContext } from "../PageContext";
-import StateVariable from "./StateVariable";
+import { Kayo } from "../Kayo";
 import { PTPBase } from "../collaborative/PTPBase";
+import WASMX from "../WASMX";
 
 export class Project {
-	pageContext: PageContext;
+	kayo: Kayo;
 	gpux: GPUX;
-	config: ProjectConfig;
-	state: ProjectState;
+	wasmx: WASMX;
 	renderer!: Renderer;
 	scene!: Scene;
 	ptpBase: PTPBase;
 
-	constructor(pageContext: PageContext) {
-		this.pageContext = pageContext;
-		this.gpux = pageContext.gpux;
-		this.config = new ProjectConfig();
-		this.state = new ProjectState(this, this.config);
+	constructor(kayo: Kayo) {
+		this.kayo = kayo;
+		this.gpux = kayo.gpux;
+		this.wasmx = kayo.wasmx;
 		this.renderer = new Renderer(this);
 		this.renderer.init();
 		this.ptpBase = new PTPBase(this);
@@ -83,14 +79,15 @@ export class Project {
 	}
 
 	requestUI(win: Window) {
-		win.document.body.appendChild(WrappingPane.createWrappingPane(win, this.pageContext));
+		win.document.body.appendChild(WrappingPane.createWrappingPane(win, this.kayo));
 	}
 
-	getVariableFromURL(stateVariableURL: string): StateVariable<any> | undefined {
+	getStateIDFromURL(stateVariableURL: string): number | undefined {
 		const names = stateVariableURL.split(".");
-		let obj: any = this[names[0] as keyof Project];
-		for (let i = 1; i < names.length && obj !== undefined; i++) obj = obj[names[i]];
-		return obj;
+		let obj: any = this.kayo.wasmx.kayoInstance.project;
+		for (let i = 0; i < names.length && obj !== undefined; i++) obj = obj[names[i]];
+		console.log(stateVariableURL);
+		return obj.getObservationID();
 	}
 
 	fullRerender() {
@@ -99,19 +96,20 @@ export class Project {
 
 	getTargetColorspaceConstants(): Record<string, number> {
 		return {
-			targetColorSpace: this.config.output.display.swapChainColorSpace == "srgb" ? 0 : 1,
+			targetColorSpace: this.wasmx.kayoInstance.project.output.swapChain.colorSpace.getValue() == "srgb" ? 0 : 1,
 		};
 	}
 
 	getDisplayFragmentOutputConstants(): { targetColorSpace: number; componentTranfere: number } {
 		return {
-			targetColorSpace: this.config.output.display.swapChainColorSpace == "srgb" ? 0 : 1,
-			componentTranfere: this.config.output.render.mode === "deferred" ? 0 : 1,
+			targetColorSpace: this.wasmx.kayoInstance.project.output.swapChain.colorSpace.getValue() == "srgb" ? 0 : 1,
+			componentTranfere: 1,
 		};
 	}
 
 	getSwapChainFormat(): GPUTextureFormat {
-		if (this.config.output.display.swapChainBitDepth === "8bpc") return this.gpux.gpu.getPreferredCanvasFormat();
+		const v = this.wasmx.kayoInstance.projectConfig.output.swapChain.bitDepth;
+		if (v === 8) return this.gpux.gpu.getPreferredCanvasFormat();
 		return "rgba16float";
 	}
 

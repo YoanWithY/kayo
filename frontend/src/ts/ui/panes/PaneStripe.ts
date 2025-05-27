@@ -1,37 +1,36 @@
-import { PageContext } from "../../PageContext";
+import { Kayo } from "../../Kayo";
 import { SelectBox, SelectOptionValue } from "../components/StateSelectBox";
 import { SplitablePane } from "../splitpane/SplitablePane";
-import { UIPaneElement } from "../ui";
 import { panesNameClassMap } from "./PaneSelectorPane";
 
 export class PaneStripe extends HTMLElement {
-	static size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--pane-stripe-hight").replace("px", ""));
+	static size = parseFloat(
+		getComputedStyle(document.documentElement).getPropertyValue("--pane-stripe-hight").replace("px", ""),
+	);
 	static size2 = this.size * 2;
 
-	static createPaneStripe(win: Window, pageContext: PageContext, name: string) {
+	static createPaneStripe(win: Window, kayo: Kayo, name: string) {
 		const p = win.document.createElement("pane-stripe");
 		p.addEventListener("dblclick", (_) => {
 			(p.parentElement as SplitablePane).toggleSingleWindow();
 		});
 
-		const selectBox = SelectBox.createUIElement<UIPaneElement>(win);
+		const selectBox = SelectBox.createUIElement(win);
 
-		const options: SelectOptionValue<UIPaneElement>[] = [];
+		const options: SelectOptionValue[] = [];
 		for (const name in panesNameClassMap) {
-			options.push({ text: name, value: panesNameClassMap[name] });
+			options.push({ text: name, value: name });
 		}
-		for (const option of options)
-			selectBox.addOption(win, option);
+		for (const option of options) selectBox.addOption(win, option);
 		selectBox.textContent = name;
 
-		selectBox.onValueChange = (optionValue: SelectOptionValue<UIPaneElement>) => {
+		selectBox.onValueChange = (optionValue: SelectOptionValue) => {
 			const parent = p.parentElement;
-			if (!parent)
-				return;
-			(parent as SplitablePane).recreateContetent(win, pageContext, optionValue.value);
+			if (!parent) return;
+			(parent as SplitablePane).recreateContent(win, kayo, panesNameClassMap[optionValue.value]);
 		};
 		p.appendChild(selectBox);
-		return p
+		return p;
 	}
 
 	public static getDomClass() {

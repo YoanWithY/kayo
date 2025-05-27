@@ -155,7 +155,7 @@ DimensionData& WorldData::createDimensionData(std::string dimension_name, int32_
 	return this->dimensions.at(index);
 }
 
-WASMMinecraftModule::WASMMinecraftModule(WASMInstance& instance) : kayo::WASMModule(instance) {}
+WASMMinecraftModule::WASMMinecraftModule(KayoInstance& instance) : kayo::KayoModule(instance) {}
 int32_t WASMMinecraftModule::pre_registration() {
 	return 0;
 }
@@ -177,7 +177,7 @@ WorldData& kayo::minecraft::WASMMinecraftModule::createWorldData(std::string nam
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(KayoWasmMinecraft) {
 	class_<kayo::minecraft::WASMMinecraftModule>("KayoWASMMinecraftModule")
-		.constructor<kayo::WASMInstance&>()
+		.constructor<kayo::KayoInstance&>()
 		.function("createWorldData", &kayo::minecraft::WASMMinecraftModule::createWorldData);
 	class_<kayo::minecraft::WorldData>("KayoWASMMinecraftWorld")
 		.function("createDimensionData", &kayo::minecraft::WorldData::createDimensionData);
