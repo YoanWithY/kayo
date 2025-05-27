@@ -7,7 +7,6 @@ export default defineConfig(({ command }) => {
 	const common = {
 		plugins: [svgLoader()],
 		build: { target: "ES2023" },
-		base: "/kayo/",
 	};
 
 	if (command === "serve") {
