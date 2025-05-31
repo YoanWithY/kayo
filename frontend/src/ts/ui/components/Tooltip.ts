@@ -1,18 +1,33 @@
 export default class Tooltip extends HTMLElement {
-	static createTooltip(toolTip: HTMLElement): Tooltip {
-		const tooltip = document.createElement("tool-tip") as Tooltip;
+	static createTooltip(win: Window, serialTooltip: SerialTooltip, stateVariableURL?: string): Tooltip {
+		const tooltip = win.document.createElement("tool-tip") as Tooltip;
 		tooltip.setAttribute("state", "invisible");
-		tooltip.appendChild(toolTip);
+
+		if (serialTooltip.description) {
+			const container = win.document.createElement("div");
+			container.innerHTML = serialTooltip.description;
+			tooltip.appendChild(container);
+		}
+
+		if (stateVariableURL) {
+			const container = win.document.createElement("div");
+			container.style.marginTop = "8px";
+			container.innerHTML = `<kbd class="api-text">API: ${stateVariableURL}</kbd>`;
+			tooltip.appendChild(container);
+		}
+
 		return tooltip;
 	}
 
-	static register(tooltip: Tooltip, element: HTMLElement) {
+	static register(win: Window, tooltipString: SerialTooltip, element: HTMLElement, stateVariableURL?: string) {
+		const tooltip = Tooltip.createTooltip(win, tooltipString, stateVariableURL);
 		element.addEventListener("mouseenter", (e) => {
 			tooltip.style.left = `${e.clientX}px`;
 			tooltip.style.top = `${e.clientY}px`;
 			tooltip.setAttribute("state", "visible");
-			document.body.appendChild(tooltip);
+			win.document.body.appendChild(tooltip);
 		});
+
 		element.addEventListener("mouseleave", () => {
 			tooltip.setAttribute("state", "invisible");
 			document.body.removeChild(tooltip);
@@ -20,6 +35,4 @@ export default class Tooltip extends HTMLElement {
 	}
 }
 
-export interface Tooltipabble<T> {
-	setTooltip(tooltip: T): void;
-}
+export type SerialTooltip = { description?: string; API?: string };

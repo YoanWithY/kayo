@@ -3,7 +3,7 @@ import { buildUIElement } from "../ui";
 import Tooltip from "./Tooltip";
 
 export default class Collapsible extends HTMLElement {
-	public opend = false;
+	public opend = true;
 	public collapsibleButton!: CollapsibleButton;
 	public collapsibleContentContainer!: CollapsibleContentContainer;
 
@@ -33,8 +33,10 @@ export default class Collapsible extends HTMLElement {
 
 		const tooltip = obj.tooltip;
 		if (tooltip !== undefined) {
-			Tooltip.register(Tooltip.createTooltip(tooltip), p.collapsibleButton);
+			Tooltip.register(win, tooltip, p.collapsibleButton);
 		}
+
+		p.appendChild(p.collapsibleContentContainer);
 		return p;
 	}
 
@@ -55,7 +57,7 @@ export class CollapsibleButton extends HTMLElement {
 
 	public static createCollapsibleButton(win: Window) {
 		const p = win.document.createElement(this.getDomClass()) as CollapsibleButton;
-		p.setAttribute("state", "closed");
+		p.setAttribute("state", "open");
 		return p;
 	}
 

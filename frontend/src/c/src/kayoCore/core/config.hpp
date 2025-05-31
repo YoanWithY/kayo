@@ -11,13 +11,27 @@ struct SwapChain {
 	std::string toneMappingMode;
 };
 
+struct Transparancy {
+	bool transparentBackground;
+};
+
+struct General {
+	SwapChain swapChain;
+	Transparancy transparency;
+};
+
 struct Antialiasing {
 	int32_t msaa;
+	std::string interpolation;
+};
+
+struct Realtime {
+	Antialiasing antialiasing;
 };
 
 struct Output {
-	SwapChain swapChain;
-	Antialiasing antialiasing;
+	General general;
+	Realtime realtime;
 };
 
 struct Project {

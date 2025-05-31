@@ -1,0 +1,21 @@
+check-box {
+	box-sizing: border-box;
+	
+	padding: var(--text-padding) calc(var(--text-padding) + 2px);
+	background-color: rgb(20, 20, 20);
+	border: 1px solid rgb(28, 28, 28);
+	border-radius: var(--radius);
+}
+
+check-box:hover {
+	background-color: rgb(28, 28, 28);
+}
+
+check-box:state(checked) {
+	background-color: var(--accent-color);
+	border-color: var(--accent-color-hover);
+}
+
+check-box:state(checked):hover {
+	background-color: var(--accent-color-hover);
+}

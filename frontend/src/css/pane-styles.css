@@ -30,6 +30,7 @@ viewport-pane {
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 1px;
+	background: repeating-conic-gradient(#5b5b5b 0 25%, #929292 0 50%) 0px / 20px 20px
 }
 
 viewport-pane>canvas {
@@ -50,8 +51,10 @@ pane-selector-pane {
 output-pane {
 	display: flex;
 	flex-direction: column;
-	flex-grow: 1;
+	flex: 1 0 0px;
+	overflow: auto;
 	gap: var(--pane-gap);
 	background-color: var(--pane-background-color);
 	padding: 4px;
+
 }

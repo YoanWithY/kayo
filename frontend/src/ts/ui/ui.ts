@@ -20,12 +20,13 @@ import { Kayo } from "../Kayo";
 import OutputPane from "./panes/OutpuPane";
 import SpanElement from "./components/SpanElement";
 import { PTPChatContent, PTPChatPane, PTPMessageElement, PTPTextInput } from "../collaborative/PTPChatPannel";
+import VBox from "./components/VBox";
 
 export function initUI() {
 	window.customElements.define("tool-tip", Tooltip);
 	window.customElements.define(Grid2Col.getDomClass(), Grid2Col);
 	window.customElements.define(PaneStripe.getDomClass(), PaneStripe);
-	window.customElements.define("check-box", Checkbox);
+	window.customElements.define(Checkbox.getDomClass(), Checkbox);
 	window.customElements.define(StateSelectBox.getDomClass(), StateSelectBox);
 	window.customElements.define(SelectBox.getDomClass(), SelectBox);
 	window.customElements.define(PTPTextInput.getDomClass(), PTPTextInput, { extends: "form" });
@@ -69,6 +70,8 @@ const nameClassMap: { [key: string]: UIElement } = {
 	[StateSelectBox.getDomClass()]: StateSelectBox,
 	[PTPChatContent.getDomClass()]: PTPChatContent,
 	[PTPTextInput.getDomClass()]: PTPTextInput,
+	[VBox.getDomClass()]: VBox,
+	[Checkbox.getDomClass()]: Checkbox,
 };
 
 export function buildUIElement(win: Window, kayo: Kayo, obj: any): HTMLElement {

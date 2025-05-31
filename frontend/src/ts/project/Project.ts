@@ -96,19 +96,21 @@ export class Project {
 
 	getTargetColorspaceConstants(): Record<string, number> {
 		return {
-			targetColorSpace: this.wasmx.kayoInstance.project.output.swapChain.colorSpace.getValue() == "srgb" ? 0 : 1,
+			targetColorSpace:
+				this.wasmx.kayoInstance.project.output.general.swapChain.colorSpace.getValue() == "srgb" ? 0 : 1,
 		};
 	}
 
 	getDisplayFragmentOutputConstants(): { targetColorSpace: number; componentTranfere: number } {
 		return {
-			targetColorSpace: this.wasmx.kayoInstance.project.output.swapChain.colorSpace.getValue() == "srgb" ? 0 : 1,
+			targetColorSpace:
+				this.wasmx.kayoInstance.project.output.general.swapChain.colorSpace.getValue() == "srgb" ? 0 : 1,
 			componentTranfere: 1,
 		};
 	}
 
 	getSwapChainFormat(): GPUTextureFormat {
-		const v = this.wasmx.kayoInstance.projectConfig.output.swapChain.bitDepth;
+		const v = this.wasmx.kayoInstance.projectConfig.output.general.swapChain.bitDepth;
 		if (v === 8) return this.gpux.gpu.getPreferredCanvasFormat();
 		return "rgba16float";
 	}

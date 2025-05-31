@@ -23,6 +23,7 @@ fn fragment_main(fragment: VertexOutput) -> R3FragmentOutput {
 	interpolant1 = (interpolant1 * interpolant1 * interpolant1) * 0.5 + 0.5;
 
 	let albedo = sRGB_EOTF(mix(vec3(0.5), vec3(1.0), interpolant1));
-	let outColor = vec4f(createOutputFragment(albedo), 1);
+	var outColor = vec4f(createOutputFragment(albedo), 0);
+	outColor = vec4f(0.0, 0.0, 0.0, 0.0);
 	return R3FragmentOutput(outColor, 0);
 }

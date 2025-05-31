@@ -154,7 +154,7 @@ export default class Renderer {
 				{
 					loadOp: "clear",
 					storeOp: "store",
-					clearValue: [0.1, 0.1, 0.1, 1],
+					clearValue: [0.0, 0.0, 0.0, 0.0],
 					view: null as unknown as GPUTextureView,
 				},
 				{
@@ -262,7 +262,7 @@ export default class Renderer {
 	rebuildDisplayOutputPipelines() {
 		const outConsts = this.project.getDisplayFragmentOutputConstants();
 		const format = this.project.getSwapChainFormat();
-		const msaa = this.project.wasmx.kayoInstance.projectConfig.output.antialiasing.msaa;
+		const msaa = this.project.wasmx.kayoInstance.projectConfig.output.realtime.antialiasing.msaa;
 
 		const surfaceInfo: DisplayInfo = {
 			gpuDevice: this.gpuDevice,
@@ -367,7 +367,7 @@ export default class Renderer {
 			r3renderPassEncoder.end();
 
 			if (viewport.useOverlays) {
-				if (config.antialiasing.msaa > 1) {
+				if (config.realtime.antialiasing.msaa > 1) {
 					const r16ResolveRenderPassEncode = commandEncoder.beginRenderPass(
 						this.r16ResolveRenderPassDescriptor,
 					);

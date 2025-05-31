@@ -13,6 +13,6 @@ export default class OutputPane extends BasicPane {
 	}
 
 	public static getName() {
-		return "Output Pane";
+		return "Output";
 	}
 }

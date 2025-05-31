@@ -1,4 +1,5 @@
 import { Kayo } from "../../Kayo";
+import Tooltip, { SerialTooltip } from "./Tooltip";
 import UIVariableComponent from "./UIComponent";
 
 interface ISelectBox {
@@ -62,6 +63,8 @@ export class StateSelectBox extends UIVariableComponent implements ISelectBox {
 			}
 			selectBox.addOption(win, option);
 		}
+		if (obj.tooltip) Tooltip.register(win, obj.tooltip as SerialTooltip, selectBox, obj.stateVariableURL);
+
 		selectBox.bind(obj.stateVariableURL);
 		return selectBox;
 	}

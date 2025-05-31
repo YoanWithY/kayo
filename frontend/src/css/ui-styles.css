@@ -11,7 +11,7 @@
     --pane-stripe-color: rgb(48, 48, 48);
     --pane-stripe-hover-color: rgb(56, 56, 56);
     --selection-pane-color: rgb(32, 32, 32);
-    --text-color: rgb(200, 200, 200);
+    --text-color: rgb(220, 220, 220);
     --font-size: 0.8rem;
 
     --text-padding: 4px;
@@ -41,7 +41,7 @@ body {
     font-size: var(--font-size);
     margin: 0;
     background-color: var(--split-pane-divider-color);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: 'Noto Sans', Helvetica, sans-serif;
     user-select: none;
     touch-action: none;
 }

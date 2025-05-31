@@ -6602,7 +6602,7 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  121936: () => {
+  122848: () => {
     console.log("Hello from proxied JS");
   }
 };

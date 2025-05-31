@@ -14,17 +14,32 @@ export interface SwapChainConfig extends ClassHandle {
   bitDepth: number;
   get colorSpace(): string;
   set colorSpace(value: EmbindString);
-  get toneMapping(): string;
-  set toneMapping(value: EmbindString);
+  get toneMappingMode(): string;
+  set toneMappingMode(value: EmbindString);
+}
+
+export interface TransparencyConfig extends ClassHandle {
+  transparentBackground: boolean;
 }
 
 export interface AntialiasingConfig extends ClassHandle {
   msaa: number;
+  get interpolation(): string;
+  set interpolation(value: EmbindString);
+}
+
+export interface GeneralConfig extends ClassHandle {
+  swapChain: SwapChainConfig;
+  transparency: TransparencyConfig;
+}
+
+export interface RealtimeConfig extends ClassHandle {
+  antialiasing: AntialiasingConfig;
 }
 
 export interface OutputConfig extends ClassHandle {
-  swapChain: SwapChainConfig;
-  antialiasing: AntialiasingConfig;
+  general: GeneralConfig;
+  realtime: RealtimeConfig;
 }
 
 export interface ProjectConfig extends ClassHandle {
@@ -63,11 +78,25 @@ export interface SwapChainState extends ClassHandle {
 
 export interface AntialiasingState extends ClassHandle {
   msaa: KayoJSVCNumber;
+  interpolation: KayoJSVCString;
+}
+
+export interface TransparencyState extends ClassHandle {
+  transparentBackground: KayoJSVCString;
+}
+
+export interface GeneralState extends ClassHandle {
+  swapChain: SwapChainState;
+  transparency: TransparencyState;
+}
+
+export interface RealtimeState extends ClassHandle {
+  antialiasing: AntialiasingState;
 }
 
 export interface OutpuState extends ClassHandle {
-  swapChain: SwapChainState;
-  antialiasing: AntialiasingState;
+  general: GeneralState;
+  realtime: RealtimeState;
 }
 
 export interface ProjectState extends ClassHandle {
@@ -98,7 +127,10 @@ export interface KayoNumber extends ClassHandle {
 
 interface EmbindModule {
   SwapChainConfig: {};
+  TransparencyConfig: {};
   AntialiasingConfig: {};
+  GeneralConfig: {};
+  RealtimeConfig: {};
   OutputConfig: {};
   ProjectConfig: {};
   KayoJSVCNumber: {};
@@ -109,6 +141,9 @@ interface EmbindModule {
   };
   SwapChainState: {};
   AntialiasingState: {};
+  TransparencyState: {};
+  GeneralState: {};
+  RealtimeState: {};
   OutpuState: {};
   ProjectState: {};
   KayoR3Object: {};

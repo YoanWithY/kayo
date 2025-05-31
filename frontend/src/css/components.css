@@ -1,20 +1,29 @@
+v-box {
+	display: flex;
+	flex-direction: column;
+	flex: 1 0 0px;
+	margin: 0;
+	padding: 0;
+	gap: var(--text-padding)
+}
+
 collapsible-element {
 	display: block;
-	flex-grow: 0;
+	flex: 0 0 auto;
 	overflow: hidden;
-	background-color: rgb(40, 40, 40);
-	border: 1px solid rgb(45, 45, 45);
+	background-color: rgba(255,  255, 255, 0.03);
+	border: 1px solid rgba(255,  255, 255, 0.03);
 	border-radius: var(--radius);
 }
 
 collapsible-button {
 	display: block;
 	white-space: nowrap;
-	padding: 6px;
+	padding: var(--text-padding);
 }
 
 collapsible-button:hover {
-	background-color: rgb(45, 45, 45);
+	background-color: rgba(255,  255, 255, 0.03);
 }
 
 collapsible-button::before {
@@ -29,19 +38,17 @@ collapsible-button::before {
 }
 
 collapsible-button[state=open]::before {
-	transform: translateY(-40%) rotate(45deg);
+	transform: translateY(-40%) translateX(40%) rotate(45deg);
 }
 
 collapsible-button[state=closed]::before {
-	transform: translateY(-20%) rotate(-45deg);
+	transform: rotate(-45deg);
 }
 
 collapsible-content-container {
 	display: block;
-	padding: 0px;
 	margin: 0px;
-	margin-left: 8px;
-	padding: 6px;
+	padding: var(--text-padding);
 }
 
 @keyframes fadeIn {
@@ -56,19 +63,24 @@ collapsible-content-container {
 
 tool-tip {
 	position: fixed;
-
+	pointer-events: none;
 	opacity: 0;
 	left: 8px;
 	top: 8px;
-	background-color: rgba(0, 0, 0, 0.5);
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	backdrop-filter: blur(8px);
+	background-color: rgba(0, 0, 0, 0.6);
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	backdrop-filter: blur(73px);
 	box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.5);
 	border-radius: var(--radius);
-	padding: 4px;
+	padding: 6px;
 	z-index: 100;
 	animation: fadeIn 0.1s ease 0.5s;
 	animation-fill-mode: forwards;
+}
+
+kbd.api-text {
+	color: rgb(110, 123, 110);
+	font-weight: bold;
 }
 
 grid-2col {
@@ -85,28 +97,7 @@ grid-2col> :nth-child(odd) {
 }
 
 grid-2col> :nth-child(even) {
-	justify-self: stretch;
-}
-
-check-box {
-	background-color: rgb(20, 20, 20);
-	min-width: 1rem;
-	min-height: 1rem;
-	border: 1px solid rgb(28, 28, 28);
-	border-radius: var(--radius);
-}
-
-check-box:hover {
-	background-color: rgb(28, 28, 28);
-}
-
-check-box:state(checked) {
-	background-color: var(--accent-color);
-	border-color: var(--accent-color-hover);
-}
-
-check-box:state(checked):hover {
-	background-color: var(--accent-color-hover);
+	justify-self: auto;
 }
 
 ptp-chat-content {

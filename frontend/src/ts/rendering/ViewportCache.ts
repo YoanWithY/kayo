@@ -52,12 +52,12 @@ export class ViewportCache {
 	public conditionalFrambebufferUpdate(config: OutputConfig) {
 		const w = this.viewport.getCurrentTexture().width;
 		const h = this.viewport.getCurrentTexture().height;
-		this.conditionalColorAttachmentUpdate(w, h, config.antialiasing.msaa);
+		this.conditionalColorAttachmentUpdate(w, h, config.realtime.antialiasing.msaa);
 		this.conditionalOverlayAttachmentUpdate(w, h, config);
 		if (
 			w === this.prevWidth &&
 			h === this.prevHeight &&
-			config.antialiasing.msaa === this.prevMSAA &&
+			config.realtime.antialiasing.msaa === this.prevMSAA &&
 			this.prevUseOverlays === this.viewport.useOverlays
 		)
 			return;
@@ -99,13 +99,13 @@ export class ViewportCache {
 			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 		});
 
-		if (config.antialiasing.msaa > 1) {
+		if (config.realtime.antialiasing.msaa > 1) {
 			if (this.idTextureMS) this.idTextureMS.destroy();
 			this.idTextureMS = this.gpuDevice.createTexture({
 				label: "multisample id attachment texture",
 				size: [w, h, 1],
 				format: "r16uint",
-				sampleCount: config.antialiasing.msaa,
+				sampleCount: config.realtime.antialiasing.msaa,
 				usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 			});
 
@@ -116,7 +116,7 @@ export class ViewportCache {
 				format: "depth24plus",
 				usage: GPUTextureUsage.RENDER_ATTACHMENT,
 				label: "multisample render depth Attachment texture",
-				sampleCount: config.antialiasing.msaa,
+				sampleCount: config.realtime.antialiasing.msaa,
 			});
 		}
 
@@ -134,7 +134,7 @@ export class ViewportCache {
 				],
 				layout: this.project.renderer.compositingBindGroupLayout,
 			});
-			if (config.antialiasing.msaa > 1) {
+			if (config.realtime.antialiasing.msaa > 1) {
 				if (!this.idTextureMS) {
 					console.error("Multisampled ID Texture missing!");
 					return;
@@ -149,7 +149,7 @@ export class ViewportCache {
 
 		this.prevWidth = w;
 		this.prevHeight = h;
-		this.prevMSAA = config.antialiasing.msaa;
+		this.prevMSAA = config.realtime.antialiasing.msaa;
 		this.prevUseOverlays = this.viewport.useOverlays;
 	}
 
@@ -201,7 +201,7 @@ export class ViewportCache {
 			w === this.prevWidth &&
 			h === this.prevHeight &&
 			this.overlayTextureSS &&
-			(config.antialiasing.msaa === 1 || this.overlayTextureMS)
+			(config.realtime.antialiasing.msaa === 1 || this.overlayTextureMS)
 		)
 			return;
 
@@ -220,12 +220,12 @@ export class ViewportCache {
 			this.overlayTextureMS = undefined;
 		}
 
-		if (config.antialiasing.msaa > 1) {
+		if (config.realtime.antialiasing.msaa > 1) {
 			this.overlayTextureMS = this.gpuDevice.createTexture({
 				label: "Overlay resolve target",
 				size: [w, h, 1],
 				format: "rgba8unorm",
-				sampleCount: config.antialiasing.msaa,
+				sampleCount: config.realtime.antialiasing.msaa,
 				usage: GPUTextureUsage.RENDER_ATTACHMENT,
 			});
 		}
@@ -234,15 +234,15 @@ export class ViewportCache {
 	public reconfigureContext() {
 		const context = this.viewport.canvasContext;
 		if (!context) return;
-		const swapChainConfig = this.project.wasmx.kayoInstance.project.output.swapChain;
+		const config = this.project.wasmx.kayoInstance.projectConfig.output.general;
 		context.unconfigure();
 		context.configure({
 			device: this.gpuDevice,
 			format: this.project.getSwapChainFormat(),
-			colorSpace: swapChainConfig.colorSpace.getValue() as PredefinedColorSpace,
-			toneMapping: { mode: swapChainConfig.toneMappingMode.getValue() as GPUCanvasToneMappingMode },
+			colorSpace: config.swapChain.colorSpace as PredefinedColorSpace,
+			toneMapping: { mode: config.swapChain.toneMappingMode as GPUCanvasToneMappingMode },
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
-			alphaMode: "opaque",
+			alphaMode: config.transparency.transparentBackground ? "premultiplied" : "opaque",
 		});
 	}
 
@@ -291,7 +291,7 @@ export class ViewportCache {
 			if (selectionDepthAttachment) selectionDepthAttachment.view = this.selectionDepthRT.createView();
 		}
 
-		if (config.antialiasing.msaa === 1) {
+		if (config.realtime.antialiasing.msaa === 1) {
 			colorAttachment.view = this.viewport.getCurrentTexture().createView();
 			colorAttachment.resolveTarget = undefined;
 
@@ -336,7 +336,7 @@ export class ViewportCache {
 		const r3depthAttachment = r3renderPassDescriptor.depthStencilAttachment;
 		const overlayDepthAttachment = overlayRenderPassDescriptor.depthStencilAttachment;
 		if (r3depthAttachment && overlayDepthAttachment && this.depthTextureSS) {
-			if (config.antialiasing.msaa === 1) {
+			if (config.realtime.antialiasing.msaa === 1) {
 				r3depthAttachment.view = this.depthTextureSS.createView();
 				overlayDepthAttachment.view = this.depthTextureSS.createView();
 			} else {

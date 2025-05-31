@@ -32,15 +32,41 @@ class SwapChain {
 		std::string old_toneMappingMode = swapChain.toneMappingMode;
 		swapChain.toneMappingMode = this->toneMappingMode.value;
 		if (old_toneMappingMode != swapChain.toneMappingMode) {
+			project.needsContextReconfiguration = true;
 			project.needsPipelineRebuild = true;
 		}
+	}
+};
+
+class Transparency {
+  public:
+	JSVCString transparentBackground;
+	Transparency(const JSVCString& transparentBackground);
+	constexpr void mirrorToConfig(kayo::config::Project& project, kayo::config::Transparancy& transparency) {
+		bool old_transparentBackground = transparency.transparentBackground;
+		transparency.transparentBackground = this->transparentBackground.value == "true";
+		if (old_transparentBackground != transparency.transparentBackground) {
+			project.needsContextReconfiguration = true;
+		}
+	}
+};
+
+class General {
+  public:
+	SwapChain swapChain;
+	Transparency transparency;
+	General(const SwapChain& swapChain, const Transparency& transparency);
+	constexpr void mirrorToConfig(kayo::config::Project& project, kayo::config::General& general) {
+		this->swapChain.mirrorToConfig(project, general.swapChain);
+		this->transparency.mirrorToConfig(project, general.transparency);
 	}
 };
 
 class Antialiasing {
   public:
 	JSVCNumber msaa;
-	Antialiasing(const JSVCNumber& msaa);
+	JSVCString interpolation;
+	Antialiasing(const JSVCNumber& msaa, const JSVCString& interpolation);
 	constexpr void mirrorToConfig(kayo::config::Project& project, kayo::config::Antialiasing& antialiasing) {
 		int32_t old_msaa = antialiasing.msaa;
 		antialiasing.msaa = static_cast<int32_t>(this->msaa.value);
@@ -50,14 +76,23 @@ class Antialiasing {
 	}
 };
 
+class Realtime {
+  public:
+	Antialiasing antialiasing;
+	Realtime(const Antialiasing& antialiasing);
+	constexpr void mirrorToConfig(kayo::config::Project& project, kayo::config::Realtime& realtime) {
+		this->antialiasing.mirrorToConfig(project, realtime.antialiasing);
+	}
+};
+
 class Output {
   public:
-	SwapChain swapChain;
-	Antialiasing antialiasing;
-	Output(const SwapChain& swapChain, const Antialiasing& antialiasing);
+	General general;
+	Realtime realtime;
+	Output(const General& general, const Realtime& realtime);
 	constexpr void mirrorToConfig(kayo::config::Project& project, kayo::config::Output& output) {
-		this->swapChain.mirrorToConfig(project, output.swapChain);
-		this->antialiasing.mirrorToConfig(project, output.antialiasing);
+		this->general.mirrorToConfig(project, output.general);
+		this->realtime.mirrorToConfig(project, output.realtime);
 	}
 };
 
