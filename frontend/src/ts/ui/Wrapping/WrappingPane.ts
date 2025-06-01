@@ -10,7 +10,6 @@ import { MinecraftSection } from "../../minecraft/MinecraftSection";
 import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
 import TextureUtils from "../../Textures/TextureUtils";
 import { Kayo } from "../../Kayo";
-import wasmx from "../../KayoWasmLoader";
 
 export class WrappingPane extends HTMLElement {
 	project!: Project;
@@ -92,7 +91,7 @@ export class WrappingPane extends HTMLElement {
 					if (file.name.endsWith(".mca")) {
 						console.log(".msc");
 						try {
-							const world = wasmx.minecraftModule.createWorldData("My World");
+							const world = project.kayo.wasmx.minecraftModule.createWorldData("My World");
 							const dimension = world.createDimensionData("Overworld", 0);
 							dimension.openRegion(0, 0, content);
 							const mWorld = new MinecraftWorld("World", res, 8);

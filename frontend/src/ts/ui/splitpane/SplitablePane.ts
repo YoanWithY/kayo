@@ -9,29 +9,36 @@ import { SplitPaneDivider } from "./SplitPaneDivider";
 
 export class SplitablePane extends HTMLElement {
 	private cachedBase?: HTMLElement;
-	private dummy: HTMLDivElement;
 	private cachedWidth?: string;
 	private cachedHeight?: string;
+	private dummy!: HTMLDivElement;
+	private _win!: Window;
 	project!: Project;
 	uiRoot!: WrappingPane;
 	sp_ul!: SplitButton;
 	sp_ur!: SplitButton;
 	sp_ll!: SplitButton;
 	sp_lr!: SplitButton;
-	constructor() {
-		super();
-		this.dummy = document.createElement("div");
-		const keyListener = (e: KeyboardEvent) => {
-			if (e.ctrlKey && e.key === " " && !e.shiftKey) {
-				this.toggleSingleWindow();
-			}
-		};
-		this.addEventListener("mouseenter", () => {
-			window.addEventListener("keydown", keyListener);
-		});
-		this.addEventListener("mouseleave", () => {
-			window.removeEventListener("keydown", keyListener);
-		});
+	private keyListener = (e: KeyboardEvent) => {
+		if (e.ctrlKey && e.key === " " && !e.shiftKey) {
+			this.toggleSingleWindow();
+		}
+	};
+	private mouseEnterWindow = () => {
+		this._win.addEventListener("keydown", this.keyListener);
+	};
+	private mouseLeaveWindow = () => {
+		this._win.removeEventListener("keydown", this.keyListener);
+	};
+
+	connectedCallback() {
+		this.addEventListener("mouseenter", this.mouseEnterWindow);
+		this.addEventListener("mouseleave", this.mouseLeaveWindow);
+	}
+
+	disconnectedCallback() {
+		this.removeEventListener("mouseenter", this.mouseEnterWindow);
+		this.removeEventListener("mouseleave", this.mouseLeaveWindow);
 	}
 
 	public toggleSingleWindow() {
@@ -78,6 +85,8 @@ export class SplitablePane extends HTMLElement {
 		rect?: DOMRect,
 	): SplitablePane {
 		const newSplitablePane = win.document.createElement("splitable-pane") as SplitablePane;
+		newSplitablePane.dummy = document.createElement("div");
+		newSplitablePane._win = win;
 		newSplitablePane.uiRoot = uiRoot;
 		newSplitablePane.project = kayo.project;
 

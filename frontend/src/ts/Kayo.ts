@@ -24,4 +24,8 @@ export class Kayo {
 	get wasmx(): WASMX {
 		return this._wasmx;
 	}
+
+	public openNewWindow(): void {
+		open(window.location.href, "_blank", "popup=true");
+	}
 }

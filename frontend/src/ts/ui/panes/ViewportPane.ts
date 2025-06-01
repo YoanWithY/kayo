@@ -73,6 +73,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 				this.addEventListener("mousemove", walkLook);
 				walkLook(e);
 				const walkMove = () => {
+					this.project.fullRerender();
 					const mat = this.camera.transformationStack.getTransformationMatrix();
 					if (keyMap["w"]) {
 						lookAt.p = lookAt.p.sub(mat.getColumn(2).xyz.mulS(speed));

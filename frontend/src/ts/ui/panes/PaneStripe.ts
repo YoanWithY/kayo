@@ -9,11 +9,25 @@ export class PaneStripe extends HTMLElement {
 	);
 	static size2 = this.size * 2;
 
+	kayo!: Kayo;
+
+	dblclickHandler = () => {
+		(this.parentElement as SplitablePane).toggleSingleWindow();
+	};
+
+	contextMenueHandler = (e: MouseEvent) => {
+		e.preventDefault();
+		this.kayo.openNewWindow();
+	};
+
+	connectedCallback() {
+		this.addEventListener("dblclick", this.dblclickHandler);
+		this.addEventListener("contextmenu", this.contextMenueHandler);
+	}
+
 	static createPaneStripe(win: Window, kayo: Kayo, name: string) {
-		const p = win.document.createElement("pane-stripe");
-		p.addEventListener("dblclick", (_) => {
-			(p.parentElement as SplitablePane).toggleSingleWindow();
-		});
+		const p = win.document.createElement("pane-stripe") as PaneStripe;
+		p.kayo = kayo;
 
 		const selectBox = SelectBox.createUIElement(win);
 
