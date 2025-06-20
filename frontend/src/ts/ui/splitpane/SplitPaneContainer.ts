@@ -1,6 +1,6 @@
 import { Kayo } from "../../Kayo";
+import { panesNameClassMap } from "../panes/PaneSelectorPane";
 import { PaneStripe } from "../panes/PaneStripe";
-import { ViewportPane } from "../panes/ViewportPane";
 import { WrappingPane } from "../Wrapping/WrappingPane";
 import { SplitablePane } from "./SplitablePane";
 import { SplitPaneDivider } from "./SplitPaneDivider";
@@ -18,12 +18,12 @@ export class SplitPaneContainer extends HTMLElement {
 		return c;
 	}
 
-	static createRoot(win: Window, kayo: Kayo, uiRoot: WrappingPane) {
+	static createRoot(win: Window, kayo: Kayo, uiRoot: WrappingPane, defaultPane: string) {
 		const c = win.document.createElement("split-pane-container");
 		c.setAttribute("split-pane-container-orientation", "none");
 		c.setAttribute("id", "wrapper");
 
-		c.appendChild(SplitablePane.createSplitablePane(win, kayo, uiRoot, ViewportPane));
+		c.appendChild(SplitablePane.createSplitablePane(win, kayo, uiRoot, panesNameClassMap[defaultPane]));
 		return c as SplitPaneContainer;
 	}
 

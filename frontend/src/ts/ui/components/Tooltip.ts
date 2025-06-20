@@ -1,5 +1,5 @@
 export default class Tooltip extends HTMLElement {
-	static createTooltip(win: Window, serialTooltip: SerialTooltip, stateVariableURL?: string): Tooltip {
+	static createTooltip(win: Window, serialTooltip: SerialTooltip, obj: any): Tooltip {
 		const tooltip = win.document.createElement("tool-tip") as Tooltip;
 		tooltip.setAttribute("state", "invisible");
 
@@ -9,18 +9,30 @@ export default class Tooltip extends HTMLElement {
 			tooltip.appendChild(container);
 		}
 
-		if (stateVariableURL) {
+		if (obj.uneffectiveIfAny) {
 			const container = win.document.createElement("div");
 			container.style.marginTop = "8px";
-			container.innerHTML = `<kbd class="api-text">API: ${stateVariableURL}</kbd>`;
+			let htmlstring = `<p>Uneffective if${obj.uneffectiveIfAny.length > 1 ? " any of" : ""}</p><ul>`;
+			for (const entry of obj.uneffectiveIfAny) {
+				htmlstring += `<li><kbd class="api-text">${entry.stateVariableURL} = ${entry.anyOf.toString()}</kbd>`;
+			}
+			htmlstring += "</ul>";
+			container.innerHTML = htmlstring;
+			tooltip.appendChild(container);
+		}
+
+		if (obj.stateVariableURL) {
+			const container = win.document.createElement("div");
+			container.style.marginTop = "8px";
+			container.innerHTML = `<kbd class="api-text">API: ${obj.stateVariableURL}</kbd>`;
 			tooltip.appendChild(container);
 		}
 
 		return tooltip;
 	}
 
-	static register(win: Window, tooltipString: SerialTooltip, element: HTMLElement, stateVariableURL?: string) {
-		const tooltip = Tooltip.createTooltip(win, tooltipString, stateVariableURL);
+	static register(win: Window, tooltipString: SerialTooltip, element: HTMLElement, obj: any) {
+		const tooltip = Tooltip.createTooltip(win, tooltipString, obj);
 		element.addEventListener("mouseenter", (e) => {
 			tooltip.style.left = `${e.clientX}px`;
 			tooltip.style.top = `${e.clientY}px`;
@@ -30,7 +42,7 @@ export default class Tooltip extends HTMLElement {
 
 		element.addEventListener("mouseleave", () => {
 			tooltip.setAttribute("state", "invisible");
-			document.body.removeChild(tooltip);
+			win.document.body.removeChild(tooltip);
 		});
 	}
 }

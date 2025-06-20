@@ -1,7 +1,8 @@
 #pragma once
 #include "../r3/R3Manager.hpp"
-#include "config.hpp"
-#include "state.hpp"
+#include "project.hpp"
+#include "renderConfig.hpp"
+#include "renderState.hpp"
 #include "webgpu/webgpu.h"
 #include <cstdint>
 #include <iostream>
@@ -32,9 +33,7 @@ class KayoInstance {
 
   public:
 	KayoInstance();
-	config::Project projectConfig;
-	state::Project project;
-	void mirrorStateToConfig();
+	Project project;
 	int32_t registerModule(KayoModule& module);
 	const std::map<std::string, KayoModule*>& getModules() const;
 };

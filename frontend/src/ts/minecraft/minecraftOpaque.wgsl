@@ -125,6 +125,7 @@ fn fragment_main(fragment: VertexOut) -> R3FragmentOutput {
 	if(albedoAlpha.a < 0.01) {
 		discard;
 	}
+	albedoAlpha = vec4f(albedoAlpha.rgb * albedoAlpha.a, albedoAlpha.a);
 	if(fragment.tint != 0) {
 		albedoAlpha = vec4f(albedoAlpha.rgb * vec3f(0.57, 0.74, 0.35), albedoAlpha.a);
 	}

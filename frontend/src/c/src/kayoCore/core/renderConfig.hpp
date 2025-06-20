@@ -25,19 +25,23 @@ struct Antialiasing {
 	std::string interpolation;
 };
 
-struct Realtime {
+struct SpecificRenderer {
+	virtual ~SpecificRenderer() {}
+};
+
+struct Realtime : public SpecificRenderer {
 	Antialiasing antialiasing;
 };
 
-struct Output {
-	General general;
-	Realtime realtime;
-};
+struct Integral : public SpecificRenderer {};
 
-struct Project {
-	Output output;
+struct RenderConfig {
 	bool needsContextReconfiguration;
 	bool needsPipelineRebuild;
+	General general;
+	SpecificRenderer* specificRenderer;
+	inline RenderConfig() : specificRenderer(new config::Realtime) {}
 };
+
 } // namespace config
 } // namespace kayo

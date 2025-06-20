@@ -1,3 +1,4 @@
+import { RenderState } from "../../c/KayoCorePP";
 import {
 	AbstractDisplayOutputRenderingPipeline,
 	fragmentEntryPoint,
@@ -53,7 +54,9 @@ class BackgroundPipeline extends AbstractDisplayOutputRenderingPipeline {
 		this.depthCompare = "always";
 		this.depthWriteEnabled = false;
 		this.depthStencilFormat = Renderer.getDepthStencilFormat();
-		this.fragmentTargets = project.getFragmentTargets();
+		this.fragmentTargets = project.getFragmentTargets(
+			(this.project.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config.general,
+		);
 
 		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule({
 			label: `${label} shader module`,

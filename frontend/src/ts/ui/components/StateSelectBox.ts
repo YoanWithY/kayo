@@ -1,14 +1,21 @@
 import { Kayo } from "../../Kayo";
+import WASMX, { WasmPath } from "../../WASMX";
 import Tooltip, { SerialTooltip } from "./Tooltip";
-import UIVariableComponent from "./UIComponent";
 
 interface ISelectBox {
 	setOption: (optionValue: SelectOptionValue) => void;
 }
 
+type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
+
 export type SelectOptionValue = { value: string; text: string };
-export class StateSelectBox extends UIVariableComponent implements ISelectBox {
+export class StateSelectBox extends HTMLElement implements ISelectBox {
 	private _win!: Window;
+	private _wasmx!: WASMX;
+	private _stateWasmPath!: WasmPath;
+	private _stateWasmPathVariables: any;
+	private _uneffectiveIfAny!: MarkUneffectiveEntry[];
+	private _additionalCallbacks: { path: WasmPath; callback: (v: string) => void }[] = [];
 	private _optionWrapper!: SelectOptionWrapper;
 	private _internals: ElementInternals;
 	private _valueNameMap: Map<string, string> = new Map();
@@ -37,7 +44,7 @@ export class StateSelectBox extends UIVariableComponent implements ISelectBox {
 	};
 
 	setOption(optionValue: SelectOptionValue) {
-		this.setModelValue(optionValue.value);
+		this._wasmx.setModelValue(this._stateWasmPath, optionValue.value);
 		this.hidingClosure();
 	}
 
@@ -47,15 +54,58 @@ export class StateSelectBox extends UIVariableComponent implements ISelectBox {
 		this._valueNameMap.set(optionValue.value, optionValue.text);
 	}
 
-	setUiValue(wasmValue: string): void {
+	stateChangeCallback = (wasmValue: string) => {
 		this.textContent = this._valueNameMap.get(wasmValue) as string;
+	};
+
+	connectedCallback() {
+		this._wasmx.addChangeListener(this._stateWasmPath, this.stateChangeCallback);
+		for (const entry of this._additionalCallbacks) this._wasmx.addChangeListener(entry.path, entry.callback);
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any): StateSelectBox {
+	disconnectedCallback() {
+		this._wasmx.removeChangeListener(this._stateWasmPath, this.stateChangeCallback);
+		for (const entry of this._additionalCallbacks) this._wasmx.removeChangeListener(entry.path, entry.callback);
+	}
+
+	private _checkMarkUneffective() {
+		for (const entry of this._uneffectiveIfAny) {
+			const path = this._wasmx.toWasmPath(entry.stateVariableURL, this._stateWasmPathVariables);
+			const val = this._wasmx.getModelReference(path).getValue();
+			for (let compValue of entry.anyOf) {
+				if (typeof compValue == "number") compValue = this._wasmx.Number.fromDouble(compValue);
+				if (val == compValue) return true;
+			}
+		}
+		return false;
+	}
+
+	public setMarkUneffective(markUneffective: boolean) {
+		if (markUneffective) this._internals.states.add("uneffective");
+		else this._internals.states.delete("uneffective");
+	}
+
+	checkDisablingCallback = () => {
+		this.setMarkUneffective(this._checkMarkUneffective());
+	};
+
+	public static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any): StateSelectBox {
 		const selectBox = win.document.createElement(this.getDomClass()) as StateSelectBox;
-		selectBox.wasmx = kayo.wasmx;
 		selectBox._win = win;
 		selectBox._optionWrapper = SelectOptionWrapper.createSelectOptionWrapper(win);
+		selectBox._wasmx = kayo.wasmx;
+		selectBox._stateWasmPath = kayo.wasmx.toWasmPath(obj.stateVariableURL, variables);
+		selectBox._stateWasmPathVariables = variables;
+
+		selectBox._uneffectiveIfAny = obj.uneffectiveIfAny;
+
+		if (selectBox._uneffectiveIfAny !== undefined) {
+			for (const entry of obj.uneffectiveIfAny) {
+				const path = kayo.wasmx.toWasmPath(entry.stateVariableURL, variables);
+				selectBox._additionalCallbacks.push({ path: path, callback: selectBox.checkDisablingCallback });
+			}
+		}
+
 		const options = obj.options;
 		for (const option of options as SelectOptionValue[]) {
 			if (typeof option.value == "number") {
@@ -63,9 +113,9 @@ export class StateSelectBox extends UIVariableComponent implements ISelectBox {
 			}
 			selectBox.addOption(win, option);
 		}
-		if (obj.tooltip) Tooltip.register(win, obj.tooltip as SerialTooltip, selectBox, obj.stateVariableURL);
 
-		selectBox.bind(obj.stateVariableURL);
+		if (obj.tooltip) Tooltip.register(win, obj.tooltip as SerialTooltip, selectBox, obj);
+
 		return selectBox;
 	}
 

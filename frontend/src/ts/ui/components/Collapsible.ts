@@ -16,7 +16,7 @@ export default class Collapsible extends HTMLElement {
 		}
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any) {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any, vairables?: any) {
 		const p = win.document.createElement(this.getDomClass()) as Collapsible;
 
 		p.collapsibleButton = CollapsibleButton.createCollapsibleButton(win);
@@ -29,11 +29,12 @@ export default class Collapsible extends HTMLElement {
 		) as CollapsibleContentContainer;
 
 		const content = obj.content;
-		if (content !== undefined) p.collapsibleContentContainer.appendChild(buildUIElement(win, kayo, obj.content));
+		if (content !== undefined)
+			p.collapsibleContentContainer.appendChild(buildUIElement(win, kayo, obj.content, vairables));
 
 		const tooltip = obj.tooltip;
 		if (tooltip !== undefined) {
-			Tooltip.register(win, tooltip, p.collapsibleButton);
+			Tooltip.register(win, tooltip, p.collapsibleButton, obj);
 		}
 
 		p.appendChild(p.collapsibleContentContainer);

@@ -8,6 +8,7 @@ import { MinecraftOpaquePipeline } from "../minecraft/MinecraftOpaquePipeline";
 import { DisplayInfo } from "../Material/AbstractRenderingPipeline";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 import { ViewportPane } from "../ui/panes/ViewportPane";
+import { RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
 
 export default class Renderer {
 	project: Project;
@@ -42,7 +43,9 @@ export default class Renderer {
 	constructor(project: Project) {
 		this.project = project;
 		this.gpuDevice = project.gpux.gpuDevice;
-		this.reconfigureContext();
+		this.reconfigureContext(
+			(this.project.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config,
+		);
 		this.viewUBO = this.gpuDevice.createBuffer({
 			label: "View UBO",
 			size: (3 * 16 + 12) * 4,
@@ -255,14 +258,14 @@ export default class Renderer {
 		};
 	}
 
-	reconfigureContext() {
-		for (const [, viewportCache] of this.viewportCache) viewportCache.reconfigureContext();
+	reconfigureContext(config: RenderConfig) {
+		for (const [, viewportCache] of this.viewportCache) viewportCache.reconfigureContext(config.general);
 	}
 
-	rebuildDisplayOutputPipelines() {
+	rebuildDisplayOutputPipelines(config: RenderConfig) {
 		const outConsts = this.project.getDisplayFragmentOutputConstants();
-		const format = this.project.getSwapChainFormat();
-		const msaa = this.project.wasmx.kayoInstance.projectConfig.output.realtime.antialiasing.msaa;
+		const format = this.project.getSwapChainFormat(config.general);
+		const msaa = (config.specificRenderer as RealtimeConfig).antialiasing.msaa;
 
 		const surfaceInfo: DisplayInfo = {
 			gpuDevice: this.gpuDevice,
@@ -293,16 +296,26 @@ export default class Renderer {
 
 	jsTime = "";
 	frame = 0;
-	loop = (_: number, window: Window) => {
+	loop = (_: number, viewport: Viewport) => {
 		const start = performance.now();
-		this.project.wasmx.kayoInstance.mirrorStateToConfig();
-		const config = this.project.wasmx.kayoInstance.projectConfig;
+		const renderState = this.project.wasmx.kayoInstance.project.renderStates.get(viewport.configKey);
+		if (renderState === null) {
+			console.error(`The render config key ${viewport.configKey} is unknown.`);
+			return;
+		}
+		renderState.applyToConfig();
+		const config = renderState.config;
+		const specificRenderer: RealtimeConfig = config.specificRenderer as RealtimeConfig;
+		if (specificRenderer === null) {
+			console.error("Specific renderer config is null!");
+			return;
+		}
 
 		this.requestedAnimationFrame.set(window, false);
 
-		if (config.needsContextReconfiguration) this.reconfigureContext();
+		if (config.needsContextReconfiguration) this.reconfigureContext(config);
 
-		if (config.needsPipelineRebuild) this.rebuildDisplayOutputPipelines();
+		if (config.needsPipelineRebuild) this.rebuildDisplayOutputPipelines(config);
 
 		for (const viewport of this.viewportsToUpdate) {
 			viewport.updateView(this.viewUBO, this.frame);
@@ -319,7 +332,6 @@ export default class Renderer {
 				continue;
 			}
 			const commandEncoder = this.gpuDevice.createCommandEncoder();
-			const config = this.project.wasmx.kayoInstance.projectConfig.output;
 			viewportCache.setupRenderPasses(
 				this.r3renderPassDescriptor,
 				this.r16ResolveRenderPassDescriptor,
@@ -367,7 +379,7 @@ export default class Renderer {
 			r3renderPassEncoder.end();
 
 			if (viewport.useOverlays) {
-				if (config.realtime.antialiasing.msaa > 1) {
+				if ((config.specificRenderer as RealtimeConfig).antialiasing.msaa > 1) {
 					const r16ResolveRenderPassEncode = commandEncoder.beginRenderPass(
 						this.r16ResolveRenderPassDescriptor,
 					);
@@ -427,7 +439,7 @@ export default class Renderer {
 
 		this.requestedAnimationFrame.set(viewport.window, true);
 		viewport.window.requestAnimationFrame((ts: number) => {
-			this.loop(ts, viewport.window);
+			this.loop(ts, viewport);
 		});
 	}
 

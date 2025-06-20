@@ -12,6 +12,7 @@ import TextureUtils from "../Textures/TextureUtils";
 import { Kayo } from "../Kayo";
 import { PTPBase } from "../collaborative/PTPBase";
 import WASMX from "../WASMX";
+import { GeneralConfig, RenderState } from "../../c/KayoCorePP";
 
 export class Project {
 	kayo: Kayo;
@@ -78,16 +79,8 @@ export class Project {
 		this.scene.gridPipeline = new GridPipeline(this);
 	}
 
-	requestUI(win: Window) {
-		win.document.body.appendChild(WrappingPane.createWrappingPane(win, this.kayo));
-	}
-
-	getStateIDFromURL(stateVariableURL: string): number | undefined {
-		const names = stateVariableURL.split(".");
-		let obj: any = this.kayo.wasmx.kayoInstance.project;
-		for (let i = 0; i < names.length && obj !== undefined; i++) obj = obj[names[i]];
-		console.log(stateVariableURL);
-		return obj.getObservationID();
+	requestUI(win: Window, defaultPane: string) {
+		win.document.body.appendChild(WrappingPane.createWrappingPane(win, this.kayo, defaultPane));
 	}
 
 	fullRerender() {
@@ -97,25 +90,30 @@ export class Project {
 	getTargetColorspaceConstants(): Record<string, number> {
 		return {
 			targetColorSpace:
-				this.wasmx.kayoInstance.project.output.general.swapChain.colorSpace.getValue() == "srgb" ? 0 : 1,
+				(this.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config.general.swapChain
+					.colorSpace == "srgb"
+					? 0
+					: 1,
 		};
 	}
 
 	getDisplayFragmentOutputConstants(): { targetColorSpace: number; componentTranfere: number } {
 		return {
 			targetColorSpace:
-				this.wasmx.kayoInstance.project.output.general.swapChain.colorSpace.getValue() == "srgb" ? 0 : 1,
+				(this.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config.general.swapChain
+					.colorSpace == "srgb"
+					? 0
+					: 1,
 			componentTranfere: 1,
 		};
 	}
 
-	getSwapChainFormat(): GPUTextureFormat {
-		const v = this.wasmx.kayoInstance.projectConfig.output.general.swapChain.bitDepth;
-		if (v === 8) return this.gpux.gpu.getPreferredCanvasFormat();
+	getSwapChainFormat(generalConfig: GeneralConfig): GPUTextureFormat {
+		if (generalConfig.swapChain.bitDepth === 8) return this.gpux.gpu.getPreferredCanvasFormat();
 		return "rgba16float";
 	}
 
-	getFragmentTargets(): GPUColorTargetState[] {
-		return [{ format: this.getSwapChainFormat() }, { format: "r16uint" }];
+	getFragmentTargets(generalConfig: GeneralConfig): GPUColorTargetState[] {
+		return [{ format: this.getSwapChainFormat(generalConfig) }, { format: "r16uint" }];
 	}
 }

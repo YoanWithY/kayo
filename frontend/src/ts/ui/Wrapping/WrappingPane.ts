@@ -16,11 +16,11 @@ export class WrappingPane extends HTMLElement {
 	baseSplitPaneContainer!: SplitPaneContainer;
 	header!: HTMLDivElement;
 	footer!: Footer;
-	static createWrappingPane(win: Window, kayo: Kayo): WrappingPane {
+	static createWrappingPane(win: Window, kayo: Kayo, defaultPane: string): WrappingPane {
 		const p = win.document.createElement("wrapping-pane") as WrappingPane;
 		const project = kayo.project;
 		p.project = project;
-		p.baseSplitPaneContainer = SplitPaneContainer.createRoot(win, kayo, p);
+		p.baseSplitPaneContainer = SplitPaneContainer.createRoot(win, kayo, p, defaultPane);
 		p.header = win.document.createElement("div");
 
 		const fullScreenButton = IconedToggleButton.createIconedToggleButton(

@@ -21,7 +21,6 @@ KayoInstance::KayoInstance() {
 	}
 
 	std::cout << "Hello from the Kayo C++ WASM instance." << std::endl;
-	this->mirrorStateToConfig();
 }
 
 int32_t KayoInstance::registerModule(KayoModule& module) {
@@ -38,10 +37,6 @@ const std::map<std::string, KayoModule*>& KayoInstance::getModules() const {
 	return this->modules;
 }
 
-void KayoInstance::mirrorStateToConfig() {
-	this->project.mirrorToConfig(this->projectConfig);
-}
-
 } // namespace kayo
 
 using namespace emscripten;
@@ -50,7 +45,5 @@ EMSCRIPTEN_BINDINGS(KayoWASM) {
 	class_<kayo::KayoInstance>("KayoWASMInstance")
 		.constructor<>()
 		.function("registerModule", &kayo::KayoInstance::registerModule)
-		.function("mirrorStateToConfig", &kayo::KayoInstance::mirrorStateToConfig)
-		.property("projectConfig", &kayo::KayoInstance::projectConfig, return_value_policy::reference())
 		.property("project", &kayo::KayoInstance::project, return_value_policy::reference());
 }

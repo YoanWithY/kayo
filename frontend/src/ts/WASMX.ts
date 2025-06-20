@@ -6,13 +6,10 @@ import type {
 	MainModule,
 } from "../c/KayoCorePP";
 
-export interface VcBindable {
-	wasmPath: string[];
-	setUiValue(value: string): void;
-}
+export type WasmPath = string[][];
 
 export default class WASMX {
-	private _bindings: Map<number, { url: string[]; bindables: Set<VcBindable> }> = new Map();
+	private _bindings: Map<number, { url: WasmPath; callbacks: Set<(v: string) => void> }> = new Map();
 
 	Number;
 	kayoInstance: KayoWASMInstance;
@@ -23,38 +20,64 @@ export default class WASMX {
 		this.minecraftModule = new module.KayoWASMMinecraftModule(this.kayoInstance);
 	}
 
-	public getModelReference(wasmPath: string[]): KayoJSVCNumber | KayoJSVCString {
+	public toWasmPath(stateVariableURL: string, variables: any = {}): WasmPath {
+		return stateVariableURL.split(".").map((val: string) => {
+			const pathPart = val.split(":");
+			for (let i = 1; i < pathPart.length; i++) {
+				const variableSubstitution = variables[pathPart[i]];
+				if (variableSubstitution === undefined) {
+					console.error(`WasmPath variable "${pathPart[i]}" is no known variable.`);
+				} else {
+					pathPart[i] = variableSubstitution;
+				}
+			}
+			return pathPart;
+		});
+	}
+
+	public getModelReference(wasmPath: WasmPath): KayoJSVCNumber | KayoJSVCString {
 		let obj: any = this.kayoInstance.project;
-		for (const name of wasmPath) obj = obj[name];
+		for (const pathSegment of wasmPath) {
+			obj = obj[pathSegment[0]];
+			for (let i = 1; i < pathSegment.length; i++) obj = obj.get(pathSegment[i]);
+		}
 		return obj;
 	}
 
-	public vcBind(vcBindable: VcBindable) {
-		const jsvc = this.getModelReference(vcBindable.wasmPath);
-		const observationID = jsvc.getObservationID();
-
-		let bound = this._bindings.get(observationID);
-		if (!bound) {
-			bound = { url: vcBindable.wasmPath, bindables: new Set<VcBindable>() };
-			this._bindings.set(observationID, bound);
-		}
-		bound.bindables.add(vcBindable);
-		vcBindable.setUiValue(jsvc.getValue());
+	public getModelValue(wasmPath: WasmPath): string {
+		return this.getModelReference(wasmPath).getValue();
 	}
 
-	public vcUnbind(vcBindable: VcBindable) {
-		const jsvc = this.getModelReference(vcBindable.wasmPath);
+	public setModelValue(wasmPath: WasmPath, value: string): void {
+		this.getModelReference(wasmPath).setValue(value);
+	}
+
+	public addChangeListener(wasmPath: WasmPath, f: (v: string) => void, fireImmediately = true) {
+		const jsvc = this.getModelReference(wasmPath);
+		const observationID = jsvc.getObservationID();
+
+		let binding = this._bindings.get(observationID);
+		if (!binding) {
+			binding = { url: wasmPath, callbacks: new Set<(v: string) => void>() };
+			this._bindings.set(observationID, binding);
+		}
+		binding.callbacks.add(f);
+		if (fireImmediately) f(jsvc.getValue());
+	}
+
+	public removeChangeListener(wasmPath: WasmPath, f: (v: string) => void) {
+		const jsvc = this.getModelReference(wasmPath);
 		const observationID = jsvc.getObservationID();
 		let bound = this._bindings.get(observationID);
 		if (!bound) return;
-		bound.bindables.delete(vcBindable);
+		bound.callbacks.delete(f);
 	}
 
 	public vcDispatch(id: number) {
 		const bound = this._bindings.get(id);
 		if (!bound) return;
-		if (bound.bindables.size === 0) return;
+		if (bound.callbacks.size === 0) return;
 		const value = this.getModelReference(bound.url).getValue();
-		for (const vcBindable of bound.bindables) vcBindable.setUiValue(value);
+		for (const callback of bound.callbacks) callback(value);
 	}
 }

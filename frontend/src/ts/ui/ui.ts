@@ -74,13 +74,13 @@ const nameClassMap: { [key: string]: UIElement } = {
 	[Checkbox.getDomClass()]: Checkbox,
 };
 
-export function buildUIElement(win: Window, kayo: Kayo, obj: any): HTMLElement {
-	return nameClassMap[obj.class].createUIElement(win, kayo, obj);
+export function buildUIElement(win: Window, kayo: Kayo, obj: any, variables: any): HTMLElement {
+	return nameClassMap[obj.class].createUIElement(win, kayo, obj, variables);
 }
 
 export interface UIElement {
 	new (): any;
-	createUIElement(win: Window, kayo: Kayo, obj: any): HTMLElement;
+	createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any): HTMLElement;
 	getDomClass(): string;
 }
 

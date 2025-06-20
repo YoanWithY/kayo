@@ -3,15 +3,14 @@ import { buildUIElement } from "../ui";
 
 export default abstract class BasicPane extends HTMLElement {
 	public kayo!: Kayo;
-	public static createUIElement(win: Window, kayo: Kayo, obj?: any): BasicPane {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any): BasicPane {
 		const p = win.document.createElement(obj.class) as BasicPane;
 		p.kayo = kayo;
-		if (obj === undefined) return p;
 
 		const children = obj.children;
 		if (children === undefined) return p;
 
-		for (const child of children) p.appendChild(buildUIElement(win, kayo, child));
+		for (const child of children) p.appendChild(buildUIElement(win, kayo, child, variables));
 		return p;
 	}
 

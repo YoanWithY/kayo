@@ -85,7 +85,7 @@ export class SplitablePane extends HTMLElement {
 		rect?: DOMRect,
 	): SplitablePane {
 		const newSplitablePane = win.document.createElement("splitable-pane") as SplitablePane;
-		newSplitablePane.dummy = document.createElement("div");
+		newSplitablePane.dummy = win.document.createElement("div");
 		newSplitablePane._win = win;
 		newSplitablePane.uiRoot = uiRoot;
 		newSplitablePane.project = kayo.project;

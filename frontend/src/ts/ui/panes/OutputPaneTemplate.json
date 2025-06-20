@@ -19,7 +19,7 @@
 								},
 								{
 									"class": "state-select-box",
-									"stateVariableURL": "output.general.swapChain.colorSpace",
+									"stateVariableURL": "renderStates:renderState.general.swapChain.colorSpace",
 									"options": [
 										{
 											"value": "display-p3",
@@ -40,7 +40,7 @@
 								},
 								{
 									"class": "state-select-box",
-									"stateVariableURL": "output.general.swapChain.bitDepth",
+									"stateVariableURL": "renderStates:renderState.general.swapChain.bitDepth",
 									"options": [
 										{
 											"value": 8,
@@ -61,7 +61,7 @@
 								},
 								{
 									"class": "state-select-box",
-									"stateVariableURL": "output.general.swapChain.toneMappingMode",
+									"stateVariableURL": "renderStates:renderState.general.swapChain.toneMappingMode",
 									"options": [
 										{
 											"value": "standard",
@@ -72,8 +72,16 @@
 											"text": "Extended"
 										}
 									],
+									"uneffectiveIfAny": [
+										{
+											"stateVariableURL": "renderStates:renderState.general.swapChain.bitDepth",
+											"anyOf": [
+												8
+											]
+										}
+									],
 									"tooltip": {
-										"description": "The range of displayable colors. This setting will have no visiable effect if the bit depth is '8 BPC undigned normalized' or the monitor does not support HDR. This may change os compositing of the browser."
+										"description": "The range of displayable colors. This may change os compositing of the browser."
 									}
 								}
 							]
@@ -94,7 +102,7 @@
 								},
 								{
 									"class": "check-box",
-									"stateVariableURL": "output.general.transparency.transparentBackground",
+									"stateVariableURL": "renderStates:renderState.general.transparency.transparentBackground",
 									"tooltip": {
 										"description": "Wether or not to make the scene background transparent."
 									}
@@ -129,7 +137,7 @@
 								},
 								{
 									"class": "state-select-box",
-									"stateVariableURL": "output.realtime.antialiasing.msaa",
+									"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.msaa",
 									"options": [
 										{
 											"value": 1,
@@ -150,7 +158,7 @@
 								},
 								{
 									"class": "state-select-box",
-									"stateVariableURL": "output.realtime.antialiasing.interpolation",
+									"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.interpolation",
 									"options": [
 										{
 											"value": "center",
@@ -163,6 +171,14 @@
 										{
 											"value": "sample",
 											"text": "Sample"
+										}
+									],
+									"uneffectiveIfAny": [
+										{
+											"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.msaa",
+											"anyOf": [
+												1
+											]
 										}
 									],
 									"tooltip": {

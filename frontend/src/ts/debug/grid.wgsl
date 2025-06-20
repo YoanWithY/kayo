@@ -18,9 +18,17 @@ fn vertex_main(@builtin(vertex_index) index: u32, @location(0) ls_pos: vec2f) ->
 	return VertexOut(clamped_pos, ls_pos, ws_pos, cs_pos.xyz, pos);
 }
 
+fn ddLength(v: f32) -> f32 {
+	return length(vec2f(dpdxFine(v), dpdyFine(v)));
+}
+
+fn ddLength2(v: vec2f) -> vec2f {
+	return vec2f(ddLength(v.x), ddLength(v.y));
+}
+
 const lineThickness = 1.0;
 fn getGrid(coord: vec2f, lineThickness: f32) -> vec4f {
-	let w = fwidthFine(coord);
+	let w = ddLength2(coord);
 	let val = abs(fract(coord - 0.5) - 0.5) / w - (lineThickness - 1);
 	return vec4(clamp(1.0 - val, vec2f(0), vec2f(1)), w);
 }
@@ -42,7 +50,8 @@ struct FragmentOutput {
 fn fragment_main(vertexData: VertexOut) -> FragmentOutput {
 	let abs_ls_pos = abs(vertexData.ls_position);
 
-	let lt = lineThickness * sqrt(getDPR());
+	let accurateLineThickness = lineThickness * sqrt(getDPR());
+	let lt = max(accurateLineThickness, 1.0);
 	let ws_pos = vertexData.ws_position;
 	let g1_2D = getGrid(ws_pos, lt);
 	let g10_2D = getGrid(ws_pos / 10.0, lt);
@@ -78,5 +87,6 @@ fn fragment_main(vertexData: VertexOut) -> FragmentOutput {
 		}
 	}
 
-	return FragmentOutput(vec4f(color, a * 0.5), depthOut);
+	let alpha = a * (accurateLineThickness / lt);
+	return FragmentOutput(vec4f(color, alpha), depthOut);
 }

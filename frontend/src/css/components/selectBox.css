@@ -36,6 +36,10 @@ select-box:hover {
 	background-color: rgb(28, 28, 28);
 }
 
+state-select-box:state(uneffective) {
+	opacity: 0.5;
+}
+
 state-select-box:state(open-down),
 select-box:state(open-down) {
 	border-radius: var(--radius) var(--radius) 0 0;

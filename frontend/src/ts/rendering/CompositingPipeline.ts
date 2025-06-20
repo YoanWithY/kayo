@@ -2,6 +2,7 @@ import { AbstractRenderingPipeline, fragmentEntryPoint, vertexEntryPoint } from 
 import { Project } from "../project/Project";
 import shaderCode from "../../wgsl/compositing.wgsl?raw";
 import { resolveShader } from "./ShaderUtils";
+import { RenderState } from "../../c/KayoCorePP";
 
 export class CompositingPipeline extends AbstractRenderingPipeline {
 	vertexEntryPoint = vertexEntryPoint;
@@ -34,7 +35,13 @@ export class CompositingPipeline extends AbstractRenderingPipeline {
 		this.cullMode = "none";
 		this.depthCompare = "always";
 		this.depthWriteEnabled = false;
-		this.fragmentTargets = [{ format: project.getSwapChainFormat() }];
+		this.fragmentTargets = [
+			{
+				format: project.getSwapChainFormat(
+					(this.project.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config.general,
+				),
+			},
+		];
 		this.fragmentTargets[0].blend = {
 			color: {
 				srcFactor: "src-alpha",

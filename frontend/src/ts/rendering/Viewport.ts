@@ -15,6 +15,10 @@ export interface Viewport {
 	 * The texture where the color output shall be written to.
 	 */
 	getCurrentTexture(): GPUTexture;
+	/**
+	 * The name (key) of the render config to use for rendering on this viewport.
+	 */
+	configKey: string;
 
 	/**
 	 * This method recieves the GPU time spend the render passes on this viewport in nanoseconds.

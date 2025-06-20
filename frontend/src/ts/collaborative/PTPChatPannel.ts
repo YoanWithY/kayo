@@ -1,5 +1,4 @@
 import { Kayo } from "../Kayo";
-import UIVariableComponent from "../ui/components/UIComponent";
 import BasicPane from "../ui/panes/BasicPane";
 import ptpChatTemplate from "./ptpChatPaneTemplate.json";
 
@@ -16,7 +15,7 @@ export class PTPMessageElement extends HTMLElement {
 	}
 }
 
-export class PTPChatContent extends UIVariableComponent {
+export class PTPChatContent extends HTMLElement {
 	private _win!: Window;
 	private _kayo!: Kayo;
 	texts: PTPMessageElement[] = [];
@@ -62,7 +61,6 @@ export class PTPChatContent extends UIVariableComponent {
 		const p = win.document.createElement(this.getDomClass()) as PTPChatContent;
 		p._win = win;
 		p._kayo = kayo;
-		p.bind(obj.stateVariableURL);
 		return p;
 	}
 

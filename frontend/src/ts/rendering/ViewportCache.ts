@@ -1,4 +1,4 @@
-import { OutputConfig } from "../../c/KayoCorePP";
+import { GeneralConfig, RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
 import { Project } from "../project/Project";
 import { getElement } from "./RenderUtil";
 import { Viewport } from "./Viewport";
@@ -46,18 +46,26 @@ export class ViewportCache {
 			size: this.timeStempBufferResolve.size,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
 		});
-		this.reconfigureContext();
+
+		this.reconfigureContext(
+			(project.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config.general,
+		);
 	}
 
-	public conditionalFrambebufferUpdate(config: OutputConfig) {
+	public conditionalFrambebufferUpdate(config: RenderConfig) {
 		const w = this.viewport.getCurrentTexture().width;
 		const h = this.viewport.getCurrentTexture().height;
-		this.conditionalColorAttachmentUpdate(w, h, config.realtime.antialiasing.msaa);
+		const specificRenderer: RealtimeConfig = config.specificRenderer as RealtimeConfig;
+		if (specificRenderer == null) {
+			console.error("Specific render config is null!");
+			return;
+		}
+		this.conditionalColorAttachmentUpdate(w, h, config);
 		this.conditionalOverlayAttachmentUpdate(w, h, config);
 		if (
 			w === this.prevWidth &&
 			h === this.prevHeight &&
-			config.realtime.antialiasing.msaa === this.prevMSAA &&
+			specificRenderer.antialiasing.msaa === this.prevMSAA &&
 			this.prevUseOverlays === this.viewport.useOverlays
 		)
 			return;
@@ -99,13 +107,13 @@ export class ViewportCache {
 			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 		});
 
-		if (config.realtime.antialiasing.msaa > 1) {
+		if (specificRenderer.antialiasing.msaa > 1) {
 			if (this.idTextureMS) this.idTextureMS.destroy();
 			this.idTextureMS = this.gpuDevice.createTexture({
 				label: "multisample id attachment texture",
 				size: [w, h, 1],
 				format: "r16uint",
-				sampleCount: config.realtime.antialiasing.msaa,
+				sampleCount: specificRenderer.antialiasing.msaa,
 				usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 			});
 
@@ -116,7 +124,7 @@ export class ViewportCache {
 				format: "depth24plus",
 				usage: GPUTextureUsage.RENDER_ATTACHMENT,
 				label: "multisample render depth Attachment texture",
-				sampleCount: config.realtime.antialiasing.msaa,
+				sampleCount: specificRenderer.antialiasing.msaa,
 			});
 		}
 
@@ -134,7 +142,7 @@ export class ViewportCache {
 				],
 				layout: this.project.renderer.compositingBindGroupLayout,
 			});
-			if (config.realtime.antialiasing.msaa > 1) {
+			if (specificRenderer.antialiasing.msaa > 1) {
 				if (!this.idTextureMS) {
 					console.error("Multisampled ID Texture missing!");
 					return;
@@ -149,12 +157,13 @@ export class ViewportCache {
 
 		this.prevWidth = w;
 		this.prevHeight = h;
-		this.prevMSAA = config.realtime.antialiasing.msaa;
+		this.prevMSAA = specificRenderer.antialiasing.msaa;
 		this.prevUseOverlays = this.viewport.useOverlays;
 	}
 
-	private conditionalColorAttachmentUpdate(w: number, h: number, msaa: number) {
-		const currentFormat = this.project.getSwapChainFormat();
+	private conditionalColorAttachmentUpdate(w: number, h: number, config: RenderConfig) {
+		const currentFormat = this.project.getSwapChainFormat(config.general);
+		const msaa = (config.specificRenderer as RealtimeConfig).antialiasing.msaa;
 		if (
 			w === this.prevWidth &&
 			h === this.prevHeight &&
@@ -183,7 +192,12 @@ export class ViewportCache {
 		});
 	}
 
-	private conditionalOverlayAttachmentUpdate(w: number, h: number, config: OutputConfig) {
+	private conditionalOverlayAttachmentUpdate(w: number, h: number, config: RenderConfig) {
+		const specificRenderer: RealtimeConfig = config.specificRenderer as RealtimeConfig;
+		if (specificRenderer === null) {
+			console.error("Specific render config is null!");
+			return;
+		}
 		// Don't use overlay
 		if (!this.viewport.useOverlays) {
 			if (this.overlayTextureMS) {
@@ -201,7 +215,7 @@ export class ViewportCache {
 			w === this.prevWidth &&
 			h === this.prevHeight &&
 			this.overlayTextureSS &&
-			(config.realtime.antialiasing.msaa === 1 || this.overlayTextureMS)
+			(specificRenderer.antialiasing.msaa === 1 || this.overlayTextureMS)
 		)
 			return;
 
@@ -220,29 +234,28 @@ export class ViewportCache {
 			this.overlayTextureMS = undefined;
 		}
 
-		if (config.realtime.antialiasing.msaa > 1) {
+		if (specificRenderer.antialiasing.msaa > 1) {
 			this.overlayTextureMS = this.gpuDevice.createTexture({
 				label: "Overlay resolve target",
 				size: [w, h, 1],
 				format: "rgba8unorm",
-				sampleCount: config.realtime.antialiasing.msaa,
+				sampleCount: specificRenderer.antialiasing.msaa,
 				usage: GPUTextureUsage.RENDER_ATTACHMENT,
 			});
 		}
 	}
 
-	public reconfigureContext() {
+	public reconfigureContext(generalConfig: GeneralConfig) {
 		const context = this.viewport.canvasContext;
 		if (!context) return;
-		const config = this.project.wasmx.kayoInstance.projectConfig.output.general;
 		context.unconfigure();
 		context.configure({
 			device: this.gpuDevice,
-			format: this.project.getSwapChainFormat(),
-			colorSpace: config.swapChain.colorSpace as PredefinedColorSpace,
-			toneMapping: { mode: config.swapChain.toneMappingMode as GPUCanvasToneMappingMode },
+			format: this.project.getSwapChainFormat(generalConfig),
+			colorSpace: generalConfig.swapChain.colorSpace as PredefinedColorSpace,
+			toneMapping: { mode: generalConfig.swapChain.toneMappingMode as GPUCanvasToneMappingMode },
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
-			alphaMode: config.transparency.transparentBackground ? "premultiplied" : "opaque",
+			alphaMode: generalConfig.transparency.transparentBackground ? "premultiplied" : "opaque",
 		});
 	}
 
@@ -252,8 +265,13 @@ export class ViewportCache {
 		selectionRenderPassDescriptor: GPURenderPassDescriptor,
 		overlayRenderPassDescriptor: GPURenderPassDescriptor,
 		compositingRenderPassDescriptor: GPURenderPassDescriptor,
-		config: OutputConfig,
+		config: RenderConfig,
 	) {
+		const specificRenderer: RealtimeConfig = config.specificRenderer as RealtimeConfig;
+		if (specificRenderer === null) {
+			console.error("Specific renderer config is null!");
+			return;
+		}
 		const colorAttachment = getElement(r3renderPassDescriptor.colorAttachments, 0);
 		const idAttachment = getElement(r3renderPassDescriptor.colorAttachments, 1);
 		const idResolveAttachment = getElement(r16ResolveRenderPassDescriptor.colorAttachments, 0);
@@ -291,7 +309,7 @@ export class ViewportCache {
 			if (selectionDepthAttachment) selectionDepthAttachment.view = this.selectionDepthRT.createView();
 		}
 
-		if (config.realtime.antialiasing.msaa === 1) {
+		if (specificRenderer.antialiasing.msaa === 1) {
 			colorAttachment.view = this.viewport.getCurrentTexture().createView();
 			colorAttachment.resolveTarget = undefined;
 
@@ -336,7 +354,7 @@ export class ViewportCache {
 		const r3depthAttachment = r3renderPassDescriptor.depthStencilAttachment;
 		const overlayDepthAttachment = overlayRenderPassDescriptor.depthStencilAttachment;
 		if (r3depthAttachment && overlayDepthAttachment && this.depthTextureSS) {
-			if (config.realtime.antialiasing.msaa === 1) {
+			if (specificRenderer.antialiasing.msaa === 1) {
 				r3depthAttachment.view = this.depthTextureSS.createView();
 				overlayDepthAttachment.view = this.depthTextureSS.createView();
 			} else {
@@ -383,33 +401,26 @@ export class ViewportCache {
 	}
 	private resetBuffer = new BigInt64Array(10);
 	public asyncGPUPerformanceUpdate() {
-		if (this.timeStempMapBuffer.mapState === "unmapped") {
-			this.timeStempMapBuffer.mapAsync(GPUMapMode.READ).then(() => {
-				const times = new BigInt64Array(this.timeStempMapBuffer.getMappedRange());
-				const r3Time = Number(times[1] - times[0]);
-				const r16Time = Number(times[3] - times[2]);
-				const selectionTime = Number(times[5] - times[4]);
-				const overlayTime = Number(times[7] - times[6]);
-				const compositingTime = Number(times[9] - times[8]);
-				// console.log(
-				// 	"R3:", r3Time / 1000000,
-				// 	"R16 Resolve:", r16Time / 1000000,
-				// 	"Selection", selectionTime / 1000000,
-				// 	"Overlay", overlayTime / 1000000,
-				// 	"Compositing", compositingTime / 1000000,
-				// 	"total:", (r3Time + r16Time + selectionTime + overlayTime + compositingTime) / 1000000);
+		if (this.timeStempMapBuffer.mapState !== "unmapped") return;
 
-				this.timeStempMapBuffer.unmap();
-				this.gpuDevice.queue.writeBuffer(
-					this.timeStempBufferResolve,
-					0,
-					this.resetBuffer,
-					0,
-					this.resetBuffer.length,
-				);
-				this.viewport.setGPUTime(r3Time, r16Time, selectionTime, overlayTime, compositingTime);
-			});
-		}
+		this.timeStempMapBuffer.mapAsync(GPUMapMode.READ).then(() => {
+			const times = new BigInt64Array(this.timeStempMapBuffer.getMappedRange());
+			const r3Time = Number(times[1] - times[0]);
+			const r16Time = Number(times[3] - times[2]);
+			const selectionTime = Number(times[5] - times[4]);
+			const overlayTime = Number(times[7] - times[6]);
+			const compositingTime = Number(times[9] - times[8]);
+
+			this.timeStempMapBuffer.unmap();
+			this.gpuDevice.queue.writeBuffer(
+				this.timeStempBufferResolve,
+				0,
+				this.resetBuffer,
+				0,
+				this.resetBuffer.length,
+			);
+			this.viewport.setGPUTime(r3Time, r16Time, selectionTime, overlayTime, compositingTime);
+		});
 	}
 
 	public destroy() {}

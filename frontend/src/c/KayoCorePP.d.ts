@@ -10,6 +10,34 @@ export interface ClassHandle {
   isDeleted(): boolean;
   clone(): this;
 }
+export interface KayoJSVCNumber extends ClassHandle {
+  getObservationID(): number;
+  getValue(): string;
+  setValue(_0: EmbindString): void;
+}
+
+export interface KayoJSVCString extends ClassHandle {
+  getObservationID(): number;
+  getValue(): string;
+  setValue(_0: EmbindString): void;
+}
+
+export interface KayoWASMModule extends ClassHandle {
+}
+
+export interface KayoWASMInstance extends ClassHandle {
+  project: ProjectConfig;
+  registerModule(_0: KayoWASMModule): number;
+}
+
+export interface RenderStatesMap extends ClassHandle {
+  get(_0: EmbindString): RenderState | null;
+}
+
+export interface ProjectConfig extends ClassHandle {
+  renderStates: RenderStatesMap;
+}
+
 export interface SwapChainConfig extends ClassHandle {
   bitDepth: number;
   get colorSpace(): string;
@@ -33,41 +61,18 @@ export interface GeneralConfig extends ClassHandle {
   transparency: TransparencyConfig;
 }
 
-export interface RealtimeConfig extends ClassHandle {
+export interface SpecificRendererConfig extends ClassHandle {
+}
+
+export interface RealtimeConfig extends SpecificRendererConfig {
   antialiasing: AntialiasingConfig;
 }
 
-export interface OutputConfig extends ClassHandle {
+export interface RenderConfig extends ClassHandle {
   general: GeneralConfig;
-  realtime: RealtimeConfig;
-}
-
-export interface ProjectConfig extends ClassHandle {
-  output: OutputConfig;
+  specificRenderer: SpecificRendererConfig | null;
   needsContextReconfiguration: boolean;
   needsPipelineRebuild: boolean;
-}
-
-export interface KayoJSVCNumber extends ClassHandle {
-  getObservationID(): number;
-  getValue(): string;
-  setValue(_0: EmbindString): void;
-}
-
-export interface KayoJSVCString extends ClassHandle {
-  getObservationID(): number;
-  getValue(): string;
-  setValue(_0: EmbindString): void;
-}
-
-export interface KayoWASMModule extends ClassHandle {
-}
-
-export interface KayoWASMInstance extends ClassHandle {
-  projectConfig: ProjectConfig;
-  project: ProjectState;
-  mirrorStateToConfig(): void;
-  registerModule(_0: KayoWASMModule): number;
 }
 
 export interface SwapChainState extends ClassHandle {
@@ -90,17 +95,20 @@ export interface GeneralState extends ClassHandle {
   transparency: TransparencyState;
 }
 
-export interface RealtimeState extends ClassHandle {
+export interface SpecificRendererState extends ClassHandle {
+  get rendererName(): string;
+  set rendererName(value: EmbindString);
+}
+
+export interface RealtimeState extends SpecificRendererState {
   antialiasing: AntialiasingState;
 }
 
-export interface OutpuState extends ClassHandle {
+export interface RenderState extends ClassHandle {
+  config: RenderConfig;
+  specificRenderer: SpecificRendererState | null;
   general: GeneralState;
-  realtime: RealtimeState;
-}
-
-export interface ProjectState extends ClassHandle {
-  output: OutpuState;
+  applyToConfig(): void;
 }
 
 export interface KayoR3Object extends ClassHandle {
@@ -126,26 +134,28 @@ export interface KayoNumber extends ClassHandle {
 }
 
 interface EmbindModule {
-  SwapChainConfig: {};
-  TransparencyConfig: {};
-  AntialiasingConfig: {};
-  GeneralConfig: {};
-  RealtimeConfig: {};
-  OutputConfig: {};
-  ProjectConfig: {};
   KayoJSVCNumber: {};
   KayoJSVCString: {};
   KayoWASMModule: {};
   KayoWASMInstance: {
     new(): KayoWASMInstance;
   };
+  RenderStatesMap: {};
+  ProjectConfig: {};
+  SwapChainConfig: {};
+  TransparencyConfig: {};
+  AntialiasingConfig: {};
+  GeneralConfig: {};
+  SpecificRendererConfig: {};
+  RealtimeConfig: {};
+  RenderConfig: {};
   SwapChainState: {};
   AntialiasingState: {};
   TransparencyState: {};
   GeneralState: {};
+  SpecificRendererState: {};
   RealtimeState: {};
-  OutpuState: {};
-  ProjectState: {};
+  RenderState: {};
   KayoR3Object: {};
   KayoWASMMinecraftModule: {
     new(_0: KayoWASMInstance): KayoWASMMinecraftModule;

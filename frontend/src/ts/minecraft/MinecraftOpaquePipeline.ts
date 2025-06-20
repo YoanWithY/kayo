@@ -1,3 +1,4 @@
+import { RenderState } from "../../c/KayoCorePP";
 import { AbstractDisplayOutputRenderingPipeline } from "../Material/AbstractRenderingPipeline";
 import { Project } from "../project/Project";
 import Renderer from "../rendering/Renderer";
@@ -66,7 +67,9 @@ export class MinecraftOpaquePipeline extends AbstractDisplayOutputRenderingPipel
 		this.depthCompare = "less-equal";
 		this.depthWriteEnabled = true;
 		this.depthStencilFormat = Renderer.getDepthStencilFormat();
-		this.fragmentTargets = project.getFragmentTargets();
+		this.fragmentTargets = project.getFragmentTargets(
+			(project.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config.general,
+		);
 
 		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule({
 			label: `${label} shader module`,

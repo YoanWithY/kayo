@@ -15,6 +15,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 	public lable = "My Viewport";
 	public project!: Project;
 	public window!: Window;
+	public configKey: string = "default";
 
 	resizeObserver: ResizeObserver = new ResizeObserver((e) => {
 		const size = e[0].devicePixelContentBoxSize[0];
@@ -24,6 +25,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 	});
 	cachedBase: any;
 	dummy: HTMLDivElement;
+	infoPane!: HTMLDivElement;
 
 	constructor() {
 		super();
@@ -191,7 +193,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 		});
 	}
 
-	useOverlays: boolean = false;
+	useOverlays: boolean = true;
 
 	private viewBuffer = new Float32Array(3 * 16 + 4);
 	private viewTimeBuffer = new Uint32Array(8);
@@ -224,11 +226,13 @@ export class ViewportPane extends BasicPane implements Viewport {
 		overlayTime: number,
 		compositingTime: number,
 	): void {
-		r3Time;
-		r16ResolveTime;
-		selectionTime;
-		overlayTime;
-		compositingTime;
+		this.infoPane.innerHTML = `
+		Forward Rendering: ${r3Time / 1000}µs <br>
+		Selection Rendering: ${selectionTime / 1000}µs <br>
+		MS Selection Resolve: ${r16ResolveTime / 1000}µs <br>
+		Overlays: ${overlayTime / 1000}µs <br>
+		Compositing: ${compositingTime / 1000}µs <br>
+		Total: ${(r3Time + selectionTime + r16ResolveTime + overlayTime + compositingTime) / 1000}µs`;
 	}
 
 	connectedCallback() {
@@ -247,6 +251,11 @@ export class ViewportPane extends BasicPane implements Viewport {
 
 	public static createUIElement(win: Window, kayo: Kayo): ViewportPane {
 		const p = super.createUIElement(win, kayo, viewportPaneTemplate) as ViewportPane;
+		p.infoPane = win.document.createElement("div");
+		p.infoPane.setAttribute(
+			"style",
+			"position: absolute; left: 10px; bottom: 10px; display: inline;  text-shadow: 0px 0px 1px black, 0px 0px 2px black; color: white;",
+		);
 		p.canvas = win.document.createElement("canvas");
 		p.canvasContext = p.canvas.getContext("webgpu") as GPUCanvasContext;
 		p.window = win;
@@ -254,6 +263,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 		p.focus();
 		p.project = p.kayo.project;
 		p.appendChild(p.canvas);
+		p.appendChild(p.infoPane);
 		return p;
 	}
 
