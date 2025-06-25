@@ -20,7 +20,6 @@ EMSCRIPTEN_BINDINGS(KayoConfigWASM) {
 		.property("antialiasing", &kayo::config::Realtime::antialiasing, return_value_policy::reference());
 	class_<kayo::config::RenderConfig>("RenderConfig")
 		.property("needsContextReconfiguration", &kayo::config::RenderConfig::needsContextReconfiguration)
-		.property("needsPipelineRebuild", &kayo::config::RenderConfig::needsPipelineRebuild)
 		.property("general", &kayo::config::RenderConfig::general, return_value_policy::reference())
 		.property("specificRenderer", &kayo::config::RenderConfig::specificRenderer, allow_raw_pointers());
 }

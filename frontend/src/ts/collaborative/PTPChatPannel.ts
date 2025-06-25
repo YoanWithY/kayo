@@ -57,7 +57,7 @@ export class PTPChatContent extends HTMLElement {
 		});
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any): PTPChatContent {
+	public static createUIElement(win: Window, kayo: Kayo, _: any): PTPChatContent {
 		const p = win.document.createElement(this.getDomClass()) as PTPChatContent;
 		p._win = win;
 		p._kayo = kayo;

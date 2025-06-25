@@ -4,13 +4,12 @@ import { ViewportCache } from "./ViewportCache";
 import { CompositingPipeline } from "./CompositingPipeline";
 import { ResolvePipeline } from "./ResolvePipeline";
 import Camera from "../Viewport/Camera";
-import { MinecraftOpaquePipeline } from "../minecraft/MinecraftOpaquePipeline";
-import { DisplayInfo } from "../Material/AbstractRenderingPipeline";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 import { ViewportPane } from "../ui/panes/ViewportPane";
 import { RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
+import { AbstractMetaRenderPipeline } from "./AbstractMetaRenderingPipeline";
 
-export default class Renderer {
+export default class RealtimeRenderer {
 	project: Project;
 	viewportPanes = new Set<ViewportPane>();
 
@@ -262,36 +261,9 @@ export default class Renderer {
 		for (const [, viewportCache] of this.viewportCache) viewportCache.reconfigureContext(config.general);
 	}
 
-	rebuildDisplayOutputPipelines(config: RenderConfig) {
-		const outConsts = this.project.getDisplayFragmentOutputConstants();
-		const format = this.project.getSwapChainFormat(config.general);
-		const msaa = (config.specificRenderer as RealtimeConfig).antialiasing.msaa;
-
-		const surfaceInfo: DisplayInfo = {
-			gpuDevice: this.gpuDevice,
-			targetColorSpace: outConsts.targetColorSpace,
-			componentTransfere: outConsts.componentTranfere,
-			msaa: msaa,
-			format: format,
-		};
-		for (const hf of this.project.scene.heightFieldObjects) hf.pipeline.updateDisplayProperties(surfaceInfo);
-
-		const gp = this.project.scene.gridPipeline;
-		if (gp) gp.updateDisplayProperties(surfaceInfo);
-
-		const background = this.project.scene.background.pipeline;
-		background.updateDisplayProperties(surfaceInfo);
-
-		const minePipe = MinecraftOpaquePipeline.pipeline;
-		minePipe.updateDisplayProperties(surfaceInfo);
-
-		this.compositingPipeline.fragmentTargets[0].format = format;
-		this.compositingPipeline.buildPipeline(this.gpuDevice);
-	}
-
 	init() {
-		this.compositingPipeline = new CompositingPipeline(this.project, "Compositing Pipeline");
-		this.r16ResolvePipeline = new ResolvePipeline(this.project, "R16u resolve pipeline", "r16uint", "u32", "x");
+		// this.compositingPipeline = new CompositingPipeline("Compositing Pipeline");
+		// this.r16ResolvePipeline = new ResolvePipeline(this.project, "R16u resolve pipeline", "r16uint", "u32", "x");
 	}
 
 	jsTime = "";
@@ -311,122 +283,43 @@ export default class Renderer {
 			return;
 		}
 
-		this.requestedAnimationFrame.set(window, false);
-
 		if (config.needsContextReconfiguration) this.reconfigureContext(config);
 
-		if (config.needsPipelineRebuild) this.rebuildDisplayOutputPipelines(config);
+		viewport.updateView(this.viewUBO, this.frame);
+		const key = AbstractMetaRenderPipeline.generalConfigToKey(
+			config.general,
+			(config.specificRenderer as RealtimeConfig).antialiasing.msaa,
+		);
 
-		for (const viewport of this.viewportsToUpdate) {
-			viewport.updateView(this.viewUBO, this.frame);
-			if (
-				viewport.canvasContext &&
-				viewport.canvasContext.canvas.width === 0 &&
-				viewport.canvasContext.canvas.height === 0
-			) {
-				continue;
-			}
-			const viewportCache = this.viewportCache.get(viewport);
-			if (!viewportCache) {
-				console.error("Could not find viewport cache.");
-				continue;
-			}
-			const commandEncoder = this.gpuDevice.createCommandEncoder();
-			viewportCache.setupRenderPasses(
-				this.r3renderPassDescriptor,
-				this.r16ResolveRenderPassDescriptor,
-				this.selectionRenderPassDescriptor,
-				this.overlayRenderPassDescriptor,
-				this.compositingRenderPassDescriptor,
-				config,
-			);
-
-			const w = viewport.getCurrentTexture().width;
-			const h = viewport.getCurrentTexture().height;
-
-			const heightFieldComputeEncoder = commandEncoder.beginComputePass(this.heightFieldComputePassDescriptor);
-			heightFieldComputeEncoder.setBindGroup(0, this.bindGroup0);
-			for (const hf of this.project.scene.heightFieldObjects) {
-				hf.compute(heightFieldComputeEncoder);
-			}
-			heightFieldComputeEncoder.end();
-
-			for (const sun of this.project.scene.sunlights) {
-				this.updateView(this.shadowViewUBO, this.frame, sun, sun.resolution, sun.resolution);
-				sun.updateSunUniforms(this.gpuDevice);
-				const shadowRenderPassEncoder = commandEncoder.beginRenderPass(sun.renderPass);
-				shadowRenderPassEncoder.setViewport(0, 0, sun.resolution, sun.resolution, 0, 1);
-				shadowRenderPassEncoder.setBindGroup(0, this.shadowBindGroup0);
-				for (const hf of this.project.scene.heightFieldObjects) {
-					hf.renderDepth(shadowRenderPassEncoder);
-				}
-
-				shadowRenderPassEncoder.end();
-			}
-
-			const r3renderPassEncoder = commandEncoder.beginRenderPass(this.r3renderPassDescriptor);
-			r3renderPassEncoder.setViewport(0, 0, w, h, 0, 1);
-
-			this.project.scene.background.recordForwardRendering(r3renderPassEncoder);
-
-			r3renderPassEncoder.setBindGroup(0, this.bindGroup0);
-			r3renderPassEncoder.setBindGroup(3, Array.from(this.project.scene.sunlights)[0].bindGroup);
-			for (const hf of this.project.scene.heightFieldObjects) {
-				hf.render(r3renderPassEncoder);
-			}
-
-			this.project.scene.minecraftWorld?.renderBundle(r3renderPassEncoder);
-			r3renderPassEncoder.end();
-
-			if (viewport.useOverlays) {
-				if ((config.specificRenderer as RealtimeConfig).antialiasing.msaa > 1) {
-					const r16ResolveRenderPassEncode = commandEncoder.beginRenderPass(
-						this.r16ResolveRenderPassDescriptor,
-					);
-					r16ResolveRenderPassEncode.setViewport(0, 0, w, h, 0, 1);
-					r16ResolveRenderPassEncode.setBindGroup(0, viewportCache.r16ResolveBindGroup0);
-					r16ResolveRenderPassEncode.setPipeline(this.r16ResolvePipeline.gpuPipeline);
-					r16ResolveRenderPassEncode.draw(4);
-					r16ResolveRenderPassEncode.end();
-				}
-
-				const selectionRenderPassEncoder = commandEncoder.beginRenderPass(this.selectionRenderPassDescriptor);
-				selectionRenderPassEncoder.setViewport(0, 0, w, h, 0, 1);
-				selectionRenderPassEncoder.setBindGroup(0, this.bindGroup0);
-
-				for (const hf of this.project.scene.heightFieldObjects) {
-					if (hf.isActive || hf.isSelected) hf.renderSelection(selectionRenderPassEncoder);
-				}
-				selectionRenderPassEncoder.end();
-
-				const overlayRenderPassEncoder = commandEncoder.beginRenderPass(this.overlayRenderPassDescriptor);
-				overlayRenderPassEncoder.setViewport(0, 0, w, h, 0, 1);
-				overlayRenderPassEncoder.setBindGroup(0, this.bindGroup0);
-				if (this.project.scene.gridPipeline)
-					this.project.scene.gridPipeline.recordForwardRendering(overlayRenderPassEncoder);
-
-				overlayRenderPassEncoder.end();
-
-				const compositingRenderPassEncoder = commandEncoder.beginRenderPass(
-					this.compositingRenderPassDescriptor,
-				);
-				compositingRenderPassEncoder.setViewport(0, 0, w, h, 0, 1);
-				compositingRenderPassEncoder.setBindGroup(0, viewportCache.compositingBindGroup0);
-				compositingRenderPassEncoder.setPipeline(this.compositingPipeline.gpuPipeline);
-				compositingRenderPassEncoder.draw(4);
-				compositingRenderPassEncoder.end();
-			}
-
-			viewportCache.resolvePerformanceQueryCommand(commandEncoder);
-			this.gpuDevice.queue.submit([commandEncoder.finish()]);
-			viewportCache.asyncGPUPerformanceUpdate();
+		const viewportCache = this.viewportCache.get(viewport);
+		if (!viewportCache) {
+			console.error("Could not find viewport cache.");
+			return;
 		}
+		viewportCache.setupRenderPasses(
+			this.r3renderPassDescriptor,
+			this.r16ResolveRenderPassDescriptor,
+			this.selectionRenderPassDescriptor,
+			this.overlayRenderPassDescriptor,
+			this.compositingRenderPassDescriptor,
+			config,
+		);
 
-		this.jsTime = `${(performance.now() - start).toFixed(3)}ms`;
-		this.viewportsToUpdate.clear();
+		const w = viewport.getCurrentTexture().width;
+		const h = viewport.getCurrentTexture().height;
+
+		const commandEncoder = this.gpuDevice.createCommandEncoder();
+		const r3renderPassEncoder = commandEncoder.beginRenderPass(this.r3renderPassDescriptor);
+		r3renderPassEncoder.setViewport(0, 0, w, h, 0, 1);
+
+		this.project.scene.background.recordForwardRendering(r3renderPassEncoder, key);
+		r3renderPassEncoder.end();
+
+		viewportCache.resolvePerformanceQueryCommand(commandEncoder);
+		this.gpuDevice.queue.submit([commandEncoder.finish()]);
+		viewportCache.asyncGPUPerformanceUpdate(performance.now() - start);
+
 		this.frame++;
-		// for(const v of this.registeredViewports)
-		// 	this.requestAnimationFrameWith(v);
 	};
 
 	requestAnimationFrameWith(viewport: Viewport) {
@@ -435,11 +328,16 @@ export default class Renderer {
 			return;
 		}
 		this.viewportsToUpdate.add(viewport);
-		if (this.requestedAnimationFrame.get(viewport.window) === true) return;
+		if (this.requestedAnimationFrame.get(viewport.window)) return;
 
 		this.requestedAnimationFrame.set(viewport.window, true);
 		viewport.window.requestAnimationFrame((ts: number) => {
-			this.loop(ts, viewport);
+			for (const v of this.viewportsToUpdate) {
+				if (v.window != viewport.window) continue;
+				this.loop(ts, v);
+				this.viewportsToUpdate.delete(v);
+			}
+			this.requestedAnimationFrame.set(viewport.window, false);
 		});
 	}
 

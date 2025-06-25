@@ -24,13 +24,7 @@ export interface Viewport {
 	 * This method recieves the GPU time spend the render passes on this viewport in nanoseconds.
 	 * @param time The time spend in nanoseconds.
 	 */
-	setGPUTime(
-		r3Time: number,
-		r16ResolveTime: number,
-		selectionTime: number,
-		overlayTime: number,
-		compositingTime: number,
-	): void;
+	setGPUTime(times: any): void;
 	/**
 	 * @param viewUBO The buffer to write to.
 	 * @param frame The current frame time to upload.

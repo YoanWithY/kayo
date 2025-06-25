@@ -2,7 +2,7 @@
 #include <utility/sRGB_EOTF>
 #include <utility/sRGB_OETF>
 
-override componentTranfere: i32; // 0: none; 1: sRGB
+override componentTranfere: i32 = 1; // 0: none; 1: sRGB
 fn createOutputFragment(linearRGB: vec3f) -> vec3f {
 	var color = convertToTargetColorSpace(linearRGB);
 	if(componentTranfere == 1) {

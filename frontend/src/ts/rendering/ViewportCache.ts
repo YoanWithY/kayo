@@ -1,6 +1,6 @@
 import { GeneralConfig, RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
 import { Project } from "../project/Project";
-import { getElement } from "./RenderUtil";
+import { getElement } from "../GPUX";
 import { Viewport } from "./Viewport";
 
 export class ViewportCache {
@@ -162,7 +162,7 @@ export class ViewportCache {
 	}
 
 	private conditionalColorAttachmentUpdate(w: number, h: number, config: RenderConfig) {
-		const currentFormat = this.project.getSwapChainFormat(config.general);
+		const currentFormat = this.project.gpux.getSwapChainFormat(config.general.swapChain.bitDepth);
 		const msaa = (config.specificRenderer as RealtimeConfig).antialiasing.msaa;
 		if (
 			w === this.prevWidth &&
@@ -171,7 +171,7 @@ export class ViewportCache {
 			currentFormat === this.prevTargetFormat
 		)
 			return;
-
+		this.prevTargetFormat = currentFormat;
 		if (msaa === 1) {
 			// No MSAA
 			if (this.colorTextureMS) {
@@ -251,7 +251,7 @@ export class ViewportCache {
 		context.unconfigure();
 		context.configure({
 			device: this.gpuDevice,
-			format: this.project.getSwapChainFormat(generalConfig),
+			format: this.project.gpux.getSwapChainFormat(generalConfig.swapChain.bitDepth),
 			colorSpace: generalConfig.swapChain.colorSpace as PredefinedColorSpace,
 			toneMapping: { mode: generalConfig.swapChain.toneMappingMode as GPUCanvasToneMappingMode },
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
@@ -400,16 +400,16 @@ export class ViewportCache {
 		}
 	}
 	private resetBuffer = new BigInt64Array(10);
-	public asyncGPUPerformanceUpdate() {
+	public asyncGPUPerformanceUpdate(jsTime: number) {
 		if (this.timeStempMapBuffer.mapState !== "unmapped") return;
 
 		this.timeStempMapBuffer.mapAsync(GPUMapMode.READ).then(() => {
 			const times = new BigInt64Array(this.timeStempMapBuffer.getMappedRange());
-			const r3Time = Number(times[1] - times[0]);
-			const r16Time = Number(times[3] - times[2]);
-			const selectionTime = Number(times[5] - times[4]);
-			const overlayTime = Number(times[7] - times[6]);
-			const compositingTime = Number(times[9] - times[8]);
+			const r3Time = Number(times[1] - times[0]) / 1000000;
+			const r16Time = Number(times[3] - times[2]) / 1000000;
+			const selectionTime = Number(times[5] - times[4]) / 1000000;
+			const overlayTime = Number(times[7] - times[6]) / 1000000;
+			const compositingTime = Number(times[9] - times[8]) / 1000000;
 
 			this.timeStempMapBuffer.unmap();
 			this.gpuDevice.queue.writeBuffer(
@@ -419,7 +419,15 @@ export class ViewportCache {
 				0,
 				this.resetBuffer.length,
 			);
-			this.viewport.setGPUTime(r3Time, r16Time, selectionTime, overlayTime, compositingTime);
+			this.viewport.setGPUTime({
+				JavaScript: jsTime,
+				Render: r3Time,
+				indexResolve: r16Time,
+				Selection: selectionTime,
+				Overlays: overlayTime,
+				compositingTime: compositingTime,
+				Total: jsTime + r3Time + r16Time + selectionTime + overlayTime + compositingTime,
+			});
 		});
 	}
 

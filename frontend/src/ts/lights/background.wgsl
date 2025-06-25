@@ -1,6 +1,7 @@
 #include <utility/frame>
 
 struct VertexInput {
+	@builtin(vertex_index) id: u32,
 	@location(0) position: vec3f
 }
 
@@ -24,6 +25,9 @@ fn fragment_main(fragment: VertexOutput) -> R3FragmentOutput {
 
 	let albedo = sRGB_EOTF(mix(vec3(0.5), vec3(1.0), interpolant1));
 	var outColor = vec4f(createOutputFragment(albedo), 0);
-	outColor = vec4f(0.0, 0.0, 0.0, 0.0);
-	return R3FragmentOutput(outColor, 0);
+
+	let srgb = fragment.ws_position * 0.5 + 0.5;
+	outColor = vec4f(sRGB_EOTF(srgb), 1.0);
+	let out_display = createOutputFragment(outColor.rgb);
+	return R3FragmentOutput(vec4f(out_display, 1.0), 0);
 }

@@ -1,4 +1,4 @@
-import { fragmentEntryPoint, vertexEntryPoint } from "../Material/AbstractRenderingPipeline";
+import { fragmentEntryPoint, vertexEntryPoint } from "../rendering/AbstractRenderingPipeline";
 import { resolveShader } from "../rendering/ShaderUtils";
 import mipmapCode from "./mipmap.wgsl?raw";
 

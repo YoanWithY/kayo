@@ -1,7 +1,7 @@
 import { ResourcePack as ResourcePack } from "./ResourcePack";
 import { MinecraftSection } from "./MinecraftSection";
 import { BlockNeighborhood } from "./MinecraftBlock";
-import { MinecraftOpaquePipeline } from "./MinecraftOpaquePipeline";
+import { MinecraftMetaRenderingPipeline } from "./MinecraftOpaquePipeline";
 
 export type PaletteEntry = { Name: string; Properties?: { [key: string]: string } };
 
@@ -34,7 +34,13 @@ export class MinecraftWorld {
 			sampleCount: 4,
 		});
 		e.setBindGroup(0, bindGroup0);
-		e.setPipeline(MinecraftOpaquePipeline.pipeline.gpuPipeline);
+		e.setPipeline(
+			MinecraftMetaRenderingPipeline.metaPipeline.getRenderPipeline({
+				msaa: 1,
+				outputColorSpace: "srgb",
+				swapChainBitDepth: 8,
+			}).gpuPipeline,
+		);
 		// e.setBindGroup(2, MinecraftOpaquePipeline.bindGroup2)
 		this.render(e);
 		this.bundle = e.finish({ label: "Minecraft World bundle" });

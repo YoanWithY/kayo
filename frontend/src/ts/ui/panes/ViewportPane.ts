@@ -61,12 +61,10 @@ export class ViewportPane extends BasicPane implements Viewport {
 			this.project.renderer.requestAnimationFrameWith(this);
 		};
 
-		let intID: number | undefined = undefined;
 		let keyMap: any = {};
 		let speed = 0.25;
 		const mm = (e: MouseEvent) => {
 			if (document.pointerLockElement) return;
-
 			this.requestPointerLock();
 			if (e.buttons === 4) {
 				this.addEventListener("mousemove", orbitMove);
@@ -75,7 +73,6 @@ export class ViewportPane extends BasicPane implements Viewport {
 				this.addEventListener("mousemove", walkLook);
 				walkLook(e);
 				const walkMove = () => {
-					this.project.fullRerender();
 					const mat = this.camera.transformationStack.getTransformationMatrix();
 					if (keyMap["w"]) {
 						lookAt.p = lookAt.p.sub(mat.getColumn(2).xyz.mulS(speed));
@@ -98,8 +95,6 @@ export class ViewportPane extends BasicPane implements Viewport {
 					}
 				};
 				walkMove();
-				clearInterval(intID);
-				intID = setInterval(walkMove, 8);
 			}
 		};
 
@@ -114,8 +109,6 @@ export class ViewportPane extends BasicPane implements Viewport {
 		this.onmouseup = () => {
 			this.removeEventListener("mousemove", walkLook);
 			this.removeEventListener("mousemove", orbitMove);
-			clearInterval(intID);
-			intID = undefined;
 			this.removeEventListener("mousemove", mm);
 			document.exitPointerLock();
 		};
@@ -124,12 +117,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 			"wheel",
 			(e) => {
 				e.preventDefault();
-				if (intID !== undefined) {
-					speed *= 1.0 - e.deltaY / 300;
-					this.project.renderer.requestAnimationFrameWith(this);
-					return;
-				}
-				const val = e.deltaY / window.devicePixelRatio;
+				const val = e.deltaY / this.window.devicePixelRatio;
 				lookAt.r += (lookAt.r * val) / 1024;
 				this.project.renderer.requestAnimationFrameWith(this);
 			},
@@ -186,14 +174,14 @@ export class ViewportPane extends BasicPane implements Viewport {
 			}
 		};
 		this.addEventListener("mouseenter", () => {
-			window.addEventListener("keydown", keyListener);
+			this.window.addEventListener("keydown", keyListener);
 		});
 		this.addEventListener("mouseleave", () => {
-			window.removeEventListener("keydown", keyListener);
+			this.window.removeEventListener("keydown", keyListener);
 		});
 	}
 
-	useOverlays: boolean = true;
+	useOverlays: boolean = false;
 
 	private viewBuffer = new Float32Array(3 * 16 + 4);
 	private viewTimeBuffer = new Uint32Array(8);
@@ -208,7 +196,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 		this.camera.transformationStack
 			.getTransformationMatrix()
 			.pushInFloat32ArrayColumnMajor(this.viewBuffer, 2 * 16);
-		this.viewBuffer.set([near, far, window.devicePixelRatio, 0], 3 * 16);
+		this.viewBuffer.set([near, far, this.window.devicePixelRatio, 0], 3 * 16);
 		this.project.gpux.gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);
 
 		this.viewTimeBuffer.set([0, 0, this.canvas.width, this.canvas.height, frame, 0, 0, 0], 0);
@@ -219,20 +207,33 @@ export class ViewportPane extends BasicPane implements Viewport {
 		return this.canvasContext.getCurrentTexture();
 	}
 
-	setGPUTime(
-		r3Time: number,
-		r16ResolveTime: number,
-		selectionTime: number,
-		overlayTime: number,
-		compositingTime: number,
-	): void {
-		this.infoPane.innerHTML = `
-		Forward Rendering: ${r3Time / 1000}µs <br>
-		Selection Rendering: ${selectionTime / 1000}µs <br>
-		MS Selection Resolve: ${r16ResolveTime / 1000}µs <br>
-		Overlays: ${overlayTime / 1000}µs <br>
-		Compositing: ${compositingTime / 1000}µs <br>
-		Total: ${(r3Time + selectionTime + r16ResolveTime + overlayTime + compositingTime) / 1000}µs`;
+	setGPUTime(times: any): void {
+		let html = `
+		<style>
+		table td:first-child {
+			text-align: left;
+			padding-right: 8px;
+		}
+		table td:last-child {
+			text-align: right;
+			font-family: monospace;
+		}
+		</style>
+
+		<table>
+			<tr>
+				<td>Category</td>
+				<td>ms</td>
+			</tr>`;
+		for (const key in times) {
+			html += `
+			<tr>
+				<td>${key}</td>
+				<td>${times[key].toFixed(2)}</td>
+			</tr>`;
+		}
+		html += `</table>`;
+		this.infoPane.innerHTML = html;
 	}
 
 	connectedCallback() {
@@ -254,7 +255,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 		p.infoPane = win.document.createElement("div");
 		p.infoPane.setAttribute(
 			"style",
-			"position: absolute; left: 10px; bottom: 10px; display: inline;  text-shadow: 0px 0px 1px black, 0px 0px 2px black; color: white;",
+			"position: absolute; left: 10px; bottom: 10px; display: inline; color: white; backdrop-filter: blur(73px); 	background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25); border-radius: 4px;",
 		);
 		p.canvas = win.document.createElement("canvas");
 		p.canvasContext = p.canvas.getContext("webgpu") as GPUCanvasContext;

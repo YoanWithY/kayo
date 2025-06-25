@@ -1,84 +1,95 @@
-import { RenderState } from "../../c/KayoCorePP";
-import {
-	AbstractDisplayOutputRenderingPipeline,
-	fragmentEntryPoint,
-	vertexEntryPoint,
-} from "../Material/AbstractRenderingPipeline";
-import Renderable from "../Material/Renderable";
+import Renderable from "../rendering/Renderable";
 import { Project } from "../project/Project";
-import Renderer from "../rendering/Renderer";
-import { resolveShader } from "../rendering/ShaderUtils";
+import { AbstractRenderingPipeline } from "../rendering/AbstractRenderingPipeline";
+import {
+	AbstractMetaRenderPipeline,
+	PipelineBuildFunction,
+	PipelineCache,
+	RenderPipelineKey,
+} from "../rendering/AbstractMetaRenderingPipeline";
+import { GPUX } from "../GPUX";
 import staticShaderCode from "./background.wgsl?raw";
+import { resolveShader } from "../rendering/ShaderUtils";
 
-class BackgroundPipeline extends AbstractDisplayOutputRenderingPipeline {
-	gpuPipeline: GPURenderPipeline;
-	shaderModule: GPUShaderModule;
-	vertexConstants: Record<string, number>;
-	vertexBufferLayout: GPUVertexBufferLayout[];
-	fragmentConstants: Record<string, number>;
-	fragmentTargets: GPUColorTargetState[];
-	topology: GPUPrimitiveTopology;
-	cullMode: GPUCullMode;
-	stripIndexFormat?: GPUIndexFormat | undefined;
-	depthStencilFormat: GPUTextureFormat;
-	depthCompare: GPUCompareFunction;
-	depthWriteEnabled: boolean;
-	vertexEntryPoint = vertexEntryPoint;
-	fragmentEntryPoint = fragmentEntryPoint;
-	project: Project;
-	shaderCode: string;
-	preProzessedShaderCoder: string;
+const vertexBufferLayout: GPUVertexBufferLayout[] = [
+	{
+		arrayStride: 12,
+		attributes: [{ shaderLocation: 0, offset: 0, format: "float32x3" }],
+	},
+];
+const preProzessedShaderCoder = resolveShader(staticShaderCode);
 
-	constructor(project: Project, label: string) {
-		super(label);
-		this.project = project;
-		this.shaderCode = staticShaderCode;
-		this.preProzessedShaderCoder = resolveShader(this.shaderCode);
-		this.vertexConstants = {};
-		this.vertexBufferLayout = [
-			{
-				arrayStride: 3 * 4,
-				attributes: [
-					{
-						shaderLocation: 0,
-						format: "float32x3",
-						offset: 0,
-					},
-				],
-				stepMode: "vertex",
-			},
-		];
-		this.fragmentConstants = project.getDisplayFragmentOutputConstants();
-		this.topology = "triangle-list";
-		this.cullMode = "none";
-		this.depthCompare = "always";
-		this.depthWriteEnabled = false;
-		this.depthStencilFormat = Renderer.getDepthStencilFormat();
-		this.fragmentTargets = project.getFragmentTargets(
-			(this.project.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config.general,
-		);
+class BackgroundPipeline extends AbstractRenderingPipeline {
+	protected primiteState: GPUPrimitiveState;
+	protected vertexState: GPUVertexState;
+	protected fragmentState: GPUFragmentState;
+	constructor(
+		label: string,
+		shaderModule: GPUShaderModule,
+		key: RenderPipelineKey,
+		gpux: GPUX,
+		layout: GPUPipelineLayout,
+	) {
+		super(label, shaderModule);
+		this.primiteState = {
+			cullMode: "front",
+			frontFace: "ccw",
+			topology: "triangle-list",
+		};
+		const constants = AbstractMetaRenderPipeline.getConstantsFromKey(key);
 
-		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule({
-			label: `${label} shader module`,
-			code: this.preProzessedShaderCoder,
-			compilationHints: [{ entryPoint: vertexEntryPoint }, { entryPoint: fragmentEntryPoint }],
-		});
-		this.gpuPipeline = this.buildPipeline(this.project.gpux.gpuDevice);
-	}
-	createPipelineLayout(): GPUPipelineLayout | "auto" {
-		return this.project.gpux.gpuDevice.createPipelineLayout({
-			label: "Background Pipeline Layout",
-			bindGroupLayouts: [this.project.renderer.bindGroup0Layout],
-		});
+		this.vertexState = {
+			module: shaderModule,
+			buffers: vertexBufferLayout,
+			constants: constants,
+			entryPoint: "vertex_main",
+		};
+		this.fragmentState = {
+			module: shaderModule,
+			entryPoint: "fragment_main",
+			constants: constants,
+			targets: AbstractMetaRenderPipeline.getRenderingFragmentTargetsFromKey(key, gpux),
+		};
+
+		this.multisample.count = key.msaa;
+
+		this.buildPipeline(gpux.gpuDevice, layout);
 	}
 }
 
 export default class Background implements Renderable {
-	pipeline: BackgroundPipeline;
+	protected pipelineCache: PipelineCache;
+	public project: Project;
+
+	constructor(project: Project) {
+		this.project = project;
+		this.pipelineCache = new PipelineCache();
+		this.pipelineCache.buildFunction = this._pipelineBuildFunction;
+	}
+
+	public recordForwardRendering(renderPassEnoder: GPURenderPassEncoder, key: RenderPipelineKey): void {
+		renderPassEnoder.setPipeline(this.pipelineCache.getPipeline(key).gpuPipeline);
+		renderPassEnoder.setVertexBuffer(0, Background._vertexBuffer);
+		renderPassEnoder.setIndexBuffer(Background._indexBuffer, "uint16");
+		renderPassEnoder.setBindGroup(0, this.project.renderer.bindGroup0);
+		renderPassEnoder.drawIndexed(6 * 2 * 3, 1);
+	}
+
+	private _pipelineBuildFunction: PipelineBuildFunction = (key: RenderPipelineKey) => {
+		return new BackgroundPipeline(
+			"background",
+			Background.shaderModule,
+			key,
+			this.project.gpux,
+			Background.pipelineLayout,
+		);
+	};
+
+	public static shaderModule: GPUShaderModule;
 	private static _vertexBuffer: GPUBuffer;
 	private static _indexBuffer: GPUBuffer;
-	public project: Project;
-	public static initBuffers(gpuDevice: GPUDevice) {
+	public static pipelineLayout: GPUPipelineLayout;
+	public static init(gpuDevice: GPUDevice, bindGroup0Layout: GPUBindGroupLayout) {
 		const vertices = [1, 1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, 1, 1, -1, -1, 1, -1, -1, -1, -1, 1, -1, -1];
 		this._vertexBuffer = gpuDevice.createBuffer({
 			label: "Background Box vertex buffer",
@@ -100,16 +111,15 @@ export default class Background implements Renderable {
 		});
 		new Uint16Array(this._indexBuffer.getMappedRange()).set(indices);
 		this._indexBuffer.unmap();
-	}
-	constructor(project: Project) {
-		this.project = project;
-		this.pipeline = new BackgroundPipeline(project, "Background Pipeline");
-	}
-	recordForwardRendering(renderPassEnoder: GPURenderPassEncoder): void {
-		renderPassEnoder.setPipeline(this.pipeline.gpuPipeline);
-		renderPassEnoder.setVertexBuffer(0, Background._vertexBuffer);
-		renderPassEnoder.setIndexBuffer(Background._indexBuffer, "uint16");
-		renderPassEnoder.setBindGroup(0, this.project.renderer.bindGroup0);
-		renderPassEnoder.drawIndexed(6 * 2 * 3, 1);
+
+		this.shaderModule = gpuDevice.createShaderModule({
+			label: "background",
+			code: preProzessedShaderCoder,
+		});
+
+		this.pipelineLayout = gpuDevice.createPipelineLayout({
+			label: "background",
+			bindGroupLayouts: [bindGroup0Layout],
+		});
 	}
 }

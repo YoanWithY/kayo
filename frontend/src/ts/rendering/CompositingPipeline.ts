@@ -1,76 +1,18 @@
-import { AbstractRenderingPipeline, fragmentEntryPoint, vertexEntryPoint } from "../Material/AbstractRenderingPipeline";
-import { Project } from "../project/Project";
-import shaderCode from "../../wgsl/compositing.wgsl?raw";
-import { resolveShader } from "./ShaderUtils";
-import { RenderState } from "../../c/KayoCorePP";
+import { AbstractRenderingPipeline } from "./AbstractRenderingPipeline";
 
 export class CompositingPipeline extends AbstractRenderingPipeline {
-	vertexEntryPoint = vertexEntryPoint;
-	fragmentEntryPoint = fragmentEntryPoint;
-	gpuPipeline: GPURenderPipeline;
-	readonly shaderCode: string;
-	readonly preProzessedShaderCoder;
-	readonly shaderModule: GPUShaderModule;
-	vertexConstants: Record<string, number>;
-	vertexBufferLayout: GPUVertexBufferLayout[];
-	fragmentConstants: Record<string, number>;
-	fragmentTargets: GPUColorTargetState[];
-	topology: GPUPrimitiveTopology;
-	cullMode: GPUCullMode;
-	stripIndexFormat?: GPUIndexFormat;
-	depthStencilFormat: GPUTextureFormat = "depth16unorm";
-	depthCompare: GPUCompareFunction;
-	depthWriteEnabled: boolean;
-	project: Project;
-
-	constructor(project: Project, label: string) {
-		super(label);
-		this.project = project;
-		this.shaderCode = shaderCode;
-		this.preProzessedShaderCoder = resolveShader(this.shaderCode);
-		this.vertexConstants = {};
-		this.vertexBufferLayout = [];
-		this.fragmentConstants = project.getTargetColorspaceConstants();
-		this.topology = "triangle-strip";
-		this.cullMode = "none";
-		this.depthCompare = "always";
-		this.depthWriteEnabled = false;
-		this.fragmentTargets = [
-			{
-				format: project.getSwapChainFormat(
-					(this.project.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config.general,
-				),
-			},
-		];
-		this.fragmentTargets[0].blend = {
-			color: {
-				srcFactor: "src-alpha",
-				dstFactor: "one-minus-src-alpha",
-				operation: "add",
-			},
-			alpha: {
-				srcFactor: "zero",
-				dstFactor: "one",
-				operation: "add",
-			},
+	protected primiteState: GPUPrimitiveState;
+	protected vertexState: GPUVertexState;
+	protected fragmentState: GPUFragmentState;
+	constructor(label: string, shaderModule: GPUShaderModule) {
+		super(label, shaderModule);
+		this.primiteState = {};
+		this.vertexState = {
+			module: shaderModule,
 		};
-
-		this.shaderModule = this.project.gpux.gpuDevice.createShaderModule({
-			label: `${label} shader module`,
-			code: this.preProzessedShaderCoder,
-			compilationHints: [{ entryPoint: vertexEntryPoint }, { entryPoint: fragmentEntryPoint }],
-		});
-		this.gpuPipeline = this.buildPipeline(this.project.gpux.gpuDevice);
-	}
-
-	createPipelineLayout(): GPUPipelineLayout | "auto" {
-		return this.project.gpux.gpuDevice.createPipelineLayout({
-			label: "Composing Pipeline Layout",
-			bindGroupLayouts: [this.project.renderer.compositingBindGroupLayout],
-		});
-	}
-
-	protected createDepthStencilState(): GPUDepthStencilState | undefined {
-		return undefined;
+		this.fragmentState = {
+			module: shaderModule,
+			targets: [],
+		};
 	}
 }
