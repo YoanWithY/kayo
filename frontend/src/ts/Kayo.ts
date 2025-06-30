@@ -32,7 +32,7 @@ export class Kayo {
 	}
 
 	public openNewWindow(): void {
-		open(window.location.href + "subwindow/", "_blank", "popup=true");
+		open("/subwindow/", "_blank", "popup=true");
 	}
 
 	public registerWindow(win: Window, defaultPane: string) {
