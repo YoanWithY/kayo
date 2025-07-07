@@ -4,9 +4,9 @@
 namespace kayo {
 namespace state {
 
-void state::Realtime::applyToConfig(config::RenderConfig& config, config::SpecificRenderer* renderer) {
+void state::Realtime::applyToConfig(config::RenderConfig& _, config::SpecificRenderer* renderer) {
 	config::Realtime* realtime = dynamic_cast<config::Realtime*>(renderer);
-	this->antialiasing.applyToConfig(config, realtime->antialiasing);
+	this->antialiasing.applyToConfig(realtime->antialiasing);
 }
 
 } // namespace state
@@ -21,11 +21,11 @@ EMSCRIPTEN_BINDINGS(KayoStateWASM) {
 	class_<kayo::state::Antialiasing>("AntialiasingState")
 		.property("msaa", &kayo::state::Antialiasing::msaa, return_value_policy::reference())
 		.property("interpolation", &kayo::state::Antialiasing::interpolation, return_value_policy::reference());
-	class_<kayo::state::Transparency>("TransparencyState")
-		.property("transparentBackground", &kayo::state::Transparency::transparentBackground, return_value_policy::reference());
+	class_<kayo::state::CustomColorQuantisation>("CustomColorQuantisationState")
+		.property("useDithering", &kayo::state::CustomColorQuantisation::useDithering, return_value_policy::reference());
 	class_<kayo::state::General>("GeneralState")
 		.property("swapChain", &kayo::state::General::swapChain, return_value_policy::reference())
-		.property("transparency", &kayo::state::General::transparency, return_value_policy::reference());
+		.property("customColorQuantisation", &kayo::state::General::customColorQuantisation, return_value_policy::reference());
 	class_<kayo::state::SpecificRenderer>("SpecificRendererState")
 		.property("rendererName", &kayo::state::SpecificRenderer::rendererName);
 	class_<kayo::state::Realtime, base<kayo::state::SpecificRenderer>>("RealtimeState")

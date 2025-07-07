@@ -255,7 +255,6 @@ export class ViewportCache {
 			colorSpace: generalConfig.swapChain.colorSpace as PredefinedColorSpace,
 			toneMapping: { mode: generalConfig.swapChain.toneMappingMode as GPUCanvasToneMappingMode },
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
-			alphaMode: generalConfig.transparency.transparentBackground ? "premultiplied" : "opaque",
 		});
 	}
 

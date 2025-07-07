@@ -2996,6 +2996,21 @@ var __embind_register_float = (rawType, name, size) => {
   });
 };
 
+var __embind_register_function = (name, argCount, rawArgTypesAddr, signature, rawInvoker, fn, isAsync, isNonnullReturn) => {
+  var argTypes = heap32VectorToArray(argCount, rawArgTypesAddr);
+  name = readLatin1String(name);
+  name = getFunctionName(name);
+  rawInvoker = embind__requireFunction(signature, rawInvoker, isAsync);
+  exposePublicSymbol(name, function() {
+    throwUnboundTypeError(`Cannot call ${name} due to unbound types`, argTypes);
+  }, argCount - 1);
+  whenDependentTypesAreResolved([], argTypes, argTypes => {
+    var invokerArgsArray = [ argTypes[0], null ].concat(argTypes.slice(1));
+    replacePublicSymbol(name, craftInvokerFunction(name, invokerArgsArray, null, rawInvoker, fn, isAsync), argCount - 1);
+    return [];
+  });
+};
+
 /** @suppress {globalThis} */ var __embind_register_integer = (primitiveType, name, size, minRange, maxRange) => {
   name = readLatin1String(name);
   // LLVM doesn't have signed and unsigned 32-bit types, so u32 literals come
@@ -3058,6 +3073,14 @@ var __embind_register_memory_view = (rawType, dataTypeIndex, name) => {
   }, {
     ignoreDuplicateRegistrations: true
   });
+};
+
+var EmValOptionalType = Object.assign({
+  optional: true
+}, EmValType);
+
+var __embind_register_optional = (rawOptionalType, rawType) => {
+  registerType(rawOptionalType, EmValOptionalType);
 };
 
 var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
@@ -6602,7 +6625,7 @@ function checkIncomingModuleAPI() {
 }
 
 var ASM_CONSTS = {
-  123376: () => {
+  128672: () => {
     console.log("Hello from proxied JS");
   }
 };
@@ -6631,8 +6654,10 @@ function assignWasmImports() {
     /** @export */ _embind_register_class_property: __embind_register_class_property,
     /** @export */ _embind_register_emval: __embind_register_emval,
     /** @export */ _embind_register_float: __embind_register_float,
+    /** @export */ _embind_register_function: __embind_register_function,
     /** @export */ _embind_register_integer: __embind_register_integer,
     /** @export */ _embind_register_memory_view: __embind_register_memory_view,
+    /** @export */ _embind_register_optional: __embind_register_optional,
     /** @export */ _embind_register_std_string: __embind_register_std_string,
     /** @export */ _embind_register_std_wstring: __embind_register_std_wstring,
     /** @export */ _embind_register_void: __embind_register_void,
@@ -6709,15 +6734,15 @@ var __emscripten_thread_crashed = createExportWrapper("_emscripten_thread_crashe
 
 var _fflush = createExportWrapper("fflush", 1);
 
+var _emscripten_stack_get_base = () => (_emscripten_stack_get_base = wasmExports["emscripten_stack_get_base"])();
+
+var _emscripten_stack_get_end = () => (_emscripten_stack_get_end = wasmExports["emscripten_stack_get_end"])();
+
 var __emscripten_run_on_main_thread_js = createExportWrapper("_emscripten_run_on_main_thread_js", 5);
 
 var __emscripten_thread_free_data = createExportWrapper("_emscripten_thread_free_data", 1);
 
 var __emscripten_thread_exit = createExportWrapper("_emscripten_thread_exit", 1);
-
-var _emscripten_stack_get_base = () => (_emscripten_stack_get_base = wasmExports["emscripten_stack_get_base"])();
-
-var _emscripten_stack_get_end = () => (_emscripten_stack_get_end = wasmExports["emscripten_stack_get_end"])();
 
 var _strerror = createExportWrapper("strerror", 1);
 

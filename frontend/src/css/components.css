@@ -7,7 +7,7 @@ v-box {
 	gap: var(--text-padding)
 }
 
-collapsible-element {
+collapsible-element, collapsible-element-2 {
 	display: block;
 	flex: 0 0 auto;
 	overflow: hidden;

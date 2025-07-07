@@ -9,7 +9,7 @@
 				"children": [
 					{
 						"class": "collapsible-element",
-						"text": "Display",
+						"text": "Canvas",
 						"content": {
 							"class": "grid-2col",
 							"children": [
@@ -91,26 +91,33 @@
 						}
 					},
 					{
-						"class": "collapsible-element",
-						"text": "Transparency",
+						"class": "collapsible-element-2",
+						"text": "Custom Color Quantisation",
 						"content": {
 							"class": "grid-2col",
 							"children": [
 								{
 									"class": "span-element",
-									"text": "Transparent Background"
+									"text": "Number of Colors"
+								},
+								{
+									"class": "number-input",
+									"min": "1",
+									"max": "4096",
+									"step": "1"
+								},
+								{
+									"class": "span-element",
+									"text": "Use Dithering"
 								},
 								{
 									"class": "check-box",
-									"stateVariableURL": "renderStates:renderState.general.transparency.transparentBackground",
+									"stateVariableURL": "renderStates:renderState.general.customColorQuantisation.useDithering",
 									"tooltip": {
-										"description": "Wether or not to make the scene background transparent."
+										"description": "Wether or not to use (blue noise) dithering for quantisation."
 									}
 								}
 							]
-						},
-						"tooltip": {
-							"description": "Settings that change the way how Transparency is handled."
 						}
 					}
 				]

@@ -46,8 +46,9 @@ export interface SwapChainConfig extends ClassHandle {
   set toneMappingMode(value: EmbindString);
 }
 
-export interface TransparencyConfig extends ClassHandle {
-  transparentBackground: boolean;
+export interface CustomColorQuantisationConfig extends ClassHandle {
+  readonly useCustomColorQuantisation: boolean;
+  readonly useDithering: boolean;
 }
 
 export interface AntialiasingConfig extends ClassHandle {
@@ -58,7 +59,7 @@ export interface AntialiasingConfig extends ClassHandle {
 
 export interface GeneralConfig extends ClassHandle {
   swapChain: SwapChainConfig;
-  transparency: TransparencyConfig;
+  customColorQuantisation: CustomColorQuantisationConfig;
 }
 
 export interface SpecificRendererConfig extends ClassHandle {
@@ -72,7 +73,6 @@ export interface RenderConfig extends ClassHandle {
   general: GeneralConfig;
   specificRenderer: SpecificRendererConfig | null;
   needsContextReconfiguration: boolean;
-  needsPipelineRebuild: boolean;
 }
 
 export interface SwapChainState extends ClassHandle {
@@ -86,13 +86,13 @@ export interface AntialiasingState extends ClassHandle {
   interpolation: KayoJSVCString;
 }
 
-export interface TransparencyState extends ClassHandle {
-  transparentBackground: KayoJSVCString;
+export interface CustomColorQuantisationState extends ClassHandle {
+  useDithering: KayoJSVCString;
 }
 
 export interface GeneralState extends ClassHandle {
   swapChain: SwapChainState;
-  transparency: TransparencyState;
+  customColorQuantisation: CustomColorQuantisationState;
 }
 
 export interface SpecificRendererState extends ClassHandle {
@@ -113,6 +113,22 @@ export interface RenderState extends ClassHandle {
 
 export interface KayoR3Object extends ClassHandle {
   getParent(): KayoR3Object | null;
+}
+
+export interface ImageData extends ClassHandle {
+  data: VectorUInt8;
+  readonly width: number;
+  readonly height: number;
+  readonly components: number;
+  readonly bytesPerComponents: number;
+}
+
+export interface VectorUInt8 extends ClassHandle {
+  push_back(_0: number): void;
+  resize(_0: number, _1: number): void;
+  size(): number;
+  get(_0: number): number | undefined;
+  set(_0: number, _1: number): boolean;
 }
 
 export interface KayoWASMMinecraftModule extends ClassHandle {
@@ -143,7 +159,7 @@ interface EmbindModule {
   RenderStatesMap: {};
   ProjectConfig: {};
   SwapChainConfig: {};
-  TransparencyConfig: {};
+  CustomColorQuantisationConfig: {};
   AntialiasingConfig: {};
   GeneralConfig: {};
   SpecificRendererConfig: {};
@@ -151,12 +167,18 @@ interface EmbindModule {
   RenderConfig: {};
   SwapChainState: {};
   AntialiasingState: {};
-  TransparencyState: {};
+  CustomColorQuantisationState: {};
   GeneralState: {};
   SpecificRendererState: {};
   RealtimeState: {};
   RenderState: {};
   KayoR3Object: {};
+  ImageData: {
+    fromImageData(_0: EmbindString): ImageData | null;
+  };
+  VectorUInt8: {
+    new(): VectorUInt8;
+  };
   KayoWASMMinecraftModule: {
     new(_0: KayoWASMInstance): KayoWASMMinecraftModule;
   };
@@ -168,6 +190,7 @@ interface EmbindModule {
     toDouble(_0: EmbindString): number;
     toString(_0: EmbindString): string;
   };
+  getBufferView(_0: VectorUInt8): any;
 }
 
 export type MainModule = WasmModule & EmbindModule;

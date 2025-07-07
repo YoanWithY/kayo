@@ -4,6 +4,7 @@ import type {
 	KayoWASMInstance,
 	KayoWASMMinecraftModule,
 	MainModule,
+	VectorUInt8,
 } from "../c/KayoCorePP";
 
 export type WasmPath = string[][];
@@ -14,10 +15,20 @@ export default class WASMX {
 	Number;
 	kayoInstance: KayoWASMInstance;
 	minecraftModule: KayoWASMMinecraftModule;
+	imageData;
+	private module: MainModule;
+
 	constructor(module: MainModule) {
+		this.module = module;
 		this.Number = module.KayoNumber;
+		this.getBufferView = module.getBufferView;
+		this.imageData = module.ImageData;
 		this.kayoInstance = new module.KayoWASMInstance();
 		this.minecraftModule = new module.KayoWASMMinecraftModule(this.kayoInstance);
+	}
+
+	getBufferView(vector: VectorUInt8) {
+		return this.module.getBufferView(vector);
 	}
 
 	public toWasmPath(stateVariableURL: string, variables: any = {}): WasmPath {

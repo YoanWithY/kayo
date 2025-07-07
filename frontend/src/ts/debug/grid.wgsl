@@ -13,7 +13,7 @@ fn vertex_main(@builtin(vertex_index) index: u32, @location(0) ls_pos: vec2f) ->
 	let cameraGridOffset = floor(getCameraPosition().xy);
 	let ws_pos = ls_pos + cameraGridOffset;
 	let cs_pos = view.viewMat * vec4f(ws_pos, 0, 1);
-	let pos = view.projectionMat * cs_pos;
+	let pos = view.projection_mat * cs_pos;
 	let clamped_pos = pos.xyww;
 	return VertexOut(clamped_pos, ls_pos, ws_pos, cs_pos.xyz, pos);
 }

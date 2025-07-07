@@ -11,13 +11,21 @@ struct SwapChain {
 	std::string toneMappingMode;
 };
 
-struct Transparancy {
-	bool transparentBackground;
+struct CustomColorQuantisation {
+	bool useCustomColorQuantisation;
+	bool useDithering;
+	constexpr bool getUseCustomColorQuantsation() const {
+		return this->useCustomColorQuantisation;
+	}
+
+	constexpr bool getUseDithering() const {
+		return this->useDithering;
+	}
 };
 
 struct General {
 	SwapChain swapChain;
-	Transparancy transparency;
+	CustomColorQuantisation customColorQuantisation;
 };
 
 struct Antialiasing {

@@ -87,8 +87,6 @@ fn vertex_geometry(@builtin(vertex_index) index: u32) -> @builtin(position) vec4
 	return view.projectionMat * view.viewMat * vec4f(ws_pos, 1);;
 }
 
-#include <utility/fragmentOutput>
-
 fn steps(v: vec3f, stepSize: f32) -> vec3f {
 	return floor(v / stepSize) * stepSize;
 }

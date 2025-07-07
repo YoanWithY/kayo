@@ -183,7 +183,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 
 	useOverlays: boolean = false;
 
-	private viewBuffer = new Float32Array(3 * 16 + 4);
+	private viewBuffer = new Float32Array(3 * 16 + 2 * 4);
 	private viewTimeBuffer = new Uint32Array(8);
 	updateView(viewUBO: GPUBuffer, frame: number): void {
 		const near = this.camera.projection.near;
@@ -196,7 +196,19 @@ export class ViewportPane extends BasicPane implements Viewport {
 		this.camera.transformationStack
 			.getTransformationMatrix()
 			.pushInFloat32ArrayColumnMajor(this.viewBuffer, 2 * 16);
-		this.viewBuffer.set([near, far, this.window.devicePixelRatio, 0], 3 * 16);
+		this.viewBuffer.set(
+			[
+				near,
+				far,
+				this.window.devicePixelRatio,
+				0, // empty
+				0, // exposure
+				1, // gamma
+				256, // number of colors if use custom quantisation, min 2^1, max 2^16
+				0, // empty
+			],
+			3 * 16,
+		);
 		this.project.gpux.gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);
 
 		this.viewTimeBuffer.set([0, 0, this.canvas.width, this.canvas.height, frame, 0, 0, 0], 0);

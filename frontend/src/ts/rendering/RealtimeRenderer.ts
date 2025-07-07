@@ -8,6 +8,10 @@ import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 import { ViewportPane } from "../ui/panes/ViewportPane";
 import { RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
 import { AbstractMetaRenderPipeline } from "./AbstractMetaRenderingPipeline";
+const blueNoiseURL = "/blue_noise_64_px_16bit.png";
+
+const blueNoiseBlob = await fetch(blueNoiseURL);
+const blueNoise = await blueNoiseBlob.bytes();
 
 export default class RealtimeRenderer {
 	project: Project;
@@ -25,7 +29,7 @@ export default class RealtimeRenderer {
 	private viewportCache = new Map<Viewport, ViewportCache>();
 	private viewUBO: GPUBuffer;
 	private gpuDevice: GPUDevice;
-	bindGroup0: GPUBindGroup;
+	bindGroup0!: GPUBindGroup;
 	bindGroup0Layout: GPUBindGroupLayout;
 	bindGroupR3Layout: GPUBindGroupLayout;
 
@@ -36,8 +40,10 @@ export default class RealtimeRenderer {
 	r16ResolveBindGroupLayout: GPUBindGroupLayout;
 	heightFieldComputePassDescriptor: GPUComputePassDescriptor;
 	shadowViewUBO: GPUBuffer;
-	shadowBindGroup0: GPUBindGroup;
+	shadowBindGroup0!: GPUBindGroup;
 	virtualTextureSystem: VirtualTextureSystem;
+	blueNoiseTexture!: GPUTexture;
+	blueNoiseView!: GPUTextureView;
 
 	constructor(project: Project) {
 		this.project = project;
@@ -47,7 +53,7 @@ export default class RealtimeRenderer {
 		);
 		this.viewUBO = this.gpuDevice.createBuffer({
 			label: "View UBO",
-			size: (3 * 16 + 12) * 4,
+			size: (3 * 16 + 4 * 4) * 4,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 		});
 		this.shadowViewUBO = this.gpuDevice.createBuffer({
@@ -64,6 +70,14 @@ export default class RealtimeRenderer {
 					visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
 					buffer: {
 						type: "uniform",
+					},
+				},
+				{
+					binding: 1,
+					visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
+					texture: {
+						viewDimension: "2d",
+						sampleType: "uint",
 					},
 				},
 				...VirtualTextureSystem.bindGroupEntries,
@@ -133,22 +147,6 @@ export default class RealtimeRenderer {
 					},
 				},
 			],
-		});
-		this.bindGroup0 = this.gpuDevice.createBindGroup({
-			label: "Global default bind group 0",
-			entries: [
-				{ binding: 0, resource: { buffer: this.viewUBO } },
-				...this.virtualTextureSystem.bindGroupEntries,
-			],
-			layout: this.bindGroup0Layout,
-		});
-		this.shadowBindGroup0 = this.gpuDevice.createBindGroup({
-			label: "Global default shadow bind group 0",
-			entries: [
-				{ binding: 0, resource: { buffer: this.shadowViewUBO } },
-				...this.virtualTextureSystem.bindGroupEntries,
-			],
-			layout: this.bindGroup0Layout,
 		});
 		this.r3renderPassDescriptor = {
 			label: "Render Pass",
@@ -255,6 +253,61 @@ export default class RealtimeRenderer {
 		this.heightFieldComputePassDescriptor = {
 			label: "height field compute pass",
 		};
+
+		const imageData = project.wasmx.imageData.fromImageData(blueNoise);
+		if (!imageData) return;
+
+		const blueNoiseData = project.wasmx.getBufferView(imageData.data);
+		this.blueNoiseTexture = this.gpuDevice.createTexture({
+			label: "blue noise texture",
+			format: "r16uint",
+			size: { width: imageData.width, height: imageData.height, depthOrArrayLayers: 1 },
+			usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING,
+			dimension: "2d",
+			mipLevelCount: 1,
+			sampleCount: 1,
+			viewFormats: ["r16uint"],
+		});
+		this.blueNoiseView = this.blueNoiseTexture.createView({
+			label: "blue noise view",
+			aspect: "all",
+			baseMipLevel: 0,
+			mipLevelCount: 1,
+			baseArrayLayer: 0,
+			arrayLayerCount: 1,
+			dimension: "2d",
+			format: "r16uint",
+			usage: GPUTextureUsage.TEXTURE_BINDING,
+		});
+
+		this.gpuDevice.queue.writeTexture(
+			{ texture: this.blueNoiseTexture },
+			blueNoiseData,
+			{ bytesPerRow: imageData.width * imageData.components * imageData.bytesPerComponents },
+			{ width: imageData.width, height: imageData.height, depthOrArrayLayers: 1 },
+		);
+
+		this.shadowBindGroup0 = this.gpuDevice.createBindGroup({
+			label: "Global default shadow bind group 0",
+			entries: [
+				{ binding: 0, resource: { buffer: this.shadowViewUBO } },
+				{ binding: 1, resource: this.blueNoiseView },
+				...this.virtualTextureSystem.bindGroupEntries,
+			],
+			layout: this.bindGroup0Layout,
+		});
+
+		this.bindGroup0 = this.gpuDevice.createBindGroup({
+			label: "Global default bind group 0",
+			entries: [
+				{ binding: 0, resource: { buffer: this.viewUBO } },
+				{ binding: 1, resource: this.blueNoiseView },
+				...this.virtualTextureSystem.bindGroupEntries,
+			],
+			layout: this.bindGroup0Layout,
+		});
+
+		imageData.deleteLater();
 	}
 
 	reconfigureContext(config: RenderConfig) {
@@ -286,9 +339,9 @@ export default class RealtimeRenderer {
 		if (config.needsContextReconfiguration) this.reconfigureContext(config);
 
 		viewport.updateView(this.viewUBO, this.frame);
-		const key = AbstractMetaRenderPipeline.generalConfigToKey(
+		const key = AbstractMetaRenderPipeline.configToKey(
 			config.general,
-			(config.specificRenderer as RealtimeConfig).antialiasing.msaa,
+			(config.specificRenderer as RealtimeConfig).antialiasing.msaa as 1 | 4,
 		);
 
 		const viewportCache = this.viewportCache.get(viewport);

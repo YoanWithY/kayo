@@ -33,14 +33,16 @@ class SwapChain {
 	}
 };
 
-class Transparency {
+class CustomColorQuantisation {
   public:
-	JSVCString transparentBackground;
-	inline Transparency() : transparentBackground(JSVCString("false")) {}
-	constexpr void applyToConfig(kayo::config::RenderConfig& output, kayo::config::Transparancy& transparency) {
-		bool old_transparentBackground = transparency.transparentBackground;
-		transparency.transparentBackground = this->transparentBackground.value == "true";
-		if (old_transparentBackground != transparency.transparentBackground) {
+	JSVCString useCustomColorQuantisation;
+	JSVCString useDithering;
+	inline CustomColorQuantisation() : useCustomColorQuantisation(JSVCString("true")), useDithering(JSVCString("false")) {}
+	constexpr void applyToConfig(kayo::config::RenderConfig& output, kayo::config::CustomColorQuantisation& customColorQuantisation) {
+		bool old_useDithering = customColorQuantisation.useDithering;
+		customColorQuantisation.useDithering = this->useDithering.value == "true";
+		customColorQuantisation.useCustomColorQuantisation = this->useCustomColorQuantisation.value == "true";
+		if (old_useDithering != customColorQuantisation.useDithering) {
 			output.needsContextReconfiguration = true;
 		}
 	}
@@ -49,11 +51,11 @@ class Transparency {
 class General {
   public:
 	SwapChain swapChain;
-	Transparency transparency;
+	CustomColorQuantisation customColorQuantisation;
 	inline General() {};
 	constexpr void applyToConfig(kayo::config::RenderConfig& config, kayo::config::General& general) {
 		this->swapChain.applyToConfig(config, general.swapChain);
-		this->transparency.applyToConfig(config, general.transparency);
+		this->customColorQuantisation.applyToConfig(config, general.customColorQuantisation);
 	}
 };
 
@@ -62,8 +64,7 @@ class Antialiasing {
 	JSVCNumber msaa;
 	JSVCString interpolation;
 	inline Antialiasing() : msaa(JSVCNumber(1)), interpolation(JSVCString("center")) {}
-	constexpr void applyToConfig(kayo::config::RenderConfig& output, kayo::config::Antialiasing& antialiasing) {
-		int32_t old_msaa = antialiasing.msaa;
+	constexpr void applyToConfig(kayo::config::Antialiasing& antialiasing) {
 		antialiasing.msaa = static_cast<int32_t>(this->msaa.value);
 	}
 };

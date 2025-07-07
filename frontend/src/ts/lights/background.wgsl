@@ -12,22 +12,19 @@ struct VertexOutput {
 
 @vertex
 fn vertex_main(vertex: VertexInput) -> VertexOutput {
-	let position = view.projectionMat * vec4f(mat3x3f(view.viewMat[0].xyz, view.viewMat[1].xyz, view.viewMat[2].xyz) * vertex.position, 1.0);
+	let position = view.projection_mat * vec4f(mat3x3f(view.view_mat[0].xyz, view.view_mat[1].xyz, view.view_mat[2].xyz) * vertex.position, 1.0);
 	return VertexOutput(position, vertex.position);
 }
 
-#include <utility/fragmentOutput>
 @fragment
 fn fragment_main(fragment: VertexOutput) -> R3FragmentOutput {
 	let ws_dir = normalize(fragment.ws_position);
+	let pixel_coord: vec2u = vec2u(fragment.position.xy);
 	var interpolant1 = dot(ws_dir, vec3f(0, 0, 1));
 	interpolant1 = (interpolant1 * interpolant1 * interpolant1) * 0.5 + 0.5;
 
-	let albedo = sRGB_EOTF(mix(vec3(0.5), vec3(1.0), interpolant1));
-	var outColor = vec4f(createOutputFragment(albedo), 0);
-
-	let srgb = fragment.ws_position * 0.5 + 0.5;
-	outColor = vec4f(sRGB_EOTF(srgb), 1.0);
-	let out_display = createOutputFragment(outColor.rgb);
+	let srgb = vec3f(fragment.ws_position) * 0.5 + 0.5;
+	let out_color = vec4f(sRGB_EOTF(srgb), 1.0);
+	let out_display = createOutputFragment(out_color.rgb, pixel_coord);
 	return R3FragmentOutput(vec4f(out_display, 1.0), 0);
 }

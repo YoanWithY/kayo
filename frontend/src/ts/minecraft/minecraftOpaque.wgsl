@@ -117,7 +117,6 @@ fn mineSample(v_id: u32, uv: vec2f, uTC: vec2f) -> vec4f {
 // 	return textureSample(textures, textureSampler, uv, layer);;
 // }
 
-#include <utility/fragmentOutput>
 @fragment
 fn fragment_main(fragment: VertexOut) -> R3FragmentOutput {
 	let light = vec3f(abs(dot(fragment.normal, vec3(.3, .1, .9))));

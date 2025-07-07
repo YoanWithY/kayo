@@ -4,7 +4,10 @@ import { AbstractRenderingPipeline } from "./AbstractRenderingPipeline";
 
 export type RenderPipelineKey = {
 	outputColorSpace: PredefinedColorSpace;
-	msaa: number;
+	outputComponentTransfere: "sRGB" | "linear";
+	useColorQuantisation: boolean;
+	useDithering: boolean;
+	msaa: 1 | 4;
 	swapChainBitDepth: number;
 };
 
@@ -83,13 +86,21 @@ export abstract class AbstractMetaRenderPipeline {
 
 	public static getConstantsFromKey(key: RenderPipelineKey): Record<string, number> | undefined {
 		return {
-			outputColorSpace: key.outputColorSpace == "srgb" ? 0 : 1,
+			output_color_space: key.outputColorSpace == "srgb" ? 0 : 1,
+			use_color_quantisation: key.useColorQuantisation ? 1 : 0,
+			use_dithering: key.useDithering ? 1 : 0,
+			output_component_transfere: key.outputComponentTransfere == "linear" ? 0 : 1,
 		};
 	}
 
-	public static generalConfigToKey(config: GeneralConfig, msaa: number = 1): RenderPipelineKey {
+	public static configToKey(config: GeneralConfig, msaa: 1 | 4): RenderPipelineKey {
 		return {
 			outputColorSpace: config.swapChain.colorSpace as PredefinedColorSpace,
+			outputComponentTransfere: "sRGB",
+			useColorQuantisation: config.customColorQuantisation.useCustomColorQuantisation,
+			useDithering:
+				config.customColorQuantisation.useCustomColorQuantisation &&
+				config.customColorQuantisation.useDithering,
 			msaa: msaa,
 			swapChainBitDepth: config.swapChain.bitDepth,
 		};
