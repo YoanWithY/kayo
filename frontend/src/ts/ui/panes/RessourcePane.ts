@@ -29,7 +29,6 @@ export default class RessourcePane extends BasicPane {
 				"WGLS Features": Array.from(gpu.wgslLanguageFeatures),
 			},
 			"GPU Adapter": {
-				"Is Fallback Adapter": gpuAdapter.isFallbackAdapter,
 				Info: gpuAdapter.info,
 				Features: Array.from(gpuAdapter.features),
 				Limits: gpuAdapter.limits,

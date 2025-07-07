@@ -39,6 +39,9 @@ export class MinecraftWorld {
 				msaa: 1,
 				outputColorSpace: "srgb",
 				swapChainBitDepth: 8,
+				outputComponentTransfere: "sRGB",
+				useColorQuantisation: false,
+				useDithering: false,
 			}).gpuPipeline,
 		);
 		// e.setBindGroup(2, MinecraftOpaquePipeline.bindGroup2)
