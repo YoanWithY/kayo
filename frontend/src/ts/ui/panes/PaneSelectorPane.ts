@@ -5,7 +5,7 @@ import { UIPaneElement } from "../ui";
 import BasicPane from "./BasicPane";
 import OutlinerPane from "./OutlinerPane";
 import OutputPane from "./OutpuPane";
-import RessourcePane from "./RessourcePane";
+import APIPane from "./ApiPane";
 import { ViewportPane } from "./ViewportPane";
 
 export default class PaneSelectorPane extends BasicPane {
@@ -36,7 +36,7 @@ export default class PaneSelectorPane extends BasicPane {
 
 export const panesNameClassMap: { [key: string]: UIPaneElement } = {
 	[ViewportPane.getName()]: ViewportPane,
-	[RessourcePane.getName()]: RessourcePane,
+	[APIPane.getName()]: APIPane,
 	[OutputPane.getName()]: OutputPane,
 	[OutlinerPane.getName()]: OutlinerPane,
 	[PTPChatPane.getName()]: PTPChatPane,

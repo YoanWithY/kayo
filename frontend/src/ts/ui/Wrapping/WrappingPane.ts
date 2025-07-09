@@ -134,6 +134,13 @@ export class WrappingPane extends HTMLElement {
 							console.error(e);
 						}
 					}
+					if (file.type == "audio/mpeg") {
+						const audio = project.kayo.audioContext;
+						const bufferSource = project.kayo.audioContext.createBufferSource();
+						bufferSource.connect(audio.destination);
+						bufferSource.buffer = await audio.decodeAudioData(content as ArrayBuffer);
+						bufferSource.start();
+					}
 				};
 				reader.readAsArrayBuffer(file); // Read file as ArrayBuffer
 			}

@@ -6,6 +6,7 @@ export class Kayo {
 	private _gpux: GPUX;
 	private _project: Project;
 	private _wasmx: WASMX;
+	private _audioContext: AudioContext;
 	private _windows: Set<Window>;
 
 	constructor(gpux: GPUX, wasmx: WASMX) {
@@ -13,6 +14,7 @@ export class Kayo {
 		this._gpux = gpux;
 		this._project = new Project(this);
 		this._windows = new Set();
+		this._audioContext = new AudioContext({ latencyHint: "interactive" });
 	}
 
 	get project(): Project {
@@ -29,6 +31,10 @@ export class Kayo {
 
 	get windows(): Set<Window> {
 		return this._windows;
+	}
+
+	get audioContext() {
+		return this._audioContext;
 	}
 
 	public openNewWindow(): void {

@@ -1,6 +1,6 @@
 import { ViewportPane } from "./panes/ViewportPane";
 import OutlinerPane, { OutlinerElement } from "./panes/OutlinerPane";
-import RessourcePane from "./panes/RessourcePane";
+import APIPane from "./panes/ApiPane";
 import PaneSelectorPane from "./panes/PaneSelectorPane";
 import { SplitPaneContainer } from "./splitpane/SplitPaneContainer";
 import { SplitButtonLL, SplitButtonLR, SplitButtonUL, SplitButtonUR } from "./splitpane/SplitButton";
@@ -41,7 +41,7 @@ export function initUI() {
 	window.customElements.define("iconed-toggle-button", IconedToggleButton);
 
 	window.customElements.define(ViewportPane.getDomClass(), ViewportPane);
-	window.customElements.define(RessourcePane.getDomClass(), RessourcePane);
+	window.customElements.define(APIPane.getDomClass(), APIPane);
 	window.customElements.define(OutputPane.getDomClass(), OutputPane);
 	window.customElements.define(PaneSelectorPane.getDomClass(), PaneSelectorPane);
 	window.customElements.define(OutlinerPane.getDomClass(), OutlinerPane);

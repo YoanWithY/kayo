@@ -2,6 +2,7 @@ export class GPUX {
 	private readonly _gpu: GPU;
 	private readonly _gpuAdapter: GPUAdapter;
 	private readonly _gpuDevice: GPUDevice;
+
 	private constructor(gpu: GPU, gpuAdapter: GPUAdapter, gpuDevice: GPUDevice) {
 		this._gpu = gpu;
 		this._gpuAdapter = gpuAdapter;
@@ -51,6 +52,7 @@ export class GPUX {
 		if (!gpuDevice) return "Could not request GPU device!";
 
 		this.initialied = true;
+
 		return new GPUX(gpu, gpuAdapter, gpuDevice);
 	}
 }

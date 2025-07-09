@@ -3,11 +3,11 @@ import { Kayo } from "./Kayo";
 import initWasmx from "./KayoWasmLoader";
 import { ViewportPane } from "./ui/panes/ViewportPane";
 import { GPUX } from "./GPUX";
+import { FileRessourceManager } from "./FileRessourceManager";
 
 const loadPara = window.document.getElementById("loadingParagraph") as HTMLParagraphElement;
 loadPara.textContent = "Initi UI...";
 initUIClasses();
-let kayo: Kayo;
 
 window.name = "Kayo Main";
 loadPara.textContent = "Initi WebGPU";
@@ -19,7 +19,15 @@ if (typeof gpux === "string") {
 
 loadPara.textContent = "Initi WASM...";
 const wasmx = await initWasmx();
-kayo = new Kayo(gpux, wasmx);
+
+loadPara.textContent = "Init file system...";
+const fileRessourceManager = await FileRessourceManager.requestFileRessourceManager();
+if (typeof fileRessourceManager === "string") {
+	alert(`Could not initialize WebGPU with reason: ${fileRessourceManager}`);
+	throw new Error("Could not initialize WebGPU!", { cause: fileRessourceManager });
+}
+
+const kayo = new Kayo(gpux, wasmx);
 (window as any).kayo = kayo;
 
 window.addEventListener("beforeunload", (e) => {

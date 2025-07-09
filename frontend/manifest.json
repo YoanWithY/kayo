@@ -1,0 +1,13 @@
+{
+    "short_name": "Kayo",
+    "name": "Kayo Engine",
+    "start_url": ".",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ],
+    "display": "fullscreen"
+}

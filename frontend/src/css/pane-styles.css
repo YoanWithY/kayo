@@ -9,7 +9,7 @@ outliner-pane {
 	background-color: var(--pane-background-color);
 }
 
-ressource-pane {
+api-pane {
 	display: flex;
 	flex: 1 1 0px;
 	overflow: auto;
