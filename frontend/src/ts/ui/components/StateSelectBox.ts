@@ -1,12 +1,11 @@
 import { Kayo } from "../../Kayo";
 import WASMX, { WasmPath } from "../../WASMX";
+import { MarkUneffectiveEntry } from "../ui";
 import Tooltip, { SerialTooltip } from "./Tooltip";
 
 interface ISelectBox {
 	setOption: (optionValue: SelectOptionValue) => void;
 }
-
-type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 
 export type SelectOptionValue = { value: string; text: string };
 export class StateSelectBox extends HTMLElement implements ISelectBox {

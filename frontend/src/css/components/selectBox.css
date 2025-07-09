@@ -8,7 +8,7 @@ select-box {
 	background-color: rgb(20, 20, 20);
 	border: 1px solid rgb(48, 48, 48);
 	border-radius: var(--radius);
-	padding: var(--text-padding) calc(var(--text-padding) + 2px);
+	padding: var(--var-padding) calc(var(--var-padding) + 2px);
 	box-sizing: border-box;
 }
 
@@ -62,7 +62,7 @@ select-option-wrapper:state(open-down) {
 
 select-option {
 	display: block;
-	padding: var(--text-padding) calc(var(--text-padding) + 2px);
+	padding: var(--var-padding) calc(var(--var-padding) + 2px);
 }
 
 select-option:hover {

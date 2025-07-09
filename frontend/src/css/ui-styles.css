@@ -14,7 +14,7 @@
     --text-color: rgb(220, 220, 220);
     --font-size: 0.8rem;
 
-    --text-padding: 4px;
+    --var-padding: 4px;
 
     --accent-color: rgb(0, 114, 220);
     --accent-color-hover: rgb(0, 130, 240);
@@ -25,7 +25,7 @@
 
 @media (pointer: coarse) {
     :root {
-        --text-padding: 6px;
+        --var-padding: 6px;
         --font-size: 1.0rem;
         --split-pane-grabber-size: 25px;
         --split-button-size: 30px;
@@ -44,6 +44,10 @@ body {
     font-family: 'Noto Sans', Helvetica, sans-serif;
     user-select: none;
     touch-action: none;
+}
+
+canvas {
+  image-rendering: pixelated;
 }
 
 .selectorButton {
@@ -68,10 +72,6 @@ body {
     box-shadow: none;
 }
 
-svg {
-    stroke: rgb(10, 10, 10);
-}
-
 select {
     color: var(--text-color);
     font-size: var(--font-size);
@@ -82,6 +82,10 @@ select {
     border-bottom: 1px solid rgba(0, 0, 0, 0.2);
     background-color: rgb(20, 20, 20);
     padding: 4px;
+}
+
+span {
+    margin: 4px 0px;
 }
 
 select:focus {

@@ -22,6 +22,7 @@ EMSCRIPTEN_BINDINGS(KayoStateWASM) {
 		.property("msaa", &kayo::state::Antialiasing::msaa, return_value_policy::reference())
 		.property("interpolation", &kayo::state::Antialiasing::interpolation, return_value_policy::reference());
 	class_<kayo::state::CustomColorQuantisation>("CustomColorQuantisationState")
+		.property("useCustomColorQuantisation", &kayo::state::CustomColorQuantisation::useCustomColorQuantisation, return_value_policy::reference())
 		.property("useDithering", &kayo::state::CustomColorQuantisation::useDithering, return_value_policy::reference());
 	class_<kayo::state::General>("GeneralState")
 		.property("swapChain", &kayo::state::General::swapChain, return_value_policy::reference())

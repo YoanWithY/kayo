@@ -6,6 +6,10 @@ iconed-toggle-button {
 	border-radius: var(--radius);
 }
 
+iconed-toggle-button svg {
+	stroke: black;
+}
+
 iconed-toggle-button:hover {
 	background-color: rgb(60, 60, 60);
 }

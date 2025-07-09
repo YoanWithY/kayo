@@ -25,17 +25,24 @@ export class WrappingPane extends HTMLElement {
 
 		const fullScreenButton = IconedToggleButton.createIconedToggleButton(
 			win,
-			fullScreenOffIcon,
-			fullScreenOnIcon,
-			() => {
-				if (win.document.fullscreenElement) win.document.exitFullscreen();
-			},
-			() => win.document.documentElement.requestFullscreen(),
+			[
+				{
+					svgIcon: fullScreenOffIcon,
+					callback: () => {
+						if (win.document.fullscreenElement) win.document.exitFullscreen();
+					},
+				},
+				{
+					svgIcon: fullScreenOnIcon,
+					callback: () => win.document.documentElement.requestFullscreen(),
+				},
+			],
+			0,
 		);
 
 		win.addEventListener("fullscreenchange", () => {
 			if (!win.document.fullscreenElement) {
-				fullScreenButton.turnOff();
+				fullScreenButton.setStateUIOnly(0);
 			}
 		});
 

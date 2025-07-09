@@ -1,7 +1,8 @@
 check-box {
-	box-sizing: border-box;
-	
-	padding: var(--text-padding) calc(var(--text-padding) + 2px);
+	cursor: pointer;
+	display: inline-flex;
+	flex: 0 0 0px;
+	padding: 1px;
 	background-color: rgb(20, 20, 20);
 	border: 1px solid rgb(28, 28, 28);
 	border-radius: var(--radius);
@@ -9,6 +10,12 @@ check-box {
 
 check-box:hover {
 	background-color: rgb(28, 28, 28);
+}
+
+check-box svg {
+	width: 12px;
+	height: 12px;
+	stroke: white;
 }
 
 check-box:state(checked) {

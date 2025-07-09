@@ -1,8 +1,12 @@
 import { Kayo } from "../../Kayo";
 import WASMX, { WasmPath } from "../../WASMX";
+import { IconedToggleButton } from "./IconedToggleButton";
 import Tooltip, { SerialTooltip } from "./Tooltip";
 
-export default class Checkbox extends HTMLElement {
+import emptyIcon from "../../../svg/empty.svg?raw";
+import checkIcon from "../../../svg/check.svg?raw";
+
+export default class Checkbox extends IconedToggleButton {
 	private _wasmx!: WASMX;
 	private _stateWasmPath!: WasmPath;
 	private _internals: ElementInternals;
@@ -12,27 +16,23 @@ export default class Checkbox extends HTMLElement {
 		this._internals = this.attachInternals();
 	}
 
-	clickCallback = (_: MouseEvent) => {
-		this._wasmx.setModelValue(this._stateWasmPath, this._internals.states.has("checked") ? "false" : "true");
-	};
-
 	stateChangeCallback = (value: string) => {
 		if (value == "true") {
 			this._internals.states.add("checked");
-			this.textContent = "Yes";
+			this.setStateUIOnly(1);
 		} else {
 			this._internals.states.delete("checked");
-			this.textContent = "No";
+			this.setStateUIOnly(0);
 		}
 	};
 
 	connectedCallback() {
-		this.addEventListener("click", this.clickCallback);
+		super.connectedCallback();
 		this._wasmx.addChangeListener(this._stateWasmPath, this.stateChangeCallback);
 	}
 
 	disconnectedCallback() {
-		this.removeEventListener("click", this.clickCallback);
+		super.disconnectedCallback();
 		this._wasmx.removeChangeListener(this._stateWasmPath, this.stateChangeCallback);
 	}
 
@@ -41,6 +41,17 @@ export default class Checkbox extends HTMLElement {
 		if (obj.tooltip) Tooltip.register(win, obj.tooltip as SerialTooltip, p, obj);
 		p._wasmx = kayo.wasmx;
 		p._stateWasmPath = kayo.wasmx.toWasmPath(obj.stateVariableURL, variables);
+		p._state = 0;
+		p._states = [
+			{
+				svgIcon: emptyIcon,
+				callback: () => p._wasmx.setModelValue(p._stateWasmPath, "false"),
+			},
+			{
+				svgIcon: checkIcon,
+				callback: () => p._wasmx.setModelValue(p._stateWasmPath, "true"),
+			},
+		];
 		return p;
 	}
 

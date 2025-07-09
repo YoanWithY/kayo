@@ -22,7 +22,8 @@ import SpanElement from "./components/SpanElement";
 import { PTPChatContent, PTPChatPane, PTPMessageElement, PTPTextInput } from "../collaborative/PTPChatPannel";
 import VBox from "./components/VBox";
 import { NumberInput } from "./components/NumberInput";
-import { Collapsible2 } from "./components/Collapsible2";
+
+export type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 
 export function initUI() {
 	window.customElements.define("tool-tip", Tooltip);
@@ -35,7 +36,6 @@ export function initUI() {
 	window.customElements.define(PTPTextInput.getDomClass(), PTPTextInput, { extends: "form" });
 	window.customElements.define(PTPChatContent.getDomClass(), PTPChatContent);
 	window.customElements.define(PTPMessageElement.getDomClass(), PTPMessageElement);
-	window.customElements.define(Collapsible2.getDomClass(), Collapsible2);
 	window.customElements.define("select-option-wrapper", SelectOptionWrapper);
 	window.customElements.define("select-option", SelectOption);
 	window.customElements.define("iconed-toggle-button", IconedToggleButton);
@@ -77,7 +77,6 @@ const nameClassMap: { [key: string]: UIElement } = {
 	[VBox.getDomClass()]: VBox,
 	[Checkbox.getDomClass()]: Checkbox,
 	[NumberInput.getDomClass()]: NumberInput,
-	[Collapsible2.getDomClass()]: Collapsible2,
 };
 
 export function buildUIElement(win: Window, kayo: Kayo, obj: any, variables: any): HTMLElement {

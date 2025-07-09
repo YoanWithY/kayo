@@ -4,51 +4,7 @@ v-box {
 	flex: 1 0 0px;
 	margin: 0;
 	padding: 0;
-	gap: var(--text-padding)
-}
-
-collapsible-element, collapsible-element-2 {
-	display: block;
-	flex: 0 0 auto;
-	overflow: hidden;
-	background-color: rgba(255,  255, 255, 0.03);
-	border: 1px solid rgba(255,  255, 255, 0.03);
-	border-radius: var(--radius);
-}
-
-collapsible-button {
-	display: block;
-	white-space: nowrap;
-	padding: var(--text-padding);
-}
-
-collapsible-button:hover {
-	background-color: rgba(255,  255, 255, 0.03);
-}
-
-collapsible-button::before {
-	display: inline-block;
-	margin-right: 10px;
-	content: '';
-	width: calc(var(--font-size) / 2);
-	height: calc(var(--font-size) / 2);
-	right: 0;
-	border: 1px solid var(--text-color);
-	border-width: 0 2px 2px 0;
-}
-
-collapsible-button[state=open]::before {
-	transform: translateY(-40%) translateX(40%) rotate(45deg);
-}
-
-collapsible-button[state=closed]::before {
-	transform: rotate(-45deg);
-}
-
-collapsible-content-container {
-	display: block;
-	margin: 0px;
-	padding: var(--text-padding);
+	gap: var(--var-padding);
 }
 
 @keyframes fadeIn {
@@ -89,7 +45,7 @@ grid-2col {
 	row-gap: 2px;
 	column-gap: 8px;
 	align-items: center;
-	grid-template-columns: max-content auto;
+	grid-template-columns: max-content max-content;
 }
 
 grid-2col> :nth-child(odd) {
@@ -98,6 +54,10 @@ grid-2col> :nth-child(odd) {
 
 grid-2col> :nth-child(even) {
 	justify-self: auto;
+}
+
+grid-2col:state(uneffective) {
+	opacity: 0.5;
 }
 
 ptp-chat-content {

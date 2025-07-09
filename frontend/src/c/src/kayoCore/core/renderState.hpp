@@ -37,7 +37,7 @@ class CustomColorQuantisation {
   public:
 	JSVCString useCustomColorQuantisation;
 	JSVCString useDithering;
-	inline CustomColorQuantisation() : useCustomColorQuantisation(JSVCString("true")), useDithering(JSVCString("false")) {}
+	inline CustomColorQuantisation() : useCustomColorQuantisation(JSVCString("true")), useDithering(JSVCString("true")) {}
 	constexpr void applyToConfig(kayo::config::RenderConfig& output, kayo::config::CustomColorQuantisation& customColorQuantisation) {
 		bool old_useDithering = customColorQuantisation.useDithering;
 		customColorQuantisation.useDithering = this->useDithering.value == "true";

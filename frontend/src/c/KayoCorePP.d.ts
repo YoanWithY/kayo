@@ -87,6 +87,7 @@ export interface AntialiasingState extends ClassHandle {
 }
 
 export interface CustomColorQuantisationState extends ClassHandle {
+  useCustomColorQuantisation: KayoJSVCString;
   useDithering: KayoJSVCString;
 }
 

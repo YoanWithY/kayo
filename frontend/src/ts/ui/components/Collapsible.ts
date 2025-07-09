@@ -1,5 +1,6 @@
 import { Kayo } from "../../Kayo";
 import { buildUIElement } from "../ui";
+import Checkbox from "./Checkbox";
 import Tooltip from "./Tooltip";
 
 export default class Collapsible extends HTMLElement {
@@ -16,12 +17,14 @@ export default class Collapsible extends HTMLElement {
 		}
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any, vairables?: any) {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any) {
 		const p = win.document.createElement(this.getDomClass()) as Collapsible;
 
-		p.collapsibleButton = CollapsibleButton.createCollapsibleButton(win);
+		p.collapsibleButton = CollapsibleButton.createCollapsibleButton(win, kayo, obj.checkbox, variables);
 		p.collapsibleButton.collapsible = p;
-		p.collapsibleButton.textContent = obj.text;
+		const text = win.document.createElement("span");
+		text.textContent = obj.text;
+		p.collapsibleButton.appendChild(text);
 		p.appendChild(p.collapsibleButton);
 
 		p.collapsibleContentContainer = win.document.createElement(
@@ -30,7 +33,7 @@ export default class Collapsible extends HTMLElement {
 
 		const content = obj.content;
 		if (content !== undefined)
-			p.collapsibleContentContainer.appendChild(buildUIElement(win, kayo, obj.content, vairables));
+			p.collapsibleContentContainer.appendChild(buildUIElement(win, kayo, obj.content, variables));
 
 		const tooltip = obj.tooltip;
 		if (tooltip !== undefined) {
@@ -56,9 +59,13 @@ export class CollapsibleButton extends HTMLElement {
 		});
 	}
 
-	public static createCollapsibleButton(win: Window) {
+	public static createCollapsibleButton(win: Window, kayo: Kayo, checkbox: any, variables: any) {
 		const p = win.document.createElement(this.getDomClass()) as CollapsibleButton;
 		p.setAttribute("state", "open");
+		if (checkbox !== undefined) {
+			const c = Checkbox.createUIElement(win, kayo, checkbox, variables);
+			p.appendChild(c);
+		}
 		return p;
 	}
 

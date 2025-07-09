@@ -8,10 +8,10 @@ import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 import { ViewportPane } from "../ui/panes/ViewportPane";
 import { RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
 import { AbstractMetaRenderPipeline } from "./AbstractMetaRenderingPipeline";
-const blueNoiseURL = "/blue_noise_64_px_16bit.png";
+const thresholdMapURL = "/beyer_2px_16bit.png";
 
-const blueNoiseBlob = await fetch(blueNoiseURL);
-const blueNoise = await blueNoiseBlob.bytes();
+const thresholdMapBlob = await fetch(thresholdMapURL);
+const thresholdMapBytes = await thresholdMapBlob.bytes();
 
 export default class RealtimeRenderer {
 	project: Project;
@@ -254,7 +254,7 @@ export default class RealtimeRenderer {
 			label: "height field compute pass",
 		};
 
-		const imageData = project.wasmx.imageData.fromImageData(blueNoise);
+		const imageData = project.wasmx.imageData.fromImageData(thresholdMapBytes);
 		if (!imageData) return;
 
 		const blueNoiseData = project.wasmx.getBufferView(imageData.data);

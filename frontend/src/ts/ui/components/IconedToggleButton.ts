@@ -1,40 +1,37 @@
+export type ToggleState = { svgIcon: string; callback: () => void };
+
 export class IconedToggleButton extends HTMLElement {
-	onSvg!: string;
-	offSvg!: string;
-	onCallback!: () => void;
-	offCalback!: () => void;
-	isOn = false;
+	protected _states!: ToggleState[];
+	protected _state!: number;
+	private _onClickCallback = (e: MouseEvent) => {
+		e.stopImmediatePropagation();
+		this._state = (this._state + 1) % this._states.length;
+		this.setStateUIOnly(this._state);
+		this._states[this._state].callback();
+	};
 
-	constructor() {
-		super();
-		this.onclick = () => {
-			if (this.isOn)
-				this.turnOff();
-			else
-				this.turnOn();
-		}
+	/**
+	 * Sets the button to the ui state without triggering any callbacks.
+	 * @param state
+	 */
+	public setStateUIOnly(state: number) {
+		this.innerHTML = this._states[state].svgIcon;
+		this._state = state;
 	}
 
-	turnOn() {
-		this.isOn = true;
-		this.innerHTML = this.onSvg;
-		this.onCallback();
+	connectedCallback() {
+		this.addEventListener("click", this._onClickCallback);
 	}
 
-	turnOff() {
-		this.isOn = false;
-		this.innerHTML = this.offSvg;
-		this.offCalback();
+	disconnectedCallback() {
+		this.removeEventListener("click", this._onClickCallback);
 	}
 
-	static createIconedToggleButton(win: Window, offSvg: string, onSvg: string, offCallback: () => void, onCalback: () => void, on = false) {
+	static createIconedToggleButton(win: Window, states: ToggleState[], state: number) {
 		const p = win.document.createElement("iconed-toggle-button") as IconedToggleButton;
-		p.isOn = on;
-		p.innerHTML = on ? onSvg : offSvg;
-		p.offSvg = offSvg;
-		p.onSvg = onSvg;
-		p.offCalback = offCallback;
-		p.onCallback = onCalback;
+		p._states = states;
+		p._state = state;
+		p.setStateUIOnly(state);
 		return p;
 	}
 }
