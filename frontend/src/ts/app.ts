@@ -41,4 +41,4 @@ setTimeout(() => {
 	window.document.body.removeChild(window.document.getElementById("kayoLoading") as HTMLDivElement);
 }, 100);
 
-kayo.registerWindow(window, ViewportPane.getName());
+kayo.registerWindow(window, ViewportPane.getName(), true);

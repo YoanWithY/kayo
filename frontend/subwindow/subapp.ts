@@ -13,4 +13,4 @@ window.addEventListener("beforeunload", (_) => {
 	openerKayo.windows.delete(window);
 });
 
-openerKayo.registerWindow(window, OutputPane.getName());
+openerKayo.registerWindow(window, OutputPane.getName(), false);

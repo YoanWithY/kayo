@@ -41,11 +41,11 @@ export class Kayo {
 		open("/subwindow/", "_blank", "popup=true");
 	}
 
-	public registerWindow(win: Window, defaultPane: string) {
+	public registerWindow(win: Window, defaultPane: string, useHeader: boolean) {
 		if (this._windows.has(win)) return;
 
 		this._windows.add(win);
-		this._project.requestUI(win, defaultPane);
+		this._project.requestUI(win, defaultPane, useHeader);
 	}
 
 	public closeAllSecondaryWindows(window: Window) {

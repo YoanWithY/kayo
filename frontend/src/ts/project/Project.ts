@@ -31,8 +31,8 @@ export class Project {
 		this.scene.background = new Background(this);
 	}
 
-	requestUI(win: Window, defaultPane: string) {
-		win.document.body.appendChild(WrappingPane.createWrappingPane(win, this.kayo, defaultPane));
+	requestUI(win: Window, defaultPane: string, useHeader: boolean) {
+		win.document.body.appendChild(WrappingPane.createWrappingPane(win, this.kayo, defaultPane, useHeader));
 	}
 
 	fullRerender() {

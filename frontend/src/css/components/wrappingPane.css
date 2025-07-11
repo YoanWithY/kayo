@@ -21,13 +21,3 @@ wrapping-pane>div {
 	background-color: rgb(50, 50, 50);
 }
 
-footer-element {
-	display: flex;
-	z-index: 1;
-	flex: 0 0 content;
-	gap: 32px;
-	padding: 4px;
-	background-color: rgb(50, 50, 50);
-	overflow-x: auto;
-	box-sizing: border-box;
-}

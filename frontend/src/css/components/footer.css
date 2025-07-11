@@ -1,0 +1,33 @@
+footer-element {
+	display: flex;
+	z-index: 1;
+	flex: 0 0 content;
+	gap: 4px;
+	align-items: center;
+	background-color: rgb(50, 50, 50);
+	overflow-x: auto;
+	box-sizing: border-box;
+}
+
+footer-element::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-left: 6px;
+    margin-right: 6px;
+    background-image: url('/favicon.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    vertical-align: middle;
+}
+
+footer-element > div {
+    display: inline-flex;
+    flex: 0 0 content; 
+    background-color: none;
+}
+
+footer-element > .middle {
+    flex: 1 1 auto;
+}

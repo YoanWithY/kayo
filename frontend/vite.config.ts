@@ -18,7 +18,7 @@ export default defineConfig(({ command }) => {
 			VitePWA({
 				registerType: "autoUpdate",
 				devOptions: {
-					enabled: true,
+					// enabled: true,
 				},
 				workbox: {
 					globPatterns: ["**/*"],
@@ -35,7 +35,7 @@ export default defineConfig(({ command }) => {
 							type: "image/svg+xml",
 						},
 					],
-					display: "fullscreen",
+					display: "standalone",
 					background_color: "#000000",
 				},
 			}),
