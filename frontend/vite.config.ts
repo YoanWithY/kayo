@@ -34,6 +34,12 @@ export default defineConfig(({ command }) => {
 							sizes: "any",
 							type: "image/svg+xml",
 						},
+						{
+							src: "/favicon_maskable.svg",
+							sizes: "any",
+							type: "image/svg+xml",
+							purpose: "maskable",
+						},
 					],
 					display: "standalone",
 					background_color: "#000000",
