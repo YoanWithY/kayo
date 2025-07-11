@@ -30,12 +30,12 @@ class JSViewControlled {
 		kayoDispatchToObserver(this->observation_id);
 	}
 
-	std::string getValueJS() {
+	std::string getValueJS() const {
 		return static_cast<std::string>(value);
 	}
 
 	void setValueJS(std::string str_value) {
-		value = T(reinterpret_cast<const char*>(str_value.c_str()), str_value.length());
+		value = T(str_value.c_str(), str_value.length());
 		dispatchToObservers();
 	}
 

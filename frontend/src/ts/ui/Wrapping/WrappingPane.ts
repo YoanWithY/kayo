@@ -50,6 +50,11 @@ export class WrappingPane extends HTMLElement {
 
 		const fi = win.document.createElement("input");
 		fi.type = "file";
+		fi.id = "fileInput";
+		const lable = win.document.createElement("label");
+		lable.setAttribute("for", fi.id);
+		lable.textContent = "File: ";
+
 		let res: ResourcePack;
 		fi.addEventListener("change", async () => {
 			const file = fi.files?.[0];
@@ -145,6 +150,7 @@ export class WrappingPane extends HTMLElement {
 				reader.readAsArrayBuffer(file); // Read file as ArrayBuffer
 			}
 		});
+		p.header.appendChild(lable);
 		p.header.appendChild(fi);
 
 		p.footer = Footer.createFooter();

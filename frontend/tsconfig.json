@@ -22,5 +22,9 @@
   "include": [
     "src",
     "vite-env.d.ts",
+  ],
+  "exclude": [
+    "src/c/**/*",
+    "!src/c/*"
   ]
 }
