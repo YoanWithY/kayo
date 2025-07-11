@@ -1,7 +1,3 @@
-:root {
-	--pane-gap: 4px;
-}
-
 outliner-pane {
 	display: block;
 	width: 100%;
@@ -53,8 +49,6 @@ output-pane {
 	flex-direction: column;
 	flex: 1 0 0px;
 	overflow: auto;
-	gap: var(--pane-gap);
 	background-color: var(--pane-background-color);
 	padding: 4px;
-
 }

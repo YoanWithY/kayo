@@ -1,15 +1,15 @@
 iconed-toggle-button {
 	display: flex;
 	align-items: center;
-	padding: 2px;
-	margin: 2px;
+	padding: var(--var-padding);
+	margin: 0px;
 	border-radius: var(--radius);
 }
 
 iconed-toggle-button svg {
-	stroke: black;
+	stroke: var(--text-color);
 }
 
 iconed-toggle-button:hover {
-	background-color: rgb(60, 60, 60);
+	background-color: rgb(70, 70, 70);
 }

@@ -2,230 +2,235 @@
 	"class": "output-pane",
 	"children": [
 		{
-			"class": "collapsible-element",
-			"text": "General",
-			"content": {
-				"class": "v-box",
-				"children": [
-					{
-						"class": "collapsible-element",
-						"text": "Canvas",
-						"content": {
-							"class": "grid-2col",
-							"children": [
-								{
-									"class": "span-element",
-									"text": "Color Space"
-								},
-								{
-									"class": "state-select-box",
-									"stateVariableURL": "renderStates:renderState.general.swapChain.colorSpace",
-									"options": [
+			"class": "v-box",
+			"children": [
+				{
+					"class": "collapsible-element",
+					"text": "General",
+					"content": {
+						"class": "v-box",
+						"children": [
+							{
+								"class": "collapsible-element",
+								"text": "Canvas",
+								"content": {
+									"class": "grid-2col",
+									"children": [
 										{
-											"value": "display-p3",
-											"text": "Display P3"
+											"class": "span-element",
+											"text": "Color Space"
 										},
 										{
-											"value": "srgb",
-											"text": "sRGB"
+											"class": "state-select-box",
+											"stateVariableURL": "renderStates:renderState.general.swapChain.colorSpace",
+											"options": [
+												{
+													"value": "display-p3",
+													"text": "Display P3"
+												},
+												{
+													"value": "srgb",
+													"text": "sRGB"
+												}
+											],
+											"tooltip": {
+												"description": "The output color space of the canvas. This may change OS compositing of the browser."
+											}
+										},
+										{
+											"class": "span-element",
+											"text": "Bit Depth"
+										},
+										{
+											"class": "state-select-box",
+											"stateVariableURL": "renderStates:renderState.general.swapChain.bitDepth",
+											"options": [
+												{
+													"value": 8,
+													"text": "8 BPC unsigned normalized"
+												},
+												{
+													"value": 16,
+													"text": "16 BPC float"
+												}
+											],
+											"tooltip": {
+												"description": "The number of bits per channel and their format for each pixel in the output. This may change os compositing of the browser."
+											}
+										},
+										{
+											"class": "span-element",
+											"text": "Dynamic Range"
+										},
+										{
+											"class": "state-select-box",
+											"stateVariableURL": "renderStates:renderState.general.swapChain.toneMappingMode",
+											"options": [
+												{
+													"value": "standard",
+													"text": "Standard"
+												},
+												{
+													"value": "extended",
+													"text": "Extended"
+												}
+											],
+											"uneffectiveIfAny": [
+												{
+													"stateVariableURL": "renderStates:renderState.general.swapChain.bitDepth",
+													"anyOf": [
+														8
+													]
+												}
+											],
+											"tooltip": {
+												"description": "The range of displayable colors. This may change os compositing of the browser."
+											}
 										}
-									],
+									]
+								},
+								"tooltip": {
+									"description": "Setting that change the way the colors are send to the display."
+								}
+							},
+							{
+								"class": "collapsible-element",
+								"text": "Custom Color Quantisation",
+								"checkbox": {
+									"class": "check-box",
+									"stateVariableURL": "renderStates:renderState.general.customColorQuantisation.useCustomColorQuantisation",
 									"tooltip": {
-										"description": "The output color space of the canvas. This may change OS compositing of the browser."
+										"description": "Wether or not to use custom qunatisation."
 									}
 								},
-								{
-									"class": "span-element",
-									"text": "Bit Depth"
-								},
-								{
-									"class": "state-select-box",
-									"stateVariableURL": "renderStates:renderState.general.swapChain.bitDepth",
-									"options": [
+								"content": {
+									"class": "grid-2col",
+									"children": [
 										{
-											"value": 8,
-											"text": "8 BPC unsigned normalized"
+											"class": "span-element",
+											"text": "Number of Colors"
 										},
 										{
-											"value": 16,
-											"text": "16 BPC float"
-										}
-									],
-									"tooltip": {
-										"description": "The number of bits per channel and their format for each pixel in the output. This may change os compositing of the browser."
-									}
-								},
-								{
-									"class": "span-element",
-									"text": "Dynamic Range"
-								},
-								{
-									"class": "state-select-box",
-									"stateVariableURL": "renderStates:renderState.general.swapChain.toneMappingMode",
-									"options": [
-										{
-											"value": "standard",
-											"text": "Standard"
+											"class": "number-input",
+											"min": "1",
+											"max": "4096",
+											"step": "1"
 										},
 										{
-											"value": "extended",
-											"text": "Extended"
+											"class": "span-element",
+											"text": "Use Dithering"
+										},
+										{
+											"class": "check-box",
+											"stateVariableURL": "renderStates:renderState.general.customColorQuantisation.useDithering",
+											"tooltip": {
+												"description": "Wether or not to use (blue noise) dithering for quantisation."
+											}
 										}
 									],
 									"uneffectiveIfAny": [
 										{
-											"stateVariableURL": "renderStates:renderState.general.swapChain.bitDepth",
+											"stateVariableURL": "renderStates:renderState.general.customColorQuantisation.useCustomColorQuantisation",
 											"anyOf": [
-												8
+												"false"
 											]
 										}
-									],
-									"tooltip": {
-										"description": "The range of displayable colors. This may change os compositing of the browser."
-									}
-								}
-							]
-						},
-						"tooltip": {
-							"description": "Setting that change the way the colors are send to the display."
-						}
-					},
-					{
-						"class": "collapsible-element",
-						"text": "Custom Color Quantisation",
-						"checkbox": {
-							"class": "check-box",
-							"stateVariableURL": "renderStates:renderState.general.customColorQuantisation.useCustomColorQuantisation",
-							"tooltip": {
-								"description": "Wether or not to use custom qunatisation."
-							}
-						},
-						"content": {
-							"class": "grid-2col",
-							"children": [
-								{
-									"class": "span-element",
-									"text": "Number of Colors"
-								},
-								{
-									"class": "number-input",
-									"min": "1",
-									"max": "4096",
-									"step": "1"
-								},
-								{
-									"class": "span-element",
-									"text": "Use Dithering"
-								},
-								{
-									"class": "check-box",
-									"stateVariableURL": "renderStates:renderState.general.customColorQuantisation.useDithering",
-									"tooltip": {
-										"description": "Wether or not to use (blue noise) dithering for quantisation."
-									}
-								}
-							],
-							"uneffectiveIfAny": [
-								{
-									"stateVariableURL": "renderStates:renderState.general.customColorQuantisation.useCustomColorQuantisation",
-									"anyOf": [
-										"false"
 									]
 								}
-							]
-						}
+							}
+						]
+					},
+					"tooltip": {
+						"description": "Settings that are general to all rendering engines."
 					}
-				]
-			},
-			"tooltip": {
-				"description": "Settings that are general to all rendering engines."
-			}
-		},
-		{
-			"class": "collapsible-element",
-			"text": "Realtime",
-			"content": {
-				"class": "v-box",
-				"children": [
-					{
-						"class": "collapsible-element",
-						"text": "Antialiasing",
-						"content": {
-							"class": "grid-2col",
-							"children": [
-								{
-									"class": "span-element",
-									"text": "MSAA"
-								},
-								{
-									"class": "state-select-box",
-									"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.msaa",
-									"options": [
+				},
+				{
+					"class": "collapsible-element",
+					"text": "Realtime",
+					"content": {
+						"class": "v-box",
+						"children": [
+							{
+								"class": "collapsible-element",
+								"text": "Antialiasing",
+								"content": {
+									"class": "grid-2col",
+									"children": [
 										{
-											"value": 1,
-											"text": "1"
+											"class": "span-element",
+											"text": "MSAA"
 										},
 										{
-											"value": 4,
-											"text": "4"
-										}
-									],
-									"tooltip": {
-										"description": "Multisample antialiasing (MSAA) allows to store multiple samples per pixel. This parameters sets the number of stored data samples per pixel. The data cost of the frame buffer multiplies with the number of samples."
-									}
-								},
-								{
-									"class": "span-element",
-									"text": "Interpolation"
-								},
-								{
-									"class": "state-select-box",
-									"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.interpolation",
-									"options": [
-										{
-											"value": "center",
-											"text": "Center"
-										},
-										{
-											"value": "centroid",
-											"text": "Centroid"
-										},
-										{
-											"value": "sample",
-											"text": "Sample"
-										}
-									],
-									"uneffectiveIfAny": [
-										{
+											"class": "state-select-box",
 											"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.msaa",
-											"anyOf": [
-												1
-											]
+											"options": [
+												{
+													"value": 1,
+													"text": "1"
+												},
+												{
+													"value": 4,
+													"text": "4"
+												}
+											],
+											"tooltip": {
+												"description": "Multisample antialiasing (MSAA) allows to store multiple samples per pixel. This parameters sets the number of stored data samples per pixel. The data cost of the frame buffer multiplies with the number of samples."
+											}
+										},
+										{
+											"class": "span-element",
+											"text": "Interpolation"
+										},
+										{
+											"class": "state-select-box",
+											"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.interpolation",
+											"options": [
+												{
+													"value": "center",
+													"text": "Center"
+												},
+												{
+													"value": "centroid",
+													"text": "Centroid"
+												},
+												{
+													"value": "sample",
+													"text": "Sample"
+												}
+											],
+											"uneffectiveIfAny": [
+												{
+													"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.msaa",
+													"anyOf": [
+														1
+													]
+												}
+											],
+											"tooltip": {
+												"description": "If multisampling is used, this defines the strategy to find the location for interpolation within a pixel for the the framgent shader invokation(s) of this pixel.<dl><dt>Center</dt><dd>Interpolation is performed at the center of the pixel.</dd><dt>Centroid</dt><dd>Interpolation is performed at a point that lies within all the samples covered by the fragment within the current primitive. This value is the same for all samples in the primitive.</dd><dt>Sample (sample rate shadeing)</dt><dd>Interpolation is performed per sample. The fragment shader is invoked once per sample when this attribute is applied.</dd></dl>"
+											}
 										}
-									],
-									"tooltip": {
-										"description": "If multisampling is used, this defines the strategy to find the location for interpolation within a pixel for the the framgent shader invokation(s) of this pixel.<dl><dt>Center</dt><dd>Interpolation is performed at the center of the pixel.</dd><dt>Centroid</dt><dd>Interpolation is performed at a point that lies within all the samples covered by the fragment within the current primitive. This value is the same for all samples in the primitive.</dd><dt>Sample (sample rate shadeing)</dt><dd>Interpolation is performed per sample. The fragment shader is invoked once per sample when this attribute is applied.</dd></dl>"
-									}
+									]
 								}
-							]
-						}
+							}
+						]
+					},
+					"tooltip": {
+						"description": "Settings that are specific to the output of the realtime rendering engine."
 					}
-				]
-			},
-			"tooltip": {
-				"description": "Settings that are specific to the output of the realtime rendering engine."
-			}
-		},
-		{
-			"class": "collapsible-element",
-			"text": "Integral",
-			"content": {
-				"class": "v-box",
-				"children": []
-			},
-			"tooltip": {
-				"description": "Settings that are specific to the output of the Integral rendering engine."
-			}
+				},
+				{
+					"class": "collapsible-element",
+					"text": "Integral",
+					"content": {
+						"class": "v-box",
+						"children": []
+					},
+					"tooltip": {
+						"description": "Settings that are specific to the output of the Integral rendering engine."
+					}
+				}
+			]
 		}
 	]
 }

@@ -9,7 +9,7 @@ wrapping-pane {
 	gap: var(--split-pane-divider-size);
 }
 
-wrapping-pane>div {
+wrapping-pane > div {
 	display: flex;
 	flex-direction: row;
 	flex: 0 0 auto;
@@ -18,6 +18,6 @@ wrapping-pane>div {
 	overflow-y: auto;
 	width: 100%;
 	box-sizing: border-box;
-	background-color: rgb(50, 50, 50);
+	background-color: var(--pane-stripe-color);
 }
 
