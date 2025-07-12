@@ -1,15 +1,18 @@
 import { defineConfig } from "vite";
 import svgLoader from "vite-svg-loader";
-import fs from "fs";
-import path, { dirname, resolve } from "path";
+import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { VitePWA } from "vite-plugin-pwa";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import pkg from "./package.json";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ command }) => {
 	const common = {
+		define: {
+			"import.meta.env.PACKAGE_VERSION": JSON.stringify(pkg.version),
+		},
 		plugins: [
 			svgLoader(),
 			viteStaticCopy({
@@ -60,10 +63,6 @@ export default defineConfig(({ command }) => {
 
 	if (command === "serve") {
 		common["server"] = {
-			// https: {
-			// 	key: fs.readFileSync(path.resolve(__dirname, "localHttps/private.key")),
-			// 	cert: fs.readFileSync(path.resolve(__dirname, "localHttps/certificate.crt")),
-			// },
 			host: true,
 			headers: {
 				"Cross-Origin-Opener-Policy": "same-origin",

@@ -13,8 +13,14 @@ struct View {
 	view_mat: mat4x4f,
 	projection_mat: mat4x4f,
 	camera_mat: mat4x4f,
-	projection_data: vec4f, // [0] near clipping plane; [1] far clipping plane; [2] dpr
-	color_data: vec4f, // [0] exposure, [1] gamma, [2] (uint): number of color to qunatize to 
+	near_clipping: f32, 
+	far_clipping: f32, 
+	dpr: f32,
+	exposure: f32,
+	gamma: f32,
+	red_quant: f32,
+	green_quant: f32,
+	blue_quant: f32,
 	viewport: vec4u,
 	frame: vec4u
 }
@@ -31,17 +37,6 @@ const blue_noise_max_value: u32 = 65535;
 
 fn getCameraPosition() -> vec3f {
 	return view.camera_mat[3].xyz;
-}
-fn getNear() -> f32 {
-	return view.projection_data[0];
-}
-
-fn getFar() -> f32 {
-	return view.projection_data[1];
-}
-
-fn getDPR() -> f32 {
-	return view.projection_data[2];
 }
 
 fn convertToTargetColorSpace(linear_rgb: vec3f) -> vec3f {
@@ -84,7 +79,7 @@ fn applyCustomQuantisation(final_color: vec3f, frag_coord: vec2u) -> vec3f {
 	if (use_color_quantisation == 0) {
 		return final_color;
 	}
-	let factor = view.color_data[2] - 1;
+	let factor = vec3f(view.red_quant, view.green_quant, view.blue_quant)- 1;
 	var scaled = final_color * factor;
 	if (use_dithering != 0) {
 		let pixel_coord: vec2u = vec2u(frag_coord) % textureDimensions(blue_noise_texture, 0);
@@ -96,9 +91,9 @@ fn applyCustomQuantisation(final_color: vec3f, frag_coord: vec2u) -> vec3f {
 }
 
 fn createOutputFragment(linear_rgb: vec3f, frag_coord: vec2u) -> vec3f {
-	let exposure_applied = linear_rgb * pow(2.0, view.color_data[0]);
+	let exposure_applied = linear_rgb * pow(2.0, view.exposure);
 	let color = convertToTargetColorSpace(exposure_applied);
 	let oe_color = select(color, sRGB_OETF(color), output_component_transfere == 1);
-	let final_high_res_color = pow(oe_color, vec3f(1.0 / view.color_data[1]));
+	let final_high_res_color = pow(oe_color, vec3f(1.0 / view.gamma));
 	return applyCustomQuantisation(final_high_res_color, frag_coord);
 }

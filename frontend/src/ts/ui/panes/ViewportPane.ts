@@ -201,11 +201,11 @@ export class ViewportPane extends BasicPane implements Viewport {
 				near,
 				far,
 				this.window.devicePixelRatio,
-				0, // empty
 				0, // exposure
 				1, // gamma
-				256, // number of colors if use custom quantisation, min 2^1, max 2^16
-				0, // empty
+				256, // number of red colors, min 2^1, max 2^16
+				256, // number of red colors, min 2^1, max 2^16
+				256, // number of red colors, min 2^1, max 2^16
 			],
 			3 * 16,
 		);

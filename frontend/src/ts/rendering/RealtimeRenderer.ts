@@ -8,7 +8,7 @@ import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 import { ViewportPane } from "../ui/panes/ViewportPane";
 import { RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
 import { AbstractMetaRenderPipeline } from "./AbstractMetaRenderingPipeline";
-const thresholdMapURL = "/beyer_2px_16bit.png";
+const thresholdMapURL = "/blue_noise_512px_16bit.png";
 
 const thresholdMapBlob = await fetch(thresholdMapURL);
 const thresholdMapBytes = await thresholdMapBlob.bytes();
