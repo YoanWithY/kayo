@@ -4,9 +4,10 @@ footer-element {
 	flex: 0 0 content;
 	gap: 4px;
 	align-items: center;
-	background-color: var(--pane-stripe-color);
+	background-color: none;
 	overflow-x: auto;
 	box-sizing: border-box;
+    padding: 2px;
 }
 
 footer-element::before {

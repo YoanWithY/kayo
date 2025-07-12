@@ -6,7 +6,6 @@ wrapping-pane {
 	height: 100dvh;
 	max-width: 100dvw;
 	max-height: 100dvh;
-	gap: var(--split-pane-divider-size);
 }
 
 wrapping-pane > div {
@@ -18,6 +17,5 @@ wrapping-pane > div {
 	overflow-y: auto;
 	width: 100%;
 	box-sizing: border-box;
-	background-color: var(--pane-stripe-color);
 }
 

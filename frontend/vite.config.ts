@@ -30,7 +30,7 @@ export default defineConfig(({ command }) => {
 					name: "Kayo Engine",
 					short_name: "Kayo",
 					description: "",
-					theme_color: "#1e1e1e",
+					theme_color: "#000000",
 					icons: [
 						{
 							src: "/favicon.svg",
@@ -45,7 +45,7 @@ export default defineConfig(({ command }) => {
 						},
 					],
 					display: "standalone",
-					background_color: "#1e1e1e",
+					background_color: "#000000",
 				},
 			}),
 		],
