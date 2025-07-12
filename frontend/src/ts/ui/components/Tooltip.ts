@@ -33,14 +33,14 @@ export default class Tooltip extends HTMLElement {
 
 	static register(win: Window, tooltipString: SerialTooltip, element: HTMLElement, obj: any) {
 		const tooltip = Tooltip.createTooltip(win, tooltipString, obj);
-		element.addEventListener("mouseenter", (e) => {
+		element.addEventListener("pointerenter", (e) => {
 			tooltip.style.left = `${e.clientX}px`;
 			tooltip.style.top = `${e.clientY}px`;
 			tooltip.setAttribute("state", "visible");
 			win.document.body.appendChild(tooltip);
 		});
 
-		element.addEventListener("mouseleave", () => {
+		element.addEventListener("pointerleave", () => {
 			tooltip.setAttribute("state", "invisible");
 			win.document.body.removeChild(tooltip);
 		});

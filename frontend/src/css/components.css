@@ -57,7 +57,7 @@ grid-2col> :nth-child(even) {
 }
 
 grid-2col:state(uneffective) {
-	opacity: 0.5;
+	opacity: var(--uneffective-opacity);
 }
 
 ptp-chat-content {

@@ -6,12 +6,13 @@
     --split-pane-divider-size: 2px;
 
     --pane-stripe-hight: 24px;
-    --split-pane-divider-color: rgb(12, 12, 12);
-    --pane-background-color: rgb(32, 32, 32);
-    --pane-stripe-color: rgb(48, 48, 48);
-    --pane-stripe-hover-color: rgb(56, 56, 56);
-    --text-color: rgb(220, 220, 220);
+    --split-pane-divider-color: rgb(0, 0, 0);
+    --pane-background-color: rgb(22, 22, 22);
+    --pane-stripe-color: rgb(30, 30, 30);
+    --pane-stripe-hover-color: rgb(40, 40, 40);
+    --text-color: rgb(200, 200, 200);
     --font-size: 0.8rem;
+    --uneffective-opacity: 0.4;
 
     --var-padding: 4px;
 
@@ -29,6 +30,21 @@
         --split-pane-grabber-size: 25px;
         --split-button-size: 30px;
     }
+}
+
+button {
+    color: var(--text-color);
+    background-color: transparent;
+    border: none;
+    border-radius: var(--radius);
+    padding: var(--var-padding) calc(var(--var-padding) + 2px);
+    font-size: var(--font-size);
+}
+
+@media (hover: hover) and (pointer: fine) {
+button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
 }
 
 input {

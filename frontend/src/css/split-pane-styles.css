@@ -29,8 +29,10 @@ splitable-pane {
 	border-radius: var(--radius);
 }
 
-splitable-pane:hover>pane-stripe {
+@media (hover: hover) and (pointer: fine) {
+splitable-pane:hover > pane-stripe, splitable-pane:focus > pane-stripe {
 	background-color: var(--pane-stripe-hover-color);
+}
 }
 
 split-pane-divider {
@@ -128,10 +130,12 @@ split-button-lr {
 	border-radius: var(--radius) 0 0 0;
 }
 
+@media (hover: hover) and (pointer: fine) {
 split-button-ul:hover,
 split-button-ul:active,
 split-button-ur:hover,
 split-button-ll:hover,
 split-button-lr:hover {
 	opacity: 0.5;
+}
 }

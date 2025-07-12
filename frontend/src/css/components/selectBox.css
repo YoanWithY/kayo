@@ -5,16 +5,14 @@ select-box {
 	justify-content: space-between;
 	align-items: center;
 	white-space: nowrap;
-	background-color: rgb(20, 20, 20);
 	border: 1px solid rgb(48, 48, 48);
+	background-color: rgba(20, 20, 20);
+
 	border-radius: var(--radius);
 	padding: var(--var-padding) calc(var(--var-padding) + 2px);
-	box-sizing: border-box;
 }
 
 select-box {
-	flex: 0;
-	background-color: rgba(0,0,0,0.2);
 	border: none;
 }
 
@@ -37,7 +35,7 @@ select-box:hover {
 }
 
 state-select-box:state(uneffective) {
-	opacity: 0.5;
+	opacity: var(--uneffective-opacity);
 }
 
 state-select-box:state(open-down),
