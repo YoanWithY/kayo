@@ -8,6 +8,7 @@ footer-element {
 	overflow-x: auto;
 	box-sizing: border-box;
     padding: 2px;
+	background-color: var(--split-pane-divider-color);
 }
 
 footer-element::before {

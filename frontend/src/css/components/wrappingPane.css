@@ -17,5 +17,6 @@ wrapping-pane > div {
 	overflow-y: auto;
 	width: 100%;
 	box-sizing: border-box;
+	background-color: var(--split-pane-divider-color);
 }
 

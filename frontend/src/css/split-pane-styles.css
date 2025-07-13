@@ -34,7 +34,7 @@ splitable-pane {
 
 @media (hover: hover) and (pointer: fine) {
 	splitable-pane:hover {
-		outline-color: rgba(255, 255, 255, 0.075);
+		outline-color: rgba(255, 255, 255, 0.15);
 	}
 splitable-pane:hover > pane-stripe {
 	background-color: var(--pane-stripe-hover-color);
