@@ -20,8 +20,21 @@ export class FileRessourceManager {
 	public static async requestFileRessourceManager(): Promise<string | FileRessourceManager> {
 		if (this.initialied) return "File ressource manager is already initialized!";
 
-		const systemRoot = await navigator.storage.getDirectory();
-		for await (const e of systemRoot.entries()) systemRoot.removeEntry(e[0], { recursive: true });
+		let systemRoot;
+		try {
+			systemRoot = await navigator.storage.getDirectory();
+		} catch (_) {
+			return "Could not get root dir!";
+		}
+
+		for await (const e of systemRoot.entries()) {
+			try {
+				await systemRoot.removeEntry(e[0], { recursive: true });
+			} catch (_) {
+				return `Could not remove entry ${e}!`;
+			}
+		}
+
 		const projectRoot = await systemRoot.getDirectoryHandle(`temp`, { create: true });
 
 		const manager = new FileRessourceManager(systemRoot, projectRoot);

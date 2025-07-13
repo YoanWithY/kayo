@@ -392,7 +392,7 @@ export default class RealtimeRenderer {
 			}
 			this.requestedAnimationFrame.set(viewport.window, false);
 
-			if (this.frame < 3) {
+			if (this.frame < 10) {
 				this.requestAnimationFrameWith(viewport);
 			}
 		});
