@@ -7,15 +7,15 @@ import vec3 from "./vec3";
  */
 export default class mat3 {
 	[index: number]: number;
-	0: number;
-	1: number;
-	2: number;
-	3: number;
-	4: number;
-	5: number;
-	6: number;
-	7: number;
-	8: number;
+	public 0: number;
+	public 1: number;
+	public 2: number;
+	public 3: number;
+	public 4: number;
+	public 5: number;
+	public 6: number;
+	public 7: number;
+	public 8: number;
 
 	/**
 	 * Creates a matrix in the manner:
@@ -25,7 +25,7 @@ export default class mat3 {
 	 * g  h  i
 	 * ```
 	 */
-	constructor(
+	public constructor(
 		a: number = 0,
 		b: number = 0,
 		c: number = 0,

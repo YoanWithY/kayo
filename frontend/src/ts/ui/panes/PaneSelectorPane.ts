@@ -7,9 +7,10 @@ import OutlinerPane from "./OutlinerPane";
 import OutputPane from "./OutpuPane";
 import APIPane from "./ApiPane";
 import { ViewportPane } from "./ViewportPane";
+import { FileSystemPane } from "./FileSystemPane";
 
 export default class PaneSelectorPane extends BasicPane {
-	public static createUIElement(win: Window, kayo: Kayo, _: any): PaneSelectorPane {
+	public static createUIElement(win: Window, kayo: Kayo): PaneSelectorPane {
 		const p = super.createUIElement(win, kayo, { class: this.getDomClass() });
 		for (const key in panesNameClassMap) {
 			const button = win.document.createElement("button");
@@ -41,4 +42,5 @@ export const panesNameClassMap: { [key: string]: UIPaneElement } = {
 	[OutlinerPane.getName()]: OutlinerPane,
 	[PTPChatPane.getName()]: PTPChatPane,
 	[PaneSelectorPane.getName()]: PaneSelectorPane,
+	[FileSystemPane.getName()]: FileSystemPane,
 };

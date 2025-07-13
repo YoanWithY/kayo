@@ -6,20 +6,16 @@ import { SplitPaneContainer } from "./SplitPaneContainer";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 export abstract class SplitButton extends HTMLElement {
-	kayo!: Kayo;
-	win!: Window;
-	uiRoot!: WrappingPane;
-	clickX = NaN;
-	clickY = NaN;
-	constructor() {
+	protected kayo!: Kayo;
+	protected win!: Window;
+	protected uiRoot!: WrappingPane;
+	protected clickX = NaN;
+	protected clickY = NaN;
+	protected constructor() {
 		super();
 		this.ondragstart = () => {
 			return false;
 		};
-		// this.onmousedown = e => {
-		// 	this.clickX = e.screenX;
-		// 	this.clickY = e.screenY;
-		// }
 
 		this.addEventListener("pointerdown", (e) => {
 			this.clickX = e.screenX;
@@ -27,7 +23,7 @@ export abstract class SplitButton extends HTMLElement {
 		});
 	}
 
-	static checkContainerForSingle(container: SplitPaneContainer, splitablePane: SplitablePane) {
+	public static checkContainerForSingle(container: SplitPaneContainer, splitablePane: SplitablePane) {
 		if (container.childElementCount == 1) {
 			if (container.getAttribute("id") == "wrapper") {
 				container.setAttribute("split-pane-container-orientation", "none");
@@ -50,7 +46,7 @@ export abstract class SplitButton extends HTMLElement {
 		}
 	}
 
-	static prepSplitablePanes(orientation: string, p1: SplitablePane, p2: SplitablePane, bb: DOMRect) {
+	public static prepSplitablePanes(orientation: string, p1: SplitablePane, p2: SplitablePane, bb: DOMRect) {
 		if (orientation == "vertical") {
 			const width = (bb.width - SplitPaneDivider.size) / 2 + "px";
 			p1.style.width = width;
@@ -120,12 +116,12 @@ export class SplitButtonUL extends SplitButton {
 		this.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
-	constructor() {
+	public constructor() {
 		super();
 		this.onpointerleave = this.left;
 	}
 
-	static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonUL {
+	public static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonUL {
 		const p = win.document.createElement("split-button-UL") as SplitButtonUL;
 		p.kayo = kayo;
 		p.uiRoot = uiRoot;
@@ -200,12 +196,12 @@ export class SplitButtonUR extends SplitButton {
 		this.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
-	constructor() {
+	public constructor() {
 		super();
 		this.onpointerleave = this.left;
 	}
 
-	static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonUR {
+	public static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonUR {
 		const p = win.document.createElement("split-button-ur") as SplitButtonUR;
 		p.kayo = kayo;
 		p.uiRoot = uiRoot;
@@ -280,12 +276,12 @@ export class SplitButtonLL extends SplitButton {
 		this.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
-	constructor() {
+	public constructor() {
 		super();
 		this.onpointerleave = this.left;
 	}
 
-	static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonLL {
+	public static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonLL {
 		const p = win.document.createElement("split-button-ll") as SplitButtonLL;
 		p.kayo = kayo;
 		p.uiRoot = uiRoot;
@@ -350,12 +346,12 @@ export class SplitButtonLR extends SplitButton {
 		this.uiRoot.baseSplitPaneContainer.updateSizesRecursively();
 	}
 
-	constructor() {
+	public constructor() {
 		super();
 		this.onpointerleave = this.left;
 	}
 
-	static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonLR {
+	public static create(win: Window, kayo: Kayo, uiRoot: WrappingPane): SplitButtonLR {
 		const p = win.document.createElement("split-button-lr") as SplitButtonLR;
 		p.kayo = kayo;
 		p.uiRoot = uiRoot;

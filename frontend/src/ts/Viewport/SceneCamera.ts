@@ -4,28 +4,25 @@ import Projection from "../projection/Projection";
 import Camera from "./Camera";
 
 export default class SceneCamera extends R3Object implements Camera {
-	renderDepth(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder;
+	public renderDepth(_: GPURenderPassEncoder): void {
 		throw new Error("Method not implemented.");
 	}
-	render(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder;
+	public render(_: GPURenderPassEncoder): void {
 		throw new Error("Method not implemented.");
 	}
-	renderSelection(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder;
+	public renderSelection(_: GPURenderPassEncoder): void {
 		throw new Error("Method not implemented.");
 	}
-	projection = new PerspectiveProjection();
-	updateGPU(): void {
+	public projection = new PerspectiveProjection();
+	public updateGPU(): void {
 		throw new Error("Method not implemented.");
 	}
 
-	getProjection(): Projection {
+	public getProjection(): Projection {
 		throw new Error("Method not implemented.");
 	}
 
-	getViewMatrix() {
+	public getViewMatrix() {
 		return this.transformationStack.getInverseTransformationMatrix();
 	}
 }

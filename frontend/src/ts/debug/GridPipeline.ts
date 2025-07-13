@@ -29,7 +29,7 @@ export class GridPipeline extends AbstractRenderingPipeline implements Renderabl
 			-inner,
 		);
 	}
-	constructor(label: string, shaderModule: GPUShaderModule) {
+	public constructor(label: string, shaderModule: GPUShaderModule) {
 		super(label, shaderModule);
 		this.primiteState = {};
 		this.vertexState = {
@@ -41,7 +41,7 @@ export class GridPipeline extends AbstractRenderingPipeline implements Renderabl
 		};
 	}
 
-	recordForwardRendering(_: GPURenderPassEncoder): void {
+	public recordForwardRendering(_: GPURenderPassEncoder): void {
 		// renderPassEncoder.setPipeline(this.gpuPipeline);
 		// renderPassEncoder.setVertexBuffer(0, this.vertexBuffer);
 		// renderPassEncoder.draw(this.vertices);

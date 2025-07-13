@@ -1,7 +1,6 @@
 import { SplitPaneContainer } from "../splitpane/SplitPaneContainer";
 import { Footer } from "./Footer";
 
-import { Project } from "../../project/Project";
 import { unzip } from "unzipit";
 import { ResourcePack } from "../../minecraft/ResourcePack";
 import { MinecraftSection } from "../../minecraft/MinecraftSection";
@@ -10,18 +9,16 @@ import TextureUtils from "../../Textures/TextureUtils";
 import { Kayo } from "../../Kayo";
 
 export class WrappingPane extends HTMLElement {
-	project!: Project;
-	baseSplitPaneContainer!: SplitPaneContainer;
-	header?: HTMLDivElement;
-	footer!: Footer;
-	static createWrappingPane(win: Window, kayo: Kayo, defaultPane: string, useHeader: boolean): WrappingPane {
+	public baseSplitPaneContainer!: SplitPaneContainer;
+	private _header?: HTMLDivElement;
+	private _footer!: Footer;
+	public static createWrappingPane(win: Window, kayo: Kayo, defaultPane: string, useHeader: boolean): WrappingPane {
 		const p = win.document.createElement("wrapping-pane") as WrappingPane;
 		const project = kayo.project;
-		p.project = project;
 		p.baseSplitPaneContainer = SplitPaneContainer.createRoot(win, kayo, p, defaultPane);
 
 		if (useHeader) {
-			p.header = win.document.createElement("div");
+			p._header = win.document.createElement("div");
 			const fi = win.document.createElement("input");
 			fi.type = "file";
 
@@ -89,12 +86,11 @@ export class WrappingPane extends HTMLElement {
 
 										for (let y = -4; y < 15; y++) {
 											const palette = JSON.parse(dimension.getPalette(x, y, z)) as PaletteEntry[];
-											let section: MinecraftSection;
 											let sectionDataView: any = undefined;
 											if (palette.length > 1) sectionDataView = dimension.getSectionView(x, y, z);
 											else if (palette.length === 1 && palette[0].Name == "minecraft:air")
 												continue;
-											section = new MinecraftSection(
+											const section = new MinecraftSection(
 												project,
 												mWorld,
 												0,
@@ -120,19 +116,20 @@ export class WrappingPane extends HTMLElement {
 							bufferSource.connect(audio.destination);
 							bufferSource.buffer = await audio.decodeAudioData(content as ArrayBuffer);
 							bufferSource.start();
+							kayo.fileRessourceManager.storeRaw(file);
 						}
 					};
 					reader.readAsArrayBuffer(file); // Read file as ArrayBuffer
 				}
 			});
-			p.header.appendChild(openButton);
-			p.appendChild(p.header);
+			p._header.appendChild(openButton);
+			p.appendChild(p._header);
 		}
 
 		p.appendChild(p.baseSplitPaneContainer);
 
-		p.footer = Footer.createFooter(win);
-		p.appendChild(p.footer);
+		p._footer = Footer.createFooter(win);
+		p.appendChild(p._footer);
 		return p;
 	}
 }

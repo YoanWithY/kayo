@@ -44,7 +44,7 @@ export class PhysicalTexture {
 	 * The gpu texture of this physical texture.
 	 */
 	public gpuTexture: GPUTexture;
-	constructor(virtualTextureSystem: VirtualTextureSystem, gpux: GPUX) {
+	public constructor(virtualTextureSystem: VirtualTextureSystem, gpux: GPUX) {
 		this.virtualTextureSystem = virtualTextureSystem;
 		if (Math.floor(gpux.gpuDevice.limits.maxTextureDimension2D / this.physicalTileSize) > 256)
 			this.size = this.physicalTileSize * 256;
@@ -65,7 +65,7 @@ export class PhysicalTexture {
 		this.gpuTexture = gpux.gpuDevice.createTexture(physicalTextureDescriptor);
 	}
 
-	generateAllMips() {
+	public generateAllMips() {
 		TextureUtils.generateMipMap(this.gpuTexture);
 	}
 

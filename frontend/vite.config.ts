@@ -4,6 +4,7 @@ import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { VitePWA } from "vite-plugin-pwa";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import eslint from "vite-plugin-eslint";
 import pkg from "./package.json";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -17,6 +18,10 @@ export default defineConfig(({ command }) => {
 			svgLoader(),
 			viteStaticCopy({
 				targets: [{ src: "src/c/KayoCorePP.wasm.map", dest: "./assets/" }],
+			}),
+			eslint({
+				failOnWarning: true,
+				failOnError: true,
 			}),
 			VitePWA({
 				registerType: "autoUpdate",
@@ -45,7 +50,7 @@ export default defineConfig(({ command }) => {
 						},
 					],
 					display: "standalone",
-					background_color: "#161616",
+					background_color: "#222222",
 				},
 			}),
 		],

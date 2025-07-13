@@ -6,27 +6,27 @@ import { MinecraftMetaRenderingPipeline } from "./MinecraftOpaquePipeline";
 export type PaletteEntry = { Name: string; Properties?: { [key: string]: string } };
 
 export class MinecraftWorld {
-	name: string;
-	ressourcePack: ResourcePack;
-	bundle!: GPURenderBundle;
-	renderSize: number;
+	public name: string;
+	public ressourcePack: ResourcePack;
+	public bundle!: GPURenderBundle;
+	public renderSize: number;
 
 	private _sections: { [key: string]: MinecraftSection };
 
-	constructor(name: string, ressourcePack: ResourcePack, renderSize: number) {
+	public constructor(name: string, ressourcePack: ResourcePack, renderSize: number) {
 		this.name = name;
 		this.ressourcePack = ressourcePack;
 		this._sections = {};
 		this.renderSize = renderSize;
 	}
 
-	buildGeometry() {
+	public buildGeometry() {
 		for (const key in this._sections) {
 			this._sections[key].buildGeometry();
 		}
 	}
 
-	buildBundle(gpuDevice: GPUDevice, bindGroup0: GPUBindGroup) {
+	public buildBundle(gpuDevice: GPUDevice, bindGroup0: GPUBindGroup) {
 		const e = gpuDevice.createRenderBundleEncoder({
 			label: "Minecraft render bundle encoder",
 			colorFormats: ["bgra8unorm", "r16uint"],
@@ -49,7 +49,7 @@ export class MinecraftWorld {
 		this.bundle = e.finish({ label: "Minecraft World bundle" });
 	}
 
-	render(renderPassEncoder: GPURenderPassEncoder | GPURenderBundleEncoder) {
+	public render(renderPassEncoder: GPURenderPassEncoder | GPURenderBundleEncoder) {
 		let quads = 0;
 		let chunks = 0;
 		for (const key in this._sections) {
@@ -59,19 +59,19 @@ export class MinecraftWorld {
 		console.log(quads, chunks);
 	}
 
-	renderBundle(renderPassEncoder: GPURenderPassEncoder) {
+	public renderBundle(renderPassEncoder: GPURenderPassEncoder) {
 		renderPassEncoder.executeBundles([this.bundle]);
 	}
 
-	getSection(x: number, y: number, z: number): MinecraftSection | undefined {
+	public getSection(x: number, y: number, z: number): MinecraftSection | undefined {
 		return this._sections[`${x},${y},${z}`];
 	}
 
-	setSection(x: number, y: number, z: number, section: MinecraftSection) {
+	public setSection(x: number, y: number, z: number, section: MinecraftSection) {
 		return (this._sections[`${x},${y},${z}`] = section);
 	}
 
-	getNeighborhoodOf(_x: number, _y: number, _z: number, x: number, y: number, z: number): BlockNeighborhood {
+	public getNeighborhoodOf(_x: number, _y: number, _z: number, x: number, y: number, z: number): BlockNeighborhood {
 		const ret: BlockNeighborhood = {};
 		const section = this.getSection(_x, _y, _z);
 		if (!section) return ret;

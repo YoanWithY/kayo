@@ -3,16 +3,16 @@ import { Project } from "./Project";
 
 let id = 1;
 export default abstract class R3Object {
-	transformationStack;
-	defaultBindGroup: GPUBindGroup;
-	vertexUniformBuffer: GPUBuffer;
-	fragmentUniformBuffer: GPUBuffer;
-	isSelected: boolean = false;
-	isActive: boolean = false;
+	public transformationStack;
+	public defaultBindGroup: GPUBindGroup;
+	public vertexUniformBuffer: GPUBuffer;
+	public fragmentUniformBuffer: GPUBuffer;
+	public isSelected: boolean = false;
+	public isActive: boolean = false;
 	private _id: number;
-	colorMatte = new Float32Array(2);
+	public colorMatte = new Float32Array(2);
 
-	constructor(project: Project) {
+	public constructor(project: Project) {
 		this.transformationStack = new TransformationStack();
 		const { vertexUniformBuffer, fragmentUniformBuffer, bindGroup } = project.renderer.getNew3RData();
 		this.vertexUniformBuffer = vertexUniformBuffer;
@@ -23,12 +23,12 @@ export default abstract class R3Object {
 		this.colorMatte[1] = (Math.floor(this._id / 256) % 256) / 255;
 	}
 
-	getWorldLocation() {
+	public getWorldLocation() {
 		return this.transformationStack.getTransformationMatrix().getTranslation();
 	}
-	vertexUniformData = new Float32Array(16);
-	fragmentUniformData = new Uint32Array(2);
-	updateUniforms(gpuDevice: GPUDevice) {
+	public vertexUniformData = new Float32Array(16);
+	public fragmentUniformData = new Uint32Array(2);
+	public updateUniforms(gpuDevice: GPUDevice) {
 		this.transformationStack.getTransformationMatrix().pushInFloat32ArrayColumnMajor(this.vertexUniformData);
 
 		this.fragmentUniformData[0] = this._id;
@@ -37,11 +37,11 @@ export default abstract class R3Object {
 		gpuDevice.queue.writeBuffer(this.fragmentUniformBuffer, 0, this.fragmentUniformData);
 	}
 
-	get id() {
+	public get id() {
 		return this._id;
 	}
 
-	abstract render(renderPassEncoder: GPURenderPassEncoder): void;
-	abstract renderSelection(renderPassEncoder: GPURenderPassEncoder): void;
-	abstract renderDepth(renderPassEncoder: GPURenderPassEncoder): void;
+	public abstract render(renderPassEncoder: GPURenderPassEncoder): void;
+	public abstract renderSelection(renderPassEncoder: GPURenderPassEncoder): void;
+	public abstract renderDepth(renderPassEncoder: GPURenderPassEncoder): void;
 }

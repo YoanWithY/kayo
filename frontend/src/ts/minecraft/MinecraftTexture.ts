@@ -2,12 +2,12 @@ import TextureUtils from "../Textures/TextureUtils";
 import { VirtualTexture2D } from "../Textures/VirtualTexture2D";
 
 export class MinecraftTexture {
-	name: string;
-	image: ImageBitmap;
-	hasTransparent = false;
-	hasSemiTransparent = false;
-	virtualTexture: VirtualTexture2D;
-	constructor(name: string, image: ImageBitmap, fallback: VirtualTexture2D) {
+	public name: string;
+	public image: ImageBitmap;
+	public hasTransparent = false;
+	public hasSemiTransparent = false;
+	public virtualTexture: VirtualTexture2D;
+	public constructor(name: string, image: ImageBitmap, fallback: VirtualTexture2D) {
 		this.name = name;
 		this.image = image;
 
@@ -50,7 +50,7 @@ export class MinecraftTexture {
 			}
 		}
 	}
-	isOpaque(): boolean {
+	public isOpaque(): boolean {
 		return !this.hasSemiTransparent && !this.hasTransparent;
 	}
 }

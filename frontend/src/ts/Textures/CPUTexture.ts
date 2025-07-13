@@ -17,9 +17,9 @@ const addressFunctions: { [key in GPUAddressMode]: AddressMode } = {
 	},
 };
 export class CPUTexture {
-	data: Uint8ClampedArray[];
-	widthAt: number[];
-	heightAt: number[];
+	public data: Uint8ClampedArray[];
+	public widthAt: number[];
+	public heightAt: number[];
 	/**
 	 *
 	 * @param width The width of the image in texels at mip 0
@@ -27,7 +27,7 @@ export class CPUTexture {
 	 * @param levels The number of mipmap levels to use, 0 for all.
 	 * @param data The data of the image at mip 0.
 	 */
-	constructor(width: number, height: number, levels = 1, data?: Uint8ClampedArray) {
+	public constructor(width: number, height: number, levels = 1, data?: Uint8ClampedArray) {
 		const mips = levels === 0 ? TextureUtils.getFullMipPyramidLevels(width, height) : levels;
 		this.widthAt = new Array(mips);
 		this.heightAt = new Array(mips);

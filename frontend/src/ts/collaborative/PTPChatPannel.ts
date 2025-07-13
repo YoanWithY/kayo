@@ -5,7 +5,7 @@ import ptpChatTemplate from "./ptpChatPaneTemplate.json";
 export type PTPMessage = { text: string; sender: number };
 
 export class PTPMessageElement extends HTMLElement {
-	_internals: ElementInternals = this.attachInternals();
+	public _internals: ElementInternals = this.attachInternals();
 
 	public static createUIElement(win: Window): PTPMessageElement {
 		return win.document.createElement(this.getDomClass()) as PTPMessageElement;
@@ -18,8 +18,8 @@ export class PTPMessageElement extends HTMLElement {
 export class PTPChatContent extends HTMLElement {
 	private _win!: Window;
 	private _kayo!: Kayo;
-	texts: PTPMessageElement[] = [];
-	rebuild(value: PTPMessage[]) {
+	public texts: PTPMessageElement[] = [];
+	public rebuild(value: PTPMessage[]) {
 		for (const t of this.texts) this.removeChild(t);
 		this.texts.length = 0;
 		for (const v of value) {
@@ -40,7 +40,7 @@ export class PTPChatContent extends HTMLElement {
 		console.error("Method not implemented.");
 	}
 
-	setValue(value: PTPMessage[]): void {
+	public setValue(value: PTPMessage[]): void {
 		this.rebuild(value);
 		const newMessage = value[value.length - 1];
 		if (newMessage === undefined) return;
@@ -70,7 +70,7 @@ export class PTPChatContent extends HTMLElement {
 }
 
 export class PTPTextInput extends HTMLFormElement {
-	constructor() {
+	public constructor() {
 		super();
 		this.classList.add(PTPTextInput.getDomClass());
 	}

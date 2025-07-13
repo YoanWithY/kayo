@@ -40,7 +40,7 @@ export abstract class AbstractRenderingPipeline {
 		stencilWriteMask: 0xffffffff,
 	};
 
-	constructor(label: string, shaderModule: GPUShaderModule) {
+	public constructor(label: string, shaderModule: GPUShaderModule) {
 		this.label = label;
 		this.shaderModule = shaderModule;
 	}

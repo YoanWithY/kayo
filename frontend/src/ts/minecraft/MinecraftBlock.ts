@@ -31,18 +31,18 @@ type ParsedFace = {
 export type BlockNeighborhood = { [key in ElementFace]?: MinecraftBlock };
 
 export class ParsedBlockModelElement {
-	from: VEC3;
-	to: VEC3;
-	rotation?: {
+	public from: VEC3;
+	public to: VEC3;
+	public rotation?: {
 		origin: VEC3;
 		axis: "x" | "y" | "z";
 		angle: number;
 		rescale: boolean;
 	};
-	shade: boolean = true;
-	faces: { [key in ElementFace]?: ParsedFace } = {};
+	public shade: boolean = true;
+	public faces: { [key in ElementFace]?: ParsedFace } = {};
 
-	constructor(parse: any) {
+	public constructor(parse: any) {
 		this.from = parse.from;
 		this.to = parse.to;
 		this.rotation = parse.rotation;
@@ -58,15 +58,15 @@ export class ParsedBlockModelElement {
 }
 
 class BuiltBlockModelElement {
-	down?: BuiltFace;
-	up?: BuiltFace;
-	north?: BuiltFace;
-	south?: BuiltFace;
-	west?: BuiltFace;
-	east?: BuiltFace;
-	isFullBlock: boolean;
-	isOpaque: boolean = true;
-	constructor(parsedElement: ParsedBlockModelElement, parsedBlockStateModel: ParsedBlockStateModel) {
+	public down?: BuiltFace;
+	public up?: BuiltFace;
+	public north?: BuiltFace;
+	public south?: BuiltFace;
+	public west?: BuiltFace;
+	public east?: BuiltFace;
+	public isFullBlock: boolean;
+	public isOpaque: boolean = true;
+	public constructor(parsedElement: ParsedBlockModelElement, parsedBlockStateModel: ParsedBlockStateModel) {
 		const faces = parsedElement.faces;
 		for (const key of elementFaceKeys) {
 			if (faces[key]) {
@@ -119,7 +119,7 @@ class BuiltBlockModelElement {
 			switch (parsedBlockStateModel.x) {
 				case 90: {
 					rotX = mat3.rotationX90();
-					let t = this.up;
+					const t = this.up;
 					this.up = this.south;
 					this.south = this.down;
 					this.down = this.north;
@@ -138,7 +138,7 @@ class BuiltBlockModelElement {
 				}
 				case 270: {
 					rotX = mat3.rotationX270();
-					let t = this.down;
+					const t = this.down;
 					this.up = this.north;
 					this.south = this.up;
 					this.down = this.south;
@@ -162,7 +162,7 @@ class BuiltBlockModelElement {
 			switch (parsedBlockStateModel.y) {
 				case 90: {
 					rotY = mat3.rotationY90();
-					let t = this.north;
+					const t = this.north;
 					this.north = this.west;
 					this.west = this.south;
 					this.south = this.east;
@@ -181,7 +181,7 @@ class BuiltBlockModelElement {
 				}
 				case 270: {
 					rotY = mat3.rotationY270();
-					let t = this.north;
+					const t = this.north;
 					this.north = this.east;
 					this.east = this.south;
 					this.south = this.west;
@@ -246,15 +246,15 @@ class BuiltBlockModelElement {
 }
 
 class BuiltFace {
-	uvOrigin: vec2;
-	uvTangent: vec2;
-	uvBitangent: vec2;
-	geomOrigin: vec3;
-	geomTangent: vec3;
-	geomBitangent: vec3;
-	texture?: MinecraftTexture;
-	tint: boolean = false;
-	constructor(parsedFace: ParsedFace, parsedElement: ParsedBlockModelElement, faceKey: ElementFace) {
+	public uvOrigin: vec2;
+	public uvTangent: vec2;
+	public uvBitangent: vec2;
+	public geomOrigin: vec3;
+	public geomTangent: vec3;
+	public geomBitangent: vec3;
+	public texture?: MinecraftTexture;
+	public tint: boolean = false;
+	public constructor(parsedFace: ParsedFace, parsedElement: ParsedBlockModelElement, faceKey: ElementFace) {
 		if (parsedFace.tintindex !== undefined) this.tint = parsedFace.tintindex !== -1;
 		if (parsedFace.texture instanceof MinecraftTexture) this.texture = parsedFace.texture;
 		const from = parsedElement.from;
@@ -332,16 +332,16 @@ class BuiltFace {
 }
 
 export class ParsedBlockModel {
-	name: string;
-	parent: string = "";
-	ambientocclusion = true;
-	display: { [key in BlockDisplayMode]?: BlockDisplay } = {};
-	textureStrings: { [key: string]: string } = {};
-	textures: { [key: string]: MinecraftTexture } = {};
-	elements: ParsedBlockModelElement[] = [];
-	parsed: any;
+	public name: string;
+	public parent: string = "";
+	public ambientocclusion = true;
+	public display: { [key in BlockDisplayMode]?: BlockDisplay } = {};
+	public textureStrings: { [key: string]: string } = {};
+	public textures: { [key: string]: MinecraftTexture } = {};
+	public elements: ParsedBlockModelElement[] = [];
+	public parsed: any;
 	private _isExpand: boolean = false;
-	constructor(name: string, parsed: any) {
+	public constructor(name: string, parsed: any) {
 		this.name = name;
 		this.parsed = parsed;
 	}
@@ -401,7 +401,7 @@ export class ParsedBlockModel {
 	}
 
 	private resolveTextureVariable(res: ResourcePack, key: string): MinecraftTexture | undefined {
-		let value = this.textureStrings[key];
+		const value = this.textureStrings[key];
 
 		if (!value) return undefined;
 
@@ -451,7 +451,7 @@ export class ParsedBlockModel {
 		}
 	}
 
-	get isExpand(): boolean {
+	public get isExpand(): boolean {
 		return this._isExpand;
 	}
 
@@ -462,8 +462,8 @@ export class ParsedBlockModel {
 }
 
 class BuiltBlockModel {
-	elements: BuiltBlockModelElement[] = [];
-	constructor(parsedBlockStateModel: ParsedBlockStateModel) {
+	public elements: BuiltBlockModelElement[] = [];
+	public constructor(parsedBlockStateModel: ParsedBlockStateModel) {
 		const model = parsedBlockStateModel.model;
 		for (const parsedElement of model.elements)
 			this.elements.push(new BuiltBlockModelElement(parsedElement, parsedBlockStateModel));
@@ -497,14 +497,14 @@ class BuiltBlockModel {
 }
 
 export class ParsedBlockStateModel {
-	model: ParsedBlockModel;
-	x: 0 | 90 | 180 | 270 = 0;
-	y: 0 | 90 | 180 | 270 = 0;
-	uvlock: boolean = false;
-	weight: number = 1;
-	builtModel: BuiltBlockModel;
+	public model: ParsedBlockModel;
+	public x: 0 | 90 | 180 | 270 = 0;
+	public y: 0 | 90 | 180 | 270 = 0;
+	public uvlock: boolean = false;
+	public weight: number = 1;
+	public builtModel: BuiltBlockModel;
 
-	constructor(res: ResourcePack, parsed: any) {
+	public constructor(res: ResourcePack, parsed: any) {
 		if (parsed.model === undefined) throw new Error("No model path.");
 		const m = res.getModelByURL(parsed.model);
 		if (!m) throw new Error("Model is undefined");
@@ -531,13 +531,13 @@ export class ParsedBlockStateModel {
 }
 
 export class ObjMap<T> {
-	keyValuePairs: { key: any; value: T }[] = [];
+	public keyValuePairs: { key: any; value: T }[] = [];
 
-	add(key: any, value: T) {
+	public add(key: any, value: T) {
 		this.keyValuePairs.push({ key: key, value: value });
 	}
 
-	find(key: any): T | undefined {
+	public find(key: any): T | undefined {
 		const res = this.keyValuePairs.filter((val) => {
 			for (const subKey in val.key) {
 				if (val.key[subKey] !== key[subKey]) return false;
@@ -550,21 +550,21 @@ export class ObjMap<T> {
 }
 
 class Matcher {
-	matches(_: any): boolean {
+	public matches(_: any): boolean {
 		return true;
 	}
 }
 
 class StateMatcher extends Matcher {
-	key: string;
-	values: string[];
-	constructor(key: string, values: any) {
+	public key: string;
+	public values: string[];
+	public constructor(key: string, values: any) {
 		super();
 		this.key = key;
 		if (typeof values == "string") this.values = values.split("|");
 		else this.values = [values.toString()];
 	}
-	matches(properties: any): boolean {
+	public matches(properties: any): boolean {
 		const propValue = properties[this.key];
 		if (!propValue) return false;
 		return this.values.includes(propValue);
@@ -572,8 +572,8 @@ class StateMatcher extends Matcher {
 }
 
 class OrMatcher extends Matcher {
-	conditions: StateMatcher[][] = [];
-	constructor(parsed: any) {
+	public conditions: StateMatcher[][] = [];
+	public constructor(parsed: any) {
 		super();
 		for (const obj of parsed) {
 			const smArray: StateMatcher[] = [];
@@ -581,7 +581,7 @@ class OrMatcher extends Matcher {
 			this.conditions.push(smArray);
 		}
 	}
-	matches(properties: any): boolean {
+	public matches(properties: any): boolean {
 		for (const smArr of this.conditions) {
 			let matches = true;
 			for (const m of smArr) {
@@ -595,8 +595,8 @@ class OrMatcher extends Matcher {
 }
 
 class AndMatcher extends Matcher {
-	conditions: StateMatcher[][] = [];
-	constructor(parsed: any) {
+	public conditions: StateMatcher[][] = [];
+	public constructor(parsed: any) {
 		super();
 		for (const obj of parsed) {
 			const smArray: StateMatcher[] = [];
@@ -604,7 +604,7 @@ class AndMatcher extends Matcher {
 			this.conditions.push(smArray);
 		}
 	}
-	matches(properties: any): boolean {
+	public matches(properties: any): boolean {
 		for (const smArr of this.conditions) {
 			for (const m of smArr) {
 				if (!m.matches(properties)) return false;
@@ -615,9 +615,9 @@ class AndMatcher extends Matcher {
 }
 
 class MultiPartCase {
-	apply: ParsedBlockStateModel | ParsedBlockStateModel[];
-	when: Matcher;
-	constructor(res: ResourcePack, parsed: any) {
+	public apply: ParsedBlockStateModel | ParsedBlockStateModel[];
+	public when: Matcher;
+	public constructor(res: ResourcePack, parsed: any) {
 		if (Array.isArray(parsed.apply)) {
 			this.apply = [];
 			for (const key in parsed.apply) this.apply.push(new ParsedBlockStateModel(res, parsed.apply[key]));
@@ -649,12 +649,12 @@ class MultiPartCase {
 }
 
 export class BlockState {
-	name: string;
-	variants?: ObjMap<ParsedBlockStateModel | ParsedBlockStateModel[]>;
-	multipart?: MultiPartCase[];
-	parsed: any;
+	public name: string;
+	public variants?: ObjMap<ParsedBlockStateModel | ParsedBlockStateModel[]>;
+	public multipart?: MultiPartCase[];
+	public parsed: any;
 
-	constructor(res: ResourcePack, name: string, parsed: any) {
+	public constructor(res: ResourcePack, name: string, parsed: any) {
 		this.name = name;
 		this.parsed = parsed;
 		if (parsed.variants !== undefined) {
@@ -718,11 +718,11 @@ export class BlockState {
 }
 
 export class MinecraftBlock {
-	name: string;
-	parsedBlockStateModels: ParsedBlockStateModel[];
-	isFullOpaque: boolean;
+	public name: string;
+	public parsedBlockStateModels: ParsedBlockStateModel[];
+	public isFullOpaque: boolean;
 
-	constructor(name: string, blockStateModels: ParsedBlockStateModel[]) {
+	public constructor(name: string, blockStateModels: ParsedBlockStateModel[]) {
 		this.name = name;
 		this.parsedBlockStateModels = blockStateModels;
 		this.isFullOpaque =
@@ -731,7 +731,7 @@ export class MinecraftBlock {
 			) !== undefined;
 	}
 
-	build(
+	public build(
 		geom: number[],
 		tex: number[],
 		texIndex: number[],

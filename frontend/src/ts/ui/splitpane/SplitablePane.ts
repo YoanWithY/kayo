@@ -13,12 +13,12 @@ export class SplitablePane extends HTMLElement {
 	private cachedHeight?: string;
 	private dummy!: HTMLDivElement;
 	private _win!: Window;
-	project!: Project;
-	uiRoot!: WrappingPane;
-	sp_ul!: SplitButton;
-	sp_ur!: SplitButton;
-	sp_ll!: SplitButton;
-	sp_lr!: SplitButton;
+	private project!: Project;
+	private uiRoot!: WrappingPane;
+	private sp_ul!: SplitButton;
+	private sp_ur!: SplitButton;
+	private sp_ll!: SplitButton;
+	private sp_lr!: SplitButton;
 	private keyListener = (e: KeyboardEvent) => {
 		if (e.ctrlKey && e.key === " " && !e.shiftKey) {
 			this.toggleSingleWindow();
@@ -31,12 +31,12 @@ export class SplitablePane extends HTMLElement {
 		this._win.removeEventListener("keydown", this.keyListener);
 	};
 
-	connectedCallback() {
+	protected connectedCallback() {
 		this.addEventListener("mouseenter", this.mouseEnterWindow);
 		this.addEventListener("mouseleave", this.mouseLeaveWindow);
 	}
 
-	disconnectedCallback() {
+	protected disconnectedCallback() {
 		this.removeEventListener("mouseenter", this.mouseEnterWindow);
 		this.removeEventListener("mouseleave", this.mouseLeaveWindow);
 	}
@@ -65,18 +65,18 @@ export class SplitablePane extends HTMLElement {
 		this.project.fullRerender();
 	}
 
-	installSplitButtons() {
+	protected installSplitButtons() {
 		this.append(this.sp_ul, this.sp_ur, this.sp_ll, this.sp_lr);
 	}
 
-	uninstallSplitButtons() {
+	protected uninstallSplitButtons() {
 		this.removeChild(this.sp_ul);
 		this.removeChild(this.sp_ur);
 		this.removeChild(this.sp_ll);
 		this.removeChild(this.sp_lr);
 	}
 
-	static createSplitablePane(
+	public static createSplitablePane(
 		win: Window,
 		kayo: Kayo,
 		uiRoot: WrappingPane,
@@ -117,15 +117,7 @@ export class SplitablePane extends HTMLElement {
 		this.installSplitButtons();
 	}
 
-	getPaneStripe() {
-		return this.children[0];
-	}
-
-	getContentPane() {
-		return this.children[1];
-	}
-
-	removePrevious(container: SplitPaneContainer, orientation: string) {
+	public removePrevious(container: SplitPaneContainer, orientation: string) {
 		let prev = this.previousElementSibling;
 		if (prev)
 			// split pane divider
@@ -149,7 +141,7 @@ export class SplitablePane extends HTMLElement {
 		}
 	}
 
-	removeNext(container: SplitPaneContainer, orientation: string) {
+	public removeNext(container: SplitPaneContainer, orientation: string) {
 		let next = this.nextElementSibling;
 		if (next)
 			// split pane divider
@@ -173,11 +165,11 @@ export class SplitablePane extends HTMLElement {
 		}
 	}
 
-	minHeight() {
+	public minHeight() {
 		return PaneStripe.size2;
 	}
 
-	minWidth() {
+	public minWidth() {
 		return PaneStripe.size2;
 	}
 }

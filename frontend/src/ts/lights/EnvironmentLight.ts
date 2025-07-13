@@ -1,20 +1,17 @@
 import R3Object from "../project/R3Object";
 
 export class EnvironmentLight extends R3Object {
-	renderDepth(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder;
+	public renderDepth(_: GPURenderPassEncoder): void {
 		throw new Error("Method not implemented.");
 	}
-	render(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder;
+	public render(_: GPURenderPassEncoder): void {
 		throw new Error("Method not implemented.");
 	}
-	renderSelection(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder;
+	public renderSelection(_: GPURenderPassEncoder): void {
 		throw new Error("Method not implemented.");
 	}
 
-	updateGPU(): void {
+	public updateGPU(): void {
 		throw new Error("Method not implemented.");
 	}
 }

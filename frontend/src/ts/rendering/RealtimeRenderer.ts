@@ -14,8 +14,8 @@ const thresholdMapBlob = await fetch(thresholdMapURL);
 const thresholdMapBytes = await thresholdMapBlob.bytes();
 
 export default class RealtimeRenderer {
-	project: Project;
-	viewportPanes = new Set<ViewportPane>();
+	public project: Project;
+	public viewportPanes = new Set<ViewportPane>();
 
 	private r3renderPassDescriptor: GPURenderPassDescriptor;
 	private overlayRenderPassDescriptor: GPURenderPassDescriptor;
@@ -29,23 +29,23 @@ export default class RealtimeRenderer {
 	private viewportCache = new Map<Viewport, ViewportCache>();
 	private viewUBO: GPUBuffer;
 	private gpuDevice: GPUDevice;
-	bindGroup0!: GPUBindGroup;
-	bindGroup0Layout: GPUBindGroupLayout;
-	bindGroupR3Layout: GPUBindGroupLayout;
+	public bindGroup0!: GPUBindGroup;
+	public bindGroup0Layout: GPUBindGroupLayout;
+	public bindGroupR3Layout: GPUBindGroupLayout;
 
-	compositingPipeline!: CompositingPipeline;
-	compositingBindGroupLayout: GPUBindGroupLayout;
+	public compositingPipeline!: CompositingPipeline;
+	public compositingBindGroupLayout: GPUBindGroupLayout;
 
-	r16ResolvePipeline!: ResolvePipeline;
-	r16ResolveBindGroupLayout: GPUBindGroupLayout;
-	heightFieldComputePassDescriptor: GPUComputePassDescriptor;
-	shadowViewUBO: GPUBuffer;
-	shadowBindGroup0!: GPUBindGroup;
-	virtualTextureSystem: VirtualTextureSystem;
-	blueNoiseTexture!: GPUTexture;
-	blueNoiseView!: GPUTextureView;
+	public r16ResolvePipeline!: ResolvePipeline;
+	public r16ResolveBindGroupLayout: GPUBindGroupLayout;
+	public heightFieldComputePassDescriptor: GPUComputePassDescriptor;
+	public shadowViewUBO: GPUBuffer;
+	public shadowBindGroup0!: GPUBindGroup;
+	public virtualTextureSystem: VirtualTextureSystem;
+	public blueNoiseTexture!: GPUTexture;
+	public blueNoiseView!: GPUTextureView;
 
-	constructor(project: Project) {
+	public constructor(project: Project) {
 		this.project = project;
 		this.gpuDevice = project.gpux.gpuDevice;
 		this.reconfigureContext(
@@ -310,18 +310,18 @@ export default class RealtimeRenderer {
 		imageData.deleteLater();
 	}
 
-	reconfigureContext(config: RenderConfig) {
+	public reconfigureContext(config: RenderConfig) {
 		for (const [, viewportCache] of this.viewportCache) viewportCache.reconfigureContext(config.general);
 	}
 
-	init() {
+	public init() {
 		// this.compositingPipeline = new CompositingPipeline("Compositing Pipeline");
 		// this.r16ResolvePipeline = new ResolvePipeline(this.project, "R16u resolve pipeline", "r16uint", "u32", "x");
 	}
 
-	jsTime = "";
-	frame = 0;
-	loop = (_: number, viewport: Viewport) => {
+	public jsTime = "";
+	public frame = 0;
+	private _renderViewport = (_: number, viewport: Viewport) => {
 		const start = performance.now();
 		const renderState = this.project.wasmx.kayoInstance.project.renderStates.get(viewport.configKey);
 		if (renderState === null) {
@@ -375,7 +375,7 @@ export default class RealtimeRenderer {
 		this.frame++;
 	};
 
-	requestAnimationFrameWith(viewport: Viewport) {
+	public requestAnimationFrameWith(viewport: Viewport) {
 		if (!this.registeredViewports.has(viewport)) {
 			console.warn("Viewport is not registered.");
 			return;
@@ -387,21 +387,25 @@ export default class RealtimeRenderer {
 		viewport.window.requestAnimationFrame((ts: number) => {
 			for (const v of this.viewportsToUpdate) {
 				if (v.window != viewport.window) continue;
-				this.loop(ts, v);
+				this._renderViewport(ts, v);
 				this.viewportsToUpdate.delete(v);
 			}
 			this.requestedAnimationFrame.set(viewport.window, false);
+
+			if (this.frame < 3) {
+				this.requestAnimationFrameWith(viewport);
+			}
 		});
 	}
 
-	registerViewport(viewport: Viewport) {
+	public registerViewport(viewport: Viewport) {
 		if (this.registeredViewports.has(viewport)) return;
 
 		this.registeredViewports.add(viewport);
 		this.viewportCache.set(viewport, new ViewportCache(this.project, viewport));
 	}
 
-	unregisterViewport(viewport: Viewport) {
+	public unregisterViewport(viewport: Viewport) {
 		if (!this.registeredViewports.has(viewport)) return;
 
 		this.registeredViewports.delete(viewport);
@@ -410,7 +414,11 @@ export default class RealtimeRenderer {
 		this.viewportCache.delete(viewport);
 	}
 
-	getNew3RData(): { vertexUniformBuffer: GPUBuffer; fragmentUniformBuffer: GPUBuffer; bindGroup: GPUBindGroup } {
+	public getNew3RData(): {
+		vertexUniformBuffer: GPUBuffer;
+		fragmentUniformBuffer: GPUBuffer;
+		bindGroup: GPUBindGroup;
+	} {
 		const vertexUniformBuffer = this.gpuDevice.createBuffer({
 			label: "R3 default vertex uniforms buffer",
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
@@ -444,13 +452,13 @@ export default class RealtimeRenderer {
 		return { vertexUniformBuffer, fragmentUniformBuffer, bindGroup };
 	}
 
-	static getDepthStencilFormat(): GPUTextureFormat {
+	public static getDepthStencilFormat(): GPUTextureFormat {
 		return "depth24plus";
 	}
 
 	private viewBuffer = new Float32Array(3 * 16 + 4);
 	private viewTimeBuffer = new Uint32Array(8);
-	updateView(viewUBO: GPUBuffer, frame: number, camera: Camera, width: number, height: number): void {
+	public updateView(viewUBO: GPUBuffer, frame: number, camera: Camera, width: number, height: number): void {
 		const projection = camera.getProjection();
 		const near = projection.near;
 		const far = projection.far;

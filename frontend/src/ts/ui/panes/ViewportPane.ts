@@ -17,17 +17,16 @@ export class ViewportPane extends BasicPane implements Viewport {
 	public window!: Window;
 	public configKey: string = "default";
 
-	resizeObserver: ResizeObserver = new ResizeObserver((e) => {
+	private _resizeObserver: ResizeObserver = new ResizeObserver((e) => {
 		const size = e[0].devicePixelContentBoxSize[0];
 		this.canvas.width = size.inlineSize;
 		this.canvas.height = size.blockSize;
 		if (this.isConnected) this.project.renderer.requestAnimationFrameWith(this);
 	});
-	cachedBase: any;
-	dummy: HTMLDivElement;
-	infoPane!: HTMLDivElement;
 
-	constructor() {
+	private _infoPane!: HTMLDivElement;
+
+	public constructor() {
 		super();
 
 		const lookAt = new LookAtTransform(new vec3(8, 8, 8), 5);
@@ -61,8 +60,8 @@ export class ViewportPane extends BasicPane implements Viewport {
 			this.project.renderer.requestAnimationFrameWith(this);
 		};
 
-		let keyMap: any = {};
-		let speed = 0.25;
+		const keyMap: any = {};
+		const speed = 0.25;
 		const mm = (e: MouseEvent) => {
 			if (document.pointerLockElement) return;
 			this.requestPointerLock();
@@ -165,12 +164,10 @@ export class ViewportPane extends BasicPane implements Viewport {
 			for (const t of e.changedTouches) delete touches[t.identifier];
 		});
 
-		this.dummy = document.createElement("div");
 		const keyListener = (e: KeyboardEvent) => {
 			if (e.ctrlKey && e.shiftKey && e.key === " ") {
 				this.requestFullscreen();
 				this.project.fullRerender();
-				2;
 			}
 		};
 		this.addEventListener("mouseenter", () => {
@@ -181,11 +178,11 @@ export class ViewportPane extends BasicPane implements Viewport {
 		});
 	}
 
-	useOverlays: boolean = false;
+	public useOverlays: boolean = false;
 
 	private viewBuffer = new Float32Array(3 * 16 + 2 * 4);
 	private viewTimeBuffer = new Uint32Array(8);
-	updateView(viewUBO: GPUBuffer, frame: number): void {
+	public updateView(viewUBO: GPUBuffer, frame: number): void {
 		const near = this.camera.projection.near;
 		const far = this.camera.projection.far;
 		this.camera.getViewMatrix().pushInFloat32ArrayColumnMajor(this.viewBuffer);
@@ -215,11 +212,11 @@ export class ViewportPane extends BasicPane implements Viewport {
 		this.project.gpux.gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
 	}
 
-	getCurrentTexture(): GPUTexture {
+	public getCurrentTexture(): GPUTexture {
 		return this.canvasContext.getCurrentTexture();
 	}
 
-	setGPUTime(times: any): void {
+	public setGPUTime(times: any): void {
 		let html = `
 		<style>
 		table td:first-child {
@@ -245,27 +242,27 @@ export class ViewportPane extends BasicPane implements Viewport {
 			</tr>`;
 		}
 		html += `</table>`;
-		this.infoPane.innerHTML = html;
+		this._infoPane.innerHTML = html;
 	}
 
-	connectedCallback() {
+	protected connectedCallback() {
 		this.project.renderer.viewportPanes.add(this);
 		this.project.renderer.registerViewport(this);
-		this.resizeObserver.observe(this, {
+		this._resizeObserver.observe(this, {
 			box: "device-pixel-content-box",
 		});
 	}
 
-	disconnectedCallback() {
+	protected disconnectedCallback() {
 		this.project.renderer.viewportPanes.delete(this);
 		this.project.renderer.unregisterViewport(this);
-		this.resizeObserver.unobserve(this);
+		this._resizeObserver.unobserve(this);
 	}
 
 	public static createUIElement(win: Window, kayo: Kayo): ViewportPane {
 		const p = super.createUIElement(win, kayo, viewportPaneTemplate) as ViewportPane;
-		p.infoPane = win.document.createElement("div");
-		p.infoPane.setAttribute(
+		p._infoPane = win.document.createElement("div");
+		p._infoPane.setAttribute(
 			"style",
 			"position: absolute; left: 10px; bottom: 10px; display: inline; color: white; backdrop-filter: blur(73px); 	background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25); border-radius: 4px;",
 		);
@@ -276,7 +273,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 		p.focus();
 		p.project = p.kayo.project;
 		p.appendChild(p.canvas);
-		p.appendChild(p.infoPane);
+		p.appendChild(p._infoPane);
 		return p;
 	}
 

@@ -10,7 +10,7 @@ export abstract class Role {
 	public abstract acceptOffer(offer: RTCSessionDescription, identity: Identity): Promise<void>;
 	public abstract addIceCandidate(wsICECandidate: WSClientIceCandidate): void;
 	private messageListener: Set<(value: string) => void>;
-	constructor(ptpBase: PTPBase, id: number) {
+	public constructor(ptpBase: PTPBase, id: number) {
 		this.base = ptpBase;
 		this.id = id;
 		this.messageListener = new Set();

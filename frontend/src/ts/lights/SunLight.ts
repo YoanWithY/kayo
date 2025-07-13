@@ -6,14 +6,14 @@ import Projection from "../projection/Projection";
 import Camera from "../Viewport/Camera";
 
 export class SunLight extends R3Object implements Camera {
-	projection: OrthographicProjection;
-	shadowMap: GPUTexture;
-	renderPass: GPURenderPassDescriptor;
-	resolution: number;
-	bindGroup: GPUBindGroup;
-	buffer: GPUBuffer;
-	project: Project;
-	static sunBindGroupLayout: any;
+	public projection: OrthographicProjection;
+	public shadowMap: GPUTexture;
+	public renderPass: GPURenderPassDescriptor;
+	public resolution: number;
+	public bindGroup: GPUBindGroup;
+	public buffer: GPUBuffer;
+	public project: Project;
+	public static sunBindGroupLayout: any;
 
 	public static init(project: Project) {
 		const gpuDevice = project.gpux.gpuDevice;
@@ -45,7 +45,7 @@ export class SunLight extends R3Object implements Camera {
 		});
 	}
 
-	constructor(project: Project, rangeWidth = 1000, distance = 1000, resolution = 4096) {
+	public constructor(project: Project, rangeWidth = 1000, distance = 1000, resolution = 4096) {
 		super(project);
 		this.project = project;
 		this.projection = new OrthographicProjection(rangeWidth, 0, distance);
@@ -94,23 +94,17 @@ export class SunLight extends R3Object implements Camera {
 			],
 		});
 	}
-	getProjection(): Projection {
+	public getProjection(): Projection {
 		return this.projection;
 	}
-	getViewMatrix(): mat4 {
+	public getViewMatrix(): mat4 {
 		return this.transformationStack.getInverseTransformationMatrix();
 	}
-	render(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder;
-	}
-	renderSelection(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder;
-	}
-	renderDepth(renderPassEncoder: GPURenderPassEncoder): void {
-		renderPassEncoder;
-	}
-	floatData = new Float32Array(20);
-	updateSunUniforms(gpuDevice: GPUDevice) {
+	public render(_: GPURenderPassEncoder): void {}
+	public renderSelection(_: GPURenderPassEncoder): void {}
+	public renderDepth(_: GPURenderPassEncoder): void {}
+	public floatData = new Float32Array(20);
+	public updateSunUniforms(gpuDevice: GPUDevice) {
 		const mat = this.transformationStack.getTransformationMatrix();
 		this.projection
 			.getProjectionMatrix(this.resolution, this.resolution)

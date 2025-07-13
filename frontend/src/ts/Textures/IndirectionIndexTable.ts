@@ -65,7 +65,7 @@ export class IndirectionIndexTable {
 	 * Each element is marks the start and end of a block allocated tiles (inclusiv), such that the tile after the end is definitely free.
 	 */
 	private indexBlocks: IndexBlock[];
-	constructor(virtualTextureSystem: VirtualTextureSystem, gpux: GPUX) {
+	public constructor(virtualTextureSystem: VirtualTextureSystem, gpux: GPUX) {
 		this.virtualTextureSystem = virtualTextureSystem;
 		this.maxTextures = this.virtualTextureSystem.indirectionTableAtlas.totalUsableTiles;
 		this.allocatedTextures = 0;

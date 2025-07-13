@@ -1,5 +1,5 @@
 export default class Tooltip extends HTMLElement {
-	static createTooltip(win: Window, serialTooltip: SerialTooltip, obj: any): Tooltip {
+	public static createTooltip(win: Window, serialTooltip: SerialTooltip, obj: any): Tooltip {
 		const tooltip = win.document.createElement("tool-tip") as Tooltip;
 		tooltip.setAttribute("state", "invisible");
 
@@ -31,7 +31,7 @@ export default class Tooltip extends HTMLElement {
 		return tooltip;
 	}
 
-	static register(win: Window, tooltipString: SerialTooltip, element: HTMLElement, obj: any) {
+	public static register(win: Window, tooltipString: SerialTooltip, element: HTMLElement, obj: any) {
 		const tooltip = Tooltip.createTooltip(win, tooltipString, obj);
 		element.addEventListener("pointerenter", (e) => {
 			tooltip.style.left = `${e.clientX}px`;

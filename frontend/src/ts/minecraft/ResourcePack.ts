@@ -5,27 +5,27 @@ import { VirtualTexture2D } from "../Textures/VirtualTexture2D";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 
 export class MinecraftNamespaceResources {
-	namespace: string;
-	blockstates: { [key: string]: BlockState } = {};
-	models: any = {};
-	textures: { [key: string]: { [key: string]: MinecraftTexture } } = {};
-	constructor(namespace: string) {
+	public namespace: string;
+	public blockstates: { [key: string]: BlockState } = {};
+	public models: any = {};
+	public textures: { [key: string]: { [key: string]: MinecraftTexture } } = {};
+	public constructor(namespace: string) {
 		this.namespace = namespace;
 	}
 }
 
 export class ResourcePack {
-	fallback: ResourcePack | undefined;
-	name: string;
-	namespaceResources: { [key: string]: MinecraftNamespaceResources };
-	allBlockTextures!: GPUTexture;
-	constructor(name: string, fallback?: ResourcePack) {
+	public fallback: ResourcePack | undefined;
+	public name: string;
+	public namespaceResources: { [key: string]: MinecraftNamespaceResources };
+	public allBlockTextures!: GPUTexture;
+	public constructor(name: string, fallback?: ResourcePack) {
 		this.name = name;
 		this.namespaceResources = {};
 		this.fallback = fallback;
 	}
 
-	getNamespace(namespaceName: string) {
+	public getNamespace(namespaceName: string) {
 		let namespace = this.namespaceResources[namespaceName];
 		if (!namespace) {
 			namespace = new MinecraftNamespaceResources(namespaceName);
@@ -34,7 +34,7 @@ export class ResourcePack {
 		return namespace;
 	}
 
-	getModelByURL(rl: string): ParsedBlockModel | undefined {
+	public getModelByURL(rl: string): ParsedBlockModel | undefined {
 		let namespacename = "minecraft";
 		const parts = rl.split(":");
 		let path = rl;
@@ -58,7 +58,7 @@ export class ResourcePack {
 		return ret;
 	}
 
-	getTextureByURL(rl: string): MinecraftTexture | undefined {
+	public getTextureByURL(rl: string): MinecraftTexture | undefined {
 		let namespacename = "minecraft";
 		const parts = rl.split(":");
 		let path = rl;
@@ -72,7 +72,7 @@ export class ResourcePack {
 		return ret;
 	}
 
-	getBlockStateByURL(rl: string): BlockState | undefined {
+	public getBlockStateByURL(rl: string): BlockState | undefined {
 		let namespacename = "minecraft";
 		const parts = rl.split(":");
 		let path = rl;
@@ -93,7 +93,7 @@ export class ResourcePack {
 		return ret;
 	}
 
-	initialize(virtualTextureSystem: VirtualTextureSystem) {
+	public initialize(virtualTextureSystem: VirtualTextureSystem) {
 		for (const namespaceName in this.namespaceResources) {
 			const namespaceres = this.namespaceResources[namespaceName];
 			const blockModels = namespaceres.models.block;
@@ -120,7 +120,7 @@ export class ResourcePack {
 		virtualTextureSystem.physicalTexture.generateAllMips();
 	}
 
-	static parse(
+	public static parse(
 		zip: ZipInfo,
 		name: string,
 		fallback: ResourcePack | undefined,

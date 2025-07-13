@@ -9,14 +9,14 @@ import { PTPBase } from "../collaborative/PTPBase";
 import WASMX from "../WASMX";
 
 export class Project {
-	kayo: Kayo;
-	gpux: GPUX;
-	wasmx: WASMX;
-	renderer!: RealtimeRenderer;
-	scene!: Scene;
-	ptpBase: PTPBase;
+	public kayo: Kayo;
+	public gpux: GPUX;
+	public wasmx: WASMX;
+	public renderer!: RealtimeRenderer;
+	public scene!: Scene;
+	public ptpBase: PTPBase;
 
-	constructor(kayo: Kayo) {
+	public constructor(kayo: Kayo) {
 		this.kayo = kayo;
 		this.gpux = kayo.gpux;
 		this.wasmx = kayo.wasmx;
@@ -31,11 +31,11 @@ export class Project {
 		this.scene.background = new Background(this);
 	}
 
-	requestUI(win: Window, defaultPane: string, useHeader: boolean) {
+	public requestUI(win: Window, defaultPane: string, useHeader: boolean) {
 		win.document.body.appendChild(WrappingPane.createWrappingPane(win, this.kayo, defaultPane, useHeader));
 	}
 
-	fullRerender() {
+	public fullRerender() {
 		for (const vp of this.renderer.viewportPanes) this.renderer.requestAnimationFrameWith(vp);
 	}
 }

@@ -9,16 +9,16 @@ import Camera from "./Camera";
  * A Camera that is capabale of being a viewport.
  */
 export default class ViewportCamera implements Camera {
-	projection = new PerspectiveProjection();
-	transformationStack = new TransformationStack();
+	public projection = new PerspectiveProjection();
+	public transformationStack = new TransformationStack();
 
-	getViewMatrix(): mat4 {
+	public getViewMatrix(): mat4 {
 		return this.transformationStack.getInverseTransformationMatrix();
 	}
-	getWorldLocation(): vec3 {
+	public getWorldLocation(): vec3 {
 		return this.transformationStack.getTransformationMatrix().getTranslation();
 	}
-	getProjection(): Projection {
+	public getProjection(): Projection {
 		return this.projection;
 	}
 }

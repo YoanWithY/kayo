@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/explicit-member-accessibility */
+
 import vec from "./vec";
 import vec3 from "./vec3";
 import vec4 from "./vec4";
 export default class vec2 implements vec<vec2> {
 	[n: number]: number;
-	0: number;
-	1: number;
+	public 0: number;
+	public 1: number;
 
-	*[Symbol.iterator](): IterableIterator<number> {
+	public *[Symbol.iterator](): IterableIterator<number> {
 		yield this[0];
 		yield this[1];
 	}
@@ -16,7 +18,7 @@ export default class vec2 implements vec<vec2> {
 	 * @param x x-component of the new vector.
 	 * @param y y-component of the new vector.
 	 */
-	constructor(x: number = 0, y: number = 0) {
+	public constructor(x: number = 0, y: number = 0) {
 		this[0] = x;
 		this[1] = y;
 	}
@@ -25,7 +27,7 @@ export default class vec2 implements vec<vec2> {
 	 * The 2-dimensional null-vector.
 	 * @returns A new vector representing the null vector.
 	 */
-	static get NULL(): vec2 {
+	public static get NULL(): vec2 {
 		return new vec2(0, 0);
 	}
 

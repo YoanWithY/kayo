@@ -3,19 +3,19 @@ import fullScreenOnIcon from "../../../svg/fullscreenOn.svg?raw";
 import fullScreenOffIcon from "../../../svg/fullscreenOff.svg?raw";
 
 export class Footer extends HTMLElement {
-	start!: HTMLDivElement;
-	middle!: HTMLDivElement;
-	end!: HTMLDivElement;
+	private _start!: HTMLDivElement;
+	private _middle!: HTMLDivElement;
+	private _end!: HTMLDivElement;
 
-	static createFooter(win: Window): Footer {
+	public static createFooter(win: Window): Footer {
 		const p = win.document.createElement("footer-element") as Footer;
 
-		p.start = win.document.createElement("div");
-		p.start.classList.add("start");
-		p.middle = win.document.createElement("div");
-		p.middle.classList.add("middle");
-		p.end = win.document.createElement("div");
-		p.end.classList.add("end");
+		p._start = win.document.createElement("div");
+		p._start.classList.add("start");
+		p._middle = win.document.createElement("div");
+		p._middle.classList.add("middle");
+		p._end = win.document.createElement("div");
+		p._end.classList.add("end");
 
 		const fullScreenButton = IconedToggleButton.createIconedToggleButton(
 			win,
@@ -38,15 +38,15 @@ export class Footer extends HTMLElement {
 			if (!win.document.fullscreenElement) fullScreenButton.setStateUIOnly(0);
 		});
 
-		p.end.appendChild(fullScreenButton);
+		p._end.appendChild(fullScreenButton);
 
 		const waterMark = document.createElement("span");
 		waterMark.textContent = `Kayo Engine ${import.meta.env.PACKAGE_VERSION}`;
-		p.start.appendChild(waterMark);
+		p._start.appendChild(waterMark);
 
-		p.appendChild(p.start);
-		p.appendChild(p.middle);
-		p.appendChild(p.end);
+		p.appendChild(p._start);
+		p.appendChild(p._middle);
+		p.appendChild(p._end);
 		return p;
 	}
 }

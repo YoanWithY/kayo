@@ -16,7 +16,7 @@ export class VirtualTextureSystem {
 	public indirectionIndexTable: IndirectionIndexTable;
 	public bindGroupEntries: GPUBindGroupEntry[];
 
-	atlasOffsets: [number, number][] = [
+	public atlasOffsets: [number, number][] = [
 		[16, 16],
 		[112, 16],
 		[112, 80],
@@ -25,7 +25,7 @@ export class VirtualTextureSystem {
 		[96, 128],
 		[136, 128],
 	];
-	constructor(gpux: GPUX) {
+	public constructor(gpux: GPUX) {
 		// Construction order is relevant!
 		this.gpux = gpux;
 		this.largestAtlasedMipSize = 64;

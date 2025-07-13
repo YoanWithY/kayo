@@ -51,7 +51,7 @@ export default class Collapsible extends HTMLElement {
 
 export class CollapsibleButton extends HTMLElement {
 	public collapsible!: Collapsible;
-	constructor() {
+	public constructor() {
 		super();
 		this.addEventListener("click", () => {
 			this.collapsible.toggleCollaps();

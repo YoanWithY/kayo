@@ -4,7 +4,7 @@ export class ResolvePipeline extends AbstractRenderingPipeline {
 	protected primiteState: GPUPrimitiveState;
 	protected vertexState: GPUVertexState;
 	protected fragmentState: GPUFragmentState;
-	constructor(label: string, shaderModule: GPUShaderModule) {
+	public constructor(label: string, shaderModule: GPUShaderModule) {
 		super(label, shaderModule);
 		this.primiteState = {};
 		this.vertexState = {

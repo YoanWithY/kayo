@@ -23,7 +23,7 @@ class BackgroundPipeline extends AbstractRenderingPipeline {
 	protected primiteState: GPUPrimitiveState;
 	protected vertexState: GPUVertexState;
 	protected fragmentState: GPUFragmentState;
-	constructor(
+	public constructor(
 		label: string,
 		shaderModule: GPUShaderModule,
 		key: RenderPipelineKey,
@@ -61,7 +61,7 @@ export default class Background implements Renderable {
 	protected pipelineCache: PipelineCache;
 	public project: Project;
 
-	constructor(project: Project) {
+	public constructor(project: Project) {
 		this.project = project;
 		this.pipelineCache = new PipelineCache();
 		this.pipelineCache.buildFunction = this._pipelineBuildFunction;

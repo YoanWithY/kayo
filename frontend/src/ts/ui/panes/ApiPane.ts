@@ -1,7 +1,7 @@
 import { Kayo } from "../../Kayo";
 import { objectToUl } from "../UIUtils";
 import BasicPane from "./BasicPane";
-import ressourcePaneTemplate from "./RessourcePaneTemplate.json";
+import ressourcePaneTemplate from "./WebAPIPane.json";
 
 function groupBy(array: any[], key: string) {
 	return array.reduce((accumulator, value) => {
@@ -92,12 +92,12 @@ export default class APIPane extends BasicPane {
 		return "Web API";
 	}
 
-	connectedCallback() {
+	protected connectedCallback() {
 		this.buildCallback();
 		this._win.addEventListener("resize", this.buildCallback);
 	}
 
-	disconnectedCallback() {
+	protected disconnectedCallback() {
 		this._win.removeEventListener("resize", this.buildCallback);
 	}
 }

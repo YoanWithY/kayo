@@ -9,7 +9,7 @@ if (!openerKayo) {
 	close();
 	throw new Error("No Kayo instance on the opener!");
 }
-window.addEventListener("beforeunload", (_) => {
+window.addEventListener("beforeunload", () => {
 	openerKayo.windows.delete(window);
 });
 

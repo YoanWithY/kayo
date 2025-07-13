@@ -6,7 +6,7 @@ import { SplitablePane } from "./SplitablePane";
 import { SplitPaneDivider } from "./SplitPaneDivider";
 
 export class SplitPaneContainer extends HTMLElement {
-	static createSplitPaneContainer(win: Window, orientation: string, rect: DOMRect) {
+	public static createSplitPaneContainer(win: Window, orientation: string, rect: DOMRect) {
 		const c = win.document.createElement("split-pane-container");
 		c.setAttribute("split-pane-container-orientation", orientation);
 		if (orientation == "vertical") {
@@ -18,7 +18,7 @@ export class SplitPaneContainer extends HTMLElement {
 		return c;
 	}
 
-	static createRoot(win: Window, kayo: Kayo, uiRoot: WrappingPane, defaultPane: string) {
+	public static createRoot(win: Window, kayo: Kayo, uiRoot: WrappingPane, defaultPane: string) {
 		const c = win.document.createElement("split-pane-container");
 		c.setAttribute("split-pane-container-orientation", "none");
 		c.setAttribute("id", "wrapper");
@@ -27,15 +27,15 @@ export class SplitPaneContainer extends HTMLElement {
 		return c as SplitPaneContainer;
 	}
 
-	minHeight() {
+	public minHeight() {
 		return Number.parseInt(this.style.minHeight.replace("px", ""));
 	}
 
-	minWidth() {
+	public minWidth() {
 		return Number.parseInt(this.style.minWidth.replace("px", ""));
 	}
 
-	updateSizesRecursively() {
+	public updateSizesRecursively() {
 		const orientation = this.getAttribute("split-pane-container-orientation");
 		if (orientation == "none") {
 			const child = this.firstElementChild;

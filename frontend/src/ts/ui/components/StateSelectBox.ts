@@ -19,7 +19,7 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 	private _internals: ElementInternals;
 	private _valueNameMap: Map<string, string> = new Map();
 
-	constructor() {
+	public constructor() {
 		super();
 		this._internals = this.attachInternals();
 		this.onclick = () => {
@@ -31,20 +31,20 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 			this._optionWrapper._internals.states.add("open-down");
 			this._internals.states.add("open-down");
 			this._optionWrapper.updateSelectedState(this.textContent as string);
-			this._win.addEventListener("mousedown", this.hidingClosure);
+			this._win.addEventListener("mousedown", this._hidingClosure);
 		};
 	}
 
-	hidingClosure = () => {
+	private _hidingClosure = () => {
 		this._win.document.body.removeChild(this._optionWrapper);
 		this._internals.states.delete("open-down");
 		this._optionWrapper._internals.states.delete("open-down");
-		this._win.removeEventListener("mousedown", this.hidingClosure);
+		this._win.removeEventListener("mousedown", this._hidingClosure);
 	};
 
-	setOption(optionValue: SelectOptionValue) {
+	public setOption(optionValue: SelectOptionValue) {
 		this._wasmx.setModelValue(this._stateWasmPath, optionValue.value);
-		this.hidingClosure();
+		this._hidingClosure();
 	}
 
 	private addOption(win: Window, optionValue: SelectOptionValue) {
@@ -53,17 +53,17 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 		this._valueNameMap.set(optionValue.value, optionValue.text);
 	}
 
-	stateChangeCallback = (wasmValue: string) => {
+	private _stateChangeCallback = (wasmValue: string) => {
 		this.textContent = this._valueNameMap.get(wasmValue) as string;
 	};
 
-	connectedCallback() {
-		this._wasmx.addChangeListener(this._stateWasmPath, this.stateChangeCallback);
+	protected connectedCallback() {
+		this._wasmx.addChangeListener(this._stateWasmPath, this._stateChangeCallback);
 		for (const entry of this._additionalCallbacks) this._wasmx.addChangeListener(entry.path, entry.callback);
 	}
 
-	disconnectedCallback() {
-		this._wasmx.removeChangeListener(this._stateWasmPath, this.stateChangeCallback);
+	protected disconnectedCallback() {
+		this._wasmx.removeChangeListener(this._stateWasmPath, this._stateChangeCallback);
 		for (const entry of this._additionalCallbacks) this._wasmx.removeChangeListener(entry.path, entry.callback);
 	}
 
@@ -84,7 +84,7 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 		else this._internals.states.delete("uneffective");
 	}
 
-	checkDisablingCallback = () => {
+	private _checkDisablingCallback = () => {
 		this.setMarkUneffective(this._checkMarkUneffective());
 	};
 
@@ -101,7 +101,7 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 		if (selectBox._uneffectiveIfAny !== undefined) {
 			for (const entry of obj.uneffectiveIfAny) {
 				const path = kayo.wasmx.toWasmPath(entry.stateVariableURL, variables);
-				selectBox._additionalCallbacks.push({ path: path, callback: selectBox.checkDisablingCallback });
+				selectBox._additionalCallbacks.push({ path: path, callback: selectBox._checkDisablingCallback });
 			}
 		}
 
@@ -124,13 +124,13 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 }
 
 export class SelectOptionWrapper extends HTMLElement {
-	_internals: ElementInternals = this.attachInternals();
+	public _internals: ElementInternals = this.attachInternals();
 
-	static createSelectOptionWrapper(win: Window): SelectOptionWrapper {
+	public static createSelectOptionWrapper(win: Window): SelectOptionWrapper {
 		return win.document.createElement("select-option-wrapper") as SelectOptionWrapper;
 	}
 
-	updateSelectedState(activeText: string) {
+	public updateSelectedState(activeText: string) {
 		for (const selectionOption of this.children) {
 			if (selectionOption instanceof SelectOption) {
 				if (selectionOption.optionValue.text === activeText) {
@@ -144,27 +144,27 @@ export class SelectOptionWrapper extends HTMLElement {
 }
 
 export class SelectOption extends HTMLElement {
-	optionValue!: SelectOptionValue;
-	selectBox!: ISelectBox;
-	_internals = this.attachInternals();
-	constructor() {
+	public optionValue!: SelectOptionValue;
+	private _selectBox!: ISelectBox;
+	public _internals = this.attachInternals();
+	public constructor() {
 		super();
 		this.onclick = () => {
-			this.selectBox.setOption(this.optionValue);
+			this._selectBox.setOption(this.optionValue);
 		};
 		this.onmousedown = (e) => {
 			e.stopImmediatePropagation();
 		};
 	}
-	static createSelectOption(win: Window, optionValue: SelectOptionValue, selectBox: ISelectBox): SelectOption {
+	public static createSelectOption(win: Window, optionValue: SelectOptionValue, selectBox: ISelectBox): SelectOption {
 		const selectOption = win.document.createElement(this.getDomClass()) as SelectOption;
 		selectOption.optionValue = optionValue;
 		selectOption.textContent = optionValue.text;
-		selectOption.selectBox = selectBox;
+		selectOption._selectBox = selectBox;
 		return selectOption;
 	}
 
-	static getDomClass() {
+	public static getDomClass() {
 		return "select-option";
 	}
 }
@@ -175,7 +175,7 @@ export class SelectBox extends HTMLElement {
 	private _valueNameMap: Map<string, string> = new Map();
 	private _win!: Window;
 
-	constructor() {
+	public constructor() {
 		super();
 		this._internals = this.attachInternals();
 		this.onclick = (_) => {
@@ -187,28 +187,26 @@ export class SelectBox extends HTMLElement {
 			this._optionWrapper._internals.states.add("open-down");
 			this._internals.states.add("open-down");
 			this._optionWrapper.updateSelectedState(this.textContent as string);
-			this._win.addEventListener("mousedown", this.hidingClosure);
+			this._win.addEventListener("mousedown", this._hidingClosure);
 		};
 	}
 
-	hidingClosure = () => {
+	private _hidingClosure = () => {
 		this._win.document.body.removeChild(this._optionWrapper);
 		this._internals.states.delete("open-down");
 		this._optionWrapper._internals.states.delete("open-down");
-		this._win.removeEventListener("mousedown", this.hidingClosure);
+		this._win.removeEventListener("mousedown", this._hidingClosure);
 	};
 
-	onValueChange = (value: SelectOptionValue) => {
-		value;
-	};
+	public onValueChange = (_: SelectOptionValue) => {};
 
-	setOption(optionValue: SelectOptionValue) {
+	public setOption(optionValue: SelectOptionValue) {
 		this.textContent = optionValue.text;
-		this.hidingClosure();
+		this._hidingClosure();
 		this.onValueChange(optionValue);
 	}
 
-	addOption(win: Window, optionValue: SelectOptionValue) {
+	public addOption(win: Window, optionValue: SelectOptionValue) {
 		const selectOption = SelectOption.createSelectOption(win, optionValue, this);
 		this._optionWrapper.appendChild(selectOption);
 		this._valueNameMap.set(optionValue.value, optionValue.text);
@@ -221,7 +219,7 @@ export class SelectBox extends HTMLElement {
 		return selectBox;
 	}
 
-	static getDomClass() {
+	public static getDomClass() {
 		return "select-box";
 	}
 }

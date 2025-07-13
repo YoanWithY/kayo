@@ -53,7 +53,7 @@ export abstract class AbstractMetaRenderPipeline {
 	protected readonly _depthPipeline: AbstractRenderingPipeline;
 	protected readonly _selectionPipeline: AbstractRenderingPipeline;
 
-	constructor(id: string) {
+	public constructor(id: string) {
 		this._id = id;
 		this._renderPiplines = new PipelineCache();
 		this._depthPipeline = this._buildDepthPipeline();

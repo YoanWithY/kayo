@@ -6,10 +6,10 @@ import vec2 from "./vec2";
  */
 export default class mat2 {
 	[index: number]: number;
-	0: number;
-	1: number;
-	2: number;
-	3: number;
+	public 0: number;
+	public 1: number;
+	public 2: number;
+	public 3: number;
 
 	/**
 	 * Creates a matrix in the manner:
@@ -18,7 +18,7 @@ export default class mat2 {
 	 * c  d
 	 * ```
 	 */
-	constructor(a: number = 0, b: number = 0, c: number = 0, d: number = 0) {
+	public constructor(a: number = 0, b: number = 0, c: number = 0, d: number = 0) {
 		this[0] = a;
 		this[1] = b;
 		this[2] = c;

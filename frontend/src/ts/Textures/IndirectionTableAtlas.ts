@@ -8,32 +8,32 @@ export class IndirectionTableAtlas {
 	/**
 	 * The virtual texturing system this atlas belongs to.
 	 */
-	virtualTextureSystem: VirtualTextureSystem;
+	public virtualTextureSystem: VirtualTextureSystem;
 	/**
 	 * The size (= width = height) of the indirection table atlas in tiles/texels.
 	 */
-	size: number;
+	public size: number;
 	/**
 	 * The number of tiles/texels each layer can store.
 	 */
-	tilesPerLayer: number;
+	public tilesPerLayer: number;
 	/**
 	 * The number of layers of the indirection table atlas.
 	 */
-	layers: number;
+	public layers: number;
 	/**
 	 * The total number of tiles/texel that can be populated with data. This is the same as {@link virtualTextureSystem.physicalTexture.totalTiles}.
 	 */
-	totalUsableTiles: number;
+	public totalUsableTiles: number;
 	/**
 	 * The data levels of the indirections table atlas mips.
 	 */
-	dataLayers: Uint8Array[];
+	public dataLayers: Uint8Array[];
 	/**
 	 * The gpu texture of this indirection table atlas.
 	 */
-	gpuTexture: GPUTexture;
-	constructor(virtualTextureSystem: VirtualTextureSystem, gpux: GPUX) {
+	public gpuTexture: GPUTexture;
+	public constructor(virtualTextureSystem: VirtualTextureSystem, gpux: GPUX) {
 		this.virtualTextureSystem = virtualTextureSystem;
 
 		this.totalUsableTiles = this.virtualTextureSystem.physicalTexture.totalTiles;

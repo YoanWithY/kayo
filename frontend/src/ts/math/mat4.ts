@@ -7,22 +7,22 @@ import vec4 from "./vec4";
  */
 export default class mat4 {
 	[index: number]: number;
-	0: number;
-	1: number;
-	2: number;
-	3: number;
-	4: number;
-	5: number;
-	6: number;
-	7: number;
-	8: number;
-	9: number;
-	10: number;
-	11: number;
-	12: number;
-	13: number;
-	14: number;
-	15: number;
+	public 0: number;
+	public 1: number;
+	public 2: number;
+	public 3: number;
+	public 4: number;
+	public 5: number;
+	public 6: number;
+	public 7: number;
+	public 8: number;
+	public 9: number;
+	public 10: number;
+	public 11: number;
+	public 12: number;
+	public 13: number;
+	public 14: number;
+	public 15: number;
 
 	/**
 	 * Creates a matrix in the manner:
@@ -33,7 +33,7 @@ export default class mat4 {
 	 * m  n  o  p
 	 * ```
 	 */
-	constructor(
+	public constructor(
 		a: number = 0,
 		b: number = 0,
 		c: number = 0,

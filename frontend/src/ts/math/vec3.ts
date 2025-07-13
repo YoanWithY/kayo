@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/explicit-member-accessibility */
 import vec from "./vec";
 import vec2 from "./vec2";
 import vec4 from "./vec4";
 export default class vec3 implements vec<vec3> {
 	[n: number]: number;
-	0: number;
-	1: number;
-	2: number;
+	public 0: number;
+	public 1: number;
+	public 2: number;
 
-	*[Symbol.iterator](): IterableIterator<number> {
+	public *[Symbol.iterator](): IterableIterator<number> {
 		yield this[0];
 		yield this[1];
 		yield this[2];
@@ -19,7 +20,7 @@ export default class vec3 implements vec<vec3> {
 	 * @param y y-component of the new vector.
 	 * @param z z-component of the new vector.
 	 */
-	constructor(x: number = 0, y: number = 0, z: number = 0) {
+	public constructor(x: number = 0, y: number = 0, z: number = 0) {
 		this[0] = x;
 		this[1] = y;
 		this[2] = z;
@@ -29,7 +30,7 @@ export default class vec3 implements vec<vec3> {
 	 * The 3-dimensional null-vector.
 	 * @returns A new vector representing the null vector.
 	 */
-	static get NULL(): vec3 {
+	public static get NULL(): vec3 {
 		return new vec3(0, 0, 0);
 	}
 

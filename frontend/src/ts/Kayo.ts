@@ -1,3 +1,4 @@
+import { FileRessourceManager } from "./FileRessourceManager";
 import { GPUX } from "./GPUX";
 import { Project } from "./project/Project";
 import WASMX from "./WASMX";
@@ -8,33 +9,39 @@ export class Kayo {
 	private _wasmx: WASMX;
 	private _audioContext: AudioContext;
 	private _windows: Set<Window>;
+	private _fileRessourceManager: FileRessourceManager;
 
-	constructor(gpux: GPUX, wasmx: WASMX) {
+	public constructor(gpux: GPUX, wasmx: WASMX, fileRessourceManager: FileRessourceManager) {
 		this._wasmx = wasmx;
 		this._gpux = gpux;
 		this._project = new Project(this);
 		this._windows = new Set();
 		this._audioContext = new AudioContext({ latencyHint: "interactive" });
+		this._fileRessourceManager = fileRessourceManager;
 	}
 
-	get project(): Project {
+	public get project(): Project {
 		return this._project;
 	}
 
-	get gpux(): GPUX {
+	public get gpux(): GPUX {
 		return this._gpux;
 	}
 
-	get wasmx(): WASMX {
+	public get wasmx(): WASMX {
 		return this._wasmx;
 	}
 
-	get windows(): Set<Window> {
+	public get windows(): Set<Window> {
 		return this._windows;
 	}
 
-	get audioContext() {
+	public get audioContext(): AudioContext {
 		return this._audioContext;
+	}
+
+	public get fileRessourceManager(): FileRessourceManager {
+		return this._fileRessourceManager;
 	}
 
 	public openNewWindow(): void {

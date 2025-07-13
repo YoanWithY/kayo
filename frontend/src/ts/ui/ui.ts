@@ -22,6 +22,7 @@ import SpanElement from "./components/SpanElement";
 import { PTPChatContent, PTPChatPane, PTPMessageElement, PTPTextInput } from "../collaborative/PTPChatPannel";
 import VBox from "./components/VBox";
 import { NumberInput } from "./components/NumberInput";
+import { FileSystemPane } from "./panes/FileSystemPane";
 
 export type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 
@@ -41,6 +42,7 @@ export function initUI() {
 	window.customElements.define("iconed-toggle-button", IconedToggleButton);
 
 	window.customElements.define(ViewportPane.getDomClass(), ViewportPane);
+	window.customElements.define(FileSystemPane.getDomClass(), FileSystemPane);
 	window.customElements.define(APIPane.getDomClass(), APIPane);
 	window.customElements.define(OutputPane.getDomClass(), OutputPane);
 	window.customElements.define(PaneSelectorPane.getDomClass(), PaneSelectorPane);
@@ -68,6 +70,7 @@ export function initUI() {
 
 const nameClassMap: { [key: string]: UIElement } = {
 	[OutputPane.getDomClass()]: OutputPane,
+	[FileSystemPane.getDomClass()]: FileSystemPane,
 	[Collapsible.getDomClass()]: Collapsible,
 	[Grid2Col.getDomClass()]: Grid2Col,
 	[SpanElement.getDomClass()]: SpanElement,
@@ -84,7 +87,7 @@ export function buildUIElement(win: Window, kayo: Kayo, obj: any, variables: any
 }
 
 export interface UIElement {
-	new (): any;
+	new (): unknown;
 	createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any): HTMLElement;
 	getDomClass(): string;
 }

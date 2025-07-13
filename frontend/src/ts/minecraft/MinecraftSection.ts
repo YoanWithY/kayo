@@ -16,7 +16,7 @@ export class MinecraftSection {
 	private _faceNumber: number = 0;
 	private _bindGroup1: GPUBindGroup;
 	private gpuDevice;
-	constructor(
+	public constructor(
 		project: Project,
 		minecraftWorld: MinecraftWorld,
 		dimension: number,
@@ -118,7 +118,6 @@ export class MinecraftSection {
 	}
 
 	public buildGeometry() {
-		let i = 0;
 		const geom: number[] = [];
 		const tex: number[] = [];
 		const texIndex: number[] = [];
@@ -131,7 +130,6 @@ export class MinecraftSection {
 
 					const n = this._minecraftWorld.getNeighborhoodOf(this._x, this._y, this._z, x, y, z);
 					this._faceNumber += block.build(geom, tex, texIndex, x, y, z, n);
-					i++;
 				}
 			}
 		}

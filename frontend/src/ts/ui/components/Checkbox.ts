@@ -11,12 +11,12 @@ export default class Checkbox extends IconedToggleButton {
 	private _stateWasmPath!: WasmPath;
 	private _internals: ElementInternals;
 
-	constructor() {
+	public constructor() {
 		super();
 		this._internals = this.attachInternals();
 	}
 
-	stateChangeCallback = (value: string) => {
+	private _stateChangeCallback = (value: string) => {
 		if (value == "true") {
 			this._internals.states.add("checked");
 			this.setStateUIOnly(1);
@@ -26,17 +26,17 @@ export default class Checkbox extends IconedToggleButton {
 		}
 	};
 
-	connectedCallback() {
+	protected connectedCallback() {
 		super.connectedCallback();
-		this._wasmx.addChangeListener(this._stateWasmPath, this.stateChangeCallback);
+		this._wasmx.addChangeListener(this._stateWasmPath, this._stateChangeCallback);
 	}
 
-	disconnectedCallback() {
+	protected disconnectedCallback() {
 		super.disconnectedCallback();
-		this._wasmx.removeChangeListener(this._stateWasmPath, this.stateChangeCallback);
+		this._wasmx.removeChangeListener(this._stateWasmPath, this._stateChangeCallback);
 	}
 
-	static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any): Checkbox {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any): Checkbox {
 		const p = win.document.createElement(this.getDomClass()) as Checkbox;
 		if (obj.tooltip) Tooltip.register(win, obj.tooltip as SerialTooltip, p, obj);
 		p._wasmx = kayo.wasmx;
@@ -55,7 +55,7 @@ export default class Checkbox extends IconedToggleButton {
 		return p;
 	}
 
-	static getDomClass(): string {
+	public static getDomClass(): string {
 		return "check-box";
 	}
 }

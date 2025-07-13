@@ -27,7 +27,7 @@ if (typeof fileRessourceManager === "string") {
 	throw new Error("Could not initialize WebGPU!", { cause: fileRessourceManager });
 }
 
-const kayo = new Kayo(gpux, wasmx);
+const kayo = new Kayo(gpux, wasmx, fileRessourceManager);
 (window as any).kayo = kayo;
 
 window.addEventListener("beforeunload", (e) => {

@@ -20,17 +20,17 @@ import { Leader } from "./Leader";
 import { Project } from "../project/Project";
 
 export class PTPBase {
-	protocol: string;
-	hostname: string;
-	wsPort: number;
-	wsUrl: string;
-	role!: Role;
-	ws: WebSocket;
-	pendingFilename = "";
-	dataArr: any[] = [];
-	messageCallback: (value: string) => void;
+	public protocol: string;
+	public hostname: string;
+	public wsPort: number;
+	public wsUrl: string;
+	public role!: Role;
+	public ws: WebSocket;
+	public pendingFilename = "";
+	public dataArr: any[] = [];
+	public messageCallback: (value: string) => void;
 
-	constructor(_: Project) {
+	public constructor(_: Project) {
 		this.protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 		this.hostname = window.location.hostname;
 		this.wsPort = 81;
@@ -52,7 +52,7 @@ export class PTPBase {
 		this.messageCallback = (_1: string) => {};
 	}
 
-	wsFuncMap: { [K in WSClientMessageType]: (content: any) => void } = {
+	public wsFuncMap: { [K in WSClientMessageType]: (content: any) => void } = {
 		offer: (content: any) => {
 			const wsOffer = content as WSClientOffer;
 			this.role.acceptOffer(wsOffer.offer, wsOffer.originIdentity);
@@ -93,12 +93,12 @@ export class PTPBase {
 		},
 	};
 
-	sendWS<T extends WSServerMessage>(message: T) {
+	public sendWS<T extends WSServerMessage>(message: T) {
 		console.log("WS Send:", message);
 		this.ws.send(JSON.stringify(message));
 	}
 
-	sendWSFile(file: File, target: WSTarget, update?: (bytesSend: number) => void) {
+	public sendWSFile(file: File, target: WSTarget, update?: (bytesSend: number) => void) {
 		this.sendWS<WSServerStartOfFileMessage>({
 			type: "start of file",
 			content: { target: target, fileName: file.name },
@@ -130,16 +130,16 @@ export class PTPBase {
 		});
 	}
 
-	sendRT<T extends RTMessage>(dataChannel: RTCDataChannel, message: T) {
+	public sendRT<T extends RTMessage>(dataChannel: RTCDataChannel, message: T) {
 		console.log("RT Send:", message);
 		dataChannel.send(JSON.stringify(message));
 	}
 
-	multicastRT<T extends RTMessage>(dataChannels: RTCDataChannel[], message: T) {
+	public multicastRT<T extends RTMessage>(dataChannels: RTCDataChannel[], message: T) {
 		for (const dataChannel of dataChannels) this.sendRT<T>(dataChannel, message);
 	}
 
-	sendRTChunked(
+	public sendRTChunked(
 		dataChannel: RTCDataChannel,
 		buffer: ArrayBuffer,
 		chunkSize: number,
@@ -175,7 +175,7 @@ export class PTPBase {
 		sendNextChunk();
 	}
 
-	sendRTLarge(
+	public sendRTLarge(
 		dataChannel: RTCDataChannel,
 		buffer: ArrayBuffer,
 		connection?: RTCPeerConnection,
@@ -188,7 +188,7 @@ export class PTPBase {
 		this.sendRTChunked(dataChannel, buffer, chunkSize, id, update, onFinish);
 	}
 
-	sendRTFile(
+	public sendRTFile(
 		file: File,
 		dataChannel: RTCDataChannel,
 		connection: RTCPeerConnection,
@@ -203,7 +203,7 @@ export class PTPBase {
 		});
 	}
 
-	multicastRTFile(
+	public multicastRTFile(
 		file: File,
 		connections: { dataChanel: RTCDataChannel; connection: RTCPeerConnection; id: number }[],
 		update?: (bytesSend: number, id: number) => void,

@@ -9,16 +9,16 @@ export default class Grid2Col extends HTMLElement {
 	private _stateWasmPathVariables: any;
 	private _additionalCallbacks: { path: WasmPath; callback: (v: string) => void }[] = [];
 
-	constructor() {
+	public constructor() {
 		super();
 		this._internals = this.attachInternals();
 	}
 
-	connectedCallback() {
+	protected connectedCallback() {
 		for (const entry of this._additionalCallbacks) this._wasmx.addChangeListener(entry.path, entry.callback);
 	}
 
-	disconnectedCallback() {
+	protected disconnectedCallback() {
 		for (const entry of this._additionalCallbacks) this._wasmx.removeChangeListener(entry.path, entry.callback);
 	}
 
@@ -27,7 +27,7 @@ export default class Grid2Col extends HTMLElement {
 		else this._internals.states.delete("uneffective");
 	}
 
-	checkDisablingCallback = () => {
+	private _checkDisablingCallback = () => {
 		this.setMarkUneffective(this._checkMarkUneffective());
 	};
 
@@ -43,7 +43,7 @@ export default class Grid2Col extends HTMLElement {
 		return false;
 	}
 
-	static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any) {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any) {
 		const p = win.document.createElement(this.getDomClass()) as Grid2Col;
 		p._wasmx = kayo.wasmx;
 		p._stateWasmPathVariables = variables;
@@ -53,7 +53,7 @@ export default class Grid2Col extends HTMLElement {
 		if (p._uneffectiveIfAny !== undefined) {
 			for (const entry of obj.uneffectiveIfAny) {
 				const path = kayo.wasmx.toWasmPath(entry.stateVariableURL, variables);
-				p._additionalCallbacks.push({ path: path, callback: p.checkDisablingCallback });
+				p._additionalCallbacks.push({ path: path, callback: p._checkDisablingCallback });
 			}
 		}
 

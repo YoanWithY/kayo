@@ -12,13 +12,13 @@ export type WasmPath = string[][];
 export default class WASMX {
 	private _bindings: Map<number, { url: WasmPath; callbacks: Set<(v: string) => void> }> = new Map();
 
-	Number;
-	kayoInstance: KayoWASMInstance;
-	minecraftModule: KayoWASMMinecraftModule;
-	imageData;
+	public Number;
+	public kayoInstance: KayoWASMInstance;
+	public minecraftModule: KayoWASMMinecraftModule;
+	public imageData;
 	private module: MainModule;
 
-	constructor(module: MainModule) {
+	public constructor(module: MainModule) {
 		this.module = module;
 		this.Number = module.KayoNumber;
 		this.getBufferView = module.getBufferView;
@@ -27,7 +27,7 @@ export default class WASMX {
 		this.minecraftModule = new module.KayoWASMMinecraftModule(this.kayoInstance);
 	}
 
-	getBufferView(vector: VectorUInt8) {
+	public getBufferView(vector: VectorUInt8) {
 		return this.module.getBufferView(vector);
 	}
 
@@ -79,7 +79,7 @@ export default class WASMX {
 	public removeChangeListener(wasmPath: WasmPath, f: (v: string) => void) {
 		const jsvc = this.getModelReference(wasmPath);
 		const observationID = jsvc.getObservationID();
-		let bound = this._bindings.get(observationID);
+		const bound = this._bindings.get(observationID);
 		if (!bound) return;
 		bound.callbacks.delete(f);
 	}

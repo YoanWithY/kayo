@@ -5,21 +5,21 @@ import Translation from "./Translation";
 import Transformation from "./Transformation";
 
 export default class TransformationStack extends Array implements Transformation {
-	scale = new Scale();
-	rotate = new RotationXYZ();
-	translate = new Translation();
+	public scale = new Scale();
+	public rotate = new RotationXYZ();
+	public translate = new Translation();
 
-	constructor() {
+	public constructor() {
 		super();
 	}
 
-	setValues(): void {}
+	public setValues(): void {}
 
-	getName(): string {
+	public getName(): string {
 		return "transformation Stack";
 	}
 
-	getTransformationMatrix(): mat4 {
+	public getTransformationMatrix(): mat4 {
 		let ret = mat4.identity();
 		for (let i = this.length - 1; i >= 0; i--) ret = ret.mult(this[i].getTransformationMatrix());
 
@@ -30,7 +30,7 @@ export default class TransformationStack extends Array implements Transformation
 		return ret;
 	}
 
-	getInverseTransformationMatrix(): mat4 {
+	public getInverseTransformationMatrix(): mat4 {
 		let ret = this.scale
 			.getInverseTransformationMatrix()
 			.mult(this.rotate.getInverseTransformationMatrix())

@@ -22,10 +22,10 @@ export interface Texture2D {
 }
 
 export class TextureLoader {
-	allTextures: { [i: string]: Texture2D };
-	project: Project;
+	public allTextures: { [i: string]: Texture2D };
+	public project: Project;
 
-	constructor(project: Project) {
+	public constructor(project: Project) {
 		this.project = project;
 		this.allTextures = {};
 	}

@@ -13,20 +13,20 @@ export interface VirtualTextureSamplingDescriptor {
 }
 
 export class VirtualTexture2D implements Texture2D {
-	static addressModeValueTable: { [key in GPUAddressMode]: number } = {
+	public static addressModeValueTable: { [key in GPUAddressMode]: number } = {
 		"clamp-to-edge": 0,
 		repeat: 1,
 		"mirror-repeat": 2,
 	};
-	virtualTextureSystem: VirtualTextureSystem;
-	uid: string;
-	width: number;
-	height: number;
-	samplingDescriptor: VirtualTextureSamplingDescriptor;
-	maxMipLevels: number;
-	firstAtlasedLevel: number;
-	virtualTextureID!: number;
-	constructor(
+	public virtualTextureSystem: VirtualTextureSystem;
+	public uid: string;
+	public width: number;
+	public height: number;
+	public samplingDescriptor: VirtualTextureSamplingDescriptor;
+	public maxMipLevels: number;
+	public firstAtlasedLevel: number;
+	public virtualTextureID!: number;
+	public constructor(
 		virtualTextureSystem: VirtualTextureSystem,
 		uid: string,
 		vid: number,

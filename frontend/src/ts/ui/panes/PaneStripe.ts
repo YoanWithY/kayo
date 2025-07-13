@@ -4,30 +4,30 @@ import { SplitablePane } from "../splitpane/SplitablePane";
 import { panesNameClassMap } from "./PaneSelectorPane";
 
 export class PaneStripe extends HTMLElement {
-	static size = parseFloat(
+	public static size = parseFloat(
 		getComputedStyle(document.documentElement).getPropertyValue("--pane-stripe-hight").replace("px", ""),
 	);
-	static size2 = this.size * 2;
+	public static size2 = this.size * 2;
 
-	kayo!: Kayo;
+	private _kayo!: Kayo;
 
-	dblclickHandler = () => {
+	private _dblclickCallback = () => {
 		(this.parentElement as SplitablePane).toggleSingleWindow();
 	};
 
-	contextMenueHandler = (e: MouseEvent) => {
+	private _contextMenueCallback = (e: MouseEvent) => {
 		e.preventDefault();
-		this.kayo.openNewWindow();
+		this._kayo.openNewWindow();
 	};
 
-	connectedCallback() {
-		this.addEventListener("dblclick", this.dblclickHandler);
-		this.addEventListener("contextmenu", this.contextMenueHandler);
+	protected connectedCallback() {
+		this.addEventListener("dblclick", this._dblclickCallback);
+		this.addEventListener("contextmenu", this._contextMenueCallback);
 	}
 
-	static createPaneStripe(win: Window, kayo: Kayo, name: string) {
+	public static createPaneStripe(win: Window, kayo: Kayo, name: string) {
 		const p = win.document.createElement("pane-stripe") as PaneStripe;
-		p.kayo = kayo;
+		p._kayo = kayo;
 
 		const selectBox = SelectBox.createUIElement(win);
 

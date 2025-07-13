@@ -19,15 +19,15 @@ export class IconedToggleButton extends HTMLElement {
 		this._state = state;
 	}
 
-	connectedCallback() {
+	protected connectedCallback() {
 		this.addEventListener("click", this._onClickCallback);
 	}
 
-	disconnectedCallback() {
+	protected disconnectedCallback() {
 		this.removeEventListener("click", this._onClickCallback);
 	}
 
-	static createIconedToggleButton(win: Window, states: ToggleState[], state: number) {
+	public static createIconedToggleButton(win: Window, states: ToggleState[], state: number) {
 		const p = win.document.createElement("iconed-toggle-button") as IconedToggleButton;
 		p._states = states;
 		p._state = state;

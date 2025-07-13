@@ -3,10 +3,10 @@ import { toRAD } from "../math/math";
 import Projection from "./Projection";
 
 export default class PerspectiveProjection implements Projection {
-	vFOV = toRAD(60);
-	near = 0.1;
-	far = 1000;
-	getProjectionMatrix(width: number, height: number): mat4 {
+	public vFOV = toRAD(60);
+	public near = 0.1;
+	public far = 1000;
+	public getProjectionMatrix(width: number, height: number): mat4 {
 		const AR = width / height;
 		const t = Math.tan(this.vFOV / 2) * this.near;
 		const b = -t;

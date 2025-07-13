@@ -50,7 +50,7 @@ export class MinecraftRenderingPipeline extends AbstractRenderingPipeline {
 	protected vertexState: GPUVertexState;
 	protected fragmentState: GPUFragmentState;
 
-	constructor(
+	public constructor(
 		label: string,
 		shaderModule: GPUShaderModule,
 		vertexEntryPoint: string,
@@ -92,7 +92,7 @@ export class MinecraftMetaRenderingPipeline extends AbstractMetaRenderPipeline {
 	protected shaderModule: GPUShaderModule;
 	protected renderingPipelineLayout: GPUPipelineLayout;
 
-	constructor(project: Project, id: string, bindGroup0Layout: GPUBindGroupLayout) {
+	public constructor(project: Project, id: string, bindGroup0Layout: GPUBindGroupLayout) {
 		super(id);
 		this.project = project;
 		this.renderingPipelineLayout = MinecraftRenderingPipeline.createPipelineLayout(
@@ -132,9 +132,9 @@ export class MinecraftMetaRenderingPipeline extends AbstractMetaRenderPipeline {
 		throw new Error("Method not implemented.");
 	}
 
-	static bindGroup1Layout: GPUBindGroupLayout;
-	static metaPipeline: MinecraftMetaRenderingPipeline;
-	static init(project: Project) {
+	public static bindGroup1Layout: GPUBindGroupLayout;
+	public static metaPipeline: MinecraftMetaRenderingPipeline;
+	public static init(project: Project) {
 		this.bindGroup1Layout = project.gpux.gpuDevice.createBindGroupLayout({
 			label: "minecraft bind group 1 layout",
 			entries: [
