@@ -29,8 +29,8 @@ export default defineConfig(({ command }) => {
 				manifest: {
 					name: "Kayo Engine",
 					short_name: "Kayo",
-					description: "",
-					theme_color: "#000000",
+					description: "The 3D multimedia engine.",
+					theme_color: "#161616",
 					icons: [
 						{
 							src: "/favicon.svg",
@@ -45,7 +45,7 @@ export default defineConfig(({ command }) => {
 						},
 					],
 					display: "standalone",
-					background_color: "#000000",
+					background_color: "#161616",
 				},
 			}),
 		],
