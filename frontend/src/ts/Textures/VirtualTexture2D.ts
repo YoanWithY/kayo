@@ -70,11 +70,15 @@ export class VirtualTexture2D implements Texture2D {
 		if (level <= this.firstAtlasedLevel) {
 			const ph = this.virtualTextureSystem.physicalTexture;
 			const coord = ph.getAtlasTileCoordinate(this);
+			const tileSize = this.virtualTextureSystem.physicalTileSize;
 			this.virtualTextureSystem.gpux.gpuDevice.queue.writeTexture(
-				{ texture: ph.gpuTexture, origin: [coord[0] * ph.physicalTileSize, coord[1] * ph.physicalTileSize, 0] },
+				{
+					texture: ph.gpuTexture,
+					origin: [coord[0] * tileSize, coord[1] * tileSize, 0],
+				},
 				image.data[0],
-				{ bytesPerRow: ph.physicalTileSize * 4 },
-				[ph.physicalTileSize, ph.physicalTileSize, 1],
+				{ bytesPerRow: tileSize * 4 },
+				[tileSize, tileSize, 1],
 			);
 		}
 	}
@@ -88,11 +92,11 @@ export class VirtualTexture2D implements Texture2D {
 	}
 
 	public xTilesOfLevel(level: number) {
-		return Math.ceil(this.widthOfLevel(level) / this.virtualTextureSystem.physicalTexture.logicalTileSize);
+		return Math.ceil(this.widthOfLevel(level) / this.virtualTextureSystem.logicalTileSize);
 	}
 
 	public yTilesOfLevel(level: number) {
-		return Math.ceil(this.heightOfLevel(level) / this.virtualTextureSystem.physicalTexture.logicalTileSize);
+		return Math.ceil(this.heightOfLevel(level) / this.virtualTextureSystem.logicalTileSize);
 	}
 
 	public getMinFilterValue(): number {

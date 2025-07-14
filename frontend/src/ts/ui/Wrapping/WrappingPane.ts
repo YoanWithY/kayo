@@ -20,6 +20,7 @@ export class WrappingPane extends HTMLElement {
 		if (useHeader) {
 			p._header = win.document.createElement("div");
 			const fi = win.document.createElement("input");
+			fi.multiple = true;
 			fi.type = "file";
 
 			const openButton = win.document.createElement("button");
@@ -28,10 +29,37 @@ export class WrappingPane extends HTMLElement {
 
 			let res: ResourcePack;
 			fi.addEventListener("change", async () => {
-				const file = fi.files?.[0];
-				if (file) {
+				if (!fi.files) return;
+				for (const file of fi.files) {
+					if (file.type == "image/png") {
+						kayo.fileRessourceManager.storeRaw(file);
+						const vts = kayo.project.renderer.virtualTextureSystem;
+						const vt = vts.allocateVirtualTexture(
+							file.name,
+							16,
+							16,
+							"repeat",
+							"repeat",
+							"linear",
+							"nearest",
+							"linear",
+							false,
+						);
+						if (!vt) return;
+
+						if (vt === undefined) return;
+						const atlas = project.renderer.virtualTextureSystem.generateMipAtlas(
+							await createImageBitmap(file),
+							vt.samplingDescriptor,
+						);
+						vt.makeResident(atlas, 0, 0, 0);
+						project.fullRerender();
+						continue;
+					}
+
 					// Create a FileReader to read the file as an ArrayBuffer
 					const reader = new FileReader();
+
 					reader.onload = async function (e) {
 						const content = e.target?.result;
 						if (!content) return;
@@ -119,8 +147,11 @@ export class WrappingPane extends HTMLElement {
 							kayo.fileRessourceManager.storeRaw(file);
 						}
 					};
+
 					reader.readAsArrayBuffer(file); // Read file as ArrayBuffer
 				}
+
+				kayo.project.renderer.virtualTextureSystem.physicalTexture.generateAllMips();
 			});
 			p._header.appendChild(openButton);
 			p.appendChild(p._header);

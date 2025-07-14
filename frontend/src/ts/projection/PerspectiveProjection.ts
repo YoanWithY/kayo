@@ -3,7 +3,7 @@ import { toRAD } from "../math/math";
 import Projection from "./Projection";
 
 export default class PerspectiveProjection implements Projection {
-	public vFOV = toRAD(60);
+	public vFOV = toRAD(50);
 	public near = 0.1;
 	public far = 1000;
 	public getProjectionMatrix(width: number, height: number): mat4 {

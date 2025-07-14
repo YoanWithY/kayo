@@ -8,7 +8,7 @@ import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 import { ViewportPane } from "../ui/panes/ViewportPane";
 import { RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
 import { AbstractMetaRenderPipeline } from "./AbstractMetaRenderingPipeline";
-const thresholdMapURL = "/blue_noise_512px_16bit.png";
+const thresholdMapURL = "/beyer_2px_16bit.png";
 
 const thresholdMapBlob = await fetch(thresholdMapURL);
 const thresholdMapBytes = await thresholdMapBlob.bytes();
@@ -80,7 +80,7 @@ export default class RealtimeRenderer {
 						sampleType: "uint",
 					},
 				},
-				...VirtualTextureSystem.bindGroupEntries,
+				...VirtualTextureSystem.bindGroupLayoutEntries,
 			],
 		});
 		this.bindGroupR3Layout = this.gpuDevice.createBindGroupLayout({
@@ -366,6 +366,7 @@ export default class RealtimeRenderer {
 		r3renderPassEncoder.setViewport(0, 0, w, h, 0, 1);
 
 		this.project.scene.background.recordForwardRendering(r3renderPassEncoder, key);
+		this.project.scene.grid?.recordForwardRendering(r3renderPassEncoder, key);
 		r3renderPassEncoder.end();
 
 		viewportCache.resolvePerformanceQueryCommand(commandEncoder);

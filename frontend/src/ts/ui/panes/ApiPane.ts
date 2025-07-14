@@ -12,6 +12,13 @@ function groupBy(array: any[], key: string) {
 	}, {});
 }
 
+async function checkPermissions() {
+	const camera = await navigator.permissions.query({ name: "camera" });
+	const microphone = await navigator.permissions.query({ name: "microphone" });
+
+	return camera.state == "granted" && microphone.state == "granted";
+}
+
 export default class APIPane extends BasicPane {
 	private tree: HTMLElement | null = null;
 	private _win!: Window;
@@ -24,11 +31,13 @@ export default class APIPane extends BasicPane {
 		const gpuDevice = gpux.gpuDevice;
 		const audioContext = this.kayo.audioContext;
 
-		const stream = await navigator.mediaDevices.getUserMedia({
-			audio: true,
-			video: true,
-		});
-		stream.getTracks().forEach((track) => track.stop());
+		if (!checkPermissions()) {
+			const stream = await navigator.mediaDevices.getUserMedia({
+				audio: true,
+				video: true,
+			});
+			stream.getTracks().forEach((track) => track.stop());
+		}
 		const outputs = await navigator.mediaDevices.enumerateDevices();
 		const groupedDevices: { [key: string]: any[] } = groupBy(outputs, "kind");
 		for (const key in groupedDevices) {

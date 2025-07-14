@@ -7,6 +7,7 @@ import TextureUtils from "../Textures/TextureUtils";
 import { Kayo } from "../Kayo";
 import { PTPBase } from "../collaborative/PTPBase";
 import WASMX from "../WASMX";
+import { Grid } from "../debug/GridPipeline";
 
 export class Project {
 	public kayo: Kayo;
@@ -26,9 +27,11 @@ export class Project {
 
 		TextureUtils.init(this.gpux.gpuDevice);
 		Background.init(this.gpux.gpuDevice, this.renderer.bindGroup0Layout);
+		Grid.init(this.gpux, this.renderer.bindGroup0Layout);
 
 		this.scene = new Scene();
 		this.scene.background = new Background(this);
+		this.scene.grid = new Grid(this);
 	}
 
 	public requestUI(win: Window, defaultPane: string, useHeader: boolean) {

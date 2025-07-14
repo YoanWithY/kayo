@@ -5,58 +5,42 @@ import { VirtualTextureSystem } from "./VirtualTextureSystem";
 
 export class IndirectionTableAtlas {
 	public static readonly components = 4;
-	/**
-	 * The virtual texturing system this atlas belongs to.
-	 */
-	public virtualTextureSystem: VirtualTextureSystem;
-	/**
-	 * The size (= width = height) of the indirection table atlas in tiles/texels.
-	 */
-	public size: number;
-	/**
-	 * The number of tiles/texels each layer can store.
-	 */
-	public tilesPerLayer: number;
-	/**
-	 * The number of layers of the indirection table atlas.
-	 */
-	public layers: number;
-	/**
-	 * The total number of tiles/texel that can be populated with data. This is the same as {@link virtualTextureSystem.physicalTexture.totalTiles}.
-	 */
-	public totalUsableTiles: number;
+	private _virtualTextureSystem: VirtualTextureSystem;
 	/**
 	 * The data levels of the indirections table atlas mips.
 	 */
-	public dataLayers: Uint8Array[];
-	/**
-	 * The gpu texture of this indirection table atlas.
-	 */
-	public gpuTexture: GPUTexture;
+	private _dataLayers: Uint8Array[];
+
+	private _gpuTexture: GPUTexture;
 	public constructor(virtualTextureSystem: VirtualTextureSystem, gpux: GPUX) {
-		this.virtualTextureSystem = virtualTextureSystem;
+		this._virtualTextureSystem = virtualTextureSystem;
 
-		this.totalUsableTiles = this.virtualTextureSystem.physicalTexture.totalTiles;
-		this.size = Math.min(Math.ceil(Math.sqrt(this.virtualTextureSystem.physicalTexture.totalTiles)), 256);
-		this.tilesPerLayer = this.size * this.size;
-		this.layers = Math.ceil(this.virtualTextureSystem.physicalTexture.totalTiles / this.tilesPerLayer);
-
-		this.dataLayers = new Array<Uint8Array>(this.layers);
-		for (let layer = 0; layer < this.layers; layer++) {
-			this.dataLayers[layer] = new Uint8Array(this.tilesPerLayer * IndirectionTableAtlas.components);
+		this._dataLayers = new Array<Uint8Array>(this._virtualTextureSystem.layers);
+		for (let layer = 0; layer < this._virtualTextureSystem.layers; layer++) {
+			this._dataLayers[layer] = new Uint8Array(
+				this._virtualTextureSystem.tilesPerLayer * IndirectionTableAtlas.components,
+			);
 		}
 
 		const indirectionTableTextureDescriptor: GPUTextureDescriptor = {
 			label: "SVT indirection table texture",
 			dimension: "2d",
-			size: [this.size, this.size, this.layers],
+			size: [
+				this._virtualTextureSystem.tilesPerDimension,
+				this._virtualTextureSystem.tilesPerDimension,
+				this._virtualTextureSystem.layers,
+			],
 			format: "rgba8uint",
-			mipLevelCount: TextureUtils.getFullMipPyramidLevels(this.size),
+			mipLevelCount: TextureUtils.getFullMipPyramidLevels(this._virtualTextureSystem.tilesPerDimension),
 			sampleCount: 1,
 			usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING,
 			viewFormats: ["rgba8uint"],
 		};
-		this.gpuTexture = gpux.gpuDevice.createTexture(indirectionTableTextureDescriptor);
+		this._gpuTexture = gpux.gpuDevice.createTexture(indirectionTableTextureDescriptor);
+	}
+
+	public get gpuTexture() {
+		return this._gpuTexture;
 	}
 
 	public allocateIndirectionTable(_virtualTexture: VirtualTexture2D): undefined {

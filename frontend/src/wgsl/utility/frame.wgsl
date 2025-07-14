@@ -90,10 +90,11 @@ fn applyCustomQuantisation(final_color: vec3f, frag_coord: vec2u) -> vec3f {
 	
 }
 
-fn createOutputFragment(linear_rgb: vec3f, frag_coord: vec2u) -> vec3f {
-	let exposure_applied = linear_rgb * pow(2.0, view.exposure);
+fn createOutputFragment(linear_rgb: vec4f, frag_coord: vec2u, premultiply: bool) -> vec4f {
+	let exposure_applied = linear_rgb.rgb * pow(2.0, view.exposure);
 	let color = convertToTargetColorSpace(exposure_applied);
 	let oe_color = select(color, sRGB_OETF(color), output_component_transfere == 1);
 	let final_high_res_color = pow(oe_color, vec3f(1.0 / view.gamma));
-	return applyCustomQuantisation(final_high_res_color, frag_coord);
+	let quantized = applyCustomQuantisation(final_high_res_color, frag_coord);
+	return select(vec4f(quantized, linear_rgb.a), vec4f(quantized * linear_rgb.a, linear_rgb.a), premultiply);
 }

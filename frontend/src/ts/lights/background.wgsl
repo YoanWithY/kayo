@@ -16,6 +16,8 @@ fn vertex_main(vertex: VertexInput) -> VertexOutput {
 	return VertexOutput(position, vertex.position);
 }
 
+#include <virtualTexture>
+
 @fragment
 fn fragment_main(fragment: VertexOutput) -> R3FragmentOutput {
 	let ws_dir = normalize(fragment.ws_position);
@@ -24,7 +26,16 @@ fn fragment_main(fragment: VertexOutput) -> R3FragmentOutput {
 	interpolant1 = (interpolant1 * interpolant1 * interpolant1) * 0.5 + 0.5;
 
 	let srgb = vec3f(fragment.ws_position) * 0.5 + 0.5;
-	let out_color = vec4f(sRGB_EOTF(srgb), 1.0);
-	let out_display = createOutputFragment(out_color.rgb, pixel_coord);
-	return R3FragmentOutput(vec4f(out_display, 1.0), 0);
+	var out_color = vec4f(srgb, 1.0);
+
+	let svt_value = textureSample(svt_physical_texture, svt_sampler_ansiotropic, srgb.xy, 0);
+	if (out_color.z == 0) {
+		out_color = svt_value;
+	}
+
+	out_color = vec4f(sRGB_EOTF(out_color.rgb), 1.0);
+
+
+	let out_display = createOutputFragment(out_color, pixel_coord, true);
+	return R3FragmentOutput(out_display, 0);
 }
