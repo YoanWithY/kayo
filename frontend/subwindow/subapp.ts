@@ -1,6 +1,6 @@
 import { initUI as initUIClasses } from "../src/ts/ui/ui";
 import type { Kayo } from "../src/ts/Kayo";
-import OutputPane from "../src/ts/ui/panes/OutpuPane";
+import PaneSelectorPane from "../src/ts/ui/panes/PaneSelectorPane";
 
 initUIClasses();
 window.name = "Kayo Sub";
@@ -13,4 +13,4 @@ window.addEventListener("beforeunload", () => {
 	openerKayo.windows.delete(window);
 });
 
-openerKayo.registerWindow(window, OutputPane.getName(), false);
+openerKayo.registerWindow(window, PaneSelectorPane.getName(), false);

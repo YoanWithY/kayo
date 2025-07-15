@@ -12,7 +12,6 @@ interface DrawVerticalStackedBarsOpts {
 	label: string;
 	startY: number; // top Y position for chart and label
 	chartHeight: number; // total height of bars
-	labelFont: string;
 }
 
 export class PerformancePane extends BasicPane {
@@ -32,7 +31,7 @@ export class PerformancePane extends BasicPane {
 	}
 
 	private _drawVerticalStackedBars(opts: DrawVerticalStackedBarsOpts): void {
-		const { canvas, ctx, data, subtasksOrder, subtaskColors, label, startY, chartHeight, labelFont } = opts;
+		const { canvas, ctx, data, subtasksOrder, subtaskColors, label, startY, chartHeight } = opts;
 		const count = data.length;
 		const availableWidth = canvas.width;
 		const barWidth = availableWidth > 0 ? Math.floor(availableWidth / count) : 0;
@@ -42,14 +41,28 @@ export class PerformancePane extends BasicPane {
 		const maxTotal = Math.ceil(Math.max(...totals, 1) / 10) * 10;
 		const scaleY = chartHeight / maxTotal;
 
+		let js = 0;
+		let render = 0;
+		for (const e of data) {
+			js += e["JavaScript"];
+			render += e["Render"];
+		}
+
 		// Draw label
-		ctx.font = labelFont;
+		ctx.font = `${this._win.devicePixelRatio}em sans-serif`;
 		ctx.textBaseline = "top";
-		ctx.fillStyle = "white";
-		ctx.fillText(label, 0, startY);
+		ctx.fillStyle = "rgb(200, 200, 200)";
+		ctx.fillText(
+			`${label} - ${data.length} Frame AVG - JS: ${(js / data.length).toFixed(1)}ms | Render: ${(render / data.length).toFixed(1)}ms`,
+			0,
+			startY,
+		);
 
 		const labelHeight = parseInt(ctx.font, 10);
 		const chartY = startY + labelHeight + 4;
+
+		ctx.fillStyle = "rgb(50, 50, 50)";
+		ctx.fillRect(0, chartY, availableWidth, chartHeight);
 
 		// Draw bars
 		data.forEach((entry, i) => {
@@ -67,10 +80,9 @@ export class PerformancePane extends BasicPane {
 			});
 		});
 
-		// Draw horizontal grid lines at each 10-unit step
-		ctx.strokeStyle = "rgb(0 0 0 / 20%)"; // grid color
-		ctx.lineWidth = 1;
+		ctx.lineWidth = this._win.devicePixelRatio;
 		for (let value = 0; value <= maxTotal; value++) {
+			ctx.strokeStyle = `rgb(0 0 0 / ${value % 5 === 0 ? 100 : 50}%)`;
 			const y = chartY + chartHeight - value * scaleY + 0.5; // center to avoid blur :contentReference[oaicite:1]{index=1}
 			ctx.beginPath();
 			ctx.moveTo(0, y);
@@ -82,13 +94,18 @@ export class PerformancePane extends BasicPane {
 	public render() {
 		this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
-		const chartHeight = 200;
-		let h = 10;
+		const chartHeight = 100 * this._win.devicePixelRatio;
+		let h = 10 * this._win.devicePixelRatio;
+		let i = 1;
 		for (const v of this._kayo.project.viewportPanes) {
+			const d = [];
+			for (let i = 0; i < v.timeRingeCach.length; i++)
+				d.push(v.timeRingeCach[(v.timeRingeCachCurrentIndex + i) % v.timeRingeCach.length]);
+
 			this._drawVerticalStackedBars({
 				canvas: this._canvas,
 				ctx: this._ctx,
-				data: v.timeRingeCach,
+				data: d,
 				subtasksOrder: ["JavaScript", "Render", "indexResolve", "Selection", "Overlays", "compositingTime"],
 				subtaskColors: {
 					JavaScript: "red",
@@ -98,12 +115,11 @@ export class PerformancePane extends BasicPane {
 					Overlays: "blue",
 					compositingTime: "purple",
 				},
-				label: "Frame Time Distribution",
+				label: `Viewport ${i++}`,
 				startY: h,
 				chartHeight,
-				labelFont: "24px sans-serif",
 			});
-			h += chartHeight + 50;
+			h += chartHeight + 50 * this._win.devicePixelRatio;
 		}
 	}
 

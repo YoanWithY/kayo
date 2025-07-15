@@ -83,7 +83,7 @@ export class GridPipeline extends AbstractRenderingPipeline {
 			targets: targets,
 			constants: constants,
 		};
-
+		this.multisample.count = key.msaa;
 		this.buildPipeline(gpux.gpuDevice, layout);
 	}
 }

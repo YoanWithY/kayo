@@ -214,7 +214,18 @@ export class ViewportPane extends BasicPane implements Viewport {
 		return this.canvasContext.getCurrentTexture();
 	}
 
-	private _timeRingCach = new Array(30);
+	private _timeRingCach = new Array(30).fill(
+		{
+			JavaScript: 0,
+			Render: 0,
+			indexResolve: 0,
+			Selection: 0,
+			Overlays: 0,
+			compositingTime: 0,
+		},
+		0,
+		30,
+	);
 	private _timeRingCurrentIndex = 0;
 	public setGPUTime(times: any): void {
 		this._timeRingCach[this._timeRingCurrentIndex] = times;
@@ -223,6 +234,10 @@ export class ViewportPane extends BasicPane implements Viewport {
 
 	public get timeRingeCach() {
 		return this._timeRingCach;
+	}
+
+	public get timeRingeCachCurrentIndex() {
+		return this._timeRingCurrentIndex;
 	}
 
 	protected connectedCallback() {

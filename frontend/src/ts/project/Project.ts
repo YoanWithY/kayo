@@ -69,10 +69,7 @@ export class Project {
 				this.viewportsToUpdate.delete(v);
 			}
 
-			for (const p of this.performancePanes) {
-				if (p.window != viewport.window) continue;
-				p.render();
-			}
+			for (const p of this.performancePanes) p.render();
 
 			this.requestedAnimationFrameForWindow.set(viewport.window, false);
 		});
