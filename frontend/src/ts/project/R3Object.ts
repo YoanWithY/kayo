@@ -1,3 +1,4 @@
+import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import TransformationStack from "../transformation/TransformationStack";
 import { Project } from "./Project";
 
@@ -14,7 +15,8 @@ export default abstract class R3Object {
 
 	public constructor(project: Project) {
 		this.transformationStack = new TransformationStack();
-		const { vertexUniformBuffer, fragmentUniformBuffer, bindGroup } = project.renderer.getNew3RData();
+		const { vertexUniformBuffer, fragmentUniformBuffer, bindGroup } =
+			project.renderers[RealtimeRenderer.rendererKey].getNew3RData();
 		this.vertexUniformBuffer = vertexUniformBuffer;
 		this.fragmentUniformBuffer = fragmentUniformBuffer;
 		this.defaultBindGroup = bindGroup;

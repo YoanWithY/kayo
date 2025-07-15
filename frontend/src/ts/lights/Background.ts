@@ -10,6 +10,7 @@ import {
 import { GPUX } from "../GPUX";
 import staticShaderCode from "./background.wgsl?raw";
 import { resolveShader } from "../rendering/ShaderUtils";
+import RealtimeRenderer from "../rendering/RealtimeRenderer";
 
 const vertexBufferLayout: GPUVertexBufferLayout[] = [
 	{
@@ -37,6 +38,8 @@ class BackgroundPipeline extends AbstractRenderingPipeline {
 			topology: "triangle-list",
 		};
 		const constants = AbstractMetaRenderPipeline.getConstantsFromKey(key);
+
+		this.depthStencilState.depthWriteEnabled = false;
 
 		this.vertexState = {
 			module: shaderModule,
@@ -71,7 +74,7 @@ export default class Background implements Renderable {
 		renderPassEnoder.setPipeline(this.pipelineCache.getPipeline(key).gpuPipeline);
 		renderPassEnoder.setVertexBuffer(0, Background._vertexBuffer);
 		renderPassEnoder.setIndexBuffer(Background._indexBuffer, "uint16");
-		renderPassEnoder.setBindGroup(0, this.project.renderer.bindGroup0);
+		renderPassEnoder.setBindGroup(0, this.project.renderers[RealtimeRenderer.rendererKey].bindGroup0);
 		renderPassEnoder.drawIndexed(6 * 2 * 3, 1);
 	}
 

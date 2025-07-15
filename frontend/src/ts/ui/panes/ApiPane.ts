@@ -25,11 +25,11 @@ export default class APIPane extends BasicPane {
 
 	private buildCallback = async () => {
 		if (this.tree && this.contains(this.tree)) this.removeChild(this.tree);
-		const gpux = this.kayo.gpux;
+		const gpux = this._kayo.gpux;
 		const gpu = gpux.gpu;
 		const gpuAdapter = gpux.gpuAdapter;
 		const gpuDevice = gpux.gpuDevice;
-		const audioContext = this.kayo.audioContext;
+		const audioContext = this._kayo.audioContext;
 
 		if (!checkPermissions()) {
 			const stream = await navigator.mediaDevices.getUserMedia({

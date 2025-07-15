@@ -2,10 +2,10 @@ import { Kayo } from "../../Kayo";
 import { buildUIElement } from "../ui";
 
 export default abstract class BasicPane extends HTMLElement {
-	public kayo!: Kayo;
+	protected _kayo!: Kayo;
 	public static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any): BasicPane {
 		const p = win.document.createElement(obj.class) as BasicPane;
-		p.kayo = kayo;
+		p._kayo = kayo;
 
 		const children = obj.children;
 		if (children === undefined) return p;

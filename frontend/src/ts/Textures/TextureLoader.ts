@@ -32,7 +32,7 @@ export class TextureLoader {
 
 	public async loadTextureVirtual(url: string): Promise<VirtualTexture2D | undefined> {
 		const bitmap = await TextureUtils.loadImageBitmap(url);
-		const vtSystem = this.project.renderer.virtualTextureSystem;
+		const vtSystem = this.project.virtualTextureSystem;
 		const virtualTexture = vtSystem.allocateVirtualTexture(url, bitmap.width, bitmap.height);
 		if (virtualTexture === undefined) return undefined;
 

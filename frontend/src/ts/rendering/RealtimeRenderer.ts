@@ -1,11 +1,10 @@
 import { Project } from "../project/Project";
 import { Viewport } from "./Viewport";
-import { ViewportCache } from "./ViewportCache";
+import { RealtimeViewportCache } from "./ViewportCache";
 import { CompositingPipeline } from "./CompositingPipeline";
 import { ResolvePipeline } from "./ResolvePipeline";
 import Camera from "../Viewport/Camera";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
-import { ViewportPane } from "../ui/panes/ViewportPane";
 import { RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
 import { AbstractMetaRenderPipeline } from "./AbstractMetaRenderingPipeline";
 const thresholdMapURL = "/beyer_2px_16bit.png";
@@ -14,8 +13,11 @@ const thresholdMapBlob = await fetch(thresholdMapURL);
 const thresholdMapBytes = await thresholdMapBlob.bytes();
 
 export default class RealtimeRenderer {
+	public static readonly rendererKey = "realtime";
+	public get rendererKey() {
+		return RealtimeRenderer.rendererKey;
+	}
 	public project: Project;
-	public viewportPanes = new Set<ViewportPane>();
 
 	private r3renderPassDescriptor: GPURenderPassDescriptor;
 	private overlayRenderPassDescriptor: GPURenderPassDescriptor;
@@ -23,10 +25,8 @@ export default class RealtimeRenderer {
 	private r16ResolveRenderPassDescriptor: GPURenderPassDescriptor;
 	private compositingRenderPassDescriptor: GPURenderPassDescriptor;
 
-	private requestedAnimationFrame: Map<Window, boolean> = new Map<Window, boolean>();
-	private viewportsToUpdate = new Set<Viewport>();
-	private registeredViewports = new Set<Viewport>();
-	private viewportCache = new Map<Viewport, ViewportCache>();
+	public registeredViewports = new Set<Viewport>();
+	private viewportCache = new Map<Viewport, RealtimeViewportCache>();
 	private viewUBO: GPUBuffer;
 	private gpuDevice: GPUDevice;
 	public bindGroup0!: GPUBindGroup;
@@ -41,7 +41,6 @@ export default class RealtimeRenderer {
 	public heightFieldComputePassDescriptor: GPUComputePassDescriptor;
 	public shadowViewUBO: GPUBuffer;
 	public shadowBindGroup0!: GPUBindGroup;
-	public virtualTextureSystem: VirtualTextureSystem;
 	public blueNoiseTexture!: GPUTexture;
 	public blueNoiseView!: GPUTextureView;
 
@@ -49,7 +48,7 @@ export default class RealtimeRenderer {
 		this.project = project;
 		this.gpuDevice = project.gpux.gpuDevice;
 		this.reconfigureContext(
-			(this.project.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config,
+			(this.project.wasmx.kayoInstance.project.renderStates.get(this.rendererKey) as RenderState).config,
 		);
 		this.viewUBO = this.gpuDevice.createBuffer({
 			label: "View UBO",
@@ -61,9 +60,8 @@ export default class RealtimeRenderer {
 			size: (3 * 16 + 12) * 4,
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
 		});
-		this.virtualTextureSystem = new VirtualTextureSystem(this.project.gpux);
 		this.bindGroup0Layout = this.gpuDevice.createBindGroupLayout({
-			label: "Global default bind group 0 layout",
+			label: "Global realtime bind group 0 layout",
 			entries: [
 				{
 					binding: 0,
@@ -292,7 +290,7 @@ export default class RealtimeRenderer {
 			entries: [
 				{ binding: 0, resource: { buffer: this.shadowViewUBO } },
 				{ binding: 1, resource: this.blueNoiseView },
-				...this.virtualTextureSystem.bindGroupEntries,
+				...this.project.virtualTextureSystem.bindGroupEntries,
 			],
 			layout: this.bindGroup0Layout,
 		});
@@ -302,7 +300,7 @@ export default class RealtimeRenderer {
 			entries: [
 				{ binding: 0, resource: { buffer: this.viewUBO } },
 				{ binding: 1, resource: this.blueNoiseView },
-				...this.virtualTextureSystem.bindGroupEntries,
+				...this.project.virtualTextureSystem.bindGroupEntries,
 			],
 			layout: this.bindGroup0Layout,
 		});
@@ -314,14 +312,9 @@ export default class RealtimeRenderer {
 		for (const [, viewportCache] of this.viewportCache) viewportCache.reconfigureContext(config.general);
 	}
 
-	public init() {
-		// this.compositingPipeline = new CompositingPipeline("Compositing Pipeline");
-		// this.r16ResolvePipeline = new ResolvePipeline(this.project, "R16u resolve pipeline", "r16uint", "u32", "x");
-	}
-
 	public jsTime = "";
 	public frame = 0;
-	private _renderViewport = (_: number, viewport: Viewport) => {
+	public renderViewport(_: number, viewport: Viewport) {
 		const start = performance.now();
 		const renderState = this.project.wasmx.kayoInstance.project.renderStates.get(viewport.configKey);
 		if (renderState === null) {
@@ -374,36 +367,13 @@ export default class RealtimeRenderer {
 		viewportCache.asyncGPUPerformanceUpdate(performance.now() - start);
 
 		this.frame++;
-	};
-
-	public requestAnimationFrameWith(viewport: Viewport) {
-		if (!this.registeredViewports.has(viewport)) {
-			console.warn("Viewport is not registered.");
-			return;
-		}
-		this.viewportsToUpdate.add(viewport);
-		if (this.requestedAnimationFrame.get(viewport.window)) return;
-
-		this.requestedAnimationFrame.set(viewport.window, true);
-		viewport.window.requestAnimationFrame((ts: number) => {
-			for (const v of this.viewportsToUpdate) {
-				if (v.window != viewport.window) continue;
-				this._renderViewport(ts, v);
-				this.viewportsToUpdate.delete(v);
-			}
-			this.requestedAnimationFrame.set(viewport.window, false);
-
-			if (this.frame < 10) {
-				this.requestAnimationFrameWith(viewport);
-			}
-		});
 	}
 
 	public registerViewport(viewport: Viewport) {
 		if (this.registeredViewports.has(viewport)) return;
 
 		this.registeredViewports.add(viewport);
-		this.viewportCache.set(viewport, new ViewportCache(this.project, viewport));
+		this.viewportCache.set(viewport, new RealtimeViewportCache(this.project, viewport));
 	}
 
 	public unregisterViewport(viewport: Viewport) {

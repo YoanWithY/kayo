@@ -5,7 +5,7 @@ import Projection from "./Projection";
 export default class PerspectiveProjection implements Projection {
 	public vFOV = toRAD(50);
 	public near = 0.1;
-	public far = 1000;
+	public far = 10000;
 	public getProjectionMatrix(width: number, height: number): mat4 {
 		const AR = width / height;
 		const t = Math.tan(this.vFOV / 2) * this.near;

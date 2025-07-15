@@ -15,16 +15,14 @@ export class ViewportPane extends BasicPane implements Viewport {
 	public lable = "My Viewport";
 	public project!: Project;
 	public window!: Window;
-	public configKey: string = "default";
+	public configKey: string = "realtime";
 
 	private _resizeObserver: ResizeObserver = new ResizeObserver((e) => {
 		const size = e[0].devicePixelContentBoxSize[0];
 		this.canvas.width = size.inlineSize;
 		this.canvas.height = size.blockSize;
-		if (this.isConnected) this.project.renderer.requestAnimationFrameWith(this);
+		if (this.isConnected) this.project.requestAnimationFrameWith(this);
 	});
-
-	private _infoPane!: HTMLDivElement;
 
 	public constructor() {
 		super();
@@ -46,7 +44,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 		const orbitMove = (e: MouseEvent) => {
 			if (e.shiftKey) shiftView(e.movementX, e.movementY);
 			else rotateView(e.movementX, e.movementY);
-			this.project.renderer.requestAnimationFrameWith(this);
+			this.project.requestAnimationFrameWith(this);
 		};
 
 		const walkLook = (e: MouseEvent) => {
@@ -57,7 +55,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 			lookAt.theta -= dtheta;
 			const camPos2 = this.camera.getWorldLocation();
 			lookAt.p = lookAt.p.add(camPos1.sub(camPos2));
-			this.project.renderer.requestAnimationFrameWith(this);
+			this.project.requestAnimationFrameWith(this);
 		};
 
 		const keyMap: any = {};
@@ -75,22 +73,22 @@ export class ViewportPane extends BasicPane implements Viewport {
 					const mat = this.camera.transformationStack.getTransformationMatrix();
 					if (keyMap["w"]) {
 						lookAt.p = lookAt.p.sub(mat.getColumn(2).xyz.mulS(speed));
-						this.project.renderer.requestAnimationFrameWith(this);
+						this.project.requestAnimationFrameWith(this);
 					}
 
 					if (keyMap["s"]) {
 						lookAt.p = lookAt.p.sub(mat.getColumn(2).xyz.mulS(-speed));
-						this.project.renderer.requestAnimationFrameWith(this);
+						this.project.requestAnimationFrameWith(this);
 					}
 
 					if (keyMap["a"]) {
 						lookAt.p = lookAt.p.sub(mat.getColumn(0).xyz.mulS(speed));
-						this.project.renderer.requestAnimationFrameWith(this);
+						this.project.requestAnimationFrameWith(this);
 					}
 
 					if (keyMap["d"]) {
 						lookAt.p = lookAt.p.sub(mat.getColumn(0).xyz.mulS(-speed));
-						this.project.renderer.requestAnimationFrameWith(this);
+						this.project.requestAnimationFrameWith(this);
 					}
 				};
 				walkMove();
@@ -118,7 +116,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 				e.preventDefault();
 				const val = e.deltaY / this.window.devicePixelRatio;
 				lookAt.r += (lookAt.r * val) / 1024;
-				this.project.renderer.requestAnimationFrameWith(this);
+				this.project.requestAnimationFrameWith(this);
 			},
 			{ passive: false },
 		);
@@ -134,7 +132,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 		this.addEventListener(
 			"touchmove",
 			(e) => {
-				this.project.renderer.requestAnimationFrameWith(this);
+				this.project.requestAnimationFrameWith(this);
 				if (e.touches.length === 1) {
 					const thisT = e.touches[0];
 					const lastT = touches[thisT.identifier];
@@ -216,64 +214,38 @@ export class ViewportPane extends BasicPane implements Viewport {
 		return this.canvasContext.getCurrentTexture();
 	}
 
+	private _timeRingCach = new Array(30);
+	private _timeRingCurrentIndex = 0;
 	public setGPUTime(times: any): void {
-		let html = `
-		<style>
-		table td:first-child {
-			text-align: left;
-			padding-right: 8px;
-		}
-		table td:last-child {
-			text-align: right;
-			font-family: monospace;
-		}
-		</style>
+		this._timeRingCach[this._timeRingCurrentIndex] = times;
+		this._timeRingCurrentIndex = (this._timeRingCurrentIndex + 1) % this._timeRingCach.length;
+	}
 
-		<table>
-			<tr>
-				<td>Category</td>
-				<td>ms</td>
-			</tr>`;
-		for (const key in times) {
-			html += `
-			<tr>
-				<td>${key}</td>
-				<td>${times[key].toFixed(2)}</td>
-			</tr>`;
-		}
-		html += `</table>`;
-		this._infoPane.innerHTML = html;
+	public get timeRingeCach() {
+		return this._timeRingCach;
 	}
 
 	protected connectedCallback() {
-		this.project.renderer.viewportPanes.add(this);
-		this.project.renderer.registerViewport(this);
+		this.project.registerViewportPane(this);
 		this._resizeObserver.observe(this, {
 			box: "device-pixel-content-box",
 		});
 	}
 
 	protected disconnectedCallback() {
-		this.project.renderer.viewportPanes.delete(this);
-		this.project.renderer.unregisterViewport(this);
+		this.project.unregisterViewportPane(this);
 		this._resizeObserver.unobserve(this);
 	}
 
 	public static createUIElement(win: Window, kayo: Kayo): ViewportPane {
 		const p = super.createUIElement(win, kayo, viewportPaneTemplate) as ViewportPane;
-		p._infoPane = win.document.createElement("div");
-		p._infoPane.setAttribute(
-			"style",
-			"position: absolute; left: 10px; bottom: 10px; display: inline; color: white; backdrop-filter: blur(73px); 	background-color: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.25); border-radius: 4px;",
-		);
 		p.canvas = win.document.createElement("canvas");
 		p.canvasContext = p.canvas.getContext("webgpu") as GPUCanvasContext;
 		p.window = win;
 		p.setAttribute("tabindex", "-1");
 		p.focus();
-		p.project = p.kayo.project;
+		p.project = p._kayo.project;
 		p.appendChild(p.canvas);
-		p.appendChild(p._infoPane);
 		return p;
 	}
 

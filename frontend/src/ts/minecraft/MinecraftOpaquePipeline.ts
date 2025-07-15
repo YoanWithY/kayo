@@ -4,6 +4,7 @@ import { AbstractRenderingPipeline } from "../rendering/AbstractRenderingPipelin
 import { Project } from "../project/Project";
 import { resolveShader } from "../rendering/ShaderUtils";
 import staticShaderCode from "./minecraftOpaque.wgsl?raw";
+import RealtimeRenderer from "../rendering/RealtimeRenderer";
 
 const shaderCode = staticShaderCode;
 const preProzessedShaderCoder = resolveShader(shaderCode);
@@ -150,7 +151,7 @@ export class MinecraftMetaRenderingPipeline extends AbstractMetaRenderPipeline {
 		this.metaPipeline = new MinecraftMetaRenderingPipeline(
 			project,
 			"Minecraft Opaque Pipeline",
-			project.renderer.bindGroup0Layout,
+			project.renderers[RealtimeRenderer.rendererKey].bindGroup0Layout,
 		);
 	}
 }

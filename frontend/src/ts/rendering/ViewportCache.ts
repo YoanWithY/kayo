@@ -2,8 +2,9 @@ import { GeneralConfig, RealtimeConfig, RenderConfig, RenderState } from "../../
 import { Project } from "../project/Project";
 import { getElement } from "../GPUX";
 import { Viewport } from "./Viewport";
+import RealtimeRenderer from "./RealtimeRenderer";
 
-export class ViewportCache {
+export class RealtimeViewportCache {
 	public viewport;
 	public prevWidth = -1;
 	public prevHeight = -1;
@@ -16,8 +17,6 @@ export class ViewportCache {
 	public idTextureMS?: GPUTexture;
 	public selectionDepthRT?: GPUTexture;
 	public selectionRT?: GPUTexture;
-	public overlayTextureMS?: GPUTexture;
-	public overlayTextureSS?: GPUTexture;
 	public querySet: GPUQuerySet;
 	public timeStempBufferResolve: GPUBuffer;
 	public timeStempMapBuffer: GPUBuffer;
@@ -48,7 +47,8 @@ export class ViewportCache {
 		});
 
 		this.reconfigureContext(
-			(project.wasmx.kayoInstance.project.renderStates.get("default") as RenderState).config.general,
+			(project.wasmx.kayoInstance.project.renderStates.get(RealtimeRenderer.rendererKey) as RenderState).config
+				.general,
 		);
 	}
 
@@ -61,7 +61,6 @@ export class ViewportCache {
 			return;
 		}
 		this.conditionalColorAttachmentUpdate(w, h, config);
-		this.conditionalOverlayAttachmentUpdate(w, h, config);
 		if (
 			w === this.prevWidth &&
 			h === this.prevHeight &&
@@ -128,33 +127,6 @@ export class ViewportCache {
 			});
 		}
 
-		if (this.viewport.useOverlays) {
-			if (!this.overlayTextureSS) {
-				console.error("Overlay Texture missing!");
-				return;
-			}
-			this.compositingBindGroup0 = this.gpuDevice.createBindGroup({
-				label: "compositing bind group 0",
-				entries: [
-					{ binding: 0, resource: this.overlayTextureSS.createView() },
-					{ binding: 1, resource: this.idTextureSS.createView() },
-					{ binding: 2, resource: this.selectionRT.createView() },
-				],
-				layout: this.project.renderer.compositingBindGroupLayout,
-			});
-			if (specificRenderer.antialiasing.msaa > 1) {
-				if (!this.idTextureMS) {
-					console.error("Multisampled ID Texture missing!");
-					return;
-				}
-				this.r16ResolveBindGroup0 = this.gpuDevice.createBindGroup({
-					label: "R16u resolve bind group 0",
-					entries: [{ binding: 0, resource: this.idTextureMS.createView() }],
-					layout: this.project.renderer.r16ResolveBindGroupLayout,
-				});
-			}
-		}
-
 		this.prevWidth = w;
 		this.prevHeight = h;
 		this.prevMSAA = specificRenderer.antialiasing.msaa;
@@ -190,59 +162,6 @@ export class ViewportCache {
 			label: "Render Color Attachment",
 			sampleCount: msaa,
 		});
-	}
-
-	private conditionalOverlayAttachmentUpdate(w: number, h: number, config: RenderConfig) {
-		const specificRenderer: RealtimeConfig = config.specificRenderer as RealtimeConfig;
-		if (specificRenderer === null) {
-			console.error("Specific render config is null!");
-			return;
-		}
-		// Don't use overlay
-		if (!this.viewport.useOverlays) {
-			if (this.overlayTextureMS) {
-				this.overlayTextureMS.destroy();
-				this.overlayTextureMS = undefined;
-			}
-			if (this.overlayTextureSS) {
-				this.overlayTextureSS.destroy();
-				this.overlayTextureSS = undefined;
-			}
-			return;
-		}
-		// Use overlay
-		if (
-			w === this.prevWidth &&
-			h === this.prevHeight &&
-			this.overlayTextureSS &&
-			(specificRenderer.antialiasing.msaa === 1 || this.overlayTextureMS)
-		)
-			return;
-
-		if (this.overlayTextureSS) this.overlayTextureSS.destroy();
-
-		this.overlayTextureSS = this.gpuDevice.createTexture({
-			label: "Overlay Attachment",
-			size: [w, h, 1],
-			format: "rgba8unorm",
-			sampleCount: 1,
-			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-		});
-
-		if (this.overlayTextureMS) {
-			this.overlayTextureMS.destroy();
-			this.overlayTextureMS = undefined;
-		}
-
-		if (specificRenderer.antialiasing.msaa > 1) {
-			this.overlayTextureMS = this.gpuDevice.createTexture({
-				label: "Overlay resolve target",
-				size: [w, h, 1],
-				format: "rgba8unorm",
-				sampleCount: specificRenderer.antialiasing.msaa,
-				usage: GPUTextureUsage.RENDER_ATTACHMENT,
-			});
-		}
 	}
 
 	public reconfigureContext(generalConfig: GeneralConfig) {
@@ -314,15 +233,6 @@ export class ViewportCache {
 
 			idAttachment.view = this.idTextureSS.createView();
 			idAttachment.resolveTarget = undefined;
-
-			if (this.viewport.useOverlays) {
-				if (!this.overlayTextureSS) {
-					console.error("Single sample overlay texture attachment missing.");
-					return;
-				}
-				overlayColorAttachment.view = this.overlayTextureSS.createView();
-				overlayColorAttachment.resolveTarget = undefined;
-			}
 		} else {
 			idResolveAttachment.view = this.idTextureSS.createView();
 			if (this.colorTextureMS && this.idTextureMS) {
@@ -331,19 +241,6 @@ export class ViewportCache {
 
 				idAttachment.view = this.idTextureMS.createView();
 				idAttachment.resolveTarget = undefined;
-
-				if (this.viewport.useOverlays) {
-					if (!this.overlayTextureSS) {
-						console.error("Single sample overlay texture attachment missing.");
-						return;
-					}
-					if (!this.overlayTextureMS) {
-						console.error("Multisample sample overlay texture attachment missing.");
-						return;
-					}
-					overlayColorAttachment.view = this.overlayTextureMS.createView();
-					overlayColorAttachment.resolveTarget = this.overlayTextureSS.createView();
-				}
 			} else {
 				console.error("Multi sample texture attachment missing.");
 				return;
@@ -425,7 +322,6 @@ export class ViewportCache {
 				Selection: selectionTime,
 				Overlays: overlayTime,
 				compositingTime: compositingTime,
-				Total: jsTime + r3Time + r16Time + selectionTime + overlayTime + compositingTime,
 			});
 		});
 	}

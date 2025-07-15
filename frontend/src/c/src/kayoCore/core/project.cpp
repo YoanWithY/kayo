@@ -4,7 +4,7 @@
 namespace kayo {
 Project::Project() {
 	using namespace state;
-	this->renderStates.set("default", new RenderState());
+	this->renderStates.set("realtime", new RenderState());
 }
 } // namespace kayo
 

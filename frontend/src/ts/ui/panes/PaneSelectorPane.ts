@@ -8,6 +8,7 @@ import OutputPane from "./OutpuPane";
 import APIPane from "./ApiPane";
 import { ViewportPane } from "./ViewportPane";
 import { FileSystemPane } from "./FileSystemPane";
+import { PerformancePane } from "./PerformancePane";
 
 export default class PaneSelectorPane extends BasicPane {
 	public static createUIElement(win: Window, kayo: Kayo): PaneSelectorPane {
@@ -43,4 +44,5 @@ export const panesNameClassMap: { [key: string]: UIPaneElement } = {
 	[PTPChatPane.getName()]: PTPChatPane,
 	[PaneSelectorPane.getName()]: PaneSelectorPane,
 	[FileSystemPane.getName()]: FileSystemPane,
+	[PerformancePane.getName()]: PerformancePane,
 };

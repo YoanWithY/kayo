@@ -11,6 +11,7 @@ import staticShaderCode from "./grid.wgsl?raw";
 import { GPUX } from "../GPUX";
 import { Project } from "../project/Project";
 import { resolveShader } from "../rendering/ShaderUtils";
+import RealtimeRenderer from "../rendering/RealtimeRenderer";
 
 const vertexBufferLayout: GPUVertexBufferLayout[] = [
 	{
@@ -60,6 +61,8 @@ export class GridPipeline extends AbstractRenderingPipeline {
 			frontFace: "ccw",
 			topology: "triangle-strip",
 		};
+
+		this.depthStencilState.depthCompare = "less";
 
 		const constants = AbstractMetaRenderPipeline.getConstantsFromKey(key);
 
@@ -133,7 +136,7 @@ export class Grid implements Renderable {
 	public recordForwardRendering(renderPassEnoder: GPURenderPassEncoder, key: RenderPipelineKey): void {
 		renderPassEnoder.setPipeline(this.pipelineCache.getPipeline(key).gpuPipeline);
 		renderPassEnoder.setVertexBuffer(0, Grid.vertexBuffer);
-		renderPassEnoder.setBindGroup(0, this.project.renderer.bindGroup0);
+		renderPassEnoder.setBindGroup(0, this.project.renderers[RealtimeRenderer.rendererKey].bindGroup0);
 		renderPassEnoder.draw(Grid.vertexData.length / 2);
 	}
 }

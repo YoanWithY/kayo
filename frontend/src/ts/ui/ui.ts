@@ -23,6 +23,7 @@ import { PTPChatContent, PTPChatPane, PTPMessageElement, PTPTextInput } from "..
 import VBox from "./components/VBox";
 import { NumberInput } from "./components/NumberInput";
 import { FileSystemPane } from "./panes/FileSystemPane";
+import { PerformancePane } from "./panes/PerformancePane";
 
 export type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 
@@ -43,6 +44,7 @@ export function initUI() {
 
 	window.customElements.define(ViewportPane.getDomClass(), ViewportPane);
 	window.customElements.define(FileSystemPane.getDomClass(), FileSystemPane);
+	window.customElements.define(PerformancePane.getDomClass(), PerformancePane);
 	window.customElements.define(APIPane.getDomClass(), APIPane);
 	window.customElements.define(OutputPane.getDomClass(), OutputPane);
 	window.customElements.define(PaneSelectorPane.getDomClass(), PaneSelectorPane);
@@ -71,6 +73,7 @@ export function initUI() {
 const nameClassMap: { [key: string]: UIElement } = {
 	[OutputPane.getDomClass()]: OutputPane,
 	[FileSystemPane.getDomClass()]: FileSystemPane,
+	[PerformancePane.getDomClass()]: PerformancePane,
 	[Collapsible.getDomClass()]: Collapsible,
 	[Grid2Col.getDomClass()]: Grid2Col,
 	[SpanElement.getDomClass()]: SpanElement,

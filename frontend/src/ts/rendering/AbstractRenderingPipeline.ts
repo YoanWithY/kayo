@@ -17,7 +17,7 @@ export abstract class AbstractRenderingPipeline {
 		alphaToCoverageEnabled: false,
 	};
 
-	protected depthStencilState: GPUDepthStencilState | undefined = {
+	protected depthStencilState: GPUDepthStencilState = {
 		format: "depth24plus",
 		depthBias: 0,
 		depthBiasClamp: 0,

@@ -19,7 +19,7 @@ export class FileSystemPane extends BasicPane {
 	}
 
 	private _buildCallback = async () => {
-		this.replaceChild(await this._dirToUl(this.kayo.fileRessourceManager.systemRoot), this._ul);
+		this.replaceChild(await this._dirToUl(this._kayo.fileRessourceManager.systemRoot), this._ul);
 	};
 
 	protected connectedCallback() {

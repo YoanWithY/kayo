@@ -7,6 +7,7 @@ import { MinecraftSection } from "../../minecraft/MinecraftSection";
 import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
 import TextureUtils from "../../Textures/TextureUtils";
 import { Kayo } from "../../Kayo";
+import RealtimeRenderer from "../../rendering/RealtimeRenderer";
 
 export class WrappingPane extends HTMLElement {
 	public baseSplitPaneContainer!: SplitPaneContainer;
@@ -33,7 +34,7 @@ export class WrappingPane extends HTMLElement {
 				for (const file of fi.files) {
 					if (file.type == "image/png") {
 						kayo.fileRessourceManager.storeRaw(file);
-						const vts = kayo.project.renderer.virtualTextureSystem;
+						const vts = kayo.project.virtualTextureSystem;
 						const vt = vts.allocateVirtualTexture(
 							file.name,
 							16,
@@ -48,7 +49,7 @@ export class WrappingPane extends HTMLElement {
 						if (!vt) return;
 
 						if (vt === undefined) return;
-						const atlas = project.renderer.virtualTextureSystem.generateMipAtlas(
+						const atlas = project.virtualTextureSystem.generateMipAtlas(
 							await createImageBitmap(file),
 							vt.samplingDescriptor,
 						);
@@ -67,7 +68,7 @@ export class WrappingPane extends HTMLElement {
 							const n = performance.now();
 
 							const image = await TextureUtils.loadImageBitmap("./glowstone.png");
-							const vt = project.renderer.virtualTextureSystem.allocateVirtualTexture(
+							const vt = project.virtualTextureSystem.allocateVirtualTexture(
 								"test texture",
 								image.width,
 								image.height,
@@ -79,10 +80,7 @@ export class WrappingPane extends HTMLElement {
 								true,
 							);
 							if (vt === undefined) return;
-							const atlas = project.renderer.virtualTextureSystem.generateMipAtlas(
-								image,
-								vt.samplingDescriptor,
-							);
+							const atlas = project.virtualTextureSystem.generateMipAtlas(image, vt.samplingDescriptor);
 							vt.makeResident(atlas, 0, 0, 0);
 
 							const zipInfo = await unzip(content);
@@ -133,7 +131,10 @@ export class WrappingPane extends HTMLElement {
 									}
 								}
 								mWorld.buildGeometry();
-								mWorld.buildBundle(project.gpux.gpuDevice, project.renderer.bindGroup0);
+								mWorld.buildBundle(
+									project.gpux.gpuDevice,
+									project.renderers[RealtimeRenderer.rendererKey].bindGroup0,
+								);
 							} catch (e) {
 								console.error(e);
 							}
@@ -151,7 +152,7 @@ export class WrappingPane extends HTMLElement {
 					reader.readAsArrayBuffer(file); // Read file as ArrayBuffer
 				}
 
-				kayo.project.renderer.virtualTextureSystem.physicalTexture.generateAllMips();
+				kayo.project.virtualTextureSystem.physicalTexture.generateAllMips();
 			});
 			p._header.appendChild(openButton);
 			p.appendChild(p._header);
