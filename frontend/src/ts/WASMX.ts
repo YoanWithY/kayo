@@ -8,6 +8,10 @@ import type {
 } from "../c/KayoCorePP";
 
 export type WasmPath = string[][];
+export type WasmTask = {
+	progressCallback: (progress: number, maximum: number) => void;
+	finishedCallback: (returnValue: any) => void;
+};
 
 export default class WASMX {
 	private _bindings: Map<number, { url: WasmPath; callbacks: Set<(v: string) => void> }> = new Map();
@@ -21,7 +25,6 @@ export default class WASMX {
 	public constructor(module: MainModule) {
 		this.module = module;
 		this.Number = module.KayoNumber;
-		this.getBufferView = module.getBufferView;
 		this.imageData = module.ImageData;
 		this.kayoInstance = new module.KayoWASMInstance();
 		this.minecraftModule = new module.KayoWASMMinecraftModule(this.kayoInstance);
@@ -90,5 +93,24 @@ export default class WASMX {
 		if (bound.callbacks.size === 0) return;
 		const value = this.getModelReference(bound.url).getValue();
 		for (const callback of bound.callbacks) callback(value);
+	}
+
+	protected taskMap: { [key: number]: WasmTask } = {};
+	protected taskUpdate(id: number, progress: number, maximum: number) {
+		const task = this.taskMap[id];
+		if (!task) {
+			console.log(`Task with id ${id} is not in the task map.`);
+			return;
+		}
+		task.progressCallback(progress, maximum);
+	}
+
+	protected taskFinished(id: number, returnValue: any) {
+		const task = this.taskMap[id];
+		if (!task) {
+			console.log(`Task with id ${id} is not in the task map.`);
+			return;
+		}
+		task.finishedCallback(returnValue);
 	}
 }

@@ -17,24 +17,22 @@ if (typeof gpux === "string") {
 	throw new Error("Could not initialize WebGPU!", { cause: gpux });
 }
 
+loadPara.textContent = "Init file system...";
+const fileRessourceManager = await FileRessourceManager.requestFileRessourceManager();
+
 loadPara.textContent = "Initi WASM...";
 const wasmx = await initWasmx();
 
-loadPara.textContent = "Init file system...";
-const fileRessourceManager = await FileRessourceManager.requestFileRessourceManager();
 if (typeof fileRessourceManager === "string") {
-	alert(`Could not initialize WebGPU with reason: ${fileRessourceManager}`);
-	throw new Error("Could not initialize WebGPU!", { cause: fileRessourceManager });
+	alert(`Could not initialize File System with reason: ${fileRessourceManager}`);
+	throw new Error("File System error!", { cause: fileRessourceManager });
 }
 
 const kayo = new Kayo(gpux, wasmx, fileRessourceManager);
 (window as any).kayo = kayo;
 
-window.addEventListener("beforeunload", (e) => {
-	if (kayo.windows.size > 1) {
-		kayo.closeAllSecondaryWindows(window);
-		e.preventDefault();
-	}
+window.addEventListener("beforeunload", (_) => {
+	if (kayo.windows.size > 1) kayo.closeAllSecondaryWindows(window);
 });
 
 setTimeout(() => {

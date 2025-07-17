@@ -44,9 +44,10 @@ target_link_options(KayoCorePP PRIVATE
   -sENVIRONMENT=web,worker
   -sALLOW_MEMORY_GROWTH
   -pthread
-  -sPTHREAD_POOL_SIZE=1   
+  -sASYNCIFY=1
+  -sPTHREAD_POOL_SIZE=2   
   --emit-tsd KayoCorePP.d.ts
-  -O0
+  -O3
   -gsource-map
   --js-library ${CMAKE_CURRENT_SOURCE_DIR}/src/libKayo.js
 )
