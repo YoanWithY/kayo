@@ -1,9 +1,9 @@
 import { initUI as initUIClasses } from "./ui/ui";
 import { Kayo } from "./Kayo";
-import initWasmx from "./KayoWasmLoader";
+import initWasmx from "./ressourceManagement/KayoWasmLoader";
 import { ViewportPane } from "./ui/panes/ViewportPane";
 import { GPUX } from "./GPUX";
-import { FileRessourceManager } from "./FileRessourceManager";
+import { FileRessourceManager } from "./ressourceManagement/FileRessourceManager";
 
 const loadPara = window.document.getElementById("loadingParagraph") as HTMLParagraphElement;
 loadPara.textContent = "Initi UI...";

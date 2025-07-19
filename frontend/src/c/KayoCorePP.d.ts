@@ -1,4 +1,12 @@
 // TypeScript bindings for emscripten-generated code.  Automatically generated at compile time.
+declare namespace RuntimeExports {
+    let HEAP8: any;
+    let HEAP16: any;
+    let HEAP32: any;
+    let HEAPU8: any;
+    let HEAPU16: any;
+    let HEAPU32: any;
+}
 interface WasmModule {
 }
 
@@ -116,20 +124,27 @@ export interface KayoR3Object extends ClassHandle {
   getParent(): KayoR3Object | null;
 }
 
-export interface ImageData extends ClassHandle {
-  data: VectorUInt8;
-  readonly width: number;
-  readonly height: number;
-  readonly components: number;
-  readonly bytesPerComponents: number;
+export interface WasmTask extends ClassHandle {
+  run(): void;
+  join(): void;
 }
 
-export interface VectorUInt8 extends ClassHandle {
-  push_back(_0: number): void;
-  resize(_0: number, _1: number): void;
-  size(): number;
-  get(_0: number): number | undefined;
-  set(_0: number, _1: number): boolean;
+export interface WasmStoreDataTask extends WasmTask {
+}
+
+export interface ImageData extends ClassHandle {
+  readonly width: number;
+  readonly height: number;
+  readonly numComponents: number;
+  readonly bytesPerComponent: number;
+  readonly bytesPerRow: number;
+  readonly numMipLevels: number;
+  readonly numStoredMipLevels: number;
+  getMipLevelByteSize(_0: number): number;
+  getMipWidth(_0: number): number;
+  getMipHeight(_0: number): number;
+  getMipBytesPerRow(_0: number): number;
+  getMipData(_0: number): any;
 }
 
 export interface KayoWASMMinecraftModule extends ClassHandle {
@@ -174,11 +189,12 @@ interface EmbindModule {
   RealtimeState: {};
   RenderState: {};
   KayoR3Object: {};
+  WasmTask: {};
+  WasmStoreDataTask: {
+    new(_0: number, _1: EmbindString, _2: EmbindString, _3: EmbindString): WasmStoreDataTask;
+  };
   ImageData: {
     fromImageData(_0: EmbindString): ImageData | null;
-  };
-  VectorUInt8: {
-    new(): VectorUInt8;
   };
   KayoWASMMinecraftModule: {
     new(_0: KayoWASMInstance): KayoWASMMinecraftModule;
@@ -191,8 +207,7 @@ interface EmbindModule {
     toDouble(_0: EmbindString): number;
     toString(_0: EmbindString): string;
   };
-  getBufferView(_0: VectorUInt8): any;
 }
 
-export type MainModule = WasmModule & EmbindModule;
+export type MainModule = WasmModule & typeof RuntimeExports & EmbindModule;
 export default function MainModuleFactory (options?: unknown): Promise<MainModule>;

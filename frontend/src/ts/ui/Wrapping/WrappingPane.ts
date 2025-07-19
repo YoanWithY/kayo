@@ -8,6 +8,7 @@ import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
 import TextureUtils from "../../Textures/TextureUtils";
 import { Kayo } from "../../Kayo";
 import RealtimeRenderer from "../../rendering/RealtimeRenderer";
+import { StoreDataTask } from "../../ressourceManagement/StoreDataTask";
 
 export class WrappingPane extends HTMLElement {
 	public baseSplitPaneContainer!: SplitPaneContainer;
@@ -33,7 +34,11 @@ export class WrappingPane extends HTMLElement {
 				if (!fi.files) return;
 				for (const file of fi.files) {
 					if (file.type == "image/png") {
-						kayo.fileRessourceManager.storeRaw(file);
+						const a = await file.arrayBuffer();
+
+						const task = new StoreDataTask(project.wasmx, "raw", file.name, a, 0, a.byteLength);
+						project.wasmx.taskQueue.queueTask(task);
+
 						const vts = kayo.project.virtualTextureSystem;
 						const vt = vts.allocateVirtualTexture(
 							file.name,
@@ -145,7 +150,6 @@ export class WrappingPane extends HTMLElement {
 							bufferSource.connect(audio.destination);
 							bufferSource.buffer = await audio.decodeAudioData(content as ArrayBuffer);
 							bufferSource.start();
-							kayo.fileRessourceManager.storeRaw(file);
 						}
 					};
 

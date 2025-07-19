@@ -255,7 +255,7 @@ export default class RealtimeRenderer {
 		const imageData = project.wasmx.imageData.fromImageData(thresholdMapBytes);
 		if (!imageData) return;
 
-		const blueNoiseData = project.wasmx.getBufferView(imageData.data);
+		const blueNoiseData = imageData.getMipData(0);
 		this.blueNoiseTexture = this.gpuDevice.createTexture({
 			label: "blue noise texture",
 			format: "r16uint",
@@ -281,7 +281,7 @@ export default class RealtimeRenderer {
 		this.gpuDevice.queue.writeTexture(
 			{ texture: this.blueNoiseTexture },
 			blueNoiseData,
-			{ bytesPerRow: imageData.width * imageData.components * imageData.bytesPerComponents },
+			{ bytesPerRow: imageData.bytesPerRow },
 			{ width: imageData.width, height: imageData.height, depthOrArrayLayers: 1 },
 		);
 

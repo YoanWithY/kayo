@@ -3,7 +3,7 @@
 #include "project.hpp"
 #include "renderConfig.hpp"
 #include "renderState.hpp"
-#include "webgpu/webgpu.h"
+
 #include <cstdint>
 #include <iostream>
 #include <map>
@@ -32,8 +32,8 @@ class KayoInstance {
 		modules;
 
   public:
-	KayoInstance();
 	Project project;
+	KayoInstance();
 	int32_t registerModule(KayoModule& module);
 	const std::map<std::string, KayoModule*>& getModules() const;
 };

@@ -4,14 +4,10 @@ import type {
 	KayoWASMInstance,
 	KayoWASMMinecraftModule,
 	MainModule,
-	VectorUInt8,
 } from "../c/KayoCorePP";
+import { ConcurrentTaskQueue } from "./ressourceManagement/ConcurrentTaskQueue";
 
 export type WasmPath = string[][];
-export type WasmTask = {
-	progressCallback: (progress: number, maximum: number) => void;
-	finishedCallback: (returnValue: any) => void;
-};
 
 export default class WASMX {
 	private _bindings: Map<number, { url: WasmPath; callbacks: Set<(v: string) => void> }> = new Map();
@@ -20,18 +16,24 @@ export default class WASMX {
 	public kayoInstance: KayoWASMInstance;
 	public minecraftModule: KayoWASMMinecraftModule;
 	public imageData;
-	private module: MainModule;
+	private _wasm: MainModule;
+	private _taskQueue: ConcurrentTaskQueue;
 
 	public constructor(module: MainModule) {
-		this.module = module;
+		this._wasm = module;
 		this.Number = module.KayoNumber;
 		this.imageData = module.ImageData;
 		this.kayoInstance = new module.KayoWASMInstance();
 		this.minecraftModule = new module.KayoWASMMinecraftModule(this.kayoInstance);
+		this._taskQueue = new ConcurrentTaskQueue();
 	}
 
-	public getBufferView(vector: VectorUInt8) {
-		return this.module.getBufferView(vector);
+	public get taskQueue() {
+		return this._taskQueue;
+	}
+
+	public get wasm() {
+		return this._wasm;
 	}
 
 	public toWasmPath(stateVariableURL: string, variables: any = {}): WasmPath {
@@ -93,24 +95,5 @@ export default class WASMX {
 		if (bound.callbacks.size === 0) return;
 		const value = this.getModelReference(bound.url).getValue();
 		for (const callback of bound.callbacks) callback(value);
-	}
-
-	protected taskMap: { [key: number]: WasmTask } = {};
-	protected taskUpdate(id: number, progress: number, maximum: number) {
-		const task = this.taskMap[id];
-		if (!task) {
-			console.log(`Task with id ${id} is not in the task map.`);
-			return;
-		}
-		task.progressCallback(progress, maximum);
-	}
-
-	protected taskFinished(id: number, returnValue: any) {
-		const task = this.taskMap[id];
-		if (!task) {
-			console.log(`Task with id ${id} is not in the task map.`);
-			return;
-		}
-		task.finishedCallback(returnValue);
 	}
 }

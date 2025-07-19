@@ -1,4 +1,4 @@
-import { FileRessourceManager } from "./FileRessourceManager";
+import { FileRessourceManager } from "./ressourceManagement/FileRessourceManager";
 import { GPUX } from "./GPUX";
 import { Project } from "./project/Project";
 import WASMX from "./WASMX";

@@ -34,7 +34,7 @@ export class GPUX {
 		if (!gpu) return "WebGPU is not supported!";
 
 		const adapterOptions: GPURequestAdapterOptions = {
-			powerPreference: "high-performance",
+			// powerPreference: "high-performance",
 			forceFallbackAdapter: false,
 			featureLevel: "core",
 		};

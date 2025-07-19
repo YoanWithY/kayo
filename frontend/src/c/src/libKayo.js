@@ -5,9 +5,9 @@ addToLibrary({
 		kayo.project.fullRerender();
 	},
 	kayoTaskUpdate: function kayoTaskUpdate(id, progress, maximum) {
-		window.kayo.wasmx.taskUpdate(id, progress, maximum);
+		window.kayo.wasmx.taskQueue.taskUpdate(id, progress, maximum);
 	},
 	kayoTaskFinished: function kayoTaskFinished(id, returnValue) {
-		window.kayo.wasmx.taskFinished(id, returnValue);
+		window.kayo.wasmx.taskQueue.taskFinished(id, returnValue);
 	},
 });
