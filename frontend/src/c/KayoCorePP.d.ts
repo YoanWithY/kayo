@@ -126,25 +126,10 @@ export interface KayoR3Object extends ClassHandle {
 
 export interface WasmTask extends ClassHandle {
   run(): void;
-  join(): void;
 }
 
-export interface WasmStoreDataTask extends WasmTask {
-}
-
-export interface ImageData extends ClassHandle {
-  readonly width: number;
-  readonly height: number;
-  readonly numComponents: number;
-  readonly bytesPerComponent: number;
-  readonly bytesPerRow: number;
-  readonly numMipLevels: number;
-  readonly numStoredMipLevels: number;
-  getMipLevelByteSize(_0: number): number;
-  getMipWidth(_0: number): number;
-  getMipHeight(_0: number): number;
-  getMipBytesPerRow(_0: number): number;
-  getMipData(_0: number): any;
+export interface WasmCreateAtlasTask extends WasmTask {
+  run(): void;
 }
 
 export interface KayoWASMMinecraftModule extends ClassHandle {
@@ -163,6 +148,24 @@ export interface KayoWASMMinecraftDimension extends ClassHandle {
 }
 
 export interface KayoNumber extends ClassHandle {
+}
+
+export interface ImageData extends ClassHandle {
+  readonly width: number;
+  readonly height: number;
+  readonly numComponents: number;
+  readonly bytesPerComponent: number;
+  readonly bytesPerRow: number;
+  readonly numMipLevels: number;
+  readonly numStoredMipLevels: number;
+  getMipLevelByteSize(_0: number): number;
+  getMipWidth(_0: number): number;
+  getMipHeight(_0: number): number;
+  getMipBytesPerRow(_0: number): number;
+  getMipData(_0: number): any;
+}
+
+export interface ImageDataUint8 extends ImageData {
 }
 
 interface EmbindModule {
@@ -190,11 +193,8 @@ interface EmbindModule {
   RenderState: {};
   KayoR3Object: {};
   WasmTask: {};
-  WasmStoreDataTask: {
-    new(_0: number, _1: EmbindString, _2: EmbindString, _3: EmbindString): WasmStoreDataTask;
-  };
-  ImageData: {
-    fromImageData(_0: EmbindString): ImageData | null;
+  WasmCreateAtlasTask: {
+    new(_0: number, _1: ImageDataUint8): WasmCreateAtlasTask;
   };
   KayoWASMMinecraftModule: {
     new(_0: KayoWASMInstance): KayoWASMMinecraftModule;
@@ -206,6 +206,12 @@ interface EmbindModule {
     fromBytes(_0: EmbindString): string;
     toDouble(_0: EmbindString): number;
     toString(_0: EmbindString): string;
+  };
+  ImageData: {
+    fromImageData(_0: EmbindString, _1: boolean): ImageData | null;
+  };
+  ImageDataUint8: {
+    empty(_0: number, _1: number, _2: number): ImageDataUint8 | null;
   };
 }
 

@@ -23,6 +23,9 @@ const fileRessourceManager = await FileRessourceManager.requestFileRessourceMana
 loadPara.textContent = "Initi WASM...";
 const wasmx = await initWasmx();
 
+loadPara.textContent = "Init Workers...";
+await wasmx.taskQueue.initWorkers("temp");
+
 if (typeof fileRessourceManager === "string") {
 	alert(`Could not initialize File System with reason: ${fileRessourceManager}`);
 	throw new Error("File System error!", { cause: fileRessourceManager });

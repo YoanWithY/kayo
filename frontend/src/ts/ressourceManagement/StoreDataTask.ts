@@ -1,7 +1,7 @@
 import WASMX from "../WASMX";
-import { JsTask } from "./ConcurrentTaskQueue";
+import { JsTask } from "./Task";
 
-export class StoreDataTask implements JsTask {
+export class StoreDataTask extends JsTask {
 	private _wasmx: WASMX;
 	private _path: string;
 	private _fileName: string;
@@ -17,6 +17,7 @@ export class StoreDataTask implements JsTask {
 		offset: number,
 		byteLength: number,
 	) {
+		super();
 		this._wasmx = wasmx;
 		this._path = path;
 		this._fileName = fileName;
@@ -25,10 +26,10 @@ export class StoreDataTask implements JsTask {
 		this._byteLength = byteLength;
 	}
 
-	public run(taskID: number, workerID: number) {
+	public run(taskID: number, worker: Worker) {
 		this._taskID = taskID;
 		this._wasmx.taskQueue.remoteJSCall(
-			workerID,
+			worker,
 			this._taskID,
 			"writeFile",
 			{

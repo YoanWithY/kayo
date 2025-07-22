@@ -1,5 +1,5 @@
 #include "kayoCore.hpp"
-#include "../utils/memUtils.hpp"
+#include "../../utils/memUtils.hpp"
 #include <cstdlib>
 #include <ctime>
 #include <emscripten/bind.h>

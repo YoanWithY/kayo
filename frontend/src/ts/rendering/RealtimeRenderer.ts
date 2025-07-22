@@ -252,7 +252,7 @@ export default class RealtimeRenderer {
 			label: "height field compute pass",
 		};
 
-		const imageData = project.wasmx.imageData.fromImageData(thresholdMapBytes);
+		const imageData = project.wasmx.imageData.fromImageData(thresholdMapBytes, false);
 		if (!imageData) return;
 
 		const blueNoiseData = imageData.getMipData(0);

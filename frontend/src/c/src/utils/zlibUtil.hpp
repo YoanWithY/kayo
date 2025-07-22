@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../zlib/zlib.h"
+#include "../../zlib/zlib.h"
 #include <iostream>
 #include <stdexcept>
 #include <vector>

@@ -1,5 +1,5 @@
 #include "../../numerics/fixedMath.hpp"
-#include "../utils/memUtils.hpp"
+#include "../../utils/memUtils.hpp"
 #include <cstdint>
 #include <emscripten/bind.h>
 #include <vector>

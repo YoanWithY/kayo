@@ -51,14 +51,11 @@ class Vec2 {
 	}
 
 	constexpr T operator[](uint32_t n) const {
-		switch (n) {
-		case 0:
-			return this->x;
-		case 1:
-			return this->y;
-		default:
-			throw std::range_error("Vec2 index out of range [0, 1]!");
-		}
+		return reinterpret_cast<const T*>(this)[n];
+	}
+
+	constexpr T& operator[](uint32_t n) {
+		return reinterpret_cast<T*>(this)[n];
 	}
 
 	constexpr T dot(const Vec2<T>& other) const {

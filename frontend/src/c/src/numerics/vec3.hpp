@@ -22,16 +22,11 @@ class Vec3 {
 	constexpr Vec3(const Vec3<K>& a) : x(T(a.x)), y(T(a.y)), z(T(a.z)) {}
 
 	constexpr T operator[](uint32_t n) const {
-		switch (n) {
-		case 0:
-			return this->x;
-		case 1:
-			return this->y;
-		case 2:
-			return this->z;
-		default:
-			throw std::range_error("Vec3 index out of range [0, 2]!");
-		}
+		return reinterpret_cast<const T*>(this)[n];
+	}
+
+	constexpr T& operator[](uint32_t n) {
+		return reinterpret_cast<T*>(this)[n];
 	}
 
 	constexpr Vec3<T> operator+(const Vec3<T>& other) const {

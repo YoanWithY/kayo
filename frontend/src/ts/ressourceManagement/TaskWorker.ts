@@ -1,54 +1,72 @@
 /// <reference lib="webworker" />
 
-async function startWorker() {
-	const root = await navigator.storage.getDirectory();
+let root!: FileSystemDirectoryHandle;
+let projectDir!: FileSystemDirectoryHandle;
+let id!: number;
+let virtualTextureStore!: FileSystemFileHandle;
 
-	const taskMap: Record<string, (args: any) => Promise<number> | number> = {
-		writeFile: async ({
-			path,
-			fileName,
-			buffer,
-			offset,
-			byteLength,
-		}: {
-			path: string;
-			fileName: string;
-			buffer: ArrayBufferLike;
-			offset: number;
-			byteLength: number;
-		}) => {
-			const dirs = path.split("/").filter(Boolean);
+const getDirHandleFromPath = async (path: string) => {
+	const dirs = path.split("/").filter(Boolean);
+	let dir = projectDir;
+	for (const segment of dirs) {
+		dir = await dir.getDirectoryHandle(segment, { create: true });
+	}
+	return dir;
+};
 
-			let dir = root;
-			for (const segment of dirs) {
-				dir = await dir.getDirectoryHandle(segment, { create: true });
-			}
+const getFileHandleFromPath = async (path: string, fileName: string) => {
+	return await (await getDirHandleFromPath(path)).getFileHandle(fileName, { create: true });
+};
 
-			const fileHandle = await dir.getFileHandle(fileName, { create: true });
-			const syncHandle = await fileHandle.createSyncAccessHandle();
+const initWorkerFunction = async ({ projectName, workerID }: { projectName: string; workerID: number }) => {
+	id = workerID;
+	root = await navigator.storage.getDirectory();
+	projectDir = await root.getDirectoryHandle(projectName);
+	const svtDir = await projectDir.getDirectoryHandle("sparse_virtual_textures");
+	virtualTextureStore = await svtDir.getFileHandle(`worker_${id}`, { create: true });
+	virtualTextureStore.isSameEntry(root);
+	return `Initialized Worker ${workerID} for dir ${projectName}`;
+};
 
-			try {
-				const view = new Uint8Array(buffer, offset, byteLength);
-				syncHandle.write(view);
-				syncHandle.flush();
-			} catch (_: any) {
-				return -1;
-			} finally {
-				syncHandle.close();
-			}
-			return 0;
-		},
-	};
+const writeFileFunction = async ({
+	path,
+	fileName,
+	buffer,
+	offset,
+	byteLength,
+}: {
+	path: string;
+	fileName: string;
+	buffer: ArrayBufferLike;
+	offset: number;
+	byteLength: number;
+}) => {
+	const fileHandle = await getFileHandleFromPath(path, fileName);
+	const syncHandle = await fileHandle.createSyncAccessHandle();
 
-	self.onmessage = async (event: MessageEvent) => {
-		const { func, taskID, args } = event.data;
-		const fn = taskMap[func];
-		if (typeof fn === "function") {
-			self.postMessage({ taskID, returnValue: await fn(args) });
-		} else {
-			console.error(`The provided function name "${func}" is unknown.`);
-		}
-	};
-}
+	try {
+		const view = new Uint8Array(buffer, offset, byteLength - byteLength);
+		syncHandle.write(view);
+		syncHandle.flush();
+	} catch (_: any) {
+		return -1;
+	} finally {
+		syncHandle.close();
+	}
+	return 0;
+};
 
-startWorker();
+const taskMap: Record<string, (args: any) => Promise<any> | any> = {
+	writeFile: writeFileFunction,
+	initWorker: initWorkerFunction,
+};
+
+self.onmessage = async (event: MessageEvent) => {
+	const { func, taskID, args } = event.data;
+	const fn = taskMap[func];
+	if (typeof fn === "function") {
+		self.postMessage({ taskID, returnValue: await fn(args) });
+	} else {
+		console.error(`The provided function name "${func}" is unknown.`);
+	}
+};
