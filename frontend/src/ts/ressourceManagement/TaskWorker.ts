@@ -3,7 +3,6 @@
 let root!: FileSystemDirectoryHandle;
 let projectDir!: FileSystemDirectoryHandle;
 let id!: number;
-let virtualTextureStore!: FileSystemFileHandle;
 
 const getDirHandleFromPath = async (path: string) => {
 	const dirs = path.split("/").filter(Boolean);
@@ -18,14 +17,17 @@ const getFileHandleFromPath = async (path: string, fileName: string) => {
 	return await (await getDirHandleFromPath(path)).getFileHandle(fileName, { create: true });
 };
 
-const initWorkerFunction = async ({ projectName, workerID }: { projectName: string; workerID: number }) => {
+const initWorkerFunction = async ({
+	projectName: projectRootName,
+	workerID,
+}: {
+	projectName: string;
+	workerID: number;
+}) => {
 	id = workerID;
 	root = await navigator.storage.getDirectory();
-	projectDir = await root.getDirectoryHandle(projectName);
-	const svtDir = await projectDir.getDirectoryHandle("sparse_virtual_textures");
-	virtualTextureStore = await svtDir.getFileHandle(`worker_${id}`, { create: true });
-	virtualTextureStore.isSameEntry(root);
-	return `Initialized Worker ${workerID} for dir ${projectName}`;
+	projectDir = await root.getDirectoryHandle(projectRootName);
+	return `Initialized Worker ${id} for dir ${projectRootName}`;
 };
 
 const writeFileFunction = async ({

@@ -56,6 +56,15 @@ pane-selector-pane {
 	background-color: var(--pane-background-color);
 }
 
+file-system-pane {
+	display: flex;
+	flex-direction: column;
+	flex: 1 0 0px;
+	overflow: auto;
+	background-color: var(--pane-background-color);
+	padding: 4px;
+}
+
 output-pane {
 	display: flex;
 	flex-direction: column;

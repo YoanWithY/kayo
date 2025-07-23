@@ -8,8 +8,8 @@ import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
 import TextureUtils from "../../Textures/TextureUtils";
 import { Kayo } from "../../Kayo";
 import RealtimeRenderer from "../../rendering/RealtimeRenderer";
-import { StoreDataTask } from "../../ressourceManagement/StoreDataTask";
 import { CreateAtlasTask } from "../../ressourceManagement/CreateAtlasTask";
+import { StoreDataTask } from "../../ressourceManagement/StoreDataTask";
 
 export class WrappingPane extends HTMLElement {
 	public baseSplitPaneContainer!: SplitPaneContainer;
@@ -44,13 +44,20 @@ export class WrappingPane extends HTMLElement {
 				if (imageData === null) continue;
 
 				const task = new StoreDataTask(project.wasmx, "raw", file.name, a, 0, a.byteLength);
-				project.wasmx.taskQueue.queueJsTask(task);
+				project.wasmx.taskQueue.queueTask(task);
 
-				const atlasTas = new CreateAtlasTask(project.wasmx, imageData, (_) => {
-					// console.log(offset, byteSize);
-				});
-				project.wasmx.taskQueue.queueWasmTask(atlasTas);
-				project.fullRerender();
+				const atlasTas = new CreateAtlasTask(
+					project.wasmx,
+					imageData,
+					(value: { offset: number; byteSize: number }) => {
+						vt.makeResident(project.wasmx.getMemoryView(value.offset, value.byteSize), 0, 0, 0);
+						project.fullRerender();
+
+						imageData.delete();
+						project.wasmx.wasm.deleteArrayUint8(value.offset);
+					},
+				);
+				project.wasmx.taskQueue.queueTask(atlasTas);
 				continue;
 			}
 
@@ -83,8 +90,8 @@ export class WrappingPane extends HTMLElement {
 						true,
 					);
 					if (vt === undefined) return;
-					const atlas = project.virtualTextureSystem.generateMipAtlas(image, vt.samplingDescriptor);
-					vt.makeResident(atlas, 0, 0, 0);
+					// const atlas = project.virtualTextureSystem.generateMipAtlas(image, vt.samplingDescriptor);
+					// vt.makeResident(atlas, 0, 0, 0);
 
 					const zipInfo = await unzip(content);
 					res = ResourcePack.parse(

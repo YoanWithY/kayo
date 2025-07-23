@@ -1,10 +1,21 @@
-export class FileRessourceManager {
-	private _systemRoot;
-	private _projectRoot;
+function randomString(length: number): string {
+	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
 
-	private constructor(systemRoot: FileSystemDirectoryHandle, projectRoot: FileSystemDirectoryHandle) {
+export class FileRessourceManager {
+	private _systemRoot: FileSystemDirectoryHandle;
+	private _projectRoot: FileSystemDirectoryHandle;
+	private _projectRootName: string;
+
+	private constructor(
+		systemRoot: FileSystemDirectoryHandle,
+		projectRoot: FileSystemDirectoryHandle,
+		projectRootName: string,
+	) {
 		this._systemRoot = systemRoot;
 		this._projectRoot = projectRoot;
+		this._projectRootName = projectRootName;
 	}
 
 	public get systemRoot() {
@@ -13,6 +24,10 @@ export class FileRessourceManager {
 
 	public get projectRoot() {
 		return this._projectRoot;
+	}
+
+	public get projectRootName() {
+		return this._projectRootName;
 	}
 
 	private static initialied = false;
@@ -33,12 +48,11 @@ export class FileRessourceManager {
 				return `Could not remove entry ${e}!`;
 			}
 		}
+		const rootName = randomString(16);
+		const projectRoot = await systemRoot.getDirectoryHandle(rootName, { create: true });
 
-		const projectRoot = await systemRoot.getDirectoryHandle(`temp`, { create: true });
-
-		const manager = new FileRessourceManager(systemRoot, projectRoot);
+		const manager = new FileRessourceManager(systemRoot, projectRoot, rootName);
 		await projectRoot.getDirectoryHandle("raw", { create: true });
-		await projectRoot.getDirectoryHandle("sparse_virtual_textures", { create: true });
 
 		this.initialied = true;
 		return manager;

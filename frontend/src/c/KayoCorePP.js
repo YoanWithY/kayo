@@ -359,12 +359,12 @@ if (ENVIRONMENT_IS_PTHREAD) {
 // end include: runtime_pthread.js
 function updateMemoryViews() {
   var b = wasmMemory.buffer;
-  Module["HEAP8"] = HEAP8 = new Int8Array(b);
-  Module["HEAP16"] = HEAP16 = new Int16Array(b);
+  HEAP8 = new Int8Array(b);
+  HEAP16 = new Int16Array(b);
   Module["HEAPU8"] = HEAPU8 = new Uint8Array(b);
-  Module["HEAPU16"] = HEAPU16 = new Uint16Array(b);
-  Module["HEAP32"] = HEAP32 = new Int32Array(b);
-  Module["HEAPU32"] = HEAPU32 = new Uint32Array(b);
+  HEAPU16 = new Uint16Array(b);
+  HEAP32 = new Int32Array(b);
+  HEAPU32 = new Uint32Array(b);
   HEAPF32 = new Float32Array(b);
   HEAPF64 = new Float64Array(b);
   HEAP64 = new BigInt64Array(b);
@@ -2577,6 +2577,21 @@ var __embind_register_float = (rawType, name, size) => {
     argPackAdvance: GenericWireTypeSize,
     "readValueFromPointer": floatReadValueFromPointer(name, size),
     destructorFunction: null
+  });
+};
+
+var __embind_register_function = (name, argCount, rawArgTypesAddr, signature, rawInvoker, fn, isAsync, isNonnullReturn) => {
+  var argTypes = heap32VectorToArray(argCount, rawArgTypesAddr);
+  name = readLatin1String(name);
+  name = getFunctionName(name);
+  rawInvoker = embind__requireFunction(signature, rawInvoker, isAsync);
+  exposePublicSymbol(name, function() {
+    throwUnboundTypeError(`Cannot call ${name} due to unbound types`, argTypes);
+  }, argCount - 1);
+  whenDependentTypesAreResolved([], argTypes, argTypes => {
+    var invokerArgsArray = [ argTypes[0], null ].concat(argTypes.slice(1));
+    replacePublicSymbol(name, craftInvokerFunction(name, invokerArgsArray, null, rawInvoker, fn, isAsync), argCount - 1);
+    return [];
   });
 };
 
@@ -5905,7 +5920,7 @@ MEMFS.doesNotExistError = new FS.ErrnoError(44);
 var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied, _environ_get, _environ_sizes_get, _fd_close, _fd_read, _fd_seek, _fd_write ];
 
 var ASM_CONSTS = {
-  50416: ($0, $1, $2) => {
+  50448: ($0, $1, $2) => {
     window.kayo.wasmx.taskQueue.taskFinished($0, {
       offset: $1,
       byteSize: $2
@@ -5937,6 +5952,7 @@ function assignWasmImports() {
     /** @export */ _embind_register_class_property: __embind_register_class_property,
     /** @export */ _embind_register_emval: __embind_register_emval,
     /** @export */ _embind_register_float: __embind_register_float,
+    /** @export */ _embind_register_function: __embind_register_function,
     /** @export */ _embind_register_integer: __embind_register_integer,
     /** @export */ _embind_register_memory_view: __embind_register_memory_view,
     /** @export */ _embind_register_std_string: __embind_register_std_string,

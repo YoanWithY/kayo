@@ -70,6 +70,12 @@ export default class APIPane extends BasicPane {
 				Features: Array.from(gpuDevice.features),
 				Limits: gpuDevice.limits,
 			},
+			Threads: {
+				concurrency: navigator.hardwareConcurrency,
+			},
+			WASM: {
+				memory: this._kayo.wasmx.heap.byteLength,
+			},
 			Audio: {
 				State: `${audioContext.state}`,
 				"Sample Rate": `${audioContext.sampleRate} Hz`,

@@ -36,6 +36,14 @@ export default class WASMX {
 		return this._wasm;
 	}
 
+	public get heap(): Uint8Array {
+		return this._wasm.HEAPU8;
+	}
+
+	public getMemoryView(byteOffset: number, byteLength: number): Uint8Array {
+		return new Uint8Array(this.heap.buffer, byteOffset, byteLength);
+	}
+
 	public toWasmPath(stateVariableURL: string, variables: any = {}): WasmPath {
 		return stateVariableURL.split(".").map((val: string) => {
 			const pathPart = val.split(":");

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -58,8 +59,8 @@ class ImageMipView {
 			for (int32_t x = -border; x < view.width + border; ++x) {
 				FixedPoint::vec4f value = view.texelFetch(x, y, wrap_x, wrap_y);
 				int32_t write_x = des_x + x;
-				int32_t wirite_y = des_y + y;
-				this->setPixel(write_x, wirite_y, value);
+				int32_t write_y = des_y + y;
+				this->setPixel(write_x, write_y, value);
 			}
 		}
 	}
@@ -103,8 +104,8 @@ class ImageMipViewImplementation : public ImageMipView {
 
 	constexpr void
 	setPixel(int32_t x, int32_t y, const FixedPoint::vec4f& value) override {
-		int32_t mip_x = start_x + x;
-		int32_t mip_y = start_y + y;
+		int32_t mip_x = this->start_x + x;
+		int32_t mip_y = this->start_y + y;
 		if (mip_x < 0 || mip_y < 0 || mip_x >= static_cast<int32_t>(this->mip_width) || mip_y >= static_cast<int32_t>(this->mip_height))
 			return;
 		uint32_t idx = (static_cast<uint32_t>(mip_y) * this->mip_width + static_cast<uint32_t>(mip_x)) * this->num_components;

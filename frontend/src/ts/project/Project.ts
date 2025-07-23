@@ -14,6 +14,7 @@ import { Viewport } from "../rendering/Viewport";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 
 export class Project {
+	private _name: string;
 	public kayo: Kayo;
 	public gpux: GPUX;
 	public wasmx: WASMX;
@@ -23,6 +24,8 @@ export class Project {
 	public ptpBase: PTPBase;
 
 	public constructor(kayo: Kayo) {
+		this._name = "Unnamed";
+		window.document.title = `Kayo Engine - ${this._name}`;
 		this.kayo = kayo;
 		this.gpux = kayo.gpux;
 		this.wasmx = kayo.wasmx;

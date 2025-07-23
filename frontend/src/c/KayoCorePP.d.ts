@@ -1,11 +1,6 @@
 // TypeScript bindings for emscripten-generated code.  Automatically generated at compile time.
 declare namespace RuntimeExports {
-    let HEAP8: any;
-    let HEAP16: any;
-    let HEAP32: any;
     let HEAPU8: any;
-    let HEAPU16: any;
-    let HEAPU32: any;
 }
 interface WasmModule {
 }
@@ -213,6 +208,7 @@ interface EmbindModule {
   ImageDataUint8: {
     empty(_0: number, _1: number, _2: number): ImageDataUint8 | null;
   };
+  deleteArrayUint8(_0: number): void;
 }
 
 export type MainModule = WasmModule & typeof RuntimeExports & EmbindModule;

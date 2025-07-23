@@ -20,16 +20,16 @@ if (typeof gpux === "string") {
 loadPara.textContent = "Init file system...";
 const fileRessourceManager = await FileRessourceManager.requestFileRessourceManager();
 
-loadPara.textContent = "Initi WASM...";
-const wasmx = await initWasmx();
-
-loadPara.textContent = "Init Workers...";
-await wasmx.taskQueue.initWorkers("temp");
-
 if (typeof fileRessourceManager === "string") {
 	alert(`Could not initialize File System with reason: ${fileRessourceManager}`);
 	throw new Error("File System error!", { cause: fileRessourceManager });
 }
+
+loadPara.textContent = "Initi WASM...";
+const wasmx = await initWasmx();
+
+loadPara.textContent = "Init Workers...";
+await wasmx.taskQueue.initWorkers(fileRessourceManager.projectRootName);
 
 const kayo = new Kayo(gpux, wasmx, fileRessourceManager);
 (window as any).kayo = kayo;

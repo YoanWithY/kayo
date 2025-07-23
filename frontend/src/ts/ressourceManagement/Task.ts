@@ -10,11 +10,10 @@ export abstract class WasmTask {
 }
 
 export abstract class JsTask {
-	public requiredWorkerID?: number;
 	public get taskType(): TaskType {
 		return "js";
 	}
-	public abstract run(taskID: number, worker: Worker): void;
+	public abstract run(taskID: number, workerID: number): void;
 	public abstract progressCallback(progress: number, maximum: number): void;
 	public abstract finishedCallback(returnValue: any): void;
 }

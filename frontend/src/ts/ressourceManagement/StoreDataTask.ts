@@ -26,10 +26,10 @@ export class StoreDataTask extends JsTask {
 		this._byteLength = byteLength;
 	}
 
-	public run(taskID: number, worker: Worker) {
+	public run(taskID: number, workerID: number) {
 		this._taskID = taskID;
 		this._wasmx.taskQueue.remoteJSCall(
-			worker,
+			workerID,
 			this._taskID,
 			"writeFile",
 			{

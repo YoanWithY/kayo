@@ -29,8 +29,8 @@ export class MinecraftTexture {
 			return;
 		}
 		this.virtualTexture = vt;
-		const atlas = fallback.virtualTextureSystem.generateMipAtlas(image, this.virtualTexture.samplingDescriptor);
-		this.virtualTexture.makeResident(atlas, 0, 0, 0);
+		fallback.virtualTextureSystem.generateMipAtlas(image, this.virtualTexture.samplingDescriptor);
+		// this.virtualTexture.makeResident(atlas, 0, 0, 0);
 	}
 
 	private scan(image: ImageBitmap) {

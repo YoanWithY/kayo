@@ -28,7 +28,7 @@ fn fragment_main(fragment: VertexOutput) -> R3FragmentOutput {
 	let srgb = vec3f(fragment.ws_position) * 0.5 + 0.5;
 	var out_color = vec4f(srgb, 1.0);
 
-	let svt_value = textureSample(svt_physical_texture, svt_sampler_ansiotropic, srgb.xy, 0);
+	let svt_value = textureSampleLevel(svt_physical_texture, svt_sampler011, srgb.xy, 0, 0);
 	if (out_color.z == 0) {
 		out_color = svt_value;
 	}

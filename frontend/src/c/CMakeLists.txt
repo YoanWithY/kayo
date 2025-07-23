@@ -45,7 +45,7 @@ target_link_options(KayoCorePP PRIVATE
   -sALLOW_MEMORY_GROWTH
   -pthread
   -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency
-  -sEXPORTED_RUNTIME_METHODS=HEAP8,HEAP16,HEAP32,HEAPU8,HEAPU16,HEAPU32
+  -sEXPORTED_RUNTIME_METHODS=HEAPU8
   --emit-tsd KayoCorePP.d.ts
   -O3
   -gsource-map

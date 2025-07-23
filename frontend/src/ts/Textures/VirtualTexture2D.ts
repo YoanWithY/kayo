@@ -1,4 +1,3 @@
-import { CPUTexture } from "./CPUTexture";
 import { Texture2D } from "./TextureLoader";
 import TextureUtils from "./TextureUtils";
 import { VirtualTextureSystem } from "./VirtualTextureSystem";
@@ -66,7 +65,7 @@ export class VirtualTexture2D implements Texture2D {
 	 * @param xTile
 	 * @param yTile
 	 */
-	public makeResident(image: CPUTexture, level: number, _xTile: number, _yTile: number) {
+	public makeResident(image: ArrayBufferView, level: number, _xTile: number, _yTile: number) {
 		if (level <= this.firstAtlasedLevel) {
 			const ph = this.virtualTextureSystem.physicalTexture;
 			const coord = ph.getAtlasTileCoordinate(this);
@@ -76,8 +75,8 @@ export class VirtualTexture2D implements Texture2D {
 					texture: ph.gpuTexture,
 					origin: [coord[0] * tileSize, coord[1] * tileSize, 0],
 				},
-				image.data[0],
-				{ bytesPerRow: tileSize * 4 },
+				image,
+				{ offset: 0, bytesPerRow: tileSize * 4, rowsPerImage: tileSize },
 				[tileSize, tileSize, 1],
 			);
 		}
