@@ -5922,8 +5922,8 @@ var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied,
 var ASM_CONSTS = {
   50448: ($0, $1, $2) => {
     window.kayo.wasmx.taskQueue.taskFinished($0, {
-      offset: $1,
-      byteSize: $2
+      byteOffset: $1,
+      byteLength: $2
     });
   }
 };

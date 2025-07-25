@@ -4,7 +4,7 @@ let root!: FileSystemDirectoryHandle;
 let projectDir!: FileSystemDirectoryHandle;
 let id!: number;
 
-const getDirHandleFromPath = async (path: string) => {
+export const getDirHandleFromPath = async (path: string) => {
 	const dirs = path.split("/").filter(Boolean);
 	let dir = projectDir;
 	for (const segment of dirs) {
@@ -13,17 +13,11 @@ const getDirHandleFromPath = async (path: string) => {
 	return dir;
 };
 
-const getFileHandleFromPath = async (path: string, fileName: string) => {
+export const getFileHandleFromPath = async (path: string, fileName: string) => {
 	return await (await getDirHandleFromPath(path)).getFileHandle(fileName, { create: true });
 };
 
-const initWorkerFunction = async ({
-	projectName: projectRootName,
-	workerID,
-}: {
-	projectName: string;
-	workerID: number;
-}) => {
+const initWorkerFunction = async ({ projectRootName, workerID }: { projectRootName: string; workerID: number }) => {
 	id = workerID;
 	root = await navigator.storage.getDirectory();
 	projectDir = await root.getDirectoryHandle(projectRootName);

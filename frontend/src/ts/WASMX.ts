@@ -36,11 +36,11 @@ export default class WASMX {
 		return this._wasm;
 	}
 
-	public get heap(): Uint8Array {
+	public get heap(): Uint8Array<SharedArrayBuffer> {
 		return this._wasm.HEAPU8;
 	}
 
-	public getMemoryView(byteOffset: number, byteLength: number): Uint8Array {
+	public getMemoryView(byteOffset: number, byteLength: number) {
 		return new Uint8Array(this.heap.buffer, byteOffset, byteLength);
 	}
 

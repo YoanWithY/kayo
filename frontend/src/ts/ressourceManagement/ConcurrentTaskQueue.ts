@@ -1,3 +1,4 @@
+import { SVTFSTask } from "./SVTFSTask";
 import { WasmTask, JsTask } from "./Task";
 
 export type ConcurrentTask = WasmTask | JsTask;
@@ -9,8 +10,10 @@ export class ConcurrentTaskQueue {
 	private _numRunningThreads: number;
 	private _taskID: number;
 	private _taskMap: { [key: number]: ConcurrentTask };
+	private _svtTaskMap: { [key: number]: SVTFSTask };
 	private _taskQueue: ConcurrentTask[];
 	private _jsWorkers: WorkerEntry[];
+	private _svtWorker: Worker;
 
 	public constructor() {
 		this._numThreads = navigator.hardwareConcurrency;
@@ -19,9 +22,14 @@ export class ConcurrentTaskQueue {
 		this._taskMap = {};
 		this._taskQueue = [];
 		this._jsWorkers = new Array(this._numThreads);
+		this._svtTaskMap = {};
+		this._svtWorker = new Worker(new URL("./SVTWorker.ts", import.meta.url), {
+			name: `SVT-Worker`,
+			type: "module",
+		});
 	}
 
-	public async initWorkers(projectName: string) {
+	public async initWorkers(projectRootName: string) {
 		const promices: Promise<void>[] = [];
 		for (let i = 0; i < this._numThreads; i++) {
 			let externalResolve: (value: void | PromiseLike<void>) => void;
@@ -37,10 +45,6 @@ export class ConcurrentTaskQueue {
 
 			const workerMessageCallback = (e: MessageEvent) => {
 				const taskID = e.data.taskID;
-				if (taskID === -1) {
-					externalResolve();
-					return;
-				}
 				const progress = e.data.progess as number | undefined;
 				if (progress !== undefined) {
 					const max = e.data.max as number;
@@ -51,15 +55,48 @@ export class ConcurrentTaskQueue {
 				}
 			};
 
-			worker.addEventListener("message", workerMessageCallback);
+			const workerInitCallback = (e: MessageEvent) => {
+				const taskID = e.data.taskID;
+				if (taskID !== -1) return;
+				worker.removeEventListener("message", workerInitCallback);
+				worker.addEventListener("message", workerMessageCallback);
+				externalResolve();
+			};
+
+			worker.addEventListener("message", workerInitCallback);
 			this._jsWorkers[i] = {
 				worker: worker,
 				isRunning: false,
 			};
 
-			this.remoteJSCall(i, -1, "initWorker", { projectName, workerID: i }, []);
+			this.remoteJSCall(i, -1, "initWorker", { projectRootName, workerID: i }, []);
 		}
 
+		// SVT Worker
+		let externalResolve: (value: void | PromiseLike<void>) => void;
+		const promice = new Promise<void>((res) => {
+			externalResolve = res;
+		});
+		promices.push(promice);
+
+		const svtWorkerCallback = (e: MessageEvent) => {
+			const taskID = e.data.taskID;
+			this._svtTaskMap[taskID].finishedCallback(e.data.returnValue);
+			this._numRunningThreads--;
+			delete this._svtTaskMap[taskID];
+		};
+		const svtInitCallback = (e: MessageEvent) => {
+			const taskID = e.data.taskID;
+			if (taskID !== -1) return;
+			this._svtWorker.removeEventListener("message", svtInitCallback);
+			this._svtWorker.addEventListener("message", svtWorkerCallback);
+			externalResolve();
+		};
+
+		this._svtWorker.addEventListener("message", svtInitCallback);
+		this._svtWorker.postMessage({ func: "initWorker", taskID: -1, args: { projectRootName: projectRootName } });
+
+		// await compleation
 		await Promise.all(promices);
 	}
 
@@ -87,6 +124,13 @@ export class ConcurrentTaskQueue {
 	public queueTask(wasmTask: ConcurrentTask) {
 		this._taskQueue.push(wasmTask);
 		this._conditonallyPopNextTask();
+	}
+
+	public queueSVTTask(svtTask: SVTFSTask) {
+		const taskID = this._taskID++;
+		this._svtTaskMap[taskID] = svtTask;
+		this._numRunningThreads++;
+		svtTask.run(taskID, this._svtWorker);
 	}
 
 	public taskUpdate(id: number, progress: number, maximum: number) {

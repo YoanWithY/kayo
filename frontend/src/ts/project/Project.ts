@@ -29,7 +29,7 @@ export class Project {
 		this.kayo = kayo;
 		this.gpux = kayo.gpux;
 		this.wasmx = kayo.wasmx;
-		this.virtualTextureSystem = new VirtualTextureSystem(this.gpux);
+		this.virtualTextureSystem = new VirtualTextureSystem(this.gpux, this.wasmx);
 		const realtimeRenderer = new RealtimeRenderer(this);
 		this.renderers["realtime"] = realtimeRenderer;
 		this.ptpBase = new PTPBase(this);

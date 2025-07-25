@@ -9,7 +9,11 @@ export class CreateAtlasTask extends WasmTask {
 	private _wasmTask!: WasmCreateAtlasTask;
 	private _callback: (ret: any) => void;
 
-	public constructor(wasmx: WASMX, imageData: ImageDataUint8, finishedCallback: (ret: any) => void) {
+	public constructor(
+		wasmx: WASMX,
+		imageData: ImageDataUint8,
+		finishedCallback: (ret: { byteOffset: number; byteLength: number }) => void,
+	) {
 		super();
 		this._wasmx = wasmx;
 		this._imageData = imageData;

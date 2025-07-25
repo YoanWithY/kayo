@@ -49,12 +49,21 @@ export class WrappingPane extends HTMLElement {
 				const atlasTas = new CreateAtlasTask(
 					project.wasmx,
 					imageData,
-					(value: { offset: number; byteSize: number }) => {
-						vt.makeResident(project.wasmx.getMemoryView(value.offset, value.byteSize), 0, 0, 0);
+					(atlasData: { byteOffset: number; byteLength: number }) => {
+						imageData.delete();
+
+						const view = project.wasmx.getMemoryView(atlasData.byteOffset, atlasData.byteLength);
+						vt.makeResident(view, 0, 0, 0);
 						project.fullRerender();
 
-						imageData.delete();
-						project.wasmx.wasm.deleteArrayUint8(value.offset);
+						const svtWriteFinishedCallback = (writeResult: number) => {
+							if (writeResult !== 0) {
+								console.error(`SVT Write failed.`);
+								return;
+							}
+							project.wasmx.wasm.deleteArrayUint8(atlasData.byteOffset);
+						};
+						vt.writeToFileSystem(view, 0, 0, 0, svtWriteFinishedCallback);
 					},
 				);
 				project.wasmx.taskQueue.queueTask(atlasTas);

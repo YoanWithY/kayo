@@ -45,7 +45,7 @@ static void* createMipAtlas(void* arg) {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdollar-in-identifier-extension"
-	MAIN_THREAD_ASYNC_EM_ASM({ window.kayo.wasmx.taskQueue.taskFinished($0, {offset : $1, byteSize : $2}); }, task->task_id, write_view.mip_data, byte_size);
+	MAIN_THREAD_ASYNC_EM_ASM({ window.kayo.wasmx.taskQueue.taskFinished($0, {byteOffset : $1, byteLength : $2}); }, task->task_id, write_view.mip_data, byte_size);
 #pragma GCC diagnostic pop
 	pthread_detach(pthread_self());
 	return nullptr;

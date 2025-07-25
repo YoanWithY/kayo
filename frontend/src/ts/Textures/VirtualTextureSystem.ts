@@ -5,9 +5,11 @@ import { IndirectionTableAtlas } from "./IndirectionTableAtlas";
 import { PhysicalTexture } from "./PhysicalTexture";
 import { VirtualTexture2D, VirtualTextureSamplingDescriptor } from "./VirtualTexture2D";
 import { CPUTexture } from "./CPUTexture";
+import WASMX from "../WASMX";
 
 export class VirtualTextureSystem {
-	public gpux: GPUX;
+	private _gpux: GPUX;
+	private _wasmx: WASMX;
 	public largestAtlasedMipSize: number; // must be power of two
 	public numberOfMipsInMipAtlas: number;
 
@@ -58,24 +60,25 @@ export class VirtualTextureSystem {
 		[96, 128],
 		[136, 128],
 	];
-	public constructor(gpux: GPUX) {
+	public constructor(gpux: GPUX, wasmx: WASMX) {
 		// Construction order is relevant!
-		this.gpux = gpux;
+		this._gpux = gpux;
+		this._wasmx = wasmx;
 		this.largestAtlasedMipSize = 64;
 		this.numberOfMipsInMipAtlas = TextureUtils.getFullMipPyramidLevels(this.largestAtlasedMipSize);
 
-		if (Math.floor(gpux.gpuDevice.limits.maxTextureDimension2D / this._physicalTileSize) > 256)
+		if (Math.floor(this._gpux.gpuDevice.limits.maxTextureDimension2D / this._physicalTileSize) > 256)
 			this._physicalLayerSize = this._physicalTileSize * 256;
-		else this._physicalLayerSize = gpux.gpuDevice.limits.maxTextureDimension2D;
+		else this._physicalLayerSize = this._gpux.gpuDevice.limits.maxTextureDimension2D;
 		this._tilesPerDimension = Math.floor(this._physicalLayerSize / this._physicalTileSize);
 		this._tilesPerLayer = this._tilesPerDimension * this._tilesPerDimension;
 		this._tilesInTotal = this._tilesPerLayer * this._physicalLayers;
 
-		this.physicalTexture = new PhysicalTexture(this, gpux);
-		this.indirectionTableAtlas = new IndirectionTableAtlas(this, gpux);
-		this.textureSVTData = new TextureSVTData(this, gpux);
+		this.physicalTexture = new PhysicalTexture(this, this._gpux);
+		this.indirectionTableAtlas = new IndirectionTableAtlas(this, this._gpux);
+		this.textureSVTData = new TextureSVTData(this, this._gpux);
 
-		const device = gpux.gpuDevice;
+		const device = this._gpux.gpuDevice;
 		this.bindGroupEntries = [
 			{ binding: 128, resource: this.textureSVTData.gpuBuffer },
 			{ binding: 130, resource: this.indirectionTableAtlas.gpuTexture.createView({ dimension: "2d-array" }) },
@@ -189,6 +192,14 @@ export class VirtualTextureSystem {
 				}),
 			}, // must be changed in virtualTexture.wgsl
 		];
+	}
+
+	public get gpux() {
+		return this._gpux;
+	}
+
+	public get wasmx() {
+		return this._wasmx;
 	}
 
 	public get logicalTileSize() {
