@@ -9,7 +9,7 @@ import TextureUtils from "../../Textures/TextureUtils";
 import { Kayo } from "../../Kayo";
 import RealtimeRenderer from "../../rendering/RealtimeRenderer";
 import { CreateAtlasTask } from "../../ressourceManagement/CreateAtlasTask";
-import { StoreDataTask } from "../../ressourceManagement/StoreDataTask";
+import { StoreFileTask } from "../../ressourceManagement/StoreFileTask";
 
 export class WrappingPane extends HTMLElement {
 	public baseSplitPaneContainer!: SplitPaneContainer;
@@ -43,7 +43,7 @@ export class WrappingPane extends HTMLElement {
 				const imageData = project.wasmx.imageData.fromImageData(a, true);
 				if (imageData === null) continue;
 
-				const task = new StoreDataTask(project.wasmx, "raw", file.name, a, 0, a.byteLength);
+				const task = new StoreFileTask(project.wasmx, project.getFSPathTo("raw"), file.name, new Uint8Array(a));
 				project.wasmx.taskQueue.queueTask(task);
 
 				const atlasTas = new CreateAtlasTask(

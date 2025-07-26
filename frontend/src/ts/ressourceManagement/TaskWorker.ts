@@ -1,67 +1,77 @@
 /// <reference lib="webworker" />
-
+type ReturnValueType = { returnValue: any; transfer: Transferable[] };
 let root!: FileSystemDirectoryHandle;
-let projectDir!: FileSystemDirectoryHandle;
 let id!: number;
 
-export const getDirHandleFromPath = async (path: string) => {
+const getDirHandleFromPath = async (path: string) => {
 	const dirs = path.split("/").filter(Boolean);
-	let dir = projectDir;
+	let dir = root;
 	for (const segment of dirs) {
 		dir = await dir.getDirectoryHandle(segment, { create: true });
 	}
 	return dir;
 };
 
-export const getFileHandleFromPath = async (path: string, fileName: string) => {
+const getFileHandleFromPathAndName = async (path: string, fileName: string) => {
 	return await (await getDirHandleFromPath(path)).getFileHandle(fileName, { create: true });
 };
 
-const initWorkerFunction = async ({ projectRootName, workerID }: { projectRootName: string; workerID: number }) => {
+const initWorkerFunction = async ({ workerID }: { workerID: number }) => {
 	id = workerID;
 	root = await navigator.storage.getDirectory();
-	projectDir = await root.getDirectoryHandle(projectRootName);
-	return `Initialized Worker ${id} for dir ${projectRootName}`;
+	return { returnValue: `Initialized Worker ${id}}`, transfer: [] };
 };
 
-const writeFileFunction = async ({
+const storeFileFunction = async ({
 	path,
 	fileName,
-	buffer,
-	offset,
-	byteLength,
+	data,
 }: {
 	path: string;
 	fileName: string;
-	buffer: ArrayBufferLike;
-	offset: number;
-	byteLength: number;
+	data: Uint8Array<ArrayBufferLike>;
 }) => {
-	const fileHandle = await getFileHandleFromPath(path, fileName);
+	const fileHandle = await getFileHandleFromPathAndName(path, fileName);
 	const syncHandle = await fileHandle.createSyncAccessHandle();
 
 	try {
-		const view = new Uint8Array(buffer, offset, byteLength - byteLength);
-		syncHandle.write(view);
+		syncHandle.write(data);
 		syncHandle.flush();
-	} catch (_: any) {
-		return -1;
+	} catch (e) {
+		console.error(e);
+		return { returnValue: -1, transfer: [] };
 	} finally {
 		syncHandle.close();
 	}
-	return 0;
+	return { returnValue: 0, transfer: [] };
 };
 
-const taskMap: Record<string, (args: any) => Promise<any> | any> = {
-	writeFile: writeFileFunction,
+const loadFileFunction = async ({ path, fileName }: { path: string; fileName: string }) => {
+	const fileHandle = await getFileHandleFromPathAndName(path, fileName);
+	const syncHandle = await fileHandle.createSyncAccessHandle();
+	const data = new Uint8Array(syncHandle.getSize());
+	try {
+		syncHandle.read(data);
+	} catch (_) {
+		return { returnValue: undefined, transfer: [] };
+	} finally {
+		syncHandle.close();
+	}
+	return { returnValue: data, transfer: [data.buffer] };
+};
+
+const taskMap: Record<string, (args: any) => Promise<ReturnValueType> | ReturnValueType> = {
 	initWorker: initWorkerFunction,
+	storeFile: storeFileFunction,
+	loadFile: loadFileFunction,
 };
 
 self.onmessage = async (event: MessageEvent) => {
 	const { func, taskID, args } = event.data;
 	const fn = taskMap[func];
 	if (typeof fn === "function") {
-		self.postMessage({ taskID, returnValue: await fn(args) });
+		const { returnValue, transfer } = await fn(args);
+		self.postMessage({ taskID, returnValue }, transfer);
 	} else {
 		console.error(`The provided function name "${func}" is unknown.`);
 	}

@@ -69,7 +69,7 @@ export class ConcurrentTaskQueue {
 				isRunning: false,
 			};
 
-			this.remoteJSCall(i, -1, "initWorker", { projectRootName, workerID: i }, []);
+			this.remoteJSCall(i, -1, "initWorker", { workerID: i }, []);
 		}
 
 		// SVT Worker

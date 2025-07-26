@@ -8,6 +8,9 @@ export class FileRessourceManager {
 	private _projectRoot: FileSystemDirectoryHandle;
 	private _projectRootName: string;
 
+	private _unserializedProjects: Set<FileSystemDirectoryHandle>;
+	private _serializedProjects: Set<FileSystemDirectoryHandle>;
+
 	private constructor(
 		systemRoot: FileSystemDirectoryHandle,
 		projectRoot: FileSystemDirectoryHandle,
@@ -16,6 +19,8 @@ export class FileRessourceManager {
 		this._systemRoot = systemRoot;
 		this._projectRoot = projectRoot;
 		this._projectRootName = projectRootName;
+		this._unserializedProjects = new Set();
+		this._serializedProjects = new Set();
 	}
 
 	public get systemRoot() {
@@ -30,6 +35,22 @@ export class FileRessourceManager {
 		return this._projectRootName;
 	}
 
+	public get unserializedProjects() {
+		return this._unserializedProjects;
+	}
+
+	public get serializedProjects() {
+		return this._serializedProjects;
+	}
+
+	public async deleteUnserializedProjects() {
+		for (const [e, _] of this._unserializedProjects.entries()) {
+			if (e.name === this._projectRootName) continue;
+			this._unserializedProjects.delete(e);
+			await this._systemRoot.removeEntry(e.name, { recursive: true });
+		}
+	}
+
 	private static initialied = false;
 	public static async requestFileRessourceManager(): Promise<string | FileRessourceManager> {
 		if (this.initialied) return "File ressource manager is already initialized!";
@@ -41,20 +62,30 @@ export class FileRessourceManager {
 			return "Could not get root dir!";
 		}
 
+		const projectRootName = randomString(16);
+		const projectRoot = await systemRoot.getDirectoryHandle(projectRootName, { create: true });
+
+		const manager = new FileRessourceManager(systemRoot, projectRoot, projectRootName);
+		await projectRoot.getDirectoryHandle("raw", { create: true });
+
 		for await (const e of systemRoot.entries()) {
+			if (e[1] instanceof FileSystemFileHandle) continue;
+
+			const handle = e[1] as FileSystemDirectoryHandle;
 			try {
-				await systemRoot.removeEntry(e[0], { recursive: true });
+				await handle.getFileHandle("project", { create: false });
+				manager._serializedProjects.add(handle);
 			} catch (_) {
-				return `Could not remove entry ${e}!`;
+				manager._unserializedProjects.add(handle);
 			}
 		}
-		const rootName = randomString(16);
-		const projectRoot = await systemRoot.getDirectoryHandle(rootName, { create: true });
-
-		const manager = new FileRessourceManager(systemRoot, projectRoot, rootName);
-		await projectRoot.getDirectoryHandle("raw", { create: true });
 
 		this.initialied = true;
 		return manager;
 	}
+}
+
+const decoder = new TextDecoder();
+export function uint8ArrayToObject(data: Uint8Array): any {
+	return JSON.parse(decoder.decode(data));
 }

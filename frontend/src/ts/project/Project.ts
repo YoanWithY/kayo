@@ -24,7 +24,7 @@ export class Project {
 	public ptpBase: PTPBase;
 
 	public constructor(kayo: Kayo) {
-		this._name = "Unnamed";
+		this._name = "Unnamed Project";
 		window.document.title = `Kayo Engine - ${this._name}`;
 		this.kayo = kayo;
 		this.gpux = kayo.gpux;
@@ -105,5 +105,9 @@ export class Project {
 
 	public fullRerender() {
 		for (const vp of this._viewportPanes) this.requestAnimationFrameWith(vp);
+	}
+
+	public getFSPathTo(localPath: string) {
+		return `${this.kayo.fileRessourceManager.projectRootName}/${localPath}`;
 	}
 }

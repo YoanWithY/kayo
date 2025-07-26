@@ -1,0 +1,36 @@
+splash-screen {
+    z-index: 100;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.6);
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	backdrop-filter: blur(73px);
+	box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.5);
+    border-radius: var(--radius);
+    padding: 18px;
+}
+
+.splashEntryTable {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 10vh;
+    overflow: auto;
+}
+
+.splashRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0px 4px;
+
+}
+
+.splashRow:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+

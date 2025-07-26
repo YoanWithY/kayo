@@ -24,10 +24,14 @@ import VBox from "./components/VBox";
 import { NumberInput } from "./components/NumberInput";
 import { FileSystemPane } from "./panes/FileSystemPane";
 import { PerformancePane } from "./panes/PerformancePane";
+import { SplashScreen } from "./panes/SplashScreen";
 
 export type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 
 export function initUI() {
+	window.document.addEventListener("contextmenu", (e) => {
+		e.preventDefault();
+	});
 	window.customElements.define("tool-tip", Tooltip);
 	window.customElements.define(Grid2Col.getDomClass(), Grid2Col);
 	window.customElements.define(NumberInput.getDomClass(), NumberInput);
@@ -50,6 +54,7 @@ export function initUI() {
 	window.customElements.define(PaneSelectorPane.getDomClass(), PaneSelectorPane);
 	window.customElements.define(OutlinerPane.getDomClass(), OutlinerPane);
 	window.customElements.define(PTPChatPane.getDomClass(), PTPChatPane);
+	window.customElements.define(SplashScreen.getDomClass(), SplashScreen);
 
 	window.customElements.define("wrapping-pane", WrappingPane);
 	window.customElements.define("full-strech", FullStretch);
