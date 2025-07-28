@@ -1,17 +1,30 @@
 splash-screen {
     z-index: 100;
     position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.splashScreenContainer {
     display: flex;
     flex-direction: column;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    width: max-content;
+    height: min-content;
+    min-width: 25vw;
     background-color: rgba(0, 0, 0, 0.6);
 	border: 1px solid rgba(255, 255, 255, 0.25);
 	backdrop-filter: blur(73px);
 	box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.5);
-    border-radius: var(--radius);
+    border-radius: calc(var(--radius) * 4);
     padding: 18px;
+    pointer-events: all;
+    overflow: hidden;
 }
 
 .splashEntryTable {
@@ -26,7 +39,7 @@ splash-screen {
     display: flex;
     justify-content: space-between;
     gap: 8px;
-    padding: 0px 4px;
+    padding: var(--var-padding) 4px;
 
 }
 

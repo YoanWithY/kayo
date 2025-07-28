@@ -56,9 +56,18 @@ body {
     font-size: var(--font-size);
     margin: 0;
     background-color: var(--split-pane-divider-color);
-    font-family: 'Noto Sans', Helvetica, sans-serif;
+    font-family: sans-serif;
     user-select: none;
     touch-action: none;
+}
+
+h1 {
+    text-align: center;
+    font-weight: 100;
+}
+
+h2 {
+    font-weight: 100;
 }
 
 canvas {

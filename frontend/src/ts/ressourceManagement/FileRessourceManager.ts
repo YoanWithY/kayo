@@ -43,11 +43,11 @@ export class FileRessourceManager {
 		return this._serializedProjects;
 	}
 
-	public async deleteUnserializedProjects() {
-		for (const [e, _] of this._unserializedProjects.entries()) {
-			if (e.name === this._projectRootName) continue;
-			this._unserializedProjects.delete(e);
-			await this._systemRoot.removeEntry(e.name, { recursive: true });
+	public async deleteUnserializedProjects(projects: FileSystemDirectoryHandle[]) {
+		for (const p of projects) {
+			if (p.name === this._projectRootName) continue;
+			this._unserializedProjects.delete(p);
+			await this._systemRoot.removeEntry(p.name, { recursive: true });
 		}
 	}
 
