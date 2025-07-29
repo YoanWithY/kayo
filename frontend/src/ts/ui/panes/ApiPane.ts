@@ -15,7 +15,6 @@ function groupBy(array: any[], key: string) {
 async function checkPermissions() {
 	const camera = await navigator.permissions.query({ name: "camera" });
 	const microphone = await navigator.permissions.query({ name: "microphone" });
-
 	return camera.state == "granted" && microphone.state == "granted";
 }
 
@@ -31,7 +30,7 @@ export default class APIPane extends BasicPane {
 		const gpuDevice = gpux.gpuDevice;
 		const audioContext = this._kayo.audioContext;
 
-		if (!checkPermissions()) {
+		if (!(await checkPermissions())) {
 			const stream = await navigator.mediaDevices.getUserMedia({
 				audio: true,
 				video: true,

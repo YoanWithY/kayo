@@ -1,3 +1,19 @@
+@font-face {
+  font-family: 'KayoFont';
+  src: url('/fonts/NotoSans/NotoSans-VariableFont_wdth,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'KayoFont';
+  src: url('/fonts/NotoSans/NotoSans-Italic-VariableFont_wdth,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: block;
+}
+
 :root {
     --radius: 4px;
     --transition-duration: 200ms;
@@ -13,6 +29,7 @@
     --text-color: rgb(200, 200, 200);
     --font-size: 0.8rem;
     --uneffective-opacity: 0.4;
+    --font-weight: 400;
 
     --var-padding: 4px;
 
@@ -32,9 +49,22 @@
     }
 }
 
+body {
+    color: var(--text-color);
+    font-size: var(--font-size);
+    margin: 0;
+    background-color: var(--split-pane-divider-color);
+    font-family: 'KayoFont';
+    font-weight: var(--font-weight);
+    user-select: none;
+    touch-action: none;
+}
+
 button {
     color: var(--text-color);
     background-color: transparent;
+    font-family: 'KayoFont';
+    font-weight: var(--font-weight);
     border: none;
     border-radius: var(--radius);
     padding: var(--var-padding) calc(var(--var-padding) + 2px);
@@ -51,23 +81,13 @@ input {
     font-size: var(--font-size);
 }
 
-body {
-    color: var(--text-color);
-    font-size: var(--font-size);
-    margin: 0;
-    background-color: var(--split-pane-divider-color);
-    font-family: sans-serif;
-    user-select: none;
-    touch-action: none;
-}
-
 h1 {
     text-align: center;
-    font-weight: 100;
+    font-weight: var(--font-weight);
 }
 
 h2 {
-    font-weight: 100;
+    font-weight: var(--font-weight);
 }
 
 canvas {
@@ -77,7 +97,6 @@ canvas {
 .selectorButton {
     color: var(--text-color);
     font-size: var(--font-size);
-    font-family: inherit;
 
     border-radius: var(--radius);
     border: 1px solid transparent;

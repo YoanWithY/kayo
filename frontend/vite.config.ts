@@ -30,6 +30,7 @@ export default defineConfig(({ command }) => {
 				},
 				workbox: {
 					globPatterns: ["**/*"],
+					maximumFileSizeToCacheInBytes: 3000000,
 				},
 				manifest: {
 					name: "Kayo Engine",
