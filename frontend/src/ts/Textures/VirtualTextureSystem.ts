@@ -3,8 +3,7 @@ import TextureUtils from "./TextureUtils";
 import { TextureSVTData as TextureSVTData } from "./TextureSVTData";
 import { IndirectionTableAtlas } from "./IndirectionTableAtlas";
 import { PhysicalTexture } from "./PhysicalTexture";
-import { VirtualTexture2D, VirtualTextureSamplingDescriptor } from "./VirtualTexture2D";
-import { CPUTexture } from "./CPUTexture";
+import { VirtualTexture2D } from "./VirtualTexture2D";
 import WASMX from "../WASMX";
 
 export class VirtualTextureSystem {
@@ -260,19 +259,6 @@ export class VirtualTextureSystem {
 		{ binding: 139, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
 		{ binding: 140, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
 	];
-
-	public generateMipAtlas(image: ImageBitmap, sampling: VirtualTextureSamplingDescriptor): CPUTexture {
-		const t = new CPUTexture(image.width, image.height, 0, TextureUtils.getImagePixels(image));
-		const atlas = new CPUTexture(this._physicalTileSize, this._physicalTileSize, 1);
-		const firstAtlasIndex =
-			this.numberOfMipsInMipAtlas - TextureUtils.getFullMipPyramidLevels(image.width, image.height);
-		let l = 0;
-		for (let i = firstAtlasIndex; i < this.numberOfMipsInMipAtlas; i++) {
-			atlas.copyFrom(t, l, this.atlasOffsets[i][0], this.atlasOffsets[i][1], 0, this.tileBorder, sampling);
-			l++;
-		}
-		return atlas;
-	}
 
 	public allocateVirtualTexture(
 		uid: string,

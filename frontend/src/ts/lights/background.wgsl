@@ -13,7 +13,7 @@ struct VertexOutput {
 @vertex
 fn vertex_main(vertex: VertexInput) -> VertexOutput {
 	let position = view.projection_mat * vec4f(mat3x3f(view.view_mat[0].xyz, view.view_mat[1].xyz, view.view_mat[2].xyz) * vertex.position, 1.0);
-	return VertexOutput(position, vertex.position);
+	return VertexOutput(position.xyww, vertex.position);
 }
 
 #include <virtualTexture>

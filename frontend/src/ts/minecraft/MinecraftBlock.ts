@@ -487,7 +487,10 @@ class BuiltBlockModel {
 
 				geom.push(...face.geomOrigin.add(pos), ...face.geomTangent, ...face.geomBitangent);
 				tex.push(...face.uvOrigin, ...face.uvTangent, ...face.uvBitangent);
-				texIndex.push(face.texture ? face.texture.virtualTexture.virtualTextureID : 0, face.tint ? 1 : 0);
+				texIndex.push(
+					face.texture && face.texture.virtualTexture ? face.texture.virtualTexture.virtualTextureID : 0,
+					face.tint ? 1 : 0,
+				);
 
 				faceCount++;
 			}

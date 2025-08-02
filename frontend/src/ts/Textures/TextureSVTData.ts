@@ -38,7 +38,7 @@ export class TextureSVTData {
 		this._allocatedTextures = 0;
 		this._indexBlocks = [{ start: -1, end: -1 }];
 
-		this._svtData = new Uint32Array(this._virtualTextureSystem.tilesInTotal * 4);
+		this._svtData = new Uint32Array(this._virtualTextureSystem.tilesInTotal * TextureSVTData.componentsPerEntry);
 
 		const bufferDescriptor: GPUBufferDescriptor = {
 			label: "SVT data buffer",
@@ -96,7 +96,7 @@ export class TextureSVTData {
 		}
 	}
 
-	public setDataOf(vt: VirtualTexture2D, flushToGPU: boolean = false) {
+	public setDataOf(vt: VirtualTexture2D, flushToGPU: boolean) {
 		const id = vt.virtualTextureID;
 		const componentOffset = id * TextureSVTData.componentsPerEntry;
 		this._svtData.set(
@@ -115,7 +115,7 @@ export class TextureSVTData {
 		if (flushToGPU) {
 			const byteOffset = componentOffset * 4;
 			const queue = this._virtualTextureSystem.gpux.gpuDevice.queue;
-			queue.writeBuffer(this._gpuBuffer, byteOffset, this._svtData, byteOffset);
+			queue.writeBuffer(this._gpuBuffer, byteOffset, this._svtData, componentOffset);
 		}
 	}
 }

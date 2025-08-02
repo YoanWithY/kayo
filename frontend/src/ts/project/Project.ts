@@ -12,6 +12,7 @@ import { ViewportPane } from "../ui/panes/ViewportPane";
 import { PerformancePane } from "../ui/panes/PerformancePane";
 import { Viewport } from "../rendering/Viewport";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
+import { MinecraftMetaRenderingPipeline } from "../minecraft/MinecraftOpaquePipeline";
 
 export class Project {
 	private _name: string;
@@ -37,6 +38,7 @@ export class Project {
 		TextureUtils.init(this.gpux.gpuDevice);
 		Background.init(this.gpux.gpuDevice, realtimeRenderer.bindGroup0Layout);
 		Grid.init(this.gpux, realtimeRenderer.bindGroup0Layout);
+		MinecraftMetaRenderingPipeline.init(this.gpux, realtimeRenderer.bindGroup0Layout);
 
 		this.scene = new Scene();
 		this.scene.background = new Background(this);

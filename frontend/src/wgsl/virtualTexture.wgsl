@@ -21,6 +21,10 @@ struct SVTTextureEntry {
 
 // ====== Texture Info Table ====== //
 
+fn virtualTextureInfo(v_id: u32) -> SVTTextureEntry {
+	return svt_texture_info[v_id];
+}
+
 fn virtualTextureLevelDimensions(size: vec2u, level: u32) -> vec2u {
 	return max(size >> vec2u(level), vec2u(1));
 }
@@ -212,7 +216,14 @@ fn virtualTextureLoadFast(coords: vec2u, level: u32, sampling_data: u32, tile_co
 	return vec4f(0); // todo: implement other case
 }
 
-fn virtualTextureGather4Fast(coords0: vec2u, coords1: vec2u, coords2: vec2u, coords3: vec2u, level: u32, sampling_data: u32, tile_coord: vec2u) -> array<vec4f, 4> {
+fn virtualTextureGather4Fast(
+	coords0: vec2u,
+	coords1: vec2u,
+	coords2: vec2u,
+	coords3: vec2u,
+	level: u32,
+	sampling_data: u32,
+	tile_coord: vec2u) -> array<vec4f, 4> {
 	if (virtualTextureFirstAtlasedLevel(sampling_data) <= level) {
 		let atlas_index = virtualTextureMipAtlasIndex(sampling_data, level);
 		let offset = tile_coord * physical_tile_size + atlas_offsets[atlas_index];
@@ -257,7 +268,7 @@ fn virtualTextureSample(v_id: u32, coords: vec2f) -> vec4f {
 	let level = clamp(virtualTextureQueryLevel(duvdx, duvdy, virtualTextureAnisotropy(info.sampling_data)), 0.0, f32(virtualTextureNumLevels(info.sampling_data)) - 1);
 	let large_level = u32(floor(level));
 	let wrapped_coords = virtualTextureWrapp(coords, info.sampling_data);
-	let level_size = vec2f(virtualTextureLevelDimensions(vec2u(info.width, info. height), large_level));
+	let level_size = vec2f(virtualTextureLevelDimensions(vec2u(info.width, info.height), large_level));
 	let wrapped_pixel_coords = wrapped_coords * level_size;
 
 	if (virtualTextureFirstAtlasedLevel(info.sampling_data) <= large_level) {

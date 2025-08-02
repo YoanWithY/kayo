@@ -1,15 +1,15 @@
 import { SplitPaneContainer } from "../splitpane/SplitPaneContainer";
 import { Footer } from "./Footer";
-
 import { unzip } from "unzipit";
 import { ResourcePack } from "../../minecraft/ResourcePack";
 import { MinecraftSection } from "../../minecraft/MinecraftSection";
 import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
-import TextureUtils from "../../Textures/TextureUtils";
 import { Kayo } from "../../Kayo";
 import RealtimeRenderer from "../../rendering/RealtimeRenderer";
 import { CreateAtlasTask } from "../../ressourceManagement/CreateAtlasTask";
 import { StoreFileTask } from "../../ressourceManagement/StoreFileTask";
+
+let ressourecePack!: ResourcePack;
 
 export class WrappingPane extends HTMLElement {
 	public baseSplitPaneContainer!: SplitPaneContainer;
@@ -18,12 +18,11 @@ export class WrappingPane extends HTMLElement {
 	private _kayo!: Kayo;
 	private _handleFile = async (event: Event) => {
 		const fi = event.target as HTMLInputElement;
-		let res: ResourcePack;
 		if (!fi.files) return;
 		const project = this._kayo.project;
 
 		for (const file of fi.files) {
-			const a = await file.arrayBuffer();
+			const fileData = await file.arrayBuffer();
 
 			if (file.type == "image/png") {
 				const vts = this._kayo.project.virtualTextureSystem;
@@ -40,10 +39,15 @@ export class WrappingPane extends HTMLElement {
 				);
 				if (!vt) return;
 
-				const imageData = project.wasmx.imageData.fromImageData(a, true);
+				const imageData = project.wasmx.imageData.fromImageData(fileData, true);
 				if (imageData === null) continue;
 
-				const task = new StoreFileTask(project.wasmx, project.getFSPathTo("raw"), file.name, new Uint8Array(a));
+				const task = new StoreFileTask(
+					project.wasmx,
+					project.getFSPathTo("raw"),
+					file.name,
+					new Uint8Array(fileData),
+				);
 				project.wasmx.taskQueue.queueTask(task);
 
 				const atlasTas = new CreateAtlasTask(
@@ -74,92 +78,71 @@ export class WrappingPane extends HTMLElement {
 				const audio = project.kayo.audioContext;
 				const bufferSource = project.kayo.audioContext.createBufferSource();
 				bufferSource.connect(audio.destination);
-				bufferSource.buffer = await audio.decodeAudioData(a);
+				bufferSource.buffer = await audio.decodeAudioData(fileData);
 				bufferSource.start();
 			}
 
-			// Create a FileReader to read the file as an ArrayBuffer
-			const reader = new FileReader();
-			reader.onload = async function (e) {
-				const content = e.target?.result;
-				if (!content) return;
-				if (file.type === "application/x-zip-compressed") {
-					const n = performance.now();
+			if (file.type === "application/x-zip-compressed") {
+				const n = performance.now();
 
-					const image = await TextureUtils.loadImageBitmap("./glowstone.png");
-					const vt = project.virtualTextureSystem.allocateVirtualTexture(
-						"test texture",
-						image.width,
-						image.height,
-						"repeat",
-						"repeat",
-						"linear",
-						"linear",
-						"linear",
-						true,
-					);
-					if (vt === undefined) return;
-					// const atlas = project.virtualTextureSystem.generateMipAtlas(image, vt.samplingDescriptor);
-					// vt.makeResident(atlas, 0, 0, 0);
+				const zipInfo = await unzip(fileData);
 
-					const zipInfo = await unzip(content);
-					res = ResourcePack.parse(
-						zipInfo,
-						file.name.substring(0, file.name.lastIndexOf(".")),
-						res,
-						vt,
-						() => {
-							res.initialize(vt.virtualTextureSystem);
-							console.log("in", performance.now() - n, res);
-						},
-						() => {},
-					);
-					return;
-				}
-				if (file.name.endsWith(".mca")) {
-					console.log(".msc");
-					try {
-						const world = project.kayo.wasmx.minecraftModule.createWorldData("My World");
-						const dimension = world.createDimensionData("Overworld", 0);
-						dimension.openRegion(0, 0, content);
-						const mWorld = new MinecraftWorld("World", res, 8);
-						project.scene.minecraftWorld = mWorld;
-						for (let x = 0; x < 8; x++) {
-							for (let z = 0; z < 8; z++) {
-								const status = dimension.buildChunk(x, z);
-								if (status !== 0) continue;
+				const onDone = () => {
+					ressourecePack.initialize(project.virtualTextureSystem);
+					console.log("in", performance.now() - n, ressourecePack);
+				};
 
-								for (let y = -4; y < 15; y++) {
-									const palette = JSON.parse(dimension.getPalette(x, y, z)) as PaletteEntry[];
-									let sectionDataView: any = undefined;
-									if (palette.length > 1) sectionDataView = dimension.getSectionView(x, y, z);
-									else if (palette.length === 1 && palette[0].Name == "minecraft:air") continue;
-									const section = new MinecraftSection(
-										project,
-										mWorld,
-										0,
-										x,
-										y,
-										z,
-										palette,
-										sectionDataView,
-									);
-									project.scene.minecraftWorld.setSection(x, y, z, section);
-								}
+				ressourecePack = ResourcePack.parse(
+					project,
+					zipInfo,
+					file.name.substring(0, file.name.lastIndexOf(".")),
+					undefined,
+					onDone,
+					() => {},
+				);
+				return;
+			}
+			if (file.name.endsWith(".mca")) {
+				console.log(".msc");
+				try {
+					const world = project.kayo.wasmx.minecraftModule.createWorldData("My World");
+					const dimension = world.createDimensionData("Overworld", 0);
+					dimension.openRegion(0, 0, fileData);
+					const mWorld = new MinecraftWorld("World", ressourecePack, 8);
+					project.scene.minecraftWorld = mWorld;
+					for (let x = 0; x < 8; x++) {
+						for (let z = 0; z < 8; z++) {
+							const status = dimension.buildChunk(x, z);
+							if (status !== 0) continue;
+
+							for (let y = -4; y < 15; y++) {
+								const palette = JSON.parse(dimension.getPalette(x, y, z)) as PaletteEntry[];
+								let sectionDataView: any = undefined;
+								if (palette.length > 1) sectionDataView = dimension.getSectionView(x, y, z);
+								else if (palette.length === 1 && palette[0].Name == "minecraft:air") continue;
+								const section = new MinecraftSection(
+									project,
+									mWorld,
+									0,
+									x,
+									y,
+									z,
+									palette,
+									sectionDataView,
+								);
+								project.scene.minecraftWorld.setSection(x, y, z, section);
 							}
 						}
-						mWorld.buildGeometry();
-						mWorld.buildBundle(
-							project.gpux.gpuDevice,
-							project.renderers[RealtimeRenderer.rendererKey].bindGroup0,
-						);
-					} catch (e) {
-						console.error(e);
 					}
+					mWorld.buildGeometry();
+					mWorld.buildBundle(
+						project.gpux.gpuDevice,
+						project.renderers[RealtimeRenderer.rendererKey].bindGroup0,
+					);
+				} catch (e) {
+					console.error(e);
 				}
-			};
-
-			// reader.readAsArrayBuffer(file); // Read file as ArrayBuffer
+			}
 		}
 
 		this._kayo.project.virtualTextureSystem.physicalTexture.generateAllMips();

@@ -1,56 +1,50 @@
-import TextureUtils from "../Textures/TextureUtils";
+import { ImageData } from "../../c/KayoCorePP";
+import { Project } from "../project/Project";
+import { CreateAtlasTask } from "../ressourceManagement/CreateAtlasTask";
 import { VirtualTexture2D } from "../Textures/VirtualTexture2D";
 
 export class MinecraftTexture {
 	public name: string;
-	public image: ImageBitmap;
-	public hasTransparent = false;
-	public hasSemiTransparent = false;
-	public virtualTexture: VirtualTexture2D;
-	public constructor(name: string, image: ImageBitmap, fallback: VirtualTexture2D) {
+	public virtualTexture?: VirtualTexture2D;
+
+	public constructor(project: Project, name: string, imageData: ImageData) {
 		this.name = name;
-		this.image = image;
 
-		this.scan(image);
-
-		const vt = fallback.virtualTextureSystem.allocateVirtualTexture(
+		const virtualTexture = project.virtualTextureSystem.allocateVirtualTexture(
 			name,
-			image.width,
-			image.height,
+			imageData.width,
+			imageData.height,
 			"clamp-to-edge",
 			"clamp-to-edge",
 			"linear",
 			"nearest",
 			"linear",
-			true,
+			false,
 		);
-		if (vt === undefined) {
-			this.virtualTexture = fallback;
-			return;
-		}
-		this.virtualTexture = vt;
-		fallback.virtualTextureSystem.generateMipAtlas(image, this.virtualTexture.samplingDescriptor);
-		// this.virtualTexture.makeResident(atlas, 0, 0, 0);
+		if (virtualTexture === undefined) return;
+
+		const createAtlasFinishedCallbakc = (atlasData: { byteOffset: number; byteLength: number }) => {
+			imageData.delete();
+			const atlasMemoryView = project.wasmx.getMemoryView(atlasData.byteOffset, atlasData.byteLength);
+			virtualTexture.makeResident(atlasMemoryView, 0, 0, 0);
+			project.fullRerender();
+
+			const svtWriteFinishedCallback = (writeResult: number) => {
+				if (writeResult !== 0) {
+					console.error(`SVT Write failed.`);
+					return;
+				}
+				project.wasmx.wasm.deleteArrayUint8(atlasData.byteOffset);
+			};
+			virtualTexture.writeToFileSystem(atlasMemoryView, 0, 0, 0, svtWriteFinishedCallback);
+		};
+
+		const atlasTas = new CreateAtlasTask(project.wasmx, imageData, createAtlasFinishedCallbakc);
+		project.wasmx.taskQueue.queueTask(atlasTas);
+		this.virtualTexture = virtualTexture;
 	}
 
-	private scan(image: ImageBitmap) {
-		const data = TextureUtils.getImagePixels(image);
-		for (let i = 3; i < data.length; i += 4) {
-			if (this.hasSemiTransparent && this.hasSemiTransparent) return;
-
-			const alpha = data[i];
-			if (alpha === 0) {
-				this.hasTransparent = true;
-				continue;
-			}
-
-			if (alpha < 200) {
-				this.hasSemiTransparent = true;
-				continue;
-			}
-		}
-	}
 	public isOpaque(): boolean {
-		return !this.hasSemiTransparent && !this.hasTransparent;
+		return true;
 	}
 }

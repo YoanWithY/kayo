@@ -49,15 +49,15 @@ export class PipelineCache {
  */
 export abstract class AbstractMetaRenderPipeline {
 	protected readonly _id: string;
-	protected readonly _renderPiplines: PipelineCache;
-	protected readonly _depthPipeline: AbstractRenderingPipeline;
-	protected readonly _selectionPipeline: AbstractRenderingPipeline;
+	protected readonly _renderPiplineCache: PipelineCache;
+	// protected readonly _depthPipeline: AbstractRenderingPipeline;
+	// protected readonly _selectionPipeline: AbstractRenderingPipeline;
 
 	public constructor(id: string) {
 		this._id = id;
-		this._renderPiplines = new PipelineCache();
-		this._depthPipeline = this._buildDepthPipeline();
-		this._selectionPipeline = this._buildSelectionPipeline();
+		this._renderPiplineCache = new PipelineCache();
+		// this._depthPipeline = this._buildDepthPipeline();
+		// this._selectionPipeline = this._buildSelectionPipeline();
 	}
 
 	protected abstract _buildRenderingPipeline: PipelineBuildFunction;
@@ -65,16 +65,16 @@ export abstract class AbstractMetaRenderPipeline {
 	protected abstract _buildSelectionPipeline(): AbstractRenderingPipeline;
 
 	public getRenderPipeline(renderPiplineKey: RenderPipelineKey): AbstractRenderingPipeline {
-		return this._renderPiplines.getPipeline(renderPiplineKey);
+		return this._renderPiplineCache.getPipeline(renderPiplineKey);
 	}
 
-	public getDepthPipeline(): AbstractRenderingPipeline {
-		return this._depthPipeline;
-	}
+	// public getDepthPipeline(): AbstractRenderingPipeline {
+	// 	return this._depthPipeline;
+	// }
 
-	public getSelectionPipeline(): AbstractRenderingPipeline {
-		return this._selectionPipeline;
-	}
+	// public getSelectionPipeline(): AbstractRenderingPipeline {
+	// 	return this._selectionPipeline;
+	// }
 
 	public get id(): string {
 		return this._id;

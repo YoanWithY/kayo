@@ -1,8 +1,9 @@
 import { ZipInfo } from "unzipit";
 import { MinecraftTexture } from "./MinecraftTexture";
 import { ParsedBlockModel, BlockState } from "./MinecraftBlock";
-import { VirtualTexture2D } from "../Textures/VirtualTexture2D";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
+import { Project } from "../project/Project";
+import { ImageData } from "../../c/KayoCorePP";
 
 export class MinecraftNamespaceResources {
 	public namespace: string;
@@ -121,10 +122,10 @@ export class ResourcePack {
 	}
 
 	public static parse(
+		project: Project,
 		zip: ZipInfo,
 		name: string,
 		fallback: ResourcePack | undefined,
-		fb: VirtualTexture2D,
 		onDone: () => void,
 		onProgress: (total: number, pending: number, name: string) => void,
 	): ResourcePack {
@@ -189,13 +190,13 @@ export class ResourcePack {
 						namespace.textures[modelType] = typeContainer;
 					}
 
-					entries[key].blob("image/png").then((blob) => {
-						createImageBitmap(blob, { colorSpaceConversion: "none" }).then((image) => {
-							const textureName = filename.substring(0, filename.length - 4);
-							typeContainer[textureName] = new MinecraftTexture(textureName, image, fb);
-							update(key);
-						});
+					const textureName = filename.substring(0, filename.length - 4);
+					entries[key].arrayBuffer().then((pngData) => {
+						const imageData = project.wasmx.imageData.fromImageData(pngData, true) as ImageData;
+						typeContainer[textureName] = new MinecraftTexture(project, textureName, imageData);
+						update(key);
 					});
+
 					break;
 				}
 			}

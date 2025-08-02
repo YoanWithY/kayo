@@ -39,7 +39,7 @@ class BackgroundPipeline extends AbstractRenderingPipeline {
 		};
 		const constants = AbstractMetaRenderPipeline.getConstantsFromKey(key);
 
-		this.depthStencilState.depthWriteEnabled = false;
+		this.depthStencilState.depthCompare = "less-equal";
 
 		this.vertexState = {
 			module: shaderModule,

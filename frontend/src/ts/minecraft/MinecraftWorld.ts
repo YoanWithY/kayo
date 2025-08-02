@@ -27,29 +27,28 @@ export class MinecraftWorld {
 	}
 
 	public buildBundle(gpuDevice: GPUDevice, bindGroup0: GPUBindGroup) {
-		const e = gpuDevice.createRenderBundleEncoder({
+		const renderBundleEncoder = gpuDevice.createRenderBundleEncoder({
 			label: "Minecraft render bundle encoder",
 			colorFormats: ["bgra8unorm", "r16uint"],
 			depthStencilFormat: "depth24plus",
-			sampleCount: 4,
+			sampleCount: 1,
 		});
-		e.setBindGroup(0, bindGroup0);
-		e.setPipeline(
-			MinecraftMetaRenderingPipeline.metaPipeline.getRenderPipeline({
-				msaa: 1,
-				outputColorSpace: "srgb",
-				swapChainBitDepth: 8,
-				outputComponentTransfere: "sRGB",
-				useColorQuantisation: false,
-				useDithering: false,
-			}).gpuPipeline,
-		);
-		// e.setBindGroup(2, MinecraftOpaquePipeline.bindGroup2)
-		this.render(e);
-		this.bundle = e.finish({ label: "Minecraft World bundle" });
+		renderBundleEncoder.setBindGroup(0, bindGroup0);
+		const pipeline = MinecraftMetaRenderingPipeline.metaPipeline.getRenderPipeline({
+			msaa: 1,
+			outputColorSpace: "srgb",
+			swapChainBitDepth: 8,
+			outputComponentTransfere: "sRGB",
+			useColorQuantisation: false,
+			useDithering: false,
+		});
+
+		renderBundleEncoder.setPipeline(pipeline.gpuPipeline);
+		this.recordRender(renderBundleEncoder);
+		this.bundle = renderBundleEncoder.finish({ label: "Minecraft World bundle" });
 	}
 
-	public render(renderPassEncoder: GPURenderPassEncoder | GPURenderBundleEncoder) {
+	public recordRender(renderPassEncoder: GPURenderPassEncoder | GPURenderBundleEncoder) {
 		let quads = 0;
 		let chunks = 0;
 		for (const key in this._sections) {

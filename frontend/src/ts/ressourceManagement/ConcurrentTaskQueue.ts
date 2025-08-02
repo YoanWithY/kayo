@@ -84,6 +84,7 @@ export class ConcurrentTaskQueue {
 			this._svtTaskMap[taskID].finishedCallback(e.data.returnValue);
 			this._numRunningThreads--;
 			delete this._svtTaskMap[taskID];
+			this._conditonallyPopNextTask();
 		};
 		const svtInitCallback = (e: MessageEvent) => {
 			const taskID = e.data.taskID;
