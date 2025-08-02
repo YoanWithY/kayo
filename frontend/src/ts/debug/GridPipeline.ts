@@ -4,7 +4,7 @@ import {
 	AbstractMetaRenderPipeline,
 	PipelineBuildFunction,
 	PipelineCache,
-	RenderPipelineKey,
+	RenderConfigKey,
 } from "../rendering/AbstractMetaRenderingPipeline";
 import staticShaderCode from "./grid.wgsl?raw";
 
@@ -51,7 +51,7 @@ export class GridPipeline extends AbstractRenderingPipeline {
 	public constructor(
 		label: string,
 		shaderModule: GPUShaderModule,
-		key: RenderPipelineKey,
+		key: RenderConfigKey,
 		gpux: GPUX,
 		layout: GPUPipelineLayout,
 	) {
@@ -100,7 +100,7 @@ export class Grid implements Renderable {
 		this.pipelineCache.buildFunction = this._pipelineBuildFunction;
 	}
 
-	private _pipelineBuildFunction: PipelineBuildFunction = (key: RenderPipelineKey) => {
+	private _pipelineBuildFunction: PipelineBuildFunction = (key: RenderConfigKey) => {
 		return new GridPipeline("Grid", Grid.shaderModule, key, this.project.gpux, Grid.pipelineLayout);
 	};
 
@@ -133,7 +133,7 @@ export class Grid implements Renderable {
 		});
 	}
 
-	public recordForwardRendering(renderPassEnoder: GPURenderPassEncoder, key: RenderPipelineKey): void {
+	public recordForwardRendering(renderPassEnoder: GPURenderPassEncoder, key: RenderConfigKey): void {
 		renderPassEnoder.setPipeline(this.pipelineCache.getPipeline(key).gpuPipeline);
 		renderPassEnoder.setVertexBuffer(0, Grid.vertexBuffer);
 		renderPassEnoder.setBindGroup(0, this.project.renderers[RealtimeRenderer.rendererKey].bindGroup0);

@@ -2,7 +2,7 @@ import { GeneralConfig } from "../../c/KayoCorePP";
 import { GPUX } from "../GPUX";
 import { AbstractRenderingPipeline } from "./AbstractRenderingPipeline";
 
-export type RenderPipelineKey = {
+export type RenderConfigKey = {
 	outputColorSpace: PredefinedColorSpace;
 	outputComponentTransfere: "sRGB" | "linear";
 	useColorQuantisation: boolean;
@@ -11,35 +11,48 @@ export type RenderPipelineKey = {
 	swapChainBitDepth: number;
 };
 
-export type PipelineBuildFunction = (key: RenderPipelineKey) => AbstractRenderingPipeline;
+export type KeyValueBuildFunction<T> = (key: RenderConfigKey) => T;
+export type PipelineBuildFunction = KeyValueBuildFunction<AbstractRenderingPipeline>;
 
 function objectContainsKey(object: any, key: any): boolean {
 	for (const k in key) if (object[k] !== key[k]) return false;
 	return true;
 }
 
-export class PipelineCache {
-	protected pipelines: Map<RenderPipelineKey, AbstractRenderingPipeline> = new Map();
-	protected _buildFunction!: PipelineBuildFunction;
+export class KeyValuedCache<T> {
+	protected keyedValueMap: Map<RenderConfigKey, T> = new Map();
+	protected _buildFunction!: KeyValueBuildFunction<T>;
 
-	public getPipeline(renderPiplineKey: RenderPipelineKey) {
-		for (const [key, val] of this.pipelines) {
-			if (objectContainsKey(key, renderPiplineKey)) {
+	protected getValue(renderConfigKey: RenderConfigKey) {
+		for (const [key, val] of this.keyedValueMap) {
+			if (objectContainsKey(key, renderConfigKey)) {
 				return val;
 			}
 		}
 
-		const newPipeline = this._buildFunction(renderPiplineKey);
-		this.pipelines.set(renderPiplineKey, newPipeline);
-		return newPipeline;
+		const value = this._buildFunction(renderConfigKey);
+		this.keyedValueMap.set(renderConfigKey, value);
+		return value;
 	}
 
-	public set buildFunction(buildFunction: PipelineBuildFunction) {
+	public set buildFunction(buildFunction: KeyValueBuildFunction<T>) {
 		this._buildFunction = buildFunction;
 	}
 
 	public clear() {
-		this.pipelines.clear();
+		this.keyedValueMap.clear();
+	}
+}
+
+export class PipelineCache extends KeyValuedCache<AbstractRenderingPipeline> {
+	public getPipeline(renderKonfigKey: RenderConfigKey) {
+		return this.getValue(renderKonfigKey);
+	}
+}
+
+export class RenderBundleCache extends KeyValuedCache<GPURenderBundle> {
+	public getBundle(renderKonfigKey: RenderConfigKey) {
+		return this.getValue(renderKonfigKey);
 	}
 }
 
@@ -64,7 +77,7 @@ export abstract class AbstractMetaRenderPipeline {
 	protected abstract _buildDepthPipeline(): AbstractRenderingPipeline;
 	protected abstract _buildSelectionPipeline(): AbstractRenderingPipeline;
 
-	public getRenderPipeline(renderPiplineKey: RenderPipelineKey): AbstractRenderingPipeline {
+	public getRenderPipeline(renderPiplineKey: RenderConfigKey): AbstractRenderingPipeline {
 		return this._renderPiplineCache.getPipeline(renderPiplineKey);
 	}
 
@@ -80,11 +93,15 @@ export abstract class AbstractMetaRenderPipeline {
 		return this._id;
 	}
 
-	public static getRenderingFragmentTargetsFromKey(key: RenderPipelineKey, gpux: GPUX): GPUColorTargetState[] {
+	public static getRenderingFragmentTargetsFromKey(key: RenderConfigKey, gpux: GPUX): GPUColorTargetState[] {
 		return [{ format: gpux.getSwapChainFormat(key.swapChainBitDepth) }, { format: "r16uint" }];
 	}
 
-	public static getConstantsFromKey(key: RenderPipelineKey): Record<string, number> | undefined {
+	public static getColorFormats(renderConfigKey: RenderConfigKey, gpux: GPUX): GPUTextureFormat[] {
+		return [gpux.getSwapChainFormat(renderConfigKey.swapChainBitDepth), "r16uint"];
+	}
+
+	public static getConstantsFromKey(key: RenderConfigKey): Record<string, number> | undefined {
 		return {
 			output_color_space: key.outputColorSpace == "srgb" ? 0 : 1,
 			use_color_quantisation: key.useColorQuantisation ? 1 : 0,
@@ -93,7 +110,7 @@ export abstract class AbstractMetaRenderPipeline {
 		};
 	}
 
-	public static configToKey(config: GeneralConfig, msaa: 1 | 4): RenderPipelineKey {
+	public static configToKey(config: GeneralConfig, msaa: 1 | 4): RenderConfigKey {
 		return {
 			outputColorSpace: config.swapChain.colorSpace as PredefinedColorSpace,
 			outputComponentTransfere: "sRGB",

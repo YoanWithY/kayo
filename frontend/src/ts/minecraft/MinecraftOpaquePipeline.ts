@@ -1,5 +1,5 @@
 import { GPUX } from "../GPUX";
-import { AbstractMetaRenderPipeline, RenderPipelineKey } from "../rendering/AbstractMetaRenderingPipeline";
+import { AbstractMetaRenderPipeline, RenderConfigKey } from "../rendering/AbstractMetaRenderingPipeline";
 import { AbstractRenderingPipeline } from "../rendering/AbstractRenderingPipeline";
 import { resolveShader } from "../rendering/ShaderUtils";
 import staticShaderCode from "./minecraftOpaque.wgsl?raw";
@@ -54,7 +54,7 @@ export class MinecraftRenderingPipeline extends AbstractRenderingPipeline {
 		shaderModule: GPUShaderModule,
 		vertexEntryPoint: string,
 		fragmentEntryPoint: string,
-		key: RenderPipelineKey,
+		renderConfigKey: RenderConfigKey,
 		gpux: GPUX,
 		layout: GPUPipelineLayout,
 	) {
@@ -62,7 +62,7 @@ export class MinecraftRenderingPipeline extends AbstractRenderingPipeline {
 		this.gpux = gpux;
 		this.primiteState = primiteState;
 
-		const constants = AbstractMetaRenderPipeline.getConstantsFromKey(key);
+		const constants = AbstractMetaRenderPipeline.getConstantsFromKey(renderConfigKey);
 		this.depthStencilState.depthCompare = "less";
 		this.depthStencilState.depthWriteEnabled = true;
 
@@ -75,10 +75,11 @@ export class MinecraftRenderingPipeline extends AbstractRenderingPipeline {
 
 		this.fragmentState = {
 			module: this.shaderModule,
-			targets: AbstractMetaRenderPipeline.getRenderingFragmentTargetsFromKey(key, gpux),
+			targets: AbstractMetaRenderPipeline.getRenderingFragmentTargetsFromKey(renderConfigKey, gpux),
 			constants: constants,
 			entryPoint: fragmentEntryPoint,
 		};
+		this.multisample.count = renderConfigKey.msaa;
 		this.buildPipeline(gpux.gpuDevice, layout);
 	}
 }
@@ -146,7 +147,7 @@ export class MinecraftMetaRenderingPipeline extends AbstractMetaRenderPipeline {
 		});
 	}
 
-	protected _buildRenderingPipeline = (key: RenderPipelineKey) => {
+	protected _buildRenderingPipeline = (key: RenderConfigKey) => {
 		return new MinecraftRenderingPipeline(
 			`${this.id} pipeline`,
 			this.shaderModule,
@@ -190,6 +191,6 @@ export class MinecraftMetaRenderingPipeline extends AbstractMetaRenderPipeline {
 			label: "Minecraft opaque pipeline layout",
 			bindGroupLayouts: [bindGroup0Layout, MinecraftMetaRenderingPipeline.bindGroup1Layout],
 		});
-		this.metaPipeline = new MinecraftMetaRenderingPipeline("Minecraft Opaque Pipeline", gpux);
+		this.metaPipeline = new MinecraftMetaRenderingPipeline("Minecraft Opaque", gpux);
 	}
 }

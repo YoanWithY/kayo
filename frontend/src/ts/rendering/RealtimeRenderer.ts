@@ -358,11 +358,7 @@ export default class RealtimeRenderer {
 		const r3renderPassEncoder = commandEncoder.beginRenderPass(this.r3renderPassDescriptor);
 		r3renderPassEncoder.setViewport(0, 0, w, h, 0, 1);
 
-		const minecraftWorld = this.project.scene.minecraftWorld;
-		if (minecraftWorld) {
-			minecraftWorld.renderBundle(r3renderPassEncoder);
-		}
-
+		this.project.scene.minecraftWorld?.renderBundle(r3renderPassEncoder, key);
 		this.project.scene.background.recordForwardRendering(r3renderPassEncoder, key);
 		this.project.scene.grid?.recordForwardRendering(r3renderPassEncoder, key);
 

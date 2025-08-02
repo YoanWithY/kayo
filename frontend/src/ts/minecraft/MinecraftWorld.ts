@@ -2,6 +2,13 @@ import { ResourcePack as ResourcePack } from "./ResourcePack";
 import { MinecraftSection } from "./MinecraftSection";
 import { BlockNeighborhood } from "./MinecraftBlock";
 import { MinecraftMetaRenderingPipeline } from "./MinecraftOpaquePipeline";
+import {
+	AbstractMetaRenderPipeline,
+	RenderBundleCache,
+	RenderConfigKey,
+} from "../rendering/AbstractMetaRenderingPipeline";
+import { Project } from "../project/Project";
+import RealtimeRenderer from "../rendering/RealtimeRenderer";
 
 export type PaletteEntry = { Name: string; Properties?: { [key: string]: string } };
 
@@ -10,14 +17,19 @@ export class MinecraftWorld {
 	public ressourcePack: ResourcePack;
 	public bundle!: GPURenderBundle;
 	public renderSize: number;
+	protected _renderBundleCache: RenderBundleCache;
+	protected _project: Project;
 
 	private _sections: { [key: string]: MinecraftSection };
 
-	public constructor(name: string, ressourcePack: ResourcePack, renderSize: number) {
+	public constructor(project: Project, name: string, ressourcePack: ResourcePack, renderSize: number) {
+		this._project = project;
 		this.name = name;
 		this.ressourcePack = ressourcePack;
 		this._sections = {};
 		this.renderSize = renderSize;
+		this._renderBundleCache = new RenderBundleCache();
+		this._renderBundleCache.buildFunction = this._buildBundle;
 	}
 
 	public buildGeometry() {
@@ -26,27 +38,20 @@ export class MinecraftWorld {
 		}
 	}
 
-	public buildBundle(gpuDevice: GPUDevice, bindGroup0: GPUBindGroup) {
-		const renderBundleEncoder = gpuDevice.createRenderBundleEncoder({
-			label: "Minecraft render bundle encoder",
-			colorFormats: ["bgra8unorm", "r16uint"],
+	private _buildBundle = (renderConfigKey: RenderConfigKey) => {
+		const renderBundleEncoder = this._project.gpux.gpuDevice.createRenderBundleEncoder({
+			label: "minecraft realtime",
+			colorFormats: AbstractMetaRenderPipeline.getColorFormats(renderConfigKey, this._project.gpux),
 			depthStencilFormat: "depth24plus",
-			sampleCount: 1,
+			sampleCount: renderConfigKey.msaa,
 		});
-		renderBundleEncoder.setBindGroup(0, bindGroup0);
-		const pipeline = MinecraftMetaRenderingPipeline.metaPipeline.getRenderPipeline({
-			msaa: 1,
-			outputColorSpace: "srgb",
-			swapChainBitDepth: 8,
-			outputComponentTransfere: "sRGB",
-			useColorQuantisation: false,
-			useDithering: false,
-		});
+		renderBundleEncoder.setBindGroup(0, this._project.renderers[RealtimeRenderer.rendererKey].bindGroup0);
+		const pipeline = MinecraftMetaRenderingPipeline.metaPipeline.getRenderPipeline(renderConfigKey);
 
 		renderBundleEncoder.setPipeline(pipeline.gpuPipeline);
 		this.recordRender(renderBundleEncoder);
-		this.bundle = renderBundleEncoder.finish({ label: "Minecraft World bundle" });
-	}
+		return renderBundleEncoder.finish({ label: "Minecraft World bundle" });
+	};
 
 	public recordRender(renderPassEncoder: GPURenderPassEncoder | GPURenderBundleEncoder) {
 		let quads = 0;
@@ -58,8 +63,8 @@ export class MinecraftWorld {
 		console.log(quads, chunks);
 	}
 
-	public renderBundle(renderPassEncoder: GPURenderPassEncoder) {
-		renderPassEncoder.executeBundles([this.bundle]);
+	public renderBundle(renderPassEncoder: GPURenderPassEncoder, renderConfigKey: RenderConfigKey) {
+		renderPassEncoder.executeBundles([this._renderBundleCache.getBundle(renderConfigKey)]);
 	}
 
 	public getSection(x: number, y: number, z: number): MinecraftSection | undefined {

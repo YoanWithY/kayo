@@ -1,5 +1,5 @@
-import { RenderPipelineKey } from "./AbstractMetaRenderingPipeline";
+import { RenderConfigKey } from "./AbstractMetaRenderingPipeline";
 
 export default interface Renderable {
-	recordForwardRendering: (renderPassEncoder: GPURenderPassEncoder, key: RenderPipelineKey) => void;
+	recordForwardRendering: (renderPassEncoder: GPURenderPassEncoder, key: RenderConfigKey) => void;
 }

@@ -5,7 +5,7 @@ import {
 	AbstractMetaRenderPipeline,
 	PipelineBuildFunction,
 	PipelineCache,
-	RenderPipelineKey,
+	RenderConfigKey,
 } from "../rendering/AbstractMetaRenderingPipeline";
 import { GPUX } from "../GPUX";
 import staticShaderCode from "./background.wgsl?raw";
@@ -27,7 +27,7 @@ class BackgroundPipeline extends AbstractRenderingPipeline {
 	public constructor(
 		label: string,
 		shaderModule: GPUShaderModule,
-		key: RenderPipelineKey,
+		key: RenderConfigKey,
 		gpux: GPUX,
 		layout: GPUPipelineLayout,
 	) {
@@ -70,7 +70,7 @@ export default class Background implements Renderable {
 		this.pipelineCache.buildFunction = this._pipelineBuildFunction;
 	}
 
-	public recordForwardRendering(renderPassEnoder: GPURenderPassEncoder, key: RenderPipelineKey): void {
+	public recordForwardRendering(renderPassEnoder: GPURenderPassEncoder, key: RenderConfigKey): void {
 		renderPassEnoder.setPipeline(this.pipelineCache.getPipeline(key).gpuPipeline);
 		renderPassEnoder.setVertexBuffer(0, Background._vertexBuffer);
 		renderPassEnoder.setIndexBuffer(Background._indexBuffer, "uint16");
@@ -78,7 +78,7 @@ export default class Background implements Renderable {
 		renderPassEnoder.drawIndexed(6 * 2 * 3, 1);
 	}
 
-	private _pipelineBuildFunction: PipelineBuildFunction = (key: RenderPipelineKey) => {
+	private _pipelineBuildFunction: PipelineBuildFunction = (key: RenderConfigKey) => {
 		return new BackgroundPipeline(
 			"background",
 			Background.shaderModule,

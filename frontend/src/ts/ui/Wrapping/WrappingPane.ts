@@ -5,7 +5,6 @@ import { ResourcePack } from "../../minecraft/ResourcePack";
 import { MinecraftSection } from "../../minecraft/MinecraftSection";
 import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
 import { Kayo } from "../../Kayo";
-import RealtimeRenderer from "../../rendering/RealtimeRenderer";
 import { CreateAtlasTask } from "../../ressourceManagement/CreateAtlasTask";
 import { StoreFileTask } from "../../ressourceManagement/StoreFileTask";
 
@@ -108,7 +107,7 @@ export class WrappingPane extends HTMLElement {
 					const world = project.kayo.wasmx.minecraftModule.createWorldData("My World");
 					const dimension = world.createDimensionData("Overworld", 0);
 					dimension.openRegion(0, 0, fileData);
-					const mWorld = new MinecraftWorld("World", ressourecePack, 8);
+					const mWorld = new MinecraftWorld(project, "World", ressourecePack, 8);
 					project.scene.minecraftWorld = mWorld;
 					for (let x = 0; x < 8; x++) {
 						for (let z = 0; z < 8; z++) {
@@ -135,10 +134,6 @@ export class WrappingPane extends HTMLElement {
 						}
 					}
 					mWorld.buildGeometry();
-					mWorld.buildBundle(
-						project.gpux.gpuDevice,
-						project.renderers[RealtimeRenderer.rendererKey].bindGroup0,
-					);
 				} catch (e) {
 					console.error(e);
 				}
