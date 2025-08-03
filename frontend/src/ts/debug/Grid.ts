@@ -1,17 +1,13 @@
 import Renderable from "../rendering/Renderable";
 import { AbstractRenderingPipeline } from "../rendering/AbstractRenderingPipeline";
-import {
-	AbstractMetaRenderPipeline,
-	PipelineBuildFunction,
-	PipelineCache,
-	RenderConfigKey,
-} from "../rendering/AbstractMetaRenderingPipeline";
 import staticShaderCode from "./grid.wgsl?raw";
 
 import { GPUX } from "../GPUX";
-import { Project } from "../project/Project";
 import { resolveShader } from "../rendering/ShaderUtils";
 import RealtimeRenderer from "../rendering/RealtimeRenderer";
+import { Representable, Representation } from "../project/Representation";
+import { Kayo } from "../Kayo";
+import { RealtimeConfig, RenderConfig } from "../../c/KayoCorePP";
 
 const vertexBufferLayout: GPUVertexBufferLayout[] = [
 	{
@@ -20,7 +16,7 @@ const vertexBufferLayout: GPUVertexBufferLayout[] = [
 	},
 ];
 
-export class GridPipeline extends AbstractRenderingPipeline {
+export class GridRealtimePipeline extends AbstractRenderingPipeline {
 	protected primiteState: GPUPrimitiveState;
 	protected vertexState: GPUVertexState;
 	protected fragmentState: GPUFragmentState;
@@ -51,7 +47,7 @@ export class GridPipeline extends AbstractRenderingPipeline {
 	public constructor(
 		label: string,
 		shaderModule: GPUShaderModule,
-		key: RenderConfigKey,
+		config: RenderConfig,
 		gpux: GPUX,
 		layout: GPUPipelineLayout,
 	) {
@@ -64,7 +60,7 @@ export class GridPipeline extends AbstractRenderingPipeline {
 
 		this.depthStencilState.depthCompare = "less";
 
-		const constants = AbstractMetaRenderPipeline.getConstantsFromKey(key);
+		const constants = RealtimeRenderer.getConstantsFromConfig(config);
 
 		this.vertexState = {
 			module: shaderModule,
@@ -72,7 +68,7 @@ export class GridPipeline extends AbstractRenderingPipeline {
 			buffers: vertexBufferLayout,
 		};
 
-		const targets = AbstractMetaRenderPipeline.getRenderingFragmentTargetsFromKey(key, gpux);
+		const targets = RealtimeRenderer.getRenderingFragmentTargetsFromConfig(config, gpux);
 		targets[0].blend = {
 			alpha: { srcFactor: "one", operation: "add", dstFactor: "one-minus-src-alpha" },
 			color: { srcFactor: "one", operation: "add", dstFactor: "one-minus-src-alpha" },
@@ -83,35 +79,56 @@ export class GridPipeline extends AbstractRenderingPipeline {
 			targets: targets,
 			constants: constants,
 		};
-		this.multisample.count = key.msaa;
+		this.multisample.count = (config.specificRenderer as RealtimeConfig).antialiasing.msaa;
 		this.buildPipeline(gpux.gpuDevice, layout);
 	}
 }
 
 const preProzessedShaderCoder = resolveShader(staticShaderCode);
 
-export class Grid implements Renderable {
-	protected pipelineCache: PipelineCache;
-	public project: Project;
-
-	public constructor(project: Project) {
-		this.project = project;
-		this.pipelineCache = new PipelineCache();
-		this.pipelineCache.buildFunction = this._pipelineBuildFunction;
+export class GridRelatimeRepresentation extends Representation<RealtimeRenderer, Grid> implements Renderable {
+	protected _kayo: Kayo;
+	protected _currentPipeline: GridRealtimePipeline;
+	public constructor(
+		kayo: Kayo,
+		representationConcept: RealtimeRenderer,
+		representationSubject: Grid,
+		realtimeConfig: RenderConfig,
+	) {
+		super(representationConcept, representationSubject);
+		this._kayo = kayo;
+		this._currentPipeline = this._buildPipeline(realtimeConfig);
 	}
 
-	private _pipelineBuildFunction: PipelineBuildFunction = (key: RenderConfigKey) => {
-		return new GridPipeline("Grid", Grid.shaderModule, key, this.project.gpux, Grid.pipelineLayout);
-	};
+	private _buildPipeline(config: RenderConfig) {
+		return new GridRealtimePipeline(
+			"Grid Realtime",
+			GridRelatimeRepresentation.shaderModule,
+			config,
+			this._kayo.gpux,
+			GridRelatimeRepresentation.pipelineLayout,
+		);
+	}
+
+	public update(config: RenderConfig): void {
+		this._currentPipeline = this._buildPipeline(config);
+	}
+
+	public recordForwardRendering(renderPassEnoder: GPURenderPassEncoder): void {
+		renderPassEnoder.setPipeline(this._currentPipeline.gpuPipeline);
+		renderPassEnoder.setVertexBuffer(0, GridRelatimeRepresentation.vertexBuffer);
+		renderPassEnoder.setBindGroup(0, this._representationConcept.bindGroup0);
+		renderPassEnoder.draw(GridRelatimeRepresentation.vertexData.length / 2);
+	}
 
 	public static shaderModule: GPUShaderModule;
 	public static pipelineLayout: GPUPipelineLayout;
 	public static vertexBuffer: GPUBuffer;
 	public static vertexData: number[] = [];
 	public static init(gpux: GPUX, bindGroup0Layout: GPUBindGroupLayout) {
-		GridPipeline.pushRotation(this.vertexData, 10000, 1000);
-		GridPipeline.pushRotation(this.vertexData, 1000, 100);
-		GridPipeline.pushRotation(this.vertexData, 100, 10);
+		GridRealtimePipeline.pushRotation(this.vertexData, 10000, 1000);
+		GridRealtimePipeline.pushRotation(this.vertexData, 1000, 100);
+		GridRealtimePipeline.pushRotation(this.vertexData, 100, 10);
 		this.vertexData.push(-10, -10, -10, 10, 10, -10, 10, 10);
 
 		this.vertexBuffer = gpux.gpuDevice.createBuffer({
@@ -132,11 +149,6 @@ export class Grid implements Renderable {
 			bindGroupLayouts: [bindGroup0Layout],
 		});
 	}
-
-	public recordForwardRendering(renderPassEnoder: GPURenderPassEncoder, key: RenderConfigKey): void {
-		renderPassEnoder.setPipeline(this.pipelineCache.getPipeline(key).gpuPipeline);
-		renderPassEnoder.setVertexBuffer(0, Grid.vertexBuffer);
-		renderPassEnoder.setBindGroup(0, this.project.renderers[RealtimeRenderer.rendererKey].bindGroup0);
-		renderPassEnoder.draw(Grid.vertexData.length / 2);
-	}
 }
+
+export class Grid extends Representable {}

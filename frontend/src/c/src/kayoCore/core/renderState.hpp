@@ -17,18 +17,21 @@ class SwapChain {
 		swapChain.bitDepth = static_cast<int32_t>(this->bitDepth.value);
 		if (old_bitDepth != swapChain.bitDepth) {
 			output.needsContextReconfiguration = true;
+			output.needsPipelineRebuild = true;
 		}
 
 		std::string old_colorSpace = swapChain.colorSpace;
 		swapChain.colorSpace = this->colorSpace.value;
 		if (old_colorSpace != swapChain.colorSpace) {
 			output.needsContextReconfiguration = true;
+			output.needsPipelineRebuild = true;
 		}
 
 		std::string old_toneMappingMode = swapChain.toneMappingMode;
 		swapChain.toneMappingMode = this->toneMappingMode.value;
 		if (old_toneMappingMode != swapChain.toneMappingMode) {
 			output.needsContextReconfiguration = true;
+			output.needsPipelineRebuild = true;
 		}
 	}
 };
@@ -41,9 +44,14 @@ class CustomColorQuantisation {
 	constexpr void applyToConfig(kayo::config::RenderConfig& output, kayo::config::CustomColorQuantisation& customColorQuantisation) {
 		bool old_useDithering = customColorQuantisation.useDithering;
 		customColorQuantisation.useDithering = this->useDithering.value == "true";
-		customColorQuantisation.useCustomColorQuantisation = this->useCustomColorQuantisation.value == "true";
 		if (old_useDithering != customColorQuantisation.useDithering) {
-			output.needsContextReconfiguration = true;
+			output.needsPipelineRebuild = true;
+		}
+
+		bool old_useCustomColorQuantisation = customColorQuantisation.useCustomColorQuantisation;
+		customColorQuantisation.useCustomColorQuantisation = this->useCustomColorQuantisation.value == "true";
+		if (old_useCustomColorQuantisation != customColorQuantisation.useCustomColorQuantisation) {
+			output.needsPipelineRebuild = true;
 		}
 	}
 };
@@ -64,8 +72,12 @@ class Antialiasing {
 	JSVCNumber msaa;
 	JSVCString interpolation;
 	inline Antialiasing() : msaa(JSVCNumber(1)), interpolation(JSVCString("center")) {}
-	constexpr void applyToConfig(kayo::config::Antialiasing& antialiasing) {
+	constexpr void applyToConfig(kayo::config::RenderConfig& output, kayo::config::Antialiasing& antialiasing) {
+		int32_t old_antialiasing = antialiasing.msaa;
 		antialiasing.msaa = static_cast<int32_t>(this->msaa.value);
+		if (old_antialiasing != antialiasing.msaa) {
+			output.needsPipelineRebuild = true;
+		}
 	}
 };
 
@@ -91,6 +103,7 @@ class RenderState {
 	inline RenderState() : specificRenderer(new state::Realtime()) { this->applyToConfig(); };
 	constexpr void applyToConfig() {
 		this->config.needsContextReconfiguration = false;
+		this->config.needsPipelineRebuild = false;
 		this->general.applyToConfig(config, this->config.general);
 		this->specificRenderer->applyToConfig(config, this->config.specificRenderer);
 	}

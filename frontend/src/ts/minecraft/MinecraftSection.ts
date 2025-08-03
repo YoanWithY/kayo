@@ -1,6 +1,6 @@
-import { Project } from "../project/Project";
+import { Kayo } from "../Kayo";
 import { MinecraftBlock } from "./MinecraftBlock";
-import { MinecraftMetaRenderingPipeline } from "./MinecraftOpaquePipeline";
+import { MinecraftRealtimeRepresentation } from "./MinecraftOpaquePipeline";
 import { MinecraftWorld, PaletteEntry } from "./MinecraftWorld";
 export class MinecraftSection {
 	private _minecraftWorld: MinecraftWorld;
@@ -17,7 +17,7 @@ export class MinecraftSection {
 	private _bindGroup1: GPUBindGroup;
 	private gpuDevice;
 	public constructor(
-		project: Project,
+		kayo: Kayo,
 		minecraftWorld: MinecraftWorld,
 		dimension: number,
 		x: number,
@@ -31,7 +31,7 @@ export class MinecraftSection {
 		this._x = x;
 		this._y = y;
 		this._z = z;
-		this.gpuDevice = project.gpux.gpuDevice;
+		this.gpuDevice = kayo.gpux.gpuDevice;
 		this._geomBuffer = this.gpuDevice.createBuffer({
 			label: "section geom buffer",
 			size: 0,
@@ -64,7 +64,7 @@ export class MinecraftSection {
 		this._bindGroup1 = this.gpuDevice.createBindGroup({
 			label: "section bind group 1",
 			entries: [{ binding: 0, resource: { buffer: this._sectionBuffer } }],
-			layout: MinecraftMetaRenderingPipeline.bindGroup1Layout,
+			layout: MinecraftRealtimeRepresentation.bindGroup1Layout,
 		});
 
 		let i = 0;
@@ -177,7 +177,7 @@ export class MinecraftSection {
 		this._bindGroup1 = this.gpuDevice.createBindGroup({
 			label: `section (${this._x}, ${this._y}, ${this._z}) bind group 1`,
 			entries: [{ binding: 0, resource: { buffer: this._sectionBuffer } }],
-			layout: MinecraftMetaRenderingPipeline.bindGroup1Layout,
+			layout: MinecraftRealtimeRepresentation.bindGroup1Layout,
 		});
 	}
 

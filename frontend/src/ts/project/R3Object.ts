@@ -1,6 +1,6 @@
+import { Kayo } from "../Kayo";
 import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import TransformationStack from "../transformation/TransformationStack";
-import { Project } from "./Project";
 
 let id = 1;
 export default abstract class R3Object {
@@ -13,10 +13,10 @@ export default abstract class R3Object {
 	private _id: number;
 	public colorMatte = new Float32Array(2);
 
-	public constructor(project: Project) {
+	public constructor(kayo: Kayo) {
 		this.transformationStack = new TransformationStack();
 		const { vertexUniformBuffer, fragmentUniformBuffer, bindGroup } =
-			project.renderers[RealtimeRenderer.rendererKey].getNew3RData();
+			kayo.renderers[RealtimeRenderer.rendererKey].getNew3RData();
 		this.vertexUniformBuffer = vertexUniformBuffer;
 		this.fragmentUniformBuffer = fragmentUniformBuffer;
 		this.defaultBindGroup = bindGroup;

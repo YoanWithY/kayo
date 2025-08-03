@@ -2,8 +2,8 @@ import { ZipInfo } from "unzipit";
 import { MinecraftTexture } from "./MinecraftTexture";
 import { ParsedBlockModel, BlockState } from "./MinecraftBlock";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
-import { Project } from "../project/Project";
 import { ImageData } from "../../c/KayoCorePP";
+import { Kayo } from "../Kayo";
 
 export class MinecraftNamespaceResources {
 	public namespace: string;
@@ -122,7 +122,7 @@ export class ResourcePack {
 	}
 
 	public static parse(
-		project: Project,
+		kayo: Kayo,
 		zip: ZipInfo,
 		name: string,
 		fallback: ResourcePack | undefined,
@@ -192,8 +192,8 @@ export class ResourcePack {
 
 					const textureName = filename.substring(0, filename.length - 4);
 					entries[key].arrayBuffer().then((pngData) => {
-						const imageData = project.wasmx.imageData.fromImageData(pngData, true) as ImageData;
-						typeContainer[textureName] = new MinecraftTexture(project, textureName, imageData);
+						const imageData = kayo.wasmx.imageData.fromImageData(pngData, true) as ImageData;
+						typeContainer[textureName] = new MinecraftTexture(kayo, textureName, imageData);
 						update(key);
 					});
 

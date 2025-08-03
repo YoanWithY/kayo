@@ -4,9 +4,9 @@
 namespace kayo {
 namespace state {
 
-void state::Realtime::applyToConfig(config::RenderConfig& _, config::SpecificRenderer* renderer) {
+void state::Realtime::applyToConfig(config::RenderConfig& config, config::SpecificRenderer* renderer) {
 	config::Realtime* realtime = dynamic_cast<config::Realtime*>(renderer);
-	this->antialiasing.applyToConfig(realtime->antialiasing);
+	this->antialiasing.applyToConfig(config, realtime->antialiasing);
 }
 
 } // namespace state

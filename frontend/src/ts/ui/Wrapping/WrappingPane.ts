@@ -24,7 +24,7 @@ export class WrappingPane extends HTMLElement {
 			const fileData = await file.arrayBuffer();
 
 			if (file.type == "image/png") {
-				const vts = this._kayo.project.virtualTextureSystem;
+				const vts = this._kayo.virtualTextureSystem;
 				const vt = vts.allocateVirtualTexture(
 					file.name,
 					16,
@@ -38,24 +38,24 @@ export class WrappingPane extends HTMLElement {
 				);
 				if (!vt) return;
 
-				const imageData = project.wasmx.imageData.fromImageData(fileData, true);
+				const imageData = this._kayo.wasmx.imageData.fromImageData(fileData, true);
 				if (imageData === null) continue;
 
 				const task = new StoreFileTask(
-					project.wasmx,
+					this._kayo.wasmx,
 					project.getFSPathTo("raw"),
 					file.name,
 					new Uint8Array(fileData),
 				);
-				project.wasmx.taskQueue.queueTask(task);
+				this._kayo.wasmx.taskQueue.queueTask(task);
 
 				const atlasTas = new CreateAtlasTask(
-					project.wasmx,
+					this._kayo.wasmx,
 					imageData,
 					(atlasData: { byteOffset: number; byteLength: number }) => {
 						imageData.delete();
 
-						const view = project.wasmx.getMemoryView(atlasData.byteOffset, atlasData.byteLength);
+						const view = this._kayo.wasmx.getMemoryView(atlasData.byteOffset, atlasData.byteLength);
 						vt.makeResident(view, 0, 0, 0);
 						project.fullRerender();
 
@@ -64,18 +64,18 @@ export class WrappingPane extends HTMLElement {
 								console.error(`SVT Write failed.`);
 								return;
 							}
-							project.wasmx.wasm.deleteArrayUint8(atlasData.byteOffset);
+							this._kayo.wasmx.wasm.deleteArrayUint8(atlasData.byteOffset);
 						};
 						vt.writeToFileSystem(view, 0, 0, 0, svtWriteFinishedCallback);
 					},
 				);
-				project.wasmx.taskQueue.queueTask(atlasTas);
+				this._kayo.wasmx.taskQueue.queueTask(atlasTas);
 				continue;
 			}
 
 			if (file.type == "audio/mpeg") {
-				const audio = project.kayo.audioContext;
-				const bufferSource = project.kayo.audioContext.createBufferSource();
+				const audio = this._kayo.audioContext;
+				const bufferSource = this._kayo.audioContext.createBufferSource();
 				bufferSource.connect(audio.destination);
 				bufferSource.buffer = await audio.decodeAudioData(fileData);
 				bufferSource.start();
@@ -87,12 +87,12 @@ export class WrappingPane extends HTMLElement {
 				const zipInfo = await unzip(fileData);
 
 				const onDone = () => {
-					ressourecePack.initialize(project.virtualTextureSystem);
+					ressourecePack.initialize(this._kayo.virtualTextureSystem);
 					console.log("in", performance.now() - n, ressourecePack);
 				};
 
 				ressourecePack = ResourcePack.parse(
-					project,
+					this._kayo,
 					zipInfo,
 					file.name.substring(0, file.name.lastIndexOf(".")),
 					undefined,
@@ -104,11 +104,10 @@ export class WrappingPane extends HTMLElement {
 			if (file.name.endsWith(".mca")) {
 				console.log(".msc");
 				try {
-					const world = project.kayo.wasmx.minecraftModule.createWorldData("My World");
+					const world = this._kayo.wasmx.minecraftModule.createWorldData("My World");
 					const dimension = world.createDimensionData("Overworld", 0);
 					dimension.openRegion(0, 0, fileData);
 					const mWorld = new MinecraftWorld(project, "World", ressourecePack, 8);
-					project.scene.minecraftWorld = mWorld;
 					for (let x = 0; x < 8; x++) {
 						for (let z = 0; z < 8; z++) {
 							const status = dimension.buildChunk(x, z);
@@ -120,7 +119,7 @@ export class WrappingPane extends HTMLElement {
 								if (palette.length > 1) sectionDataView = dimension.getSectionView(x, y, z);
 								else if (palette.length === 1 && palette[0].Name == "minecraft:air") continue;
 								const section = new MinecraftSection(
-									project,
+									this._kayo,
 									mWorld,
 									0,
 									x,
@@ -129,18 +128,19 @@ export class WrappingPane extends HTMLElement {
 									palette,
 									sectionDataView,
 								);
-								project.scene.minecraftWorld.setSection(x, y, z, section);
+								mWorld.setSection(x, y, z, section);
 							}
 						}
 					}
 					mWorld.buildGeometry();
+					project.scene.addMinecraftWorld(mWorld);
 				} catch (e) {
 					console.error(e);
 				}
 			}
 		}
 
-		this._kayo.project.virtualTextureSystem.physicalTexture.generateAllMips();
+		this._kayo.virtualTextureSystem.physicalTexture.generateAllMips();
 	};
 
 	public static createWrappingPane(win: Window, kayo: Kayo, defaultPane: string, useHeader: boolean): WrappingPane {

@@ -45,6 +45,7 @@ struct Integral : public SpecificRenderer {};
 
 struct RenderConfig {
 	bool needsContextReconfiguration;
+	bool needsPipelineRebuild;
 	General general;
 	SpecificRenderer* specificRenderer;
 	inline RenderConfig() : specificRenderer(new config::Realtime) {}

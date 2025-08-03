@@ -1,5 +1,6 @@
+import { GPUX } from "../GPUX";
+import { Kayo } from "../Kayo";
 import mat4 from "../math/mat4";
-import { Project } from "../project/Project";
 import R3Object from "../project/R3Object";
 import OrthographicProjection from "../projection/OrthographicProjection";
 import Projection from "../projection/Projection";
@@ -12,11 +13,10 @@ export class SunLight extends R3Object implements Camera {
 	public resolution: number;
 	public bindGroup: GPUBindGroup;
 	public buffer: GPUBuffer;
-	public project: Project;
 	public static sunBindGroupLayout: any;
 
-	public static init(project: Project) {
-		const gpuDevice = project.gpux.gpuDevice;
+	public static init(gpux: GPUX) {
+		const gpuDevice = gpux.gpuDevice;
 		this.sunBindGroupLayout = gpuDevice.createBindGroupLayout({
 			label: "sun bind group layout",
 			entries: [
@@ -45,12 +45,11 @@ export class SunLight extends R3Object implements Camera {
 		});
 	}
 
-	public constructor(project: Project, rangeWidth = 1000, distance = 1000, resolution = 4096) {
-		super(project);
-		this.project = project;
+	public constructor(kayo: Kayo, rangeWidth = 1000, distance = 1000, resolution = 4096) {
+		super(kayo);
 		this.projection = new OrthographicProjection(rangeWidth, 0, distance);
 		this.resolution = resolution;
-		const gpuDevice = project.gpux.gpuDevice;
+		const gpuDevice = kayo.gpux.gpuDevice;
 		this.shadowMap = gpuDevice.createTexture({
 			label: "Sun Light shadow map",
 			format: "depth24plus",

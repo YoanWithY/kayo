@@ -258,13 +258,14 @@ const col = array<vec4f, 8>(
 	vec4f(1, 1, 0.5, 1),
 	vec4f(0.5, 0.5, 0.5, 1),
 );
-// incompleate
-fn virtualTextureSample(v_id: u32, coords: vec2f) -> vec4f {
+
+fn virtualTextureSampleBias(v_id: u32, coords: vec2f, bias: f32) -> vec4f {
 	let info = svt_texture_info[v_id];
 	let tex_size = vec2f(f32(info.width), f32(info.height));
 	let pixel_coords = coords * tex_size;
-	let duvdx = dpdxFine(pixel_coords);
-	let duvdy = dpdyFine(pixel_coords);
+	let bias_factor = pow(2.0, bias);
+	let duvdx = dpdxFine(pixel_coords) * bias_factor;
+	let duvdy = dpdyFine(pixel_coords) * bias_factor;
 	let level = clamp(virtualTextureQueryLevel(duvdx, duvdy, virtualTextureAnisotropy(info.sampling_data)), 0.0, f32(virtualTextureNumLevels(info.sampling_data)) - 1);
 	let large_level = u32(floor(level));
 	let wrapped_coords = virtualTextureWrapp(coords, info.sampling_data);
@@ -279,4 +280,9 @@ fn virtualTextureSample(v_id: u32, coords: vec2f) -> vec4f {
 	}
 	
 	return vec4f(0);
+}
+
+// incompleate
+fn virtualTextureSample(v_id: u32, coords: vec2f) -> vec4f {
+	return virtualTextureSampleBias(v_id, coords, 0.0);
 }

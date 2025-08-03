@@ -1,4 +1,3 @@
-import { Project } from "../project/Project";
 import { Viewport } from "./Viewport";
 import { RealtimeViewportCache } from "./ViewportCache";
 import { CompositingPipeline } from "./CompositingPipeline";
@@ -6,18 +5,20 @@ import { ResolvePipeline } from "./ResolvePipeline";
 import Camera from "../Viewport/Camera";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 import { RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
-import { AbstractMetaRenderPipeline } from "./AbstractMetaRenderingPipeline";
+import { Kayo } from "../Kayo";
+import { RepresentationConcept } from "../project/Representation";
+import { GPUX } from "../GPUX";
+import { BackgroundRealtimeRepresentation } from "../lights/Background";
+import { SceneRealtimeRepresentation } from "./SceneRealtimeRenderingRepresentation";
+import { GridRelatimeRepresentation } from "../debug/Grid";
+import { MinecraftRealtimeRepresentation } from "../minecraft/MinecraftOpaquePipeline";
 const thresholdMapURL = "/beyer_2px_16bit.png";
 
 const thresholdMapBlob = await fetch(thresholdMapURL);
 const thresholdMapBytes = await thresholdMapBlob.bytes();
 
-export default class RealtimeRenderer {
-	public static readonly rendererKey = "realtime";
-	public get rendererKey() {
-		return RealtimeRenderer.rendererKey;
-	}
-	public project: Project;
+export default class RealtimeRenderer implements RepresentationConcept {
+	protected _kayo: Kayo;
 
 	private r3renderPassDescriptor: GPURenderPassDescriptor;
 	private overlayRenderPassDescriptor: GPURenderPassDescriptor;
@@ -44,11 +45,11 @@ export default class RealtimeRenderer {
 	public blueNoiseTexture!: GPUTexture;
 	public blueNoiseView!: GPUTextureView;
 
-	public constructor(project: Project) {
-		this.project = project;
-		this.gpuDevice = project.gpux.gpuDevice;
+	public constructor(kayo: Kayo) {
+		this._kayo = kayo;
+		this.gpuDevice = kayo.gpux.gpuDevice;
 		this.reconfigureContext(
-			(this.project.wasmx.kayoInstance.project.renderStates.get(this.rendererKey) as RenderState).config,
+			(this._kayo.wasmx.kayoInstance.project.renderStates.get(this.rendererKey) as RenderState).config,
 		);
 		this.viewUBO = this.gpuDevice.createBuffer({
 			label: "View UBO",
@@ -252,7 +253,7 @@ export default class RealtimeRenderer {
 			label: "height field compute pass",
 		};
 
-		const imageData = project.wasmx.imageData.fromImageData(thresholdMapBytes, false);
+		const imageData = this._kayo.wasmx.imageData.fromImageData(thresholdMapBytes, false);
 		if (!imageData) return;
 
 		const blueNoiseData = imageData.getMipData(0);
@@ -290,7 +291,7 @@ export default class RealtimeRenderer {
 			entries: [
 				{ binding: 0, resource: { buffer: this.shadowViewUBO } },
 				{ binding: 1, resource: this.blueNoiseView },
-				...this.project.virtualTextureSystem.bindGroupEntries,
+				...this._kayo.virtualTextureSystem.bindGroupEntries,
 			],
 			layout: this.bindGroup0Layout,
 		});
@@ -300,12 +301,16 @@ export default class RealtimeRenderer {
 			entries: [
 				{ binding: 0, resource: { buffer: this.viewUBO } },
 				{ binding: 1, resource: this.blueNoiseView },
-				...this.project.virtualTextureSystem.bindGroupEntries,
+				...this._kayo.virtualTextureSystem.bindGroupEntries,
 			],
 			layout: this.bindGroup0Layout,
 		});
 
 		imageData.deleteLater();
+
+		BackgroundRealtimeRepresentation.init(this._kayo.gpux, this.bindGroup0Layout);
+		GridRelatimeRepresentation.init(this._kayo.gpux, this.bindGroup0Layout);
+		MinecraftRealtimeRepresentation.init(this._kayo.gpux, this.bindGroup0Layout);
 	}
 
 	public reconfigureContext(config: RenderConfig) {
@@ -316,7 +321,7 @@ export default class RealtimeRenderer {
 	public frame = 0;
 	public renderViewport(_: number, viewport: Viewport) {
 		const start = performance.now();
-		const renderState = this.project.wasmx.kayoInstance.project.renderStates.get(viewport.configKey);
+		const renderState = this._kayo.wasmx.kayoInstance.project.renderStates.get(viewport.configKey);
 		if (renderState === null) {
 			console.error(`The render config key ${viewport.configKey} is unknown.`);
 			return;
@@ -329,13 +334,10 @@ export default class RealtimeRenderer {
 			return;
 		}
 
+		if (config.needsPipelineRebuild) this._kayo.project.scene.updateRepresentation(this, config);
 		if (config.needsContextReconfiguration) this.reconfigureContext(config);
 
 		viewport.updateView(this.viewUBO, this.frame);
-		const key = AbstractMetaRenderPipeline.configToKey(
-			config.general,
-			(config.specificRenderer as RealtimeConfig).antialiasing.msaa as 1 | 4,
-		);
 
 		const viewportCache = this.viewportCache.get(viewport);
 		if (!viewportCache) {
@@ -358,9 +360,14 @@ export default class RealtimeRenderer {
 		const r3renderPassEncoder = commandEncoder.beginRenderPass(this.r3renderPassDescriptor);
 		r3renderPassEncoder.setViewport(0, 0, w, h, 0, 1);
 
-		this.project.scene.minecraftWorld?.renderBundle(r3renderPassEncoder, key);
-		this.project.scene.background.recordForwardRendering(r3renderPassEncoder, key);
-		this.project.scene.grid?.recordForwardRendering(r3renderPassEncoder, key);
+		const realtimeScene = this._kayo.project.scene.getRepresentation(this) as
+			| SceneRealtimeRepresentation
+			| undefined;
+		if (!realtimeScene) return;
+
+		for (const world of realtimeScene.minecraftWorlds) world.recordForwardRendering(r3renderPassEncoder);
+		realtimeScene.background.recordForwardRendering(r3renderPassEncoder);
+		for (const grid of realtimeScene.grids) grid.recordForwardRendering(r3renderPassEncoder);
 
 		r3renderPassEncoder.end();
 
@@ -375,7 +382,7 @@ export default class RealtimeRenderer {
 		if (this.registeredViewports.has(viewport)) return;
 
 		this.registeredViewports.add(viewport);
-		this.viewportCache.set(viewport, new RealtimeViewportCache(this.project, viewport));
+		this.viewportCache.set(viewport, new RealtimeViewportCache(this._kayo, viewport));
 	}
 
 	public unregisterViewport(viewport: Viewport) {
@@ -444,4 +451,30 @@ export default class RealtimeRenderer {
 		this.viewTimeBuffer.set([0, 0, width, height, frame, 0, 0, 0], 0);
 		this.gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
 	}
+
+	public get rendererKey() {
+		return RealtimeRenderer.rendererKey;
+	}
+	public get representationConeceptID() {
+		return "realtime rendering";
+	}
+
+	public static getRenderingFragmentTargetsFromConfig(config: RenderConfig, gpux: GPUX): GPUColorTargetState[] {
+		return [{ format: gpux.getSwapChainFormat(config.general.swapChain.bitDepth) }, { format: "r16uint" }];
+	}
+
+	public static getColorFormats(config: RenderConfig, gpux: GPUX): GPUTextureFormat[] {
+		return [gpux.getSwapChainFormat(config.general.swapChain.bitDepth), "r16uint"];
+	}
+
+	public static getConstantsFromConfig(config: RenderConfig): Record<string, number> | undefined {
+		return {
+			output_color_space: config.general.swapChain.colorSpace == "srgb" ? 0 : 1,
+			use_color_quantisation: config.general.customColorQuantisation.useCustomColorQuantisation ? 1 : 0,
+			use_dithering: config.general.customColorQuantisation.useDithering ? 1 : 0,
+			output_component_transfere: config.general.swapChain.toneMappingMode == "linear" ? 0 : 1,
+		};
+	}
+
+	public static readonly rendererKey = "realtime";
 }

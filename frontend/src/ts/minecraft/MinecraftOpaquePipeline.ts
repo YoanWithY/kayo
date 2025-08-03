@@ -1,8 +1,13 @@
+import { RealtimeConfig, RenderConfig } from "../../c/KayoCorePP";
 import { GPUX } from "../GPUX";
-import { AbstractMetaRenderPipeline, RenderConfigKey } from "../rendering/AbstractMetaRenderingPipeline";
+import { Kayo } from "../Kayo";
+import { Representation } from "../project/Representation";
 import { AbstractRenderingPipeline } from "../rendering/AbstractRenderingPipeline";
+import RealtimeRenderer from "../rendering/RealtimeRenderer";
+import Renderable from "../rendering/Renderable";
 import { resolveShader } from "../rendering/ShaderUtils";
 import staticShaderCode from "./minecraftOpaque.wgsl?raw";
+import { MinecraftWorld } from "./MinecraftWorld";
 
 const shaderCode = staticShaderCode;
 const preProzessedShaderCoder = resolveShader(shaderCode);
@@ -43,7 +48,7 @@ const vertexBufferLayout: GPUVertexBufferLayout[] = [
 const vertexEntryPoint = "vertex_main";
 const fragmentEntryPoint = "fragment_main";
 
-export class MinecraftRenderingPipeline extends AbstractRenderingPipeline {
+export class MinecraftRealtimeRenderingPipeline extends AbstractRenderingPipeline {
 	protected gpux: GPUX;
 	protected primiteState: GPUPrimitiveState;
 	protected vertexState: GPUVertexState;
@@ -54,7 +59,7 @@ export class MinecraftRenderingPipeline extends AbstractRenderingPipeline {
 		shaderModule: GPUShaderModule,
 		vertexEntryPoint: string,
 		fragmentEntryPoint: string,
-		renderConfigKey: RenderConfigKey,
+		config: RenderConfig,
 		gpux: GPUX,
 		layout: GPUPipelineLayout,
 	) {
@@ -62,7 +67,7 @@ export class MinecraftRenderingPipeline extends AbstractRenderingPipeline {
 		this.gpux = gpux;
 		this.primiteState = primiteState;
 
-		const constants = AbstractMetaRenderPipeline.getConstantsFromKey(renderConfigKey);
+		const constants = RealtimeRenderer.getConstantsFromConfig(config);
 		this.depthStencilState.depthCompare = "less";
 		this.depthStencilState.depthWriteEnabled = true;
 
@@ -75,105 +80,84 @@ export class MinecraftRenderingPipeline extends AbstractRenderingPipeline {
 
 		this.fragmentState = {
 			module: this.shaderModule,
-			targets: AbstractMetaRenderPipeline.getRenderingFragmentTargetsFromKey(renderConfigKey, gpux),
+			targets: RealtimeRenderer.getRenderingFragmentTargetsFromConfig(config, gpux),
 			constants: constants,
 			entryPoint: fragmentEntryPoint,
 		};
-		this.multisample.count = renderConfigKey.msaa;
+		this.multisample.count = (config.specificRenderer as RealtimeConfig).antialiasing.msaa;
 		this.buildPipeline(gpux.gpuDevice, layout);
 	}
 }
 
-export class MinecraftDepthRenderingPipeline extends AbstractRenderingPipeline {
-	protected gpux: GPUX;
-	protected primiteState: GPUPrimitiveState;
-	protected vertexState: GPUVertexState;
-	protected fragmentState: GPUFragmentState;
+export class MinecraftRealtimeRepresentation
+	extends Representation<RealtimeRenderer, MinecraftWorld>
+	implements Renderable
+{
+	protected _kayo: Kayo;
+	protected _currentPipeline: MinecraftRealtimeRenderingPipeline;
+	protected _currentRenderBundle: GPURenderBundle;
 
 	public constructor(
-		label: string,
-		shaderModule: GPUShaderModule,
-		vertexEntryPoint: string,
-		fragmentEntryPoint: string,
-		gpux: GPUX,
+		kayo: Kayo,
+		representationConcept: RealtimeRenderer,
+		representationSubject: MinecraftWorld,
+		config: RenderConfig,
 	) {
-		super(label, shaderModule);
-		this.gpux = gpux;
-		this.primiteState = primiteState;
-
-		this.vertexState = {
-			module: this.shaderModule,
-			buffers: vertexBufferLayout,
-			entryPoint: vertexEntryPoint,
-		};
-
-		this.fragmentState = {
-			module: this.shaderModule,
-			targets: [],
-			entryPoint: fragmentEntryPoint,
-		};
+		super(representationConcept, representationSubject);
+		this._kayo = kayo;
+		this._currentPipeline = this._buildRenderingPipeline(config);
+		this._currentRenderBundle = this._buildRenderBundle(config);
 	}
 
-	public static createPipelineLayout(gpux: GPUX, bindGroup0Layout: GPUBindGroupLayout) {
-		return gpux.gpuDevice.createPipelineLayout({
-			label: "Minecraft opaque pipeline layout",
-			bindGroupLayouts: [bindGroup0Layout, MinecraftMetaRenderingPipeline.bindGroup1Layout],
-		});
-	}
-}
-
-export class MinecraftMetaRenderingPipeline extends AbstractMetaRenderPipeline {
-	protected _gpux: GPUX;
-	protected shaderModule: GPUShaderModule;
-
-	public constructor(id: string, gpux: GPUX) {
-		super(id);
-		this._renderPiplineCache.buildFunction = this._buildRenderingPipeline;
-		this._gpux = gpux;
-
-		this.shaderModule = gpux.gpuDevice.createShaderModule({
-			code: preProzessedShaderCoder,
-			label: `minecraft shader module`,
-			compilationHints: [
-				{
-					entryPoint: vertexEntryPoint,
-					layout: MinecraftMetaRenderingPipeline.renderPipelineLayout,
-				},
-				{
-					entryPoint: fragmentEntryPoint,
-					layout: MinecraftMetaRenderingPipeline.renderPipelineLayout,
-				},
-			],
-		});
-	}
-
-	protected _buildRenderingPipeline = (key: RenderConfigKey) => {
-		return new MinecraftRenderingPipeline(
-			`${this.id} pipeline`,
-			this.shaderModule,
+	protected _buildRenderingPipeline(config: RenderConfig) {
+		return new MinecraftRealtimeRenderingPipeline(
+			`Minecraft Realtime Opaque`,
+			MinecraftRealtimeRepresentation.shaderModule,
 			vertexEntryPoint,
 			fragmentEntryPoint,
-			key,
-			this._gpux,
-			MinecraftMetaRenderingPipeline.renderPipelineLayout,
+			config,
+			this._kayo.gpux,
+			MinecraftRealtimeRepresentation.renderPipelineLayout,
 		);
-	};
-	protected _buildDepthPipeline(): AbstractRenderingPipeline {
-		return new MinecraftDepthRenderingPipeline(
-			`${this.id} depth pipeline`,
-			this.shaderModule,
-			vertexEntryPoint,
-			fragmentEntryPoint,
-			this._gpux,
-		);
-	}
-	protected _buildSelectionPipeline(): AbstractRenderingPipeline {
-		throw new Error("Method not implemented.");
 	}
 
+	protected _recordRender(renderPassEncoder: GPURenderPassEncoder | GPURenderBundleEncoder) {
+		let quads = 0;
+		let chunks = 0;
+		for (const key in this.represenationSubject.sections) {
+			chunks++;
+			quads += this.represenationSubject.sections[key].render(renderPassEncoder);
+		}
+		console.log(quads, chunks);
+	}
+
+	public recordForwardRendering(renderPassEncoder: GPURenderPassEncoder) {
+		renderPassEncoder.executeBundles([this._currentRenderBundle]);
+	}
+
+	protected _buildRenderBundle(config: RenderConfig) {
+		const renderBundleEncoder = this._kayo.gpux.gpuDevice.createRenderBundleEncoder({
+			label: "minecraft realtime",
+			colorFormats: RealtimeRenderer.getColorFormats(config, this._kayo.gpux),
+			depthStencilFormat: "depth24plus",
+			sampleCount: (config.specificRenderer as RealtimeConfig).antialiasing.msaa,
+		});
+		renderBundleEncoder.setBindGroup(0, this.representationConcept.bindGroup0);
+
+		renderBundleEncoder.setPipeline(this._currentPipeline.gpuPipeline);
+		this._recordRender(renderBundleEncoder);
+		return renderBundleEncoder.finish({ label: "Minecraft World bundle" });
+	}
+
+	public update(config: RenderConfig): void {
+		this._currentPipeline = this._buildRenderingPipeline(config);
+		this._currentRenderBundle = this._buildRenderBundle(config);
+	}
+
+	public static shaderModule: GPUShaderModule;
 	public static bindGroup1Layout: GPUBindGroupLayout;
 	public static renderPipelineLayout: GPUPipelineLayout;
-	public static metaPipeline: MinecraftMetaRenderingPipeline;
+	public static metaPipeline: MinecraftRealtimeRepresentation;
 	public static init(gpux: GPUX, bindGroup0Layout: GPUBindGroupLayout) {
 		this.bindGroup1Layout = gpux.gpuDevice.createBindGroupLayout({
 			label: "minecraft bind group 1 layout",
@@ -189,8 +173,21 @@ export class MinecraftMetaRenderingPipeline extends AbstractMetaRenderPipeline {
 		});
 		this.renderPipelineLayout = gpux.gpuDevice.createPipelineLayout({
 			label: "Minecraft opaque pipeline layout",
-			bindGroupLayouts: [bindGroup0Layout, MinecraftMetaRenderingPipeline.bindGroup1Layout],
+			bindGroupLayouts: [bindGroup0Layout, MinecraftRealtimeRepresentation.bindGroup1Layout],
 		});
-		this.metaPipeline = new MinecraftMetaRenderingPipeline("Minecraft Opaque", gpux);
+		this.shaderModule = gpux.gpuDevice.createShaderModule({
+			code: preProzessedShaderCoder,
+			label: `minecraft shader module`,
+			compilationHints: [
+				{
+					entryPoint: vertexEntryPoint,
+					layout: MinecraftRealtimeRepresentation.renderPipelineLayout,
+				},
+				{
+					entryPoint: fragmentEntryPoint,
+					layout: MinecraftRealtimeRepresentation.renderPipelineLayout,
+				},
+			],
+		});
 	}
 }

@@ -1,8 +1,8 @@
 import { GeneralConfig, RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
-import { Project } from "../project/Project";
 import { getElement } from "../GPUX";
 import { Viewport } from "./Viewport";
 import RealtimeRenderer from "./RealtimeRenderer";
+import { Kayo } from "../Kayo";
 
 export class RealtimeViewportCache {
 	public viewport;
@@ -22,13 +22,13 @@ export class RealtimeViewportCache {
 	public timeStempMapBuffer: GPUBuffer;
 	public compositingBindGroup0!: GPUBindGroup;
 	public r16ResolveBindGroup0!: GPUBindGroup;
-	public project: Project;
+	protected _kayo: Kayo;
 	public prevUseOverlays: boolean = false;
 	public gpuDevice: GPUDevice;
-	public constructor(project: Project, viewport: Viewport) {
-		this.project = project;
+	public constructor(kayo: Kayo, viewport: Viewport) {
+		this._kayo = kayo;
 		this.viewport = viewport;
-		this.gpuDevice = project.gpux.gpuDevice;
+		this.gpuDevice = this._kayo.gpux.gpuDevice;
 		this.querySet = this.gpuDevice.createQuerySet({
 			label: `time stamp query set for ${viewport.lable}`,
 			type: "timestamp",
@@ -47,7 +47,7 @@ export class RealtimeViewportCache {
 		});
 
 		this.reconfigureContext(
-			(project.wasmx.kayoInstance.project.renderStates.get(RealtimeRenderer.rendererKey) as RenderState).config
+			(this._kayo.wasmx.kayoInstance.project.renderStates.get(RealtimeRenderer.rendererKey) as RenderState).config
 				.general,
 		);
 	}
@@ -134,7 +134,7 @@ export class RealtimeViewportCache {
 	}
 
 	private conditionalColorAttachmentUpdate(w: number, h: number, config: RenderConfig) {
-		const currentFormat = this.project.gpux.getSwapChainFormat(config.general.swapChain.bitDepth);
+		const currentFormat = this._kayo.gpux.getSwapChainFormat(config.general.swapChain.bitDepth);
 		const msaa = (config.specificRenderer as RealtimeConfig).antialiasing.msaa;
 		if (
 			w === this.prevWidth &&
@@ -170,7 +170,7 @@ export class RealtimeViewportCache {
 		context.unconfigure();
 		context.configure({
 			device: this.gpuDevice,
-			format: this.project.gpux.getSwapChainFormat(generalConfig.swapChain.bitDepth),
+			format: this._kayo.gpux.getSwapChainFormat(generalConfig.swapChain.bitDepth),
 			colorSpace: generalConfig.swapChain.colorSpace as PredefinedColorSpace,
 			toneMapping: { mode: generalConfig.swapChain.toneMappingMode as GPUCanvasToneMappingMode },
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,

@@ -1,26 +1,18 @@
-import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import Scene from "./Scene";
 import { WrappingPane } from "../ui/Wrapping/WrappingPane";
 import { GPUX } from "../GPUX";
-import Background from "../lights/Background";
-import TextureUtils from "../Textures/TextureUtils";
 import { Kayo } from "../Kayo";
 import { PTPBase } from "../collaborative/PTPBase";
 import WASMX from "../WASMX";
-import { Grid } from "../debug/GridPipeline";
 import { ViewportPane } from "../ui/panes/ViewportPane";
 import { PerformancePane } from "../ui/panes/PerformancePane";
 import { Viewport } from "../rendering/Viewport";
-import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
-import { MinecraftMetaRenderingPipeline } from "../minecraft/MinecraftOpaquePipeline";
 
 export class Project {
 	private _name: string;
-	public kayo: Kayo;
-	public gpux: GPUX;
-	public wasmx: WASMX;
-	public renderers: { [key: string]: RealtimeRenderer } = {};
-	public virtualTextureSystem: VirtualTextureSystem;
+	protected kayo: Kayo;
+	protected gpux: GPUX;
+	protected wasmx: WASMX;
 	public scene!: Scene;
 	public ptpBase: PTPBase;
 
@@ -30,19 +22,8 @@ export class Project {
 		this.kayo = kayo;
 		this.gpux = kayo.gpux;
 		this.wasmx = kayo.wasmx;
-		this.virtualTextureSystem = new VirtualTextureSystem(this.gpux, this.wasmx);
-		const realtimeRenderer = new RealtimeRenderer(this);
-		this.renderers["realtime"] = realtimeRenderer;
 		this.ptpBase = new PTPBase(this);
-
-		TextureUtils.init(this.gpux.gpuDevice);
-		Background.init(this.gpux.gpuDevice, realtimeRenderer.bindGroup0Layout);
-		Grid.init(this.gpux, realtimeRenderer.bindGroup0Layout);
-		MinecraftMetaRenderingPipeline.init(this.gpux, realtimeRenderer.bindGroup0Layout);
-
 		this.scene = new Scene();
-		this.scene.background = new Background(this);
-		this.scene.grid = new Grid(this);
 	}
 
 	public requestUI(win: Window, defaultPane: string, useHeader: boolean) {
@@ -61,7 +42,7 @@ export class Project {
 		viewport.window.requestAnimationFrame((ts: number) => {
 			for (const v of this.viewportsToUpdate) {
 				if (v.window != viewport.window) continue;
-				const renderer = this.renderers[viewport.configKey];
+				const renderer = this.kayo.renderers[viewport.configKey];
 				if (!renderer) {
 					console.error(`Renderer with key "${viewport.configKey}" is not know to kayo.`);
 					continue;
@@ -82,7 +63,7 @@ export class Project {
 
 	private _viewportPanes = new Set<ViewportPane>();
 	public registerViewportPane(viewport: ViewportPane) {
-		const renderer = this.renderers[viewport.configKey];
+		const renderer = this.kayo.renderers[viewport.configKey];
 		if (!renderer) {
 			console.error(`Renderer with key "${viewport.configKey}" is not know to kayo.`);
 			return;
@@ -92,7 +73,7 @@ export class Project {
 	}
 
 	public unregisterViewportPane(viewport: ViewportPane) {
-		const renderer = this.renderers[viewport.configKey];
+		const renderer = this.kayo.renderers[viewport.configKey];
 		if (!renderer) {
 			console.error(`Renderer with key "${viewport.configKey}" is not know to kayo.`);
 			return;

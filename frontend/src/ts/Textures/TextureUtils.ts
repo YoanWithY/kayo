@@ -1,3 +1,4 @@
+import { GPUX } from "../GPUX";
 import { fragmentEntryPoint, vertexEntryPoint } from "../rendering/AbstractRenderingPipeline";
 import { resolveShader } from "../rendering/ShaderUtils";
 import mipmapCode from "./mipmap.wgsl?raw";
@@ -11,14 +12,14 @@ export default class TextureUtils {
 	private static mipMapModule: GPUShaderModule;
 	private static sampler: GPUSampler;
 	private static gpuDevice: GPUDevice;
-	public static init(gpuDevice: GPUDevice) {
-		this.gpuDevice = gpuDevice;
-		this.mipMapModule = gpuDevice.createShaderModule({
+	public static init(gpux: GPUX) {
+		this.gpuDevice = gpux.gpuDevice;
+		this.mipMapModule = gpux.gpuDevice.createShaderModule({
 			label: "mip map shader module",
 			code: resolveShader(mipmapCode),
 			compilationHints: [{ entryPoint: vertexEntryPoint }, { entryPoint: fragmentEntryPoint }],
 		});
-		this.sampler = gpuDevice.createSampler({ minFilter: "linear" });
+		this.sampler = gpux.gpuDevice.createSampler({ minFilter: "linear" });
 	}
 
 	public static getResolutionOfMip(resolutionAtLevel0: number, level: number) {

@@ -1,7 +1,4 @@
 import mat4 from "../math/mat4";
-import Scene from "../project/Scene";
-
-export const scene = new Scene();
 
 export default interface Projection {
 	near: number;

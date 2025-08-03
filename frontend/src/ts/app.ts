@@ -6,6 +6,7 @@ import { GPUX } from "./GPUX";
 import { FileRessourceManager } from "./ressourceManagement/FileRessourceManager";
 import { StoreFileTask as StoreFileTask } from "./ressourceManagement/StoreFileTask";
 import { SplashScreen } from "./ui/panes/SplashScreen";
+import TextureUtils from "./Textures/TextureUtils";
 
 const loadPara = window.document.getElementById("loadingParagraph") as HTMLParagraphElement;
 loadPara.textContent = "Initi UI...";
@@ -18,6 +19,7 @@ if (typeof gpux === "string") {
 	alert(`Could not initialize WebGPU with reason: ${gpux}`);
 	throw new Error("Could not initialize WebGPU!", { cause: gpux });
 }
+TextureUtils.init(gpux);
 
 loadPara.textContent = "Initi WASM...";
 const wasmx = await initWasmx();

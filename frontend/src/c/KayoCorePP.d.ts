@@ -76,6 +76,7 @@ export interface RenderConfig extends ClassHandle {
   general: GeneralConfig;
   specificRenderer: SpecificRendererConfig | null;
   needsContextReconfiguration: boolean;
+  needsPipelineRebuild: boolean;
 }
 
 export interface SwapChainState extends ClassHandle {

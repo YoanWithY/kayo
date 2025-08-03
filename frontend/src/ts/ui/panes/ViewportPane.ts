@@ -204,10 +204,10 @@ export class ViewportPane extends BasicPane implements Viewport {
 			],
 			3 * 16,
 		);
-		this.project.gpux.gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);
+		this._kayo.gpux.gpuDevice.queue.writeBuffer(viewUBO, 0, this.viewBuffer);
 
 		this.viewTimeBuffer.set([0, 0, this.canvas.width, this.canvas.height, frame, 0, 0, 0], 0);
-		this.project.gpux.gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
+		this._kayo.gpux.gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
 	}
 
 	public getCurrentTexture(): GPUTexture {
