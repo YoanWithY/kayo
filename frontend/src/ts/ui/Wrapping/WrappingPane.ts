@@ -5,8 +5,8 @@ import { ResourcePack } from "../../minecraft/ResourcePack";
 import { MinecraftSection } from "../../minecraft/MinecraftSection";
 import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
 import { Kayo } from "../../Kayo";
-import { CreateAtlasTask } from "../../ressourceManagement/CreateAtlasTask";
-import { StoreFileTask } from "../../ressourceManagement/StoreFileTask";
+import { StoreFileTask } from "../../ressourceManagement/jsTasks/StoreFileTask";
+import { CreateAtlasTask } from "../../ressourceManagement/wasmTasks/CreateAtlasTask";
 
 let ressourecePack!: ResourcePack;
 
@@ -41,13 +41,8 @@ export class WrappingPane extends HTMLElement {
 				const imageData = this._kayo.wasmx.imageData.fromImageData(fileData, true);
 				if (imageData === null) continue;
 
-				const task = new StoreFileTask(
-					this._kayo.wasmx,
-					project.getFSPathTo("raw"),
-					file.name,
-					new Uint8Array(fileData),
-				);
-				this._kayo.wasmx.taskQueue.queueTask(task);
+				const task = new StoreFileTask(project.getFSPathTo("raw"), file.name, new Uint8Array(fileData));
+				this._kayo.taskQueue.queueTask(task);
 
 				const atlasTas = new CreateAtlasTask(
 					this._kayo.wasmx,
@@ -69,7 +64,7 @@ export class WrappingPane extends HTMLElement {
 						vt.writeToFileSystem(view, 0, 0, 0, svtWriteFinishedCallback);
 					},
 				);
-				this._kayo.wasmx.taskQueue.queueTask(atlasTas);
+				this._kayo.taskQueue.queueTask(atlasTas);
 				continue;
 			}
 

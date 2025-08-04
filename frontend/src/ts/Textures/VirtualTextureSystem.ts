@@ -5,8 +5,10 @@ import { IndirectionTableAtlas } from "./IndirectionTableAtlas";
 import { PhysicalTexture } from "./PhysicalTexture";
 import { VirtualTexture2D } from "./VirtualTexture2D";
 import WASMX from "../WASMX";
+import { Kayo } from "../Kayo";
 
 export class VirtualTextureSystem {
+	private _kayo: Kayo;
 	private _gpux: GPUX;
 	private _wasmx: WASMX;
 	public largestAtlasedMipSize: number; // must be power of two
@@ -59,10 +61,11 @@ export class VirtualTextureSystem {
 		[96, 128],
 		[136, 128],
 	];
-	public constructor(gpux: GPUX, wasmx: WASMX) {
+	public constructor(kayo: Kayo) {
 		// Construction order is relevant!
-		this._gpux = gpux;
-		this._wasmx = wasmx;
+		this._kayo = kayo;
+		this._gpux = this._kayo.gpux;
+		this._wasmx = this._kayo.wasmx;
 		this.largestAtlasedMipSize = 64;
 		this.numberOfMipsInMipAtlas = TextureUtils.getFullMipPyramidLevels(this.largestAtlasedMipSize);
 
@@ -79,7 +82,7 @@ export class VirtualTextureSystem {
 
 		const device = this._gpux.gpuDevice;
 		this.bindGroupEntries = [
-			{ binding: 128, resource: this.textureSVTData.gpuBuffer },
+			{ binding: 128, resource: { buffer: this.textureSVTData.gpuBuffer } },
 			{ binding: 130, resource: this.indirectionTableAtlas.gpuTexture.createView({ dimension: "2d-array" }) },
 			{ binding: 131, resource: this.physicalTexture.gpuTexture.createView() },
 			{
@@ -191,6 +194,10 @@ export class VirtualTextureSystem {
 				}),
 			}, // must be changed in virtualTexture.wgsl
 		];
+	}
+
+	public get kayo() {
+		return this._kayo;
 	}
 
 	public get gpux() {

@@ -1,4 +1,3 @@
-import { FileRessourceManager } from "./ressourceManagement/FileRessourceManager";
 import { GPUX } from "./GPUX";
 import { Project } from "./project/Project";
 import WASMX from "./WASMX";
@@ -7,26 +6,29 @@ import RealtimeRenderer from "./rendering/RealtimeRenderer";
 import { SceneRealtimeRepresentation } from "./rendering/SceneRealtimeRenderingRepresentation";
 import { RenderConfig } from "../c/KayoCorePP";
 import { Grid } from "./debug/Grid";
+import { ConcurrentTaskQueue } from "./ressourceManagement/ConcurrentTaskQueue";
 
 export class Kayo {
 	private _gpux: GPUX;
 	private _wasmx: WASMX;
-	private _fileRessourceManager: FileRessourceManager;
+	private _taskQueue: ConcurrentTaskQueue;
 	private _audioContext: AudioContext;
 	private _virtualTextureSystem: VirtualTextureSystem;
 	private _renderers: { [key: string]: RealtimeRenderer } = {};
 	private _windows: Set<Window>;
+	private _rootName: string;
 	private _project: Project;
 
-	public constructor(gpux: GPUX, wasmx: WASMX, fileRessourceManager: FileRessourceManager) {
+	public constructor(gpux: GPUX, wasmx: WASMX, taskQueue: ConcurrentTaskQueue, rootName: string) {
 		this._wasmx = wasmx;
 		this._gpux = gpux;
-		this._fileRessourceManager = fileRessourceManager;
+		this._taskQueue = taskQueue;
 		this._audioContext = new AudioContext({ latencyHint: "interactive" });
-		this._virtualTextureSystem = new VirtualTextureSystem(this.gpux, this.wasmx);
+		this._virtualTextureSystem = new VirtualTextureSystem(this);
 		const realtimeRenderer = new RealtimeRenderer(this);
 		this._renderers["realtime"] = realtimeRenderer;
 		this._windows = new Set();
+		this._rootName = rootName;
 		this._project = new Project(this);
 
 		const config = this._wasmx.kayoInstance.project.renderStates.get(RealtimeRenderer.rendererKey)
@@ -45,8 +47,8 @@ export class Kayo {
 		return this._wasmx;
 	}
 
-	public get fileRessourceManager(): FileRessourceManager {
-		return this._fileRessourceManager;
+	public get taskQueue(): ConcurrentTaskQueue {
+		return this._taskQueue;
 	}
 
 	public get audioContext(): AudioContext {
@@ -63,6 +65,10 @@ export class Kayo {
 
 	public get project(): Project {
 		return this._project;
+	}
+
+	public get rootName(): string {
+		return this._rootName;
 	}
 
 	public get windows(): Set<Window> {

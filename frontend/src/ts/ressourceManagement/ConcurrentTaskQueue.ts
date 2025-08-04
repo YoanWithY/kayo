@@ -1,9 +1,8 @@
-import { SVTFSTask } from "./SVTFSTask";
+import { SVTFSTask } from "./jsTasks/SVTFSTask";
 import { WasmTask, JsTask } from "./Task";
 
-export type ConcurrentTask = WasmTask | JsTask;
-
 type WorkerEntry = { worker: Worker; isRunning: boolean };
+export type ConcurrentTask = WasmTask | JsTask;
 
 export class ConcurrentTaskQueue {
 	private _numThreads: number;
@@ -29,7 +28,7 @@ export class ConcurrentTaskQueue {
 		});
 	}
 
-	public async initWorkers(projectRootName: string) {
+	public async initWorkers(newRootName: string) {
 		const promices: Promise<void>[] = [];
 		for (let i = 0; i < this._numThreads; i++) {
 			let externalResolve: (value: void | PromiseLike<void>) => void;
@@ -95,7 +94,7 @@ export class ConcurrentTaskQueue {
 		};
 
 		this._svtWorker.addEventListener("message", svtInitCallback);
-		this._svtWorker.postMessage({ func: "initWorker", taskID: -1, args: { projectRootName: projectRootName } });
+		this._svtWorker.postMessage({ func: "initWorker", taskID: -1, args: { projectRootName: newRootName } });
 
 		// await compleation
 		await Promise.all(promices);
@@ -115,15 +114,15 @@ export class ConcurrentTaskQueue {
 		this._taskMap[id] = task;
 		this._numRunningThreads++;
 		if (task instanceof WasmTask) task.run(id);
-		else task.run(id, this._occupyJSWorker());
+		else task.run(this, id, this._occupyJSWorker());
 	}
 
 	public remoteJSCall(workerID: number, taskID: number, func: string, args: any, transfer: ArrayBuffer[]) {
 		this._jsWorkers[workerID].worker.postMessage({ func, taskID, args }, transfer);
 	}
 
-	public queueTask(wasmTask: ConcurrentTask) {
-		this._taskQueue.push(wasmTask);
+	public queueTask(task: ConcurrentTask) {
+		this._taskQueue.push(task);
 		this._conditonallyPopNextTask();
 	}
 

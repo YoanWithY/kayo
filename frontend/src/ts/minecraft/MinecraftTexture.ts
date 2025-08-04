@@ -1,6 +1,6 @@
 import { ImageData } from "../../c/KayoCorePP";
 import { Kayo } from "../Kayo";
-import { CreateAtlasTask } from "../ressourceManagement/CreateAtlasTask";
+import { CreateAtlasTask } from "../ressourceManagement/wasmTasks/CreateAtlasTask";
 import { VirtualTexture2D } from "../Textures/VirtualTexture2D";
 
 export class MinecraftTexture {
@@ -40,7 +40,7 @@ export class MinecraftTexture {
 		};
 
 		const atlasTas = new CreateAtlasTask(kayo.wasmx, imageData, createAtlasFinishedCallbakc);
-		kayo.wasmx.taskQueue.queueTask(atlasTas);
+		kayo.taskQueue.queueTask(atlasTas);
 		this.virtualTexture = virtualTexture;
 	}
 

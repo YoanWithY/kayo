@@ -1,11 +1,11 @@
 /// <reference lib="webworker" />
 type ReturnValueType = { returnValue: any; transfer: Transferable[] };
-let root!: FileSystemDirectoryHandle;
-let id!: number;
+let systemRoot!: FileSystemDirectoryHandle;
+let workerID!: number;
 
 const getDirHandleFromPath = async (path: string) => {
 	const dirs = path.split("/").filter(Boolean);
-	let dir = root;
+	let dir = systemRoot;
 	for (const segment of dirs) {
 		dir = await dir.getDirectoryHandle(segment, { create: true });
 	}
@@ -16,10 +16,10 @@ const getFileHandleFromPathAndName = async (path: string, fileName: string) => {
 	return await (await getDirHandleFromPath(path)).getFileHandle(fileName, { create: true });
 };
 
-const initWorkerFunction = async ({ workerID }: { workerID: number }) => {
-	id = workerID;
-	root = await navigator.storage.getDirectory();
-	return { returnValue: `Initialized Worker ${id}}`, transfer: [] };
+const initWorkerFunction = async (args: { workerID: number }) => {
+	workerID = args.workerID;
+	systemRoot = await navigator.storage.getDirectory();
+	return { returnValue: `Initialized Worker ${workerID}}`, transfer: [] };
 };
 
 const storeFileFunction = async ({
@@ -39,11 +39,11 @@ const storeFileFunction = async ({
 		syncHandle.flush();
 	} catch (e) {
 		console.error(e);
-		return { returnValue: -1, transfer: [] };
+		return { returnValue: undefined, transfer: [] };
 	} finally {
 		syncHandle.close();
 	}
-	return { returnValue: 0, transfer: [] };
+	return { returnValue: true, transfer: [] };
 };
 
 const loadFileFunction = async ({ path, fileName }: { path: string; fileName: string }) => {
@@ -60,10 +60,39 @@ const loadFileFunction = async ({ path, fileName }: { path: string; fileName: st
 	return { returnValue: data, transfer: [data.buffer] };
 };
 
+async function populateChildren(obj: any, dir: FileSystemDirectoryHandle, currentDepth: number, maxDepth: number) {
+	const childArray: any[] = [];
+	obj.children = childArray;
+
+	if (maxDepth >= 0 && currentDepth > maxDepth) return;
+
+	for await (const fd of dir.values()) {
+		const newEntry = { kind: fd.kind, name: fd.name };
+		if (fd.kind !== "file")
+			await populateChildren(newEntry, fd as FileSystemDirectoryHandle, currentDepth + 1, maxDepth);
+		childArray.push(newEntry);
+	}
+}
+
+const queryFileSystemFunction = async ({ path, maxDepth }: { path: string; maxDepth: number }) => {
+	const dir = await getDirHandleFromPath(path);
+	const retObj = { type: "directory", name: "ROOT" };
+	await populateChildren(retObj, dir, 0, maxDepth);
+	return { returnValue: retObj, transfer: [] };
+};
+
+const deleteFSEntryTaskFunction = async ({ path, entry }: { path: string; entry: string }) => {
+	const dir = await getDirHandleFromPath(path);
+	await dir.removeEntry(entry, { recursive: true });
+	return { returnValue: undefined, transfer: [] };
+};
+
 const taskMap: Record<string, (args: any) => Promise<ReturnValueType> | ReturnValueType> = {
 	initWorker: initWorkerFunction,
 	storeFile: storeFileFunction,
 	loadFile: loadFileFunction,
+	queryFileSystem: queryFileSystemFunction,
+	deleteFSEntry: deleteFSEntryTaskFunction,
 };
 
 self.onmessage = async (event: MessageEvent) => {
@@ -74,5 +103,6 @@ self.onmessage = async (event: MessageEvent) => {
 		self.postMessage({ taskID, returnValue }, transfer);
 	} else {
 		console.error(`The provided function name "${func}" is unknown.`);
+		self.postMessage({ taskID, undefined });
 	}
 };

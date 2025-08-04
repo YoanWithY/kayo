@@ -1,4 +1,5 @@
 import { Kayo } from "../../Kayo";
+import { debounce } from "../../Utils";
 import ViewportCamera from "../../Viewport/ViewportCamera";
 import vec2 from "../../math/vec2";
 import vec3 from "../../math/vec3";
@@ -17,12 +18,14 @@ export class ViewportPane extends BasicPane implements Viewport {
 	public window!: Window;
 	public configKey: string = "realtime";
 
-	private _resizeObserver: ResizeObserver = new ResizeObserver((e) => {
+	private _resizeCallbackDebunced = debounce((e: ResizeObserverEntry[]) => {
 		const size = e[0].devicePixelContentBoxSize[0];
 		this.canvas.width = size.inlineSize;
 		this.canvas.height = size.blockSize;
 		if (this.isConnected) this.project.requestAnimationFrameWith(this);
-	});
+	}, 64);
+
+	private _resizeObserver: ResizeObserver = new ResizeObserver(this._resizeCallbackDebunced);
 
 	public constructor() {
 		super();

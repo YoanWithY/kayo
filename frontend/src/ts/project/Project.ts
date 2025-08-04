@@ -91,6 +91,6 @@ export class Project {
 	}
 
 	public getFSPathTo(localPath: string) {
-		return `${this.kayo.fileRessourceManager.projectRootName}/${localPath}`;
+		return `${this.kayo.rootName}/${localPath}`;
 	}
 }

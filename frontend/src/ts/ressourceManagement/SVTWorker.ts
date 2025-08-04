@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-let root!: FileSystemDirectoryHandle;
+let systemRoot!: FileSystemDirectoryHandle;
 let projectDir!: FileSystemDirectoryHandle;
 let svtFile!: FileSystemFileHandle;
 let svtHandle!: FileSystemSyncAccessHandle;
@@ -10,8 +10,8 @@ function svtTileKey(textureID: string, mip: number, tileX: number, tileY: number
 }
 
 async function initWorker({ projectRootName }: { projectRootName: string }) {
-	root = await navigator.storage.getDirectory();
-	projectDir = await root.getDirectoryHandle(projectRootName);
+	systemRoot = await navigator.storage.getDirectory();
+	projectDir = await systemRoot.getDirectoryHandle(projectRootName, { create: true });
 	svtFile = await projectDir.getFileHandle("svt_cache", { create: true });
 	svtHandle = await svtFile.createSyncAccessHandle();
 	return `Initialized SVT Worker for dir ${projectRootName}`;

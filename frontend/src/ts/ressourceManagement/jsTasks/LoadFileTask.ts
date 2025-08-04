@@ -1,31 +1,29 @@
-import WASMX from "../WASMX";
-import { JsTask } from "./Task";
+import { ConcurrentTaskQueue } from "../ConcurrentTaskQueue";
+import { JsTask } from "../Task";
 
-type CallbackType = (returnValue: Uint8Array<ArrayBuffer> | undefined) => void;
+export type LoadFileTaskFinishedCallback = (returnValue: Uint8Array<ArrayBuffer> | undefined) => void;
 
 export class LoadFileTask extends JsTask {
-	private _wasmx: WASMX;
 	private _path: string;
 	private _fileName: string;
 	private _taskID!: number;
-	private _finishedCallback: CallbackType;
+	private _finishedCallback: LoadFileTaskFinishedCallback;
 
 	/**
-	 * @param wasmx The WASMX instance.
+	 * @param taskQueue The WASMX instance.
 	 * @param path The root relative directory path.
 	 * @param fileName The file name to read from.
 	 */
-	public constructor(wasmx: WASMX, path: string, fileName: string, finishedCallback: CallbackType) {
+	public constructor(path: string, fileName: string, finishedCallback: LoadFileTaskFinishedCallback) {
 		super();
-		this._wasmx = wasmx;
 		this._path = path;
 		this._fileName = fileName;
 		this._finishedCallback = finishedCallback;
 	}
 
-	public run(taskID: number, workerID: number) {
+	public run(taskQueue: ConcurrentTaskQueue, taskID: number, workerID: number) {
 		this._taskID = taskID;
-		this._wasmx.taskQueue.remoteJSCall(
+		taskQueue.remoteJSCall(
 			workerID,
 			this._taskID,
 			"loadFile",

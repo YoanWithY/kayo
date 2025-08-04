@@ -5,7 +5,6 @@ import type {
 	KayoWASMMinecraftModule,
 	MainModule,
 } from "../c/KayoCorePP";
-import { ConcurrentTaskQueue } from "./ressourceManagement/ConcurrentTaskQueue";
 
 export type WasmPath = string[][];
 
@@ -17,7 +16,6 @@ export default class WASMX {
 	public minecraftModule: KayoWASMMinecraftModule;
 	public imageData;
 	private _wasm: MainModule;
-	private _taskQueue: ConcurrentTaskQueue;
 
 	public constructor(module: MainModule) {
 		this._wasm = module;
@@ -25,11 +23,6 @@ export default class WASMX {
 		this.imageData = module.ImageData;
 		this.kayoInstance = new module.KayoWASMInstance();
 		this.minecraftModule = new module.KayoWASMMinecraftModule(this.kayoInstance);
-		this._taskQueue = new ConcurrentTaskQueue();
-	}
-
-	public get taskQueue() {
-		return this._taskQueue;
 	}
 
 	public get wasm() {

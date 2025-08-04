@@ -1,6 +1,6 @@
-import { ImageDataUint8, WasmCreateAtlasTask } from "../../c/KayoCorePP";
-import WASMX from "../WASMX";
-import { WasmTask } from "./Task";
+import { ImageDataUint8, WasmCreateAtlasTask } from "../../../c/KayoCorePP";
+import WASMX from "../../WASMX";
+import { WasmTask } from "../Task";
 
 export class CreateAtlasTask extends WasmTask {
 	private _wasmx: WASMX;

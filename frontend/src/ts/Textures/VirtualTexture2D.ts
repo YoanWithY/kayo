@@ -1,4 +1,4 @@
-import { SVTWriteTask } from "../ressourceManagement/SVTFSTask";
+import { SVTWriteTask } from "../ressourceManagement/jsTasks/SVTFSTask";
 import { Texture2D } from "./TextureLoader";
 import TextureUtils from "./TextureUtils";
 import { VirtualTextureSystem } from "./VirtualTextureSystem";
@@ -90,7 +90,7 @@ export class VirtualTexture2D implements Texture2D {
 		tileY: number,
 		finishedCallback: (returnValue: number) => void,
 	) {
-		this.virtualTextureSystem.wasmx.taskQueue.queueSVTTask(
+		this.virtualTextureSystem.kayo.taskQueue.queueSVTTask(
 			new SVTWriteTask(data, "", level, tileX, tileY, finishedCallback),
 		);
 	}

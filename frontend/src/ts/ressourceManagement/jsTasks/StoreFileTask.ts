@@ -1,31 +1,38 @@
-import WASMX from "../WASMX";
-import { JsTask } from "./Task";
+import { ConcurrentTaskQueue } from "../ConcurrentTaskQueue";
+import { JsTask } from "../Task";
+
+type CallbackType = (returnValue: true | undefined) => void;
 
 export class StoreFileTask extends JsTask {
-	private _wasmx: WASMX;
 	private _path: string;
 	private _fileName: string;
 	private _data: Uint8Array<ArrayBufferLike>;
 	private _taskID!: number;
+	private _finishedCallback?: CallbackType;
 
 	/**
 	 *
-	 * @param wasmx The WASMX instance.
+	 * @param taskQueue The task queue instance.
 	 * @param path The root relative directory path.
 	 * @param fileName The file name to write to.
 	 * @param data The data to write.
 	 */
-	public constructor(wasmx: WASMX, path: string, fileName: string, data: Uint8Array<ArrayBufferLike>) {
+	public constructor(
+		path: string,
+		fileName: string,
+		data: Uint8Array<ArrayBufferLike>,
+		finishedCallback?: CallbackType,
+	) {
 		super();
-		this._wasmx = wasmx;
 		this._path = path;
 		this._fileName = fileName;
 		this._data = data;
+		this._finishedCallback = finishedCallback;
 	}
 
-	public run(taskID: number, workerID: number) {
+	public run(taskQueue: ConcurrentTaskQueue, taskID: number, workerID: number) {
 		this._taskID = taskID;
-		this._wasmx.taskQueue.remoteJSCall(
+		taskQueue.remoteJSCall(
 			workerID,
 			this._taskID,
 			"storeFile",
@@ -42,5 +49,7 @@ export class StoreFileTask extends JsTask {
 		console.log(this._taskID, progress, maximum);
 	}
 
-	public finishedCallback(_: number) {}
+	public finishedCallback(returnValue: true | undefined) {
+		if (this._finishedCallback) this._finishedCallback(returnValue);
+	}
 }
