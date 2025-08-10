@@ -15,8 +15,9 @@ export default abstract class R3Object {
 
 	public constructor(kayo: Kayo) {
 		this.transformationStack = new TransformationStack();
-		const { vertexUniformBuffer, fragmentUniformBuffer, bindGroup } =
-			kayo.renderers[RealtimeRenderer.rendererKey].getNew3RData();
+		const { vertexUniformBuffer, fragmentUniformBuffer, bindGroup } = (
+			kayo.renderers[RealtimeRenderer.rendererKey] as RealtimeRenderer
+		).getNew3RData();
 		this.vertexUniformBuffer = vertexUniformBuffer;
 		this.fragmentUniformBuffer = fragmentUniformBuffer;
 		this.defaultBindGroup = bindGroup;

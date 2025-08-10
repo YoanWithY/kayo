@@ -244,14 +244,14 @@ export class ViewportPane extends BasicPane implements Viewport {
 	}
 
 	protected connectedCallback() {
-		this.project.registerViewportPane(this);
+		this.project.registerViewport(this);
 		this._resizeObserver.observe(this, {
 			box: "device-pixel-content-box",
 		});
 	}
 
 	protected disconnectedCallback() {
-		this.project.unregisterViewportPane(this);
+		this.project.unregisterViewport(this);
 		this._resizeObserver.unobserve(this);
 	}
 

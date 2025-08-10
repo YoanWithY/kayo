@@ -1,6 +1,7 @@
 import { Kayo } from "../../Kayo";
 import BasicPane from "./BasicPane";
 import performancePaneTemplate from "./PerformancePane.json";
+import { ViewportPane } from "./ViewportPane";
 
 type TimeEntry = { [subtask: string]: number };
 interface DrawVerticalStackedBarsOpts {
@@ -98,6 +99,7 @@ export class PerformancePane extends BasicPane {
 		let h = 10 * this._win.devicePixelRatio;
 		let i = 1;
 		for (const v of this._kayo.project.viewportPanes) {
+			if (!(v instanceof ViewportPane)) continue;
 			const d = [];
 			for (let i = 0; i < v.timeRingeCach.length; i++)
 				d.push(v.timeRingeCach[(v.timeRingeCachCurrentIndex + i) % v.timeRingeCach.length]);

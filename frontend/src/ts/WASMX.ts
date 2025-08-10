@@ -7,9 +7,10 @@ import type {
 } from "../c/KayoCorePP";
 
 export type WasmPath = string[][];
+export type KayoJSVC = KayoJSVCNumber | KayoJSVCString;
 
 export default class WASMX {
-	private _bindings: Map<number, { url: WasmPath; callbacks: Set<(v: string) => void> }> = new Map();
+	private _bindings: Map<number, { jsvc: KayoJSVC; callbacks: Set<(v: string) => void> }> = new Map();
 
 	public Number;
 	public kayoInstance: KayoWASMInstance;
@@ -52,7 +53,7 @@ export default class WASMX {
 		});
 	}
 
-	public getModelReference(wasmPath: WasmPath): KayoJSVCNumber | KayoJSVCString {
+	public getModelReference(wasmPath: WasmPath): KayoJSVC {
 		let obj: any = this.kayoInstance.project;
 		for (const pathSegment of wasmPath) {
 			obj = obj[pathSegment[0]];
@@ -61,29 +62,23 @@ export default class WASMX {
 		return obj;
 	}
 
-	public getModelValue(wasmPath: WasmPath): string {
-		return this.getModelReference(wasmPath).getValue();
-	}
-
-	public setModelValue(wasmPath: WasmPath, value: string): void {
-		this.getModelReference(wasmPath).setValue(value);
-	}
-
-	public addChangeListener(wasmPath: WasmPath, f: (v: string) => void, fireImmediately = true) {
-		const jsvc = this.getModelReference(wasmPath);
+	public addChangeListener(jsvc: KayoJSVC, f: (v: string) => void, fireImmediately: boolean) {
 		const observationID = jsvc.getObservationID();
 
 		let binding = this._bindings.get(observationID);
 		if (!binding) {
-			binding = { url: wasmPath, callbacks: new Set<(v: string) => void>() };
+			binding = { jsvc, callbacks: new Set<(v: string) => void>() };
 			this._bindings.set(observationID, binding);
 		}
 		binding.callbacks.add(f);
 		if (fireImmediately) f(jsvc.getValue());
 	}
 
-	public removeChangeListener(wasmPath: WasmPath, f: (v: string) => void) {
-		const jsvc = this.getModelReference(wasmPath);
+	public addChangeListenerByPath(wasmPath: WasmPath, f: (v: string) => void, fireImmediately: boolean) {
+		this.addChangeListener(this.getModelReference(wasmPath), f, fireImmediately);
+	}
+
+	public removeChangeListener(jsvc: KayoJSVC, f: (v: string) => void) {
 		const observationID = jsvc.getObservationID();
 		const bound = this._bindings.get(observationID);
 		if (!bound) return;
@@ -93,8 +88,6 @@ export default class WASMX {
 	public vcDispatch(id: number) {
 		const bound = this._bindings.get(id);
 		if (!bound) return;
-		if (bound.callbacks.size === 0) return;
-		const value = this.getModelReference(bound.url).getValue();
-		for (const callback of bound.callbacks) callback(value);
+		for (const callback of bound.callbacks) callback(bound.jsvc.getValue());
 	}
 }

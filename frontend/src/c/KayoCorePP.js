@@ -2652,6 +2652,14 @@ var __embind_register_memory_view = (rawType, dataTypeIndex, name) => {
   });
 };
 
+var EmValOptionalType = Object.assign({
+  optional: true
+}, EmValType);
+
+var __embind_register_optional = (rawOptionalType, rawType) => {
+  registerType(rawOptionalType, EmValOptionalType);
+};
+
 var stringToUTF8Array = (str, heap, outIdx, maxBytesToWrite) => {
   // Parameter maxBytesToWrite is not optional. Negative values, 0, null,
   // undefined and false each don't write out any bytes.
@@ -5920,7 +5928,7 @@ MEMFS.doesNotExistError = new FS.ErrnoError(44);
 var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied, _environ_get, _environ_sizes_get, _fd_close, _fd_read, _fd_seek, _fd_write ];
 
 var ASM_CONSTS = {
-  50480: ($0, $1, $2) => {
+  54480: ($0, $1, $2) => {
     window.kayo.taskQueue.taskFinished($0, {
       byteOffset: $1,
       byteLength: $2
@@ -5955,6 +5963,7 @@ function assignWasmImports() {
     /** @export */ _embind_register_function: __embind_register_function,
     /** @export */ _embind_register_integer: __embind_register_integer,
     /** @export */ _embind_register_memory_view: __embind_register_memory_view,
+    /** @export */ _embind_register_optional: __embind_register_optional,
     /** @export */ _embind_register_std_string: __embind_register_std_string,
     /** @export */ _embind_register_std_wstring: __embind_register_std_wstring,
     /** @export */ _embind_register_void: __embind_register_void,
@@ -6013,9 +6022,9 @@ var wasmExports = await createWasm();
 
 var ___wasm_call_ctors = () => (___wasm_call_ctors = wasmExports["__wasm_call_ctors"])();
 
-var _malloc = a0 => (_malloc = wasmExports["malloc"])(a0);
-
 var _pthread_self = () => (_pthread_self = wasmExports["pthread_self"])();
+
+var _malloc = a0 => (_malloc = wasmExports["malloc"])(a0);
 
 var _free = a0 => (_free = wasmExports["free"])(a0);
 

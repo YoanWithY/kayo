@@ -1,11 +1,11 @@
-import { Viewport } from "./Viewport";
+import { Viewport, WebGPUViewport } from "./Viewport";
 import { RealtimeViewportCache } from "./ViewportCache";
 import { CompositingPipeline } from "./CompositingPipeline";
 import { ResolvePipeline } from "./ResolvePipeline";
 import Camera from "../Viewport/Camera";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 import { RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
-import { Kayo } from "../Kayo";
+import { Kayo, Renderer } from "../Kayo";
 import { RepresentationConcept } from "../project/Representation";
 import { GPUX } from "../GPUX";
 import { BackgroundRealtimeRepresentation } from "../lights/Background";
@@ -17,7 +17,7 @@ const thresholdMapURL = "/beyer_2px_16bit.png";
 const thresholdMapBlob = await fetch(thresholdMapURL);
 const thresholdMapBytes = await thresholdMapBlob.bytes();
 
-export default class RealtimeRenderer implements RepresentationConcept {
+export default class RealtimeRenderer implements RepresentationConcept, Renderer {
 	protected _kayo: Kayo;
 
 	private r3renderPassDescriptor: GPURenderPassDescriptor;
@@ -26,7 +26,7 @@ export default class RealtimeRenderer implements RepresentationConcept {
 	private r16ResolveRenderPassDescriptor: GPURenderPassDescriptor;
 	private compositingRenderPassDescriptor: GPURenderPassDescriptor;
 
-	public registeredViewports = new Set<Viewport>();
+	public registeredViewports = new Set<WebGPUViewport>();
 	private viewportCache = new Map<Viewport, RealtimeViewportCache>();
 	private viewUBO: GPUBuffer;
 	private gpuDevice: GPUDevice;
@@ -319,7 +319,7 @@ export default class RealtimeRenderer implements RepresentationConcept {
 
 	public jsTime = "";
 	public frame = 0;
-	public renderViewport(_: number, viewport: Viewport) {
+	public renderViewport(_: number, viewport: WebGPUViewport) {
 		const start = performance.now();
 		const renderState = this._kayo.wasmx.kayoInstance.project.renderStates.get(viewport.configKey);
 		if (renderState === null) {
@@ -378,14 +378,14 @@ export default class RealtimeRenderer implements RepresentationConcept {
 		this.frame++;
 	}
 
-	public registerViewport(viewport: Viewport) {
+	public registerViewport(viewport: WebGPUViewport) {
 		if (this.registeredViewports.has(viewport)) return;
 
 		this.registeredViewports.add(viewport);
 		this.viewportCache.set(viewport, new RealtimeViewportCache(this._kayo, viewport));
 	}
 
-	public unregisterViewport(viewport: Viewport) {
+	public unregisterViewport(viewport: WebGPUViewport) {
 		if (!this.registeredViewports.has(viewport)) return;
 
 		this.registeredViewports.delete(viewport);

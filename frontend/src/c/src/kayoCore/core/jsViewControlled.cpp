@@ -13,6 +13,7 @@ uint32_t allocViewControlledID() {
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(KayoWASMJSVC) {
 	class_<kayo::JSVCNumber>("KayoJSVCNumber")
+		.constructor<FixedPoint::Number>()
 		.function("getObservationID", &kayo::JSVCNumber::getObservationID)
 		.function("getValue", &kayo::JSVCNumber::getValueJS)
 		.function("setValue", &kayo::JSVCNumber::setValueJS);

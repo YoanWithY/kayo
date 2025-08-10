@@ -13,6 +13,40 @@ export interface ClassHandle {
   isDeleted(): boolean;
   clone(): this;
 }
+export interface FCurveSegment extends ClassHandle {
+}
+
+export interface FCurveKnot extends ClassHandle {
+}
+
+export interface FCurveSegmentVector extends ClassHandle {
+  push_back(_0: FCurveSegment | null): void;
+  resize(_0: number, _1: FCurveSegment | null): void;
+  size(): number;
+  get(_0: number): FCurveSegment | undefined;
+  set(_0: number, _1: FCurveSegment | null): boolean;
+}
+
+export interface FCurveKnotVector extends ClassHandle {
+  push_back(_0: FCurveKnot | null): void;
+  resize(_0: number, _1: FCurveKnot | null): void;
+  size(): number;
+  get(_0: number): FCurveKnot | undefined;
+  set(_0: number, _1: FCurveKnot | null): boolean;
+}
+
+export interface FCurve extends ClassHandle {
+  segments: FCurveSegmentVector;
+  knots: FCurveKnotVector;
+  curve: NonUniformSplineCurve1D;
+}
+
+export interface TimeLine extends ClassHandle {
+  simulationTimeVelocity: FCurve;
+  simulationTime: KayoNumber;
+  framesPerSecond: KayoNumber;
+}
+
 export interface KayoJSVCNumber extends ClassHandle {
   getObservationID(): number;
   getValue(): string;
@@ -39,6 +73,7 @@ export interface RenderStatesMap extends ClassHandle {
 
 export interface ProjectConfig extends ClassHandle {
   renderStates: RenderStatesMap;
+  timeLine: TimeLine;
 }
 
 export interface SwapChainConfig extends ClassHandle {
@@ -146,6 +181,29 @@ export interface KayoWASMMinecraftDimension extends ClassHandle {
 export interface KayoNumber extends ClassHandle {
 }
 
+export interface UniformSplineCurve1D extends ClassHandle {
+}
+
+export interface NonUniformSplineCurve1D extends ClassHandle {
+  sample(_0: EmbindString): string;
+}
+
+export interface UniformSplineCurveSegment1D extends ClassHandle {
+  sampleUniform(_0: KayoNumber): KayoNumber;
+}
+
+export interface ConstantUniformSplineCurve1D extends UniformSplineCurveSegment1D {
+  sampleUniform(_0: KayoNumber): KayoNumber;
+}
+
+export interface NonUniformSplineCurveSegment1D extends ClassHandle {
+  sampleNonUniform(_0: KayoNumber): KayoNumber;
+}
+
+export interface ConstantNonUniformSplineCurve1D extends NonUniformSplineCurveSegment1D {
+  sampleNonUniform(_0: KayoNumber): KayoNumber;
+}
+
 export interface ImageData extends ClassHandle {
   readonly width: number;
   readonly height: number;
@@ -165,7 +223,19 @@ export interface ImageDataUint8 extends ImageData {
 }
 
 interface EmbindModule {
-  KayoJSVCNumber: {};
+  FCurveSegment: {};
+  FCurveKnot: {};
+  FCurveSegmentVector: {
+    new(): FCurveSegmentVector;
+  };
+  FCurveKnotVector: {
+    new(): FCurveKnotVector;
+  };
+  FCurve: {};
+  TimeLine: {};
+  KayoJSVCNumber: {
+    new(_0: KayoNumber): KayoJSVCNumber;
+  };
   KayoJSVCString: {};
   KayoWASMModule: {};
   KayoWASMInstance: {
@@ -199,10 +269,15 @@ interface EmbindModule {
   KayoWASMMinecraftDimension: {};
   KayoNumber: {
     fromDouble(_0: number): string;
-    fromBytes(_0: EmbindString): string;
     toDouble(_0: EmbindString): number;
     toString(_0: EmbindString): string;
   };
+  UniformSplineCurve1D: {};
+  NonUniformSplineCurve1D: {};
+  UniformSplineCurveSegment1D: {};
+  ConstantUniformSplineCurve1D: {};
+  NonUniformSplineCurveSegment1D: {};
+  ConstantNonUniformSplineCurve1D: {};
   ImageData: {
     fromImageData(_0: EmbindString, _1: boolean): ImageData | null;
   };

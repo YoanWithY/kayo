@@ -37,22 +37,21 @@ std::string Number::toString() const {
 	return oss.str();
 }
 
-std::string Number::fromDouble(double d) {
+std::string Number::fromDoubleJS(double d) {
 	const Number x = d;
 	return std::string(reinterpret_cast<const char*>(&x.n), sizeof(x.n));
 }
 
-std::string Number::fromBytes(std::string d) {
-	const Number x = d;
-	return std::string(reinterpret_cast<const char*>(&x.n), sizeof(x.n));
+Number Number::fromString(const std::string& d) {
+	return Number(reinterpret_cast<const void*>(d.c_str()), d.length());
 }
 
-double Number::toDouble(std::string d) {
-	return double(Number(reinterpret_cast<const void*>(d.c_str()), d.length()));
+double Number::toDoubleJS(std::string d) {
+	return static_cast<double>(Number::fromString(d));
 }
 
-std::string Number::toString(std::string d) {
-	return Number(reinterpret_cast<const void*>(d.c_str()), d.length()).toString();
+std::string Number::toStringJS(std::string d) {
+	return Number::fromString(d).toString();
 }
 
 Number::operator std::string() const {
@@ -64,8 +63,7 @@ Number::operator std::string() const {
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(KayoFixedWASM) {
 	class_<FixedPoint::Number>("KayoNumber")
-		.class_function("fromDouble", &FixedPoint::Number::fromDouble)
-		.class_function("fromBytes", &FixedPoint::Number::fromBytes)
-		.class_function("toDouble", &FixedPoint::Number::toDouble)
-		.class_function("toString", &FixedPoint::Number::toString);
+		.class_function("fromDouble", &FixedPoint::Number::fromDoubleJS)
+		.class_function("toDouble", &FixedPoint::Number::toDoubleJS)
+		.class_function("toString", &FixedPoint::Number::toStringJS);
 }

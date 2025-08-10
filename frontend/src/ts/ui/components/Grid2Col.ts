@@ -1,5 +1,5 @@
 import { Kayo } from "../../Kayo";
-import WASMX, { WasmPath } from "../../WASMX";
+import WASMX, { KayoJSVC } from "../../WASMX";
 import { buildUIElement, MarkUneffectiveEntry } from "../ui";
 
 export default class Grid2Col extends HTMLElement {
@@ -7,7 +7,7 @@ export default class Grid2Col extends HTMLElement {
 	private _uneffectiveIfAny!: MarkUneffectiveEntry[];
 	private _internals: ElementInternals;
 	private _stateWasmPathVariables: any;
-	private _additionalCallbacks: { path: WasmPath; callback: (v: string) => void }[] = [];
+	private _additionalCallbacks: { jsvc: KayoJSVC; callback: (v: string) => void }[] = [];
 
 	public constructor() {
 		super();
@@ -15,11 +15,11 @@ export default class Grid2Col extends HTMLElement {
 	}
 
 	protected connectedCallback() {
-		for (const entry of this._additionalCallbacks) this._wasmx.addChangeListener(entry.path, entry.callback);
+		for (const entry of this._additionalCallbacks) this._wasmx.addChangeListener(entry.jsvc, entry.callback, true);
 	}
 
 	protected disconnectedCallback() {
-		for (const entry of this._additionalCallbacks) this._wasmx.removeChangeListener(entry.path, entry.callback);
+		for (const entry of this._additionalCallbacks) this._wasmx.removeChangeListener(entry.jsvc, entry.callback);
 	}
 
 	public setMarkUneffective(markUneffective: boolean) {
@@ -52,8 +52,10 @@ export default class Grid2Col extends HTMLElement {
 
 		if (p._uneffectiveIfAny !== undefined) {
 			for (const entry of obj.uneffectiveIfAny) {
-				const path = kayo.wasmx.toWasmPath(entry.stateVariableURL, variables);
-				p._additionalCallbacks.push({ path: path, callback: p._checkDisablingCallback });
+				p._additionalCallbacks.push({
+					jsvc: kayo.wasmx.getModelReference(kayo.wasmx.toWasmPath(entry.stateVariableURL, variables)),
+					callback: p._checkDisablingCallback,
+				});
 			}
 		}
 

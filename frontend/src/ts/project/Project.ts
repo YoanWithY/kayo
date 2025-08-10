@@ -4,7 +4,6 @@ import { GPUX } from "../GPUX";
 import { Kayo } from "../Kayo";
 import { PTPBase } from "../collaborative/PTPBase";
 import WASMX from "../WASMX";
-import { ViewportPane } from "../ui/panes/ViewportPane";
 import { PerformancePane } from "../ui/panes/PerformancePane";
 import { Viewport } from "../rendering/Viewport";
 
@@ -61,33 +60,33 @@ export class Project {
 		});
 	}
 
-	private _viewportPanes = new Set<ViewportPane>();
-	public registerViewportPane(viewport: ViewportPane) {
+	private _viewports = new Set<Viewport>();
+	public registerViewport(viewport: Viewport) {
 		const renderer = this.kayo.renderers[viewport.configKey];
 		if (!renderer) {
 			console.error(`Renderer with key "${viewport.configKey}" is not know to kayo.`);
 			return;
 		}
-		this._viewportPanes.add(viewport);
+		this._viewports.add(viewport);
 		renderer.registerViewport(viewport);
 	}
 
-	public unregisterViewportPane(viewport: ViewportPane) {
+	public unregisterViewport(viewport: Viewport) {
 		const renderer = this.kayo.renderers[viewport.configKey];
 		if (!renderer) {
 			console.error(`Renderer with key "${viewport.configKey}" is not know to kayo.`);
 			return;
 		}
-		this._viewportPanes.delete(viewport);
+		this._viewports.delete(viewport);
 		renderer.unregisterViewport(viewport);
 	}
 
 	public get viewportPanes() {
-		return this._viewportPanes;
+		return this._viewports;
 	}
 
 	public fullRerender() {
-		for (const vp of this._viewportPanes) this.requestAnimationFrameWith(vp);
+		for (const vp of this._viewports) this.requestAnimationFrameWith(vp);
 	}
 
 	public getFSPathTo(localPath: string) {

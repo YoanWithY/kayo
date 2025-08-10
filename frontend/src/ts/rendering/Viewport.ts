@@ -4,22 +4,24 @@ export interface Viewport {
 	 */
 	lable: string;
 	/**
-	 * If the viewport is the attached to a canvas, the canvas context shall be provided.
-	 */
-	canvasContext?: GPUCanvasContext;
-	/**
 	 * The window this viewport belongs to.
 	 */
 	window: Window;
 	/**
-	 * The texture where the color output shall be written to.
-	 */
-	getCurrentTexture(): GPUTexture;
-	/**
 	 * The name (key) of the render config to use for rendering on this viewport.
 	 */
 	configKey: string;
+}
 
+export interface WebGPUViewport extends Viewport {
+	/**
+	 * If the viewport is the attached to a canvas, the canvas context shall be provided.
+	 */
+	canvasContext?: GPUCanvasContext;
+	/**
+	 * The texture where the color output shall be written to.
+	 */
+	getCurrentTexture(): GPUTexture;
 	/**
 	 * This method recieves the GPU time spend the render passes on this viewport in nanoseconds.
 	 * @param time The time spend in nanoseconds.
@@ -30,6 +32,9 @@ export interface Viewport {
 	 * @param frame The current frame time to upload.
 	 */
 	updateView(viewUBO: GPUBuffer, frame: number): void;
-
 	useOverlays: boolean;
+}
+
+export interface Viewport2D extends Viewport {
+	canvasContext: CanvasRenderingContext2D;
 }

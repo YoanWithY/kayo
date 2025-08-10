@@ -7,6 +7,15 @@ import { SceneRealtimeRepresentation } from "./rendering/SceneRealtimeRenderingR
 import { RenderConfig } from "../c/KayoCorePP";
 import { Grid } from "./debug/Grid";
 import { ConcurrentTaskQueue } from "./ressourceManagement/ConcurrentTaskQueue";
+import { Viewport } from "./rendering/Viewport";
+import { AnimationRenderer } from "./ui/panes/AnimationPane";
+
+export interface Renderer {
+	renderViewport(timeStemp: number, viewport: Viewport): void;
+	registeredViewports: Set<Viewport>;
+	registerViewport(viewport: Viewport): void;
+	unregisterViewport(viewport: Viewport): void;
+}
 
 export class Kayo {
 	private _gpux: GPUX;
@@ -14,7 +23,7 @@ export class Kayo {
 	private _taskQueue: ConcurrentTaskQueue;
 	private _audioContext: AudioContext;
 	private _virtualTextureSystem: VirtualTextureSystem;
-	private _renderers: { [key: string]: RealtimeRenderer } = {};
+	private _renderers: { [key: string]: Renderer } = {};
 	private _windows: Set<Window>;
 	private _rootName: string;
 	private _project: Project;
@@ -26,7 +35,9 @@ export class Kayo {
 		this._audioContext = new AudioContext({ latencyHint: "interactive" });
 		this._virtualTextureSystem = new VirtualTextureSystem(this);
 		const realtimeRenderer = new RealtimeRenderer(this);
-		this._renderers["realtime"] = realtimeRenderer;
+		const animationRenderer = new AnimationRenderer(this);
+		this._renderers[RealtimeRenderer.rendererKey] = realtimeRenderer;
+		this._renderers[AnimationRenderer.rendererKey] = animationRenderer;
 		this._windows = new Set();
 		this._rootName = rootName;
 		this._project = new Project(this);

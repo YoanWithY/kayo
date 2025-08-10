@@ -25,7 +25,8 @@ class JSViewControlled {
   public:
 	T value;
 	uint32_t observation_id;
-	JSViewControlled(T value) : value(value), observation_id(allocViewControlledID()) {}
+	constexpr JSViewControlled() : value(), observation_id(allocViewControlledID()) {}
+	constexpr JSViewControlled(T value) : value(value), observation_id(allocViewControlledID()) {}
 	void dispatchToObservers() {
 		kayoDispatchToObserver(this->observation_id);
 	}

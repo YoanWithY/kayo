@@ -1,11 +1,11 @@
 import { GeneralConfig, RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
 import { getElement } from "../GPUX";
-import { Viewport } from "./Viewport";
+import { WebGPUViewport } from "./Viewport";
 import RealtimeRenderer from "./RealtimeRenderer";
 import { Kayo } from "../Kayo";
 
 export class RealtimeViewportCache {
-	public viewport;
+	public viewport: WebGPUViewport;
 	public prevWidth = -1;
 	public prevHeight = -1;
 	public prevMSAA = -1;
@@ -25,7 +25,7 @@ export class RealtimeViewportCache {
 	protected _kayo: Kayo;
 	public prevUseOverlays: boolean = false;
 	public gpuDevice: GPUDevice;
-	public constructor(kayo: Kayo, viewport: Viewport) {
+	public constructor(kayo: Kayo, viewport: WebGPUViewport) {
 		this._kayo = kayo;
 		this.viewport = viewport;
 		this.gpuDevice = this._kayo.gpux.gpuDevice;

@@ -1,5 +1,5 @@
 import { Kayo } from "../../Kayo";
-import WASMX, { WasmPath } from "../../WASMX";
+import WASMX, { KayoJSVC } from "../../WASMX";
 import { MarkUneffectiveEntry } from "../ui";
 import Tooltip, { SerialTooltip } from "./Tooltip";
 
@@ -11,10 +11,10 @@ export type SelectOptionValue = { value: string; text: string };
 export class StateSelectBox extends HTMLElement implements ISelectBox {
 	private _win!: Window;
 	private _wasmx!: WASMX;
-	private _stateWasmPath!: WasmPath;
+	private _stateJSVC!: KayoJSVC;
 	private _stateWasmPathVariables: any;
 	private _uneffectiveIfAny!: MarkUneffectiveEntry[];
-	private _additionalCallbacks: { path: WasmPath; callback: (v: string) => void }[] = [];
+	private _additionalCallbacks: { jsvc: KayoJSVC; callback: (v: string) => void }[] = [];
 	private _optionWrapper!: SelectOptionWrapper;
 	private _internals: ElementInternals;
 	private _valueNameMap: Map<string, string> = new Map();
@@ -43,7 +43,7 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 	};
 
 	public setOption(optionValue: SelectOptionValue) {
-		this._wasmx.setModelValue(this._stateWasmPath, optionValue.value);
+		this._stateJSVC.setValue(optionValue.value);
 		this._hidingClosure();
 	}
 
@@ -58,13 +58,13 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 	};
 
 	protected connectedCallback() {
-		this._wasmx.addChangeListener(this._stateWasmPath, this._stateChangeCallback);
-		for (const entry of this._additionalCallbacks) this._wasmx.addChangeListener(entry.path, entry.callback);
+		this._wasmx.addChangeListener(this._stateJSVC, this._stateChangeCallback, true);
+		for (const entry of this._additionalCallbacks) this._wasmx.addChangeListener(entry.jsvc, entry.callback, true);
 	}
 
 	protected disconnectedCallback() {
-		this._wasmx.removeChangeListener(this._stateWasmPath, this._stateChangeCallback);
-		for (const entry of this._additionalCallbacks) this._wasmx.removeChangeListener(entry.path, entry.callback);
+		this._wasmx.removeChangeListener(this._stateJSVC, this._stateChangeCallback);
+		for (const entry of this._additionalCallbacks) this._wasmx.removeChangeListener(entry.jsvc, entry.callback);
 	}
 
 	private _checkMarkUneffective() {
@@ -93,15 +93,17 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 		selectBox._win = win;
 		selectBox._optionWrapper = SelectOptionWrapper.createSelectOptionWrapper(win);
 		selectBox._wasmx = kayo.wasmx;
-		selectBox._stateWasmPath = kayo.wasmx.toWasmPath(obj.stateVariableURL, variables);
+		selectBox._stateJSVC = kayo.wasmx.getModelReference(kayo.wasmx.toWasmPath(obj.stateVariableURL, variables));
 		selectBox._stateWasmPathVariables = variables;
 
 		selectBox._uneffectiveIfAny = obj.uneffectiveIfAny;
 
 		if (selectBox._uneffectiveIfAny !== undefined) {
 			for (const entry of obj.uneffectiveIfAny) {
-				const path = kayo.wasmx.toWasmPath(entry.stateVariableURL, variables);
-				selectBox._additionalCallbacks.push({ path: path, callback: selectBox._checkDisablingCallback });
+				selectBox._additionalCallbacks.push({
+					jsvc: kayo.wasmx.getModelReference(kayo.wasmx.toWasmPath(entry.stateVariableURL, variables)),
+					callback: selectBox._checkDisablingCallback,
+				});
 			}
 		}
 

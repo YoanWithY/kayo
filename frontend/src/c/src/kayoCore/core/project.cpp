@@ -5,6 +5,8 @@ namespace kayo {
 Project::Project() {
 	using namespace state;
 	this->renderStates.set("realtime", new RenderState());
+	timeLine.framesPerSecond = 30;
+	timeLine.simulationTime = 0;
 }
 } // namespace kayo
 
@@ -13,5 +15,6 @@ EMSCRIPTEN_BINDINGS(KayoProjectWASM) {
 	class_<kayo::JsMap<kayo::state::RenderState>>("RenderStatesMap")
 		.function("get", &kayo::JsMap<kayo::state::RenderState>::get, allow_raw_pointers());
 	class_<kayo::Project>("ProjectConfig")
-		.property("renderStates", &kayo::Project::renderStates, return_value_policy::reference());
+		.property("renderStates", &kayo::Project::renderStates, return_value_policy::reference())
+		.property("timeLine", &kayo::Project::timeLine, return_value_policy::reference());
 }

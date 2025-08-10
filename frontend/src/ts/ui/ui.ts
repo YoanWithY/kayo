@@ -25,6 +25,7 @@ import { NumberInput } from "./components/NumberInput";
 import { FileSystemPane } from "./panes/FileSystemPane";
 import { PerformancePane } from "./panes/PerformancePane";
 import { SplashScreen } from "./panes/SplashScreen";
+import { AnimationPane } from "./panes/AnimationPane";
 
 export type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 
@@ -55,6 +56,7 @@ export function initUI() {
 	window.customElements.define(OutlinerPane.getDomClass(), OutlinerPane);
 	window.customElements.define(PTPChatPane.getDomClass(), PTPChatPane);
 	window.customElements.define(SplashScreen.getDomClass(), SplashScreen);
+	window.customElements.define(AnimationPane.getDomClass(), AnimationPane);
 
 	window.customElements.define("wrapping-pane", WrappingPane);
 	window.customElements.define("full-strech", FullStretch);
@@ -76,6 +78,7 @@ export function initUI() {
 }
 
 const nameClassMap: { [key: string]: UIElement } = {
+	[AnimationPane.getDomClass()]: AnimationPane,
 	[OutputPane.getDomClass()]: OutputPane,
 	[FileSystemPane.getDomClass()]: FileSystemPane,
 	[PerformancePane.getDomClass()]: PerformancePane,

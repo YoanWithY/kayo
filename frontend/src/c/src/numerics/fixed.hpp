@@ -31,8 +31,8 @@ class Number {
   public:
 	// ----- CONSTRUCTORS ----- //
 
+	constexpr Number() : n(0) {}
 	constexpr Number(__int128_t n) : n{saturate(n)} {}
-
 	constexpr Number(int8_t a) : n(static_cast<__int128_t>(a) * FIXED_POINT_DECIMAL_FACTOR) {}
 	constexpr Number(int16_t a) : n(static_cast<__int128_t>(a) * FIXED_POINT_DECIMAL_FACTOR) {}
 	constexpr Number(int32_t a) : n(static_cast<__int128_t>(a) * FIXED_POINT_DECIMAL_FACTOR) {}
@@ -61,10 +61,10 @@ class Number {
 	 */
 	Number(const std::string& value);
 
-	static std::string fromDouble(double d);
-	static std::string fromBytes(std::string d);
-	static double toDouble(std::string d);
-	static std::string toString(std::string d);
+	static Number fromString(const std::string& d);
+	static std::string fromDoubleJS(double d);
+	static double toDoubleJS(std::string d);
+	static std::string toStringJS(std::string d);
 	friend std::ostream& operator<<(std::ostream& os, const Number& number);
 	std::string toString() const;
 
