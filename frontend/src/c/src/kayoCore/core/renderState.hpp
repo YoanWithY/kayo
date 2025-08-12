@@ -38,18 +38,18 @@ class SwapChain {
 
 class CustomColorQuantisation {
   public:
-	JSVCString useCustomColorQuantisation;
-	JSVCString useDithering;
-	inline CustomColorQuantisation() : useCustomColorQuantisation(JSVCString("true")), useDithering(JSVCString("true")) {}
+	JSVCBoolean useCustomColorQuantisation;
+	JSVCBoolean useDithering;
+	inline CustomColorQuantisation() : useCustomColorQuantisation(JSVCBoolean(true)), useDithering(JSVCBoolean(true)) {}
 	constexpr void applyToConfig(kayo::config::RenderConfig& output, kayo::config::CustomColorQuantisation& customColorQuantisation) {
 		bool old_useDithering = customColorQuantisation.useDithering;
-		customColorQuantisation.useDithering = this->useDithering.value == "true";
+		customColorQuantisation.useDithering = this->useDithering.value;
 		if (old_useDithering != customColorQuantisation.useDithering) {
 			output.needsPipelineRebuild = true;
 		}
 
 		bool old_useCustomColorQuantisation = customColorQuantisation.useCustomColorQuantisation;
-		customColorQuantisation.useCustomColorQuantisation = this->useCustomColorQuantisation.value == "true";
+		customColorQuantisation.useCustomColorQuantisation = this->useCustomColorQuantisation.value;
 		if (old_useCustomColorQuantisation != customColorQuantisation.useCustomColorQuantisation) {
 			output.needsPipelineRebuild = true;
 		}

@@ -12,8 +12,8 @@ class NonUniformSplineCurve {
 			return T(0);
 		return segment->sampleNonUniform(u);
 	}
-	constexpr std::string sampleJS(std::string n) const {
-		return static_cast<std::string>(this->sample(Number::fromString(n)));
+	constexpr NumberJSWireType sampleJS(NumberJSWireType n) const {
+		return static_cast<NumberJSWireType>(this->sample(Number(n)));
 	}
 	constexpr int64_t getSegmentIndexAt(Number u) const noexcept {
 		if (this->segments.empty())

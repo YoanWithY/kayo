@@ -8,9 +8,9 @@ EMSCRIPTEN_BINDINGS(KayoTimeLineWASM) {
 	register_vector<kayo::FCurveSegment*>("FCurveSegmentVector");
 	register_vector<kayo::FCurveKnot*>("FCurveKnotVector");
 	class_<kayo::FCurve>("FCurve")
-		.property("segments", &kayo::FCurve::segments)
-		.property("knots", &kayo::FCurve::knots)
-		.property("curve", &kayo::FCurve::curve);
+		.property("segments", &kayo::FCurve::segments, return_value_policy::reference())
+		.property("knots", &kayo::FCurve::knots, return_value_policy::reference())
+		.property("curve", &kayo::FCurve::curve, return_value_policy::reference());
 	class_<kayo::TimeLine>("TimeLine")
 		.property("simulationTime", &kayo::TimeLine::simulationTime)
 		.property("framesPerSecond", &kayo::TimeLine::framesPerSecond)

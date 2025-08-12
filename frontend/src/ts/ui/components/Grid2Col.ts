@@ -1,5 +1,5 @@
 import { Kayo } from "../../Kayo";
-import WASMX, { KayoJSVC } from "../../WASMX";
+import WASMX, { KayoJSVC, WasmValue } from "../../WASMX";
 import { buildUIElement, MarkUneffectiveEntry } from "../ui";
 
 export default class Grid2Col extends HTMLElement {
@@ -7,7 +7,7 @@ export default class Grid2Col extends HTMLElement {
 	private _uneffectiveIfAny!: MarkUneffectiveEntry[];
 	private _internals: ElementInternals;
 	private _stateWasmPathVariables: any;
-	private _additionalCallbacks: { jsvc: KayoJSVC; callback: (v: string) => void }[] = [];
+	private _additionalCallbacks: { jsvc: KayoJSVC; callback: (v: WasmValue) => void }[] = [];
 
 	public constructor() {
 		super();
@@ -34,9 +34,9 @@ export default class Grid2Col extends HTMLElement {
 	private _checkMarkUneffective() {
 		for (const entry of this._uneffectiveIfAny) {
 			const path = this._wasmx.toWasmPath(entry.stateVariableURL, this._stateWasmPathVariables);
-			const val = this._wasmx.getModelReference(path).getValue();
+			const val = this._wasmx.getModelReference(path).getValue().toString();
 			for (let compValue of entry.anyOf) {
-				if (typeof compValue == "number") compValue = this._wasmx.Number.fromDouble(compValue);
+				if (typeof compValue == "number") compValue = this._wasmx.KN.fromDouble(compValue).toString();
 				if (val == compValue) return true;
 			}
 		}

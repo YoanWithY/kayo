@@ -43,20 +43,26 @@ export interface FCurve extends ClassHandle {
 
 export interface TimeLine extends ClassHandle {
   simulationTimeVelocity: FCurve;
-  simulationTime: KayoNumber;
-  framesPerSecond: KayoNumber;
+  simulationTime: KN;
+  framesPerSecond: KN;
 }
 
 export interface KayoJSVCNumber extends ClassHandle {
   getObservationID(): number;
-  getValue(): string;
-  setValue(_0: EmbindString): void;
+  getValue(): KayoNumber;
+  setValue(_0: KayoNumber): void;
 }
 
 export interface KayoJSVCString extends ClassHandle {
   getObservationID(): number;
   getValue(): string;
   setValue(_0: EmbindString): void;
+}
+
+export interface KayoJSVCBoolean extends ClassHandle {
+  getValue(): boolean;
+  setValue(_0: boolean): void;
+  getObservationID(): number;
 }
 
 export interface KayoWASMModule extends ClassHandle {
@@ -126,8 +132,8 @@ export interface AntialiasingState extends ClassHandle {
 }
 
 export interface CustomColorQuantisationState extends ClassHandle {
-  useCustomColorQuantisation: KayoJSVCString;
-  useDithering: KayoJSVCString;
+  useCustomColorQuantisation: KayoJSVCBoolean;
+  useDithering: KayoJSVCBoolean;
 }
 
 export interface GeneralState extends ClassHandle {
@@ -178,30 +184,30 @@ export interface KayoWASMMinecraftDimension extends ClassHandle {
   getSectionView(_0: number, _1: number, _2: number): any;
 }
 
-export interface KayoNumber extends ClassHandle {
+export interface KN extends ClassHandle {
 }
 
 export interface UniformSplineCurve1D extends ClassHandle {
 }
 
 export interface NonUniformSplineCurve1D extends ClassHandle {
-  sample(_0: EmbindString): string;
+  sample(_0: KayoNumber): KayoNumber;
 }
 
 export interface UniformSplineCurveSegment1D extends ClassHandle {
-  sampleUniform(_0: KayoNumber): KayoNumber;
+  sampleUniform(_0: KN): KN;
 }
 
 export interface ConstantUniformSplineCurve1D extends UniformSplineCurveSegment1D {
-  sampleUniform(_0: KayoNumber): KayoNumber;
+  sampleUniform(_0: KN): KN;
 }
 
 export interface NonUniformSplineCurveSegment1D extends ClassHandle {
-  sampleNonUniform(_0: KayoNumber): KayoNumber;
+  sampleNonUniform(_0: KN): KN;
 }
 
 export interface ConstantNonUniformSplineCurve1D extends NonUniformSplineCurveSegment1D {
-  sampleNonUniform(_0: KayoNumber): KayoNumber;
+  sampleNonUniform(_0: KN): KN;
 }
 
 export interface ImageData extends ClassHandle {
@@ -222,6 +228,8 @@ export interface ImageData extends ClassHandle {
 export interface ImageDataUint8 extends ImageData {
 }
 
+export type KayoNumber = [ bigint, bigint ];
+
 interface EmbindModule {
   FCurveSegment: {};
   FCurveKnot: {};
@@ -233,10 +241,9 @@ interface EmbindModule {
   };
   FCurve: {};
   TimeLine: {};
-  KayoJSVCNumber: {
-    new(_0: KayoNumber): KayoJSVCNumber;
-  };
+  KayoJSVCNumber: {};
   KayoJSVCString: {};
+  KayoJSVCBoolean: {};
   KayoWASMModule: {};
   KayoWASMInstance: {
     new(): KayoWASMInstance;
@@ -267,10 +274,24 @@ interface EmbindModule {
   };
   KayoWASMMinecraftWorld: {};
   KayoWASMMinecraftDimension: {};
-  KayoNumber: {
-    fromDouble(_0: number): string;
-    toDouble(_0: EmbindString): number;
-    toString(_0: EmbindString): string;
+  KN: {
+    add(_0: KayoNumber, _1: KayoNumber): KayoNumber;
+    mul(_0: KayoNumber, _1: KayoNumber): KayoNumber;
+    sub(_0: KayoNumber, _1: KayoNumber): KayoNumber;
+    div(_0: KayoNumber, _1: KayoNumber): KayoNumber;
+    fromDouble(_0: number): KayoNumber;
+    toDouble(_0: KayoNumber): number;
+    nremap(_0: number, _1: number, _2: number, _3: KayoNumber, _4: KayoNumber): KayoNumber;
+    remapn(_0: KayoNumber, _1: KayoNumber, _2: KayoNumber, _3: number, _4: number): number;
+    nadd(_0: number, _1: KayoNumber): KayoNumber;
+    addn(_0: KayoNumber, _1: number): KayoNumber;
+    nmul(_0: number, _1: KayoNumber): KayoNumber;
+    muln(_0: KayoNumber, _1: number): KayoNumber;
+    nsub(_0: number, _1: KayoNumber): KayoNumber;
+    subn(_0: KayoNumber, _1: number): KayoNumber;
+    ndiv(_0: number, _1: KayoNumber): KayoNumber;
+    divn(_0: KayoNumber, _1: number): KayoNumber;
+    toString(_0: KayoNumber): string;
   };
   UniformSplineCurve1D: {};
   NonUniformSplineCurve1D: {};

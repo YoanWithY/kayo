@@ -1345,6 +1345,126 @@ var ___resumeException = ptr => {
 
 var __abort_js = () => abort("");
 
+var tupleRegistrations = {};
+
+var runDestructors = destructors => {
+  while (destructors.length) {
+    var ptr = destructors.pop();
+    var del = destructors.pop();
+    del(ptr);
+  }
+};
+
+/** @suppress {globalThis} */ function readPointer(pointer) {
+  return this["fromWireType"](GROWABLE_HEAP_U32()[((pointer) >> 2)]);
+}
+
+var awaitingDependencies = {};
+
+var registeredTypes = {};
+
+var typeDependencies = {};
+
+var InternalError = Module["InternalError"] = class InternalError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "InternalError";
+  }
+};
+
+var throwInternalError = message => {
+  throw new InternalError(message);
+};
+
+var whenDependentTypesAreResolved = (myTypes, dependentTypes, getTypeConverters) => {
+  myTypes.forEach(type => typeDependencies[type] = dependentTypes);
+  function onComplete(typeConverters) {
+    var myTypeConverters = getTypeConverters(typeConverters);
+    if (myTypeConverters.length !== myTypes.length) {
+      throwInternalError("Mismatched type converter count");
+    }
+    for (var i = 0; i < myTypes.length; ++i) {
+      registerType(myTypes[i], myTypeConverters[i]);
+    }
+  }
+  var typeConverters = new Array(dependentTypes.length);
+  var unregisteredTypes = [];
+  var registered = 0;
+  dependentTypes.forEach((dt, i) => {
+    if (registeredTypes.hasOwnProperty(dt)) {
+      typeConverters[i] = registeredTypes[dt];
+    } else {
+      unregisteredTypes.push(dt);
+      if (!awaitingDependencies.hasOwnProperty(dt)) {
+        awaitingDependencies[dt] = [];
+      }
+      awaitingDependencies[dt].push(() => {
+        typeConverters[i] = registeredTypes[dt];
+        ++registered;
+        if (registered === unregisteredTypes.length) {
+          onComplete(typeConverters);
+        }
+      });
+    }
+  });
+  if (0 === unregisteredTypes.length) {
+    onComplete(typeConverters);
+  }
+};
+
+var __embind_finalize_value_array = rawTupleType => {
+  var reg = tupleRegistrations[rawTupleType];
+  delete tupleRegistrations[rawTupleType];
+  var elements = reg.elements;
+  var elementsLength = elements.length;
+  var elementTypes = elements.map(elt => elt.getterReturnType).concat(elements.map(elt => elt.setterArgumentType));
+  var rawConstructor = reg.rawConstructor;
+  var rawDestructor = reg.rawDestructor;
+  whenDependentTypesAreResolved([ rawTupleType ], elementTypes, elementTypes => {
+    elements.forEach((elt, i) => {
+      var getterReturnType = elementTypes[i];
+      var getter = elt.getter;
+      var getterContext = elt.getterContext;
+      var setterArgumentType = elementTypes[i + elementsLength];
+      var setter = elt.setter;
+      var setterContext = elt.setterContext;
+      elt.read = ptr => getterReturnType["fromWireType"](getter(getterContext, ptr));
+      elt.write = (ptr, o) => {
+        var destructors = [];
+        setter(setterContext, ptr, setterArgumentType["toWireType"](destructors, o));
+        runDestructors(destructors);
+      };
+    });
+    return [ {
+      name: reg.name,
+      "fromWireType": ptr => {
+        var rv = new Array(elementsLength);
+        for (var i = 0; i < elementsLength; ++i) {
+          rv[i] = elements[i].read(ptr);
+        }
+        rawDestructor(ptr);
+        return rv;
+      },
+      "toWireType": (destructors, o) => {
+        if (elementsLength !== o.length) {
+          throw new TypeError(`Incorrect number of tuple elements for ${reg.name}: expected=${elementsLength}, actual=${o.length}`);
+        }
+        var ptr = rawConstructor();
+        for (var i = 0; i < elementsLength; ++i) {
+          elements[i].write(ptr, o[i]);
+        }
+        if (destructors !== null) {
+          destructors.push(rawDestructor, ptr);
+        }
+        return ptr;
+      },
+      argPackAdvance: GenericWireTypeSize,
+      "readValueFromPointer": readPointer,
+      destructorFunction: rawDestructor
+    } ];
+  });
+};
+
 var embindRepr = v => {
   if (v === null) {
     return "null";
@@ -1375,12 +1495,6 @@ var readLatin1String = ptr => {
   }
   return ret;
 };
-
-var awaitingDependencies = {};
-
-var registeredTypes = {};
-
-var typeDependencies = {};
 
 var BindingError = Module["BindingError"] = class BindingError extends Error {
   constructor(message) {
@@ -1833,10 +1947,6 @@ var upcastPointer = (ptr, ptrClass, desiredClass) => {
   return ptr;
 }
 
-/** @suppress {globalThis} */ function readPointer(pointer) {
-  return this["fromWireType"](GROWABLE_HEAP_U32()[((pointer) >> 2)]);
-}
-
 var downcastPointer = (ptr, ptrClass, desiredClass) => {
   if (ptrClass === desiredClass) {
     return ptr;
@@ -1867,17 +1977,6 @@ var getBasestPointer = (class_, ptr) => {
 var getInheritedInstance = (class_, ptr) => {
   ptr = getBasestPointer(class_, ptr);
   return registeredInstances[ptr];
-};
-
-var InternalError = Module["InternalError"] = class InternalError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = "InternalError";
-  }
-};
-
-var throwInternalError = message => {
-  throw new InternalError(message);
 };
 
 var makeClassHandle = (prototype, record) => {
@@ -2075,42 +2174,6 @@ var throwUnboundTypeError = (message, types) => {
   throw new UnboundTypeError(`${message}: ` + unboundTypes.map(getTypeName).join([ ", " ]));
 };
 
-var whenDependentTypesAreResolved = (myTypes, dependentTypes, getTypeConverters) => {
-  myTypes.forEach(type => typeDependencies[type] = dependentTypes);
-  function onComplete(typeConverters) {
-    var myTypeConverters = getTypeConverters(typeConverters);
-    if (myTypeConverters.length !== myTypes.length) {
-      throwInternalError("Mismatched type converter count");
-    }
-    for (var i = 0; i < myTypes.length; ++i) {
-      registerType(myTypes[i], myTypeConverters[i]);
-    }
-  }
-  var typeConverters = new Array(dependentTypes.length);
-  var unregisteredTypes = [];
-  var registered = 0;
-  dependentTypes.forEach((dt, i) => {
-    if (registeredTypes.hasOwnProperty(dt)) {
-      typeConverters[i] = registeredTypes[dt];
-    } else {
-      unregisteredTypes.push(dt);
-      if (!awaitingDependencies.hasOwnProperty(dt)) {
-        awaitingDependencies[dt] = [];
-      }
-      awaitingDependencies[dt].push(() => {
-        typeConverters[i] = registeredTypes[dt];
-        ++registered;
-        if (registered === unregisteredTypes.length) {
-          onComplete(typeConverters);
-        }
-      });
-    }
-  });
-  if (0 === unregisteredTypes.length) {
-    onComplete(typeConverters);
-  }
-};
-
 var __embind_register_class = (rawType, rawPointerType, rawConstPointerType, baseClassRawType, getActualTypeSignature, getActualType, upcastSignature, upcast, downcastSignature, downcast, name, destructorSignature, rawDestructor) => {
   name = readLatin1String(name);
   getActualType = embind__requireFunction(getActualTypeSignature, getActualType);
@@ -2167,14 +2230,6 @@ var __embind_register_class = (rawType, rawPointerType, rawConstPointerType, bas
     replacePublicSymbol(legalFunctionName, constructor);
     return [ referenceConverter, pointerConverter, constPointerConverter ];
   });
-};
-
-var runDestructors = destructors => {
-  while (destructors.length) {
-    var ptr = destructors.pop();
-    var del = destructors.pop();
-    del(ptr);
-  }
 };
 
 function usesDestructorStack(argTypes) {
@@ -2985,6 +3040,26 @@ var __embind_register_std_wstring = (rawType, charSize, name) => {
     destructorFunction(ptr) {
       _free(ptr);
     }
+  });
+};
+
+var __embind_register_value_array = (rawType, name, constructorSignature, rawConstructor, destructorSignature, rawDestructor) => {
+  tupleRegistrations[rawType] = {
+    name: readLatin1String(name),
+    rawConstructor: embind__requireFunction(constructorSignature, rawConstructor),
+    rawDestructor: embind__requireFunction(destructorSignature, rawDestructor),
+    elements: []
+  };
+};
+
+var __embind_register_value_array_element = (rawTupleType, getterReturnType, getterSignature, getter, getterContext, setterArgumentType, setterSignature, setter, setterContext) => {
+  tupleRegistrations[rawTupleType].elements.push({
+    getterReturnType,
+    getter: embind__requireFunction(getterSignature, getter),
+    getterContext,
+    setterArgumentType,
+    setter: embind__requireFunction(setterSignature, setter),
+    setterContext
   });
 };
 
@@ -5928,7 +6003,7 @@ MEMFS.doesNotExistError = new FS.ErrnoError(44);
 var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied, _environ_get, _environ_sizes_get, _fd_close, _fd_read, _fd_seek, _fd_write ];
 
 var ASM_CONSTS = {
-  54480: ($0, $1, $2) => {
+  54960: ($0, $1, $2) => {
     window.kayo.taskQueue.taskFinished($0, {
       byteOffset: $1,
       byteLength: $2
@@ -5951,6 +6026,7 @@ function assignWasmImports() {
     /** @export */ __pthread_create_js: ___pthread_create_js,
     /** @export */ __resumeException: ___resumeException,
     /** @export */ _abort_js: __abort_js,
+    /** @export */ _embind_finalize_value_array: __embind_finalize_value_array,
     /** @export */ _embind_register_bigint: __embind_register_bigint,
     /** @export */ _embind_register_bool: __embind_register_bool,
     /** @export */ _embind_register_class: __embind_register_class,
@@ -5966,6 +6042,8 @@ function assignWasmImports() {
     /** @export */ _embind_register_optional: __embind_register_optional,
     /** @export */ _embind_register_std_string: __embind_register_std_string,
     /** @export */ _embind_register_std_wstring: __embind_register_std_wstring,
+    /** @export */ _embind_register_value_array: __embind_register_value_array,
+    /** @export */ _embind_register_value_array_element: __embind_register_value_array_element,
     /** @export */ _embind_register_void: __embind_register_void,
     /** @export */ _emscripten_init_main_thread_js: __emscripten_init_main_thread_js,
     /** @export */ _emscripten_notify_mailbox_postmessage: __emscripten_notify_mailbox_postmessage,

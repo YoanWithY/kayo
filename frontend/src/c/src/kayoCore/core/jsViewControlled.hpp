@@ -13,30 +13,23 @@ namespace kayo {
 
 uint32_t allocViewControlledID();
 
-template <typename T>
-concept JSViewControllable =
-	requires(const char* cstr, std::size_t len, T t) {
-		T{cstr, len};
-		static_cast<std::string>(t);
-	};
-
-template <JSViewControllable T>
+template <typename T, typename W>
 class JSViewControlled {
   public:
 	T value;
 	uint32_t observation_id;
-	constexpr JSViewControlled() : value(), observation_id(allocViewControlledID()) {}
+	constexpr JSViewControlled() : observation_id(allocViewControlledID()) {}
 	constexpr JSViewControlled(T value) : value(value), observation_id(allocViewControlledID()) {}
 	void dispatchToObservers() {
 		kayoDispatchToObserver(this->observation_id);
 	}
 
-	std::string getValueJS() const {
-		return static_cast<std::string>(value);
+	W getValueJS() const {
+		return static_cast<W>(value);
 	}
 
-	void setValueJS(std::string str_value) {
-		value = T(str_value.c_str(), str_value.length());
+	void setValueJS(W wire_data) {
+		this->value = static_cast<T>(wire_data);
 		dispatchToObservers();
 	}
 
@@ -45,7 +38,8 @@ class JSViewControlled {
 	}
 };
 
-typedef JSViewControlled<FixedPoint::Number> JSVCNumber;
-typedef JSViewControlled<std::string> JSVCString;
+typedef JSViewControlled<FixedPoint::Number, FixedPoint::NumberJSWireType> JSVCNumber;
+typedef JSViewControlled<std::string, std::string> JSVCString;
+typedef JSViewControlled<bool, bool> JSVCBoolean;
 
 } // namespace kayo

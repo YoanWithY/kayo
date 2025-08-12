@@ -321,9 +321,9 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 	public frame = 0;
 	public renderViewport(_: number, viewport: WebGPUViewport) {
 		const start = performance.now();
-		const renderState = this._kayo.wasmx.kayoInstance.project.renderStates.get(viewport.configKey);
+		const renderState = this._kayo.wasmx.kayoInstance.project.renderStates.get(viewport.rendererKey);
 		if (renderState === null) {
-			console.error(`The render config key ${viewport.configKey} is unknown.`);
+			console.error(`The render config key ${viewport.rendererKey} is unknown.`);
 			return;
 		}
 		renderState.applyToConfig();

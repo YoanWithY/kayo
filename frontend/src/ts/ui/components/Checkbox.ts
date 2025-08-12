@@ -1,15 +1,15 @@
 import { Kayo } from "../../Kayo";
-import WASMX from "../../WASMX";
+import WASMX, { WasmValue } from "../../WASMX";
 import { IconedToggleButton } from "./IconedToggleButton";
 import Tooltip, { SerialTooltip } from "./Tooltip";
 
 import emptyIcon from "../../../svg/empty.svg?raw";
 import checkIcon from "../../../svg/check.svg?raw";
-import { KayoJSVCString } from "../../../c/KayoCorePP";
+import { KayoJSVCBoolean } from "../../../c/KayoCorePP";
 
 export default class Checkbox extends IconedToggleButton {
 	private _wasmx!: WASMX;
-	private _stateJSVC!: KayoJSVCString;
+	private _stateJSVC!: KayoJSVCBoolean;
 	private _internals: ElementInternals;
 
 	public constructor() {
@@ -17,8 +17,9 @@ export default class Checkbox extends IconedToggleButton {
 		this._internals = this.attachInternals();
 	}
 
-	private _stateChangeCallback = (value: string) => {
-		if (value == "true") {
+	private _stateChangeCallback = (value: WasmValue) => {
+		console.log(value);
+		if (value) {
 			this._internals.states.add("checked");
 			this.setStateUIOnly(1);
 		} else {
@@ -42,16 +43,18 @@ export default class Checkbox extends IconedToggleButton {
 		if (obj.tooltip) Tooltip.register(win, obj.tooltip as SerialTooltip, p, obj);
 		p._wasmx = kayo.wasmx;
 
-		p._stateJSVC = kayo.wasmx.getModelReference(kayo.wasmx.toWasmPath(obj.stateVariableURL, variables));
+		p._stateJSVC = kayo.wasmx.getModelReference(
+			kayo.wasmx.toWasmPath(obj.stateVariableURL, variables),
+		) as KayoJSVCBoolean;
 		p._state = 0;
 		p._states = [
 			{
 				svgIcon: emptyIcon,
-				callback: () => p._stateJSVC.setValue("false"),
+				callback: () => p._stateJSVC.setValue(false),
 			},
 			{
 				svgIcon: checkIcon,
-				callback: () => p._stateJSVC.setValue("true"),
+				callback: () => p._stateJSVC.setValue(true),
 			},
 		];
 		return p;

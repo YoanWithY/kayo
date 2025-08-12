@@ -2,20 +2,41 @@ import { Kayo, Renderer } from "../../Kayo";
 import BasicPane from "./BasicPane";
 import animationPaneTemplate from "./AnimationPane.json";
 import { Viewport2D } from "../../rendering/Viewport";
+import { KayoNumber } from "../../../c/KayoCorePP";
 
 export class AnimationRenderer implements Renderer {
+	public registeredViewports: Set<Viewport2D> = new Set();
 	protected _kayo: Kayo;
 	public constructor(kayo: Kayo) {
 		this._kayo = kayo;
 	}
-	public renderViewport(timeStamp: number, viewport: Viewport2D): void {
-		// const KN = this._kayo.wasmx.Number;
-		console.log(timeStamp, viewport);
+	public renderViewport(_: number, viewport: Viewport2D): void {
+		const KN = this._kayo.wasmx.KN;
 		const ctx = viewport.canvasContext;
-		ctx.fillStyle = "red";
-		// const timeLine = this._kayo.wasmx.kayoInstance.project.timeLine;
+		const canvas = ctx.canvas;
+		const dpr = viewport.window.devicePixelRatio;
+		ctx.lineWidth = dpr;
+		ctx.strokeStyle = "white";
+
+		const startXa = viewport.origin[0];
+		const startYa = viewport.origin[1];
+
+		const rangeXa = KN.ndiv(canvas.width, viewport.contentScale[0]);
+		const endXa = KN.add(startXa, rangeXa);
+		const rangeYa = KN.ndiv(canvas.height, viewport.contentScale[1]);
+		const endYa = KN.add(startYa, rangeYa);
+		const curve = this._kayo.wasmx.kayoInstance.project.timeLine.simulationTimeVelocity.curve;
+		ctx.beginPath();
+		for (let x = 0; x < canvas.width; x += 1) {
+			const Xa = KN.nremap(x, 0, canvas.width, startXa, endXa);
+			const Ya = curve.sample(Xa);
+			const y = KN.remapn(Ya, startYa, endYa, 0, canvas.height);
+
+			if (x == 0) ctx.moveTo(x, y);
+			else ctx.lineTo(x, y);
+		}
+		ctx.stroke();
 	}
-	public registeredViewports: Set<Viewport2D> = new Set();
 	public registerViewport(viewport: Viewport2D): void {
 		this.registeredViewports.add(viewport);
 	}
@@ -29,6 +50,8 @@ export class AnimationPane extends BasicPane implements Viewport2D {
 	private _ctx!: CanvasRenderingContext2D;
 	private _win!: Window;
 	private _canvas!: HTMLCanvasElement;
+	private _origin!: [KayoNumber, KayoNumber];
+	private _contentScale!: [KayoNumber, KayoNumber];
 
 	private _resizeCallback = (e: ResizeObserverEntry[]) => {
 		const size = e[0].devicePixelContentBoxSize[0];
@@ -47,8 +70,14 @@ export class AnimationPane extends BasicPane implements Viewport2D {
 	public get window(): Window {
 		return this._win;
 	}
-	public get configKey(): string {
+	public get rendererKey(): string {
 		return "animation";
+	}
+	public get origin(): [KayoNumber, KayoNumber] {
+		return this._origin;
+	}
+	public get contentScale(): [KayoNumber, KayoNumber] {
+		return this._contentScale;
 	}
 
 	protected connectedCallback() {
@@ -73,6 +102,9 @@ export class AnimationPane extends BasicPane implements Viewport2D {
 			return p;
 		}
 		p._ctx = ctx;
+		const KN = kayo.wasmx.KN;
+		p._origin = [KN.fromDouble(-100), KN.fromDouble(100)];
+		p._contentScale = [KN.fromDouble(1), KN.fromDouble(-1)];
 		p.appendChild(p._canvas);
 		return p;
 	}

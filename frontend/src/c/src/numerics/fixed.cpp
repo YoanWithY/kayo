@@ -29,41 +29,95 @@ Number::Number(const std::string& value) {
 	this->n = int_part < 0 ? (int_part - digit_part).n : (int_part + digit_part).n;
 }
 
-Number::Number(const void* ptr, size_t) : n(reinterpret_cast<const __int128_t*>(ptr)[0]) {}
-
 std::string Number::toString() const {
 	std::ostringstream oss;
 	oss << *this;
 	return oss.str();
 }
 
-std::string Number::fromDoubleJS(double d) {
+NumberJSWireType Number::fromDoubleJS(double d) {
 	const Number x = d;
-	return std::string(reinterpret_cast<const char*>(&x.n), sizeof(x.n));
+	return static_cast<NumberJSWireType>(x);
 }
 
-Number Number::fromString(const std::string& d) {
-	return Number(reinterpret_cast<const void*>(d.c_str()), d.length());
+double Number::toDoubleJS(NumberJSWireType d) {
+	return static_cast<double>(Number(d));
 }
 
-double Number::toDoubleJS(std::string d) {
-	return static_cast<double>(Number::fromString(d));
+std::string Number::toStringJS(NumberJSWireType d) {
+	return Number(d).toString();
 }
 
-std::string Number::toStringJS(std::string d) {
-	return Number::fromString(d).toString();
+NumberJSWireType Number::mulJS(NumberJSWireType a, NumberJSWireType b) {
+	return static_cast<NumberJSWireType>(Number(a) * Number(b));
+}
+NumberJSWireType Number::nmulJS(double a, NumberJSWireType b) {
+	return static_cast<NumberJSWireType>(Number(a) * Number(b));
+}
+NumberJSWireType Number::mulnJS(NumberJSWireType a, double b) {
+	return static_cast<NumberJSWireType>(Number(a) * Number(b));
+}
+NumberJSWireType Number::addJS(NumberJSWireType a, NumberJSWireType b) {
+	return static_cast<NumberJSWireType>(Number(a) + Number(b));
+}
+NumberJSWireType Number::naddJS(double a, NumberJSWireType b) {
+	return static_cast<NumberJSWireType>(Number(a) + Number(b));
+}
+NumberJSWireType Number::addnJS(NumberJSWireType a, double b) {
+	return static_cast<NumberJSWireType>(Number(a) + Number(b));
+}
+NumberJSWireType Number::subJS(NumberJSWireType a, NumberJSWireType b) {
+	return static_cast<NumberJSWireType>(Number(a) - Number(b));
+}
+NumberJSWireType Number::nsubJS(double a, NumberJSWireType b) {
+	return static_cast<NumberJSWireType>(Number(a) - Number(b));
+}
+NumberJSWireType Number::subnJS(NumberJSWireType a, double b) {
+	return static_cast<NumberJSWireType>(Number(a) - Number(b));
+}
+NumberJSWireType Number::divJS(NumberJSWireType a, NumberJSWireType b) {
+	return static_cast<NumberJSWireType>(Number(a) / Number(b));
+}
+NumberJSWireType Number::ndivJS(double a, NumberJSWireType b) {
+	return static_cast<NumberJSWireType>(Number(a) / Number(b));
+}
+NumberJSWireType Number::divnJS(NumberJSWireType a, double b) {
+	return static_cast<NumberJSWireType>(Number(a) / Number(b));
 }
 
-Number::operator std::string() const {
-	return std::string(reinterpret_cast<const char*>(&this->n), sizeof(this->n));
+NumberJSWireType Number::nremap(double x, double start_x, double end_x, NumberJSWireType start_new, NumberJSWireType end_new) {
+	Number s = Number(start_new);
+	return static_cast<NumberJSWireType>(Number(x - start_x / (end_x - start_x)) * (Number(end_new) - s) + s);
+}
+
+double Number::remapn(NumberJSWireType x, NumberJSWireType start_x, NumberJSWireType end_x, double start_new, double end_new) {
+	Number s = Number(start_x);
+	return double(Number(x) - s / (Number(end_x) - s)) * (end_new - start_new) + start_new;
 }
 
 } // namespace FixedPoint
 
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(KayoFixedWASM) {
-	class_<FixedPoint::Number>("KayoNumber")
+	value_array<FixedPoint::NumberJSWireType>("KayoNumber")
+		.element(emscripten::index<0>())
+		.element(emscripten::index<1>());
+	class_<FixedPoint::Number>("KN")
 		.class_function("fromDouble", &FixedPoint::Number::fromDoubleJS)
 		.class_function("toDouble", &FixedPoint::Number::toDoubleJS)
-		.class_function("toString", &FixedPoint::Number::toStringJS);
+		.class_function("toString", &FixedPoint::Number::toStringJS)
+		.class_function("nremap", &FixedPoint::Number::nremap)
+		.class_function("remapn", &FixedPoint::Number::remapn)
+		.class_function("add", &FixedPoint::Number::addJS)
+		.class_function("nadd", &FixedPoint::Number::naddJS)
+		.class_function("addn", &FixedPoint::Number::addnJS)
+		.class_function("mul", &FixedPoint::Number::mulJS)
+		.class_function("nmul", &FixedPoint::Number::nmulJS)
+		.class_function("muln", &FixedPoint::Number::mulnJS)
+		.class_function("sub", &FixedPoint::Number::subJS)
+		.class_function("nsub", &FixedPoint::Number::nsubJS)
+		.class_function("subn", &FixedPoint::Number::subnJS)
+		.class_function("div", &FixedPoint::Number::divJS)
+		.class_function("ndiv", &FixedPoint::Number::ndivJS)
+		.class_function("divn", &FixedPoint::Number::divnJS);
 }

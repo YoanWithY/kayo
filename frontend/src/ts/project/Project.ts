@@ -41,9 +41,9 @@ export class Project {
 		viewport.window.requestAnimationFrame((ts: number) => {
 			for (const v of this.viewportsToUpdate) {
 				if (v.window != viewport.window) continue;
-				const renderer = this.kayo.renderers[viewport.configKey];
+				const renderer = this.kayo.renderers[viewport.rendererKey];
 				if (!renderer) {
-					console.error(`Renderer with key "${viewport.configKey}" is not know to kayo.`);
+					console.error(`Renderer with key "${viewport.rendererKey}" is not know to kayo.`);
 					continue;
 				}
 				if (!renderer.registeredViewports.has(viewport)) {
@@ -62,9 +62,9 @@ export class Project {
 
 	private _viewports = new Set<Viewport>();
 	public registerViewport(viewport: Viewport) {
-		const renderer = this.kayo.renderers[viewport.configKey];
+		const renderer = this.kayo.renderers[viewport.rendererKey];
 		if (!renderer) {
-			console.error(`Renderer with key "${viewport.configKey}" is not know to kayo.`);
+			console.error(`Renderer with key "${viewport.rendererKey}" is not know to kayo.`);
 			return;
 		}
 		this._viewports.add(viewport);
@@ -72,9 +72,9 @@ export class Project {
 	}
 
 	public unregisterViewport(viewport: Viewport) {
-		const renderer = this.kayo.renderers[viewport.configKey];
+		const renderer = this.kayo.renderers[viewport.rendererKey];
 		if (!renderer) {
-			console.error(`Renderer with key "${viewport.configKey}" is not know to kayo.`);
+			console.error(`Renderer with key "${viewport.rendererKey}" is not know to kayo.`);
 			return;
 		}
 		this._viewports.delete(viewport);

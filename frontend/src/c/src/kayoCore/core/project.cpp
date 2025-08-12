@@ -5,8 +5,9 @@ namespace kayo {
 Project::Project() {
 	using namespace state;
 	this->renderStates.set("realtime", new RenderState());
-	timeLine.framesPerSecond = 30;
-	timeLine.simulationTime = 0;
+	this->timeLine.framesPerSecond = 30;
+	this->timeLine.simulationTime = 0;
+	this->timeLine.simulationTimeVelocity.create();
 }
 } // namespace kayo
 

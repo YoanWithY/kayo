@@ -37,7 +37,8 @@ class FCurve {
 	FixedPoint::NonUniformSplineCurve1D curve;
 	std::vector<FCurveSegment*> segments;
 	std::vector<FCurveKnot*> knots;
-	constexpr FCurve() {
+
+	constexpr void create() {
 		FixedPoint::ConstantNonUniformSplineCurveSegment1D* seg1 = new FixedPoint::ConstantNonUniformSplineCurveSegment1D(-100000, 0, 0);
 		FixedPoint::ConstantNonUniformSplineCurveSegment1D* seg2 = new FixedPoint::ConstantNonUniformSplineCurveSegment1D(0, 100000, 0);
 		this->curve.segments.push_back(seg1);
@@ -46,7 +47,7 @@ class FCurve {
 		this->knots.push_back(knot);
 	}
 
-	constexpr ~FCurve() {
+	constexpr void destroy() const {
 		for (auto a : this->segments)
 			delete a;
 		for (auto a : this->knots)

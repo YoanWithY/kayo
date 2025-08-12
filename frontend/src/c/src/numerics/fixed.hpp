@@ -11,6 +11,8 @@
 
 namespace FixedPoint {
 
+typedef std::array<uint64_t, 2> NumberJSWireType;
+
 constexpr __int128_t max_Q_rep = (__int128_t(1) << (FIXED_POINT_DECIMAL_BITS + FIXED_POINT_INTEGER_BITS)) - __int128_t(1);
 constexpr __int128_t min_Q_rep = -max_Q_rep;
 
@@ -50,21 +52,32 @@ class Number {
 	constexpr Number(double a) : n((a < 0 ? -1 : 1) * saturate(
 														  (static_cast<__int128_t>(std::abs(a)) * FIXED_POINT_DECIMAL_FACTOR) |
 														  (static_cast<__int128_t>((std::abs(a) - static_cast<double>(static_cast<__int128_t>(std::abs(a)))) * double(FIXED_POINT_DECIMAL_FACTOR))))) {}
-
-	/**
-	 * Reinterprets the bytes of the pointer as Number.
-	 */
-	Number(const void* ptr, size_t size);
+	inline Number(NumberJSWireType a) {
+		std::memcpy(&this->n, a.data(), sizeof(this->n));
+	}
 
 	/**
 	 * Must be of format `-?d+\.d+`
 	 */
 	Number(const std::string& value);
 
-	static Number fromString(const std::string& d);
-	static std::string fromDoubleJS(double d);
-	static double toDoubleJS(std::string d);
-	static std::string toStringJS(std::string d);
+	static NumberJSWireType fromDoubleJS(double d);
+	static double toDoubleJS(NumberJSWireType d);
+	static std::string toStringJS(NumberJSWireType d);
+	static NumberJSWireType nremap(double x, double start_x, double end_x, NumberJSWireType start_new, NumberJSWireType end_new);
+	static double remapn(NumberJSWireType x, NumberJSWireType start_x, NumberJSWireType end_x, double start_new, double end_new);
+	static NumberJSWireType mulJS(NumberJSWireType a, NumberJSWireType b);
+	static NumberJSWireType nmulJS(double a, NumberJSWireType b);
+	static NumberJSWireType mulnJS(NumberJSWireType a, double b);
+	static NumberJSWireType addJS(NumberJSWireType a, NumberJSWireType b);
+	static NumberJSWireType naddJS(double a, NumberJSWireType b);
+	static NumberJSWireType addnJS(NumberJSWireType a, double b);
+	static NumberJSWireType subJS(NumberJSWireType a, NumberJSWireType b);
+	static NumberJSWireType nsubJS(double a, NumberJSWireType b);
+	static NumberJSWireType subnJS(NumberJSWireType a, double b);
+	static NumberJSWireType divJS(NumberJSWireType a, NumberJSWireType b);
+	static NumberJSWireType ndivJS(double a, NumberJSWireType b);
+	static NumberJSWireType divnJS(NumberJSWireType a, double b);
 	friend std::ostream& operator<<(std::ostream& os, const Number& number);
 	std::string toString() const;
 
@@ -120,7 +133,11 @@ class Number {
 		return double(this->n) / double(FIXED_POINT_DECIMAL_FACTOR);
 	}
 
-	explicit operator std::string() const;
+	inline explicit operator NumberJSWireType() const {
+		NumberJSWireType result;
+		std::memcpy(result.data(), static_cast<const void*>(&this->n), sizeof(this->n));
+		return result;
+	}
 
 	// ----- MATH ----- //
 

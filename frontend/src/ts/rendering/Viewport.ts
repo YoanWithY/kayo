@@ -1,3 +1,5 @@
+import { KayoNumber } from "../../c/KayoCorePP";
+
 export interface Viewport {
 	/**
 	 * A string that to identify the viewport and name WebGPU debug.
@@ -8,9 +10,9 @@ export interface Viewport {
 	 */
 	window: Window;
 	/**
-	 * The name (key) of the render config to use for rendering on this viewport.
+	 * The name (key) of the renderer to use for rendering on this viewport.
 	 */
-	configKey: string;
+	rendererKey: string;
 }
 
 export interface WebGPUViewport extends Viewport {
@@ -37,4 +39,12 @@ export interface WebGPUViewport extends Viewport {
 
 export interface Viewport2D extends Viewport {
 	canvasContext: CanvasRenderingContext2D;
+	/**
+	 * The upper left coordinate of the content to display.
+	 */
+	origin: [KayoNumber, KayoNumber];
+	/**
+	 * The scale of the content relative to css px coordinates to display.
+	 */
+	contentScale: [KayoNumber, KayoNumber];
 }

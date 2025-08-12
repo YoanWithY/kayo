@@ -1,26 +1,28 @@
 import type {
+	KayoJSVCBoolean,
 	KayoJSVCNumber,
 	KayoJSVCString,
+	KayoNumber,
 	KayoWASMInstance,
 	KayoWASMMinecraftModule,
 	MainModule,
 } from "../c/KayoCorePP";
-
 export type WasmPath = string[][];
-export type KayoJSVC = KayoJSVCNumber | KayoJSVCString;
+export type KayoJSVC = KayoJSVCNumber | KayoJSVCString | KayoJSVCBoolean;
+export type WasmValue = string | KayoNumber | boolean;
 
 export default class WASMX {
-	private _bindings: Map<number, { jsvc: KayoJSVC; callbacks: Set<(v: string) => void> }> = new Map();
+	private _bindings: Map<number, { jsvc: KayoJSVC; callbacks: Set<(v: WasmValue) => void> }> = new Map();
 
-	public Number;
 	public kayoInstance: KayoWASMInstance;
 	public minecraftModule: KayoWASMMinecraftModule;
 	public imageData;
+	private _KN;
 	private _wasm: MainModule;
 
 	public constructor(module: MainModule) {
 		this._wasm = module;
-		this.Number = module.KayoNumber;
+		this._KN = module.KN;
 		this.imageData = module.ImageData;
 		this.kayoInstance = new module.KayoWASMInstance();
 		this.minecraftModule = new module.KayoWASMMinecraftModule(this.kayoInstance);
@@ -28,6 +30,10 @@ export default class WASMX {
 
 	public get wasm() {
 		return this._wasm;
+	}
+
+	public get KN() {
+		return this._KN;
 	}
 
 	public get heap(): Uint8Array<SharedArrayBuffer> {
@@ -62,23 +68,23 @@ export default class WASMX {
 		return obj;
 	}
 
-	public addChangeListener(jsvc: KayoJSVC, f: (v: string) => void, fireImmediately: boolean) {
+	public addChangeListener(jsvc: KayoJSVC, f: (v: WasmValue) => void, fireImmediately: boolean) {
 		const observationID = jsvc.getObservationID();
 
 		let binding = this._bindings.get(observationID);
 		if (!binding) {
-			binding = { jsvc, callbacks: new Set<(v: string) => void>() };
+			binding = { jsvc, callbacks: new Set<(v: WasmValue) => void>() };
 			this._bindings.set(observationID, binding);
 		}
 		binding.callbacks.add(f);
 		if (fireImmediately) f(jsvc.getValue());
 	}
 
-	public addChangeListenerByPath(wasmPath: WasmPath, f: (v: string) => void, fireImmediately: boolean) {
+	public addChangeListenerByPath(wasmPath: WasmPath, f: (v: WasmValue) => void, fireImmediately: boolean) {
 		this.addChangeListener(this.getModelReference(wasmPath), f, fireImmediately);
 	}
 
-	public removeChangeListener(jsvc: KayoJSVC, f: (v: string) => void) {
+	public removeChangeListener(jsvc: KayoJSVC, f: (v: WasmValue) => void) {
 		const observationID = jsvc.getObservationID();
 		const bound = this._bindings.get(observationID);
 		if (!bound) return;

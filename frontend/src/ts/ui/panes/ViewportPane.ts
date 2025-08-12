@@ -16,7 +16,7 @@ export class ViewportPane extends BasicPane implements Viewport {
 	public lable = "My Viewport";
 	public project!: Project;
 	public window!: Window;
-	public configKey: string = "realtime";
+	public rendererKey: string = "realtime";
 
 	private _resizeCallbackDebunced = debounce((e: ResizeObserverEntry[]) => {
 		const size = e[0].devicePixelContentBoxSize[0];
