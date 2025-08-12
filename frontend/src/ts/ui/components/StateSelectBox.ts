@@ -30,7 +30,7 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 			this._optionWrapper.style.width = rect.width + "px";
 			this._optionWrapper._internals.states.add("open-down");
 			this._internals.states.add("open-down");
-			this._optionWrapper.updateSelectedState(this.textContent);
+			this._optionWrapper.updateSelectedState(this.textContent as string);
 			this._win.addEventListener("mousedown", this._hidingClosure);
 		};
 	}

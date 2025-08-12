@@ -41,7 +41,7 @@ export class PaneStripe extends HTMLElement {
 		selectBox.onValueChange = (optionValue: SelectOptionValue) => {
 			const parent = p.parentElement;
 			if (!parent) return;
-			(parent as SplitablePane).recreateContent(win, kayo, panesNameClassMap[optionValue.value]);
+			(parent as SplitablePane).recreateContent(win, kayo, panesNameClassMap[optionValue.value.toString()]);
 		};
 		p.appendChild(selectBox);
 		return p;
