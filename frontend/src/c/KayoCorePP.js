@@ -1465,6 +1465,70 @@ var __embind_finalize_value_array = rawTupleType => {
   });
 };
 
+var structRegistrations = {};
+
+var __embind_finalize_value_object = structType => {
+  var reg = structRegistrations[structType];
+  delete structRegistrations[structType];
+  var rawConstructor = reg.rawConstructor;
+  var rawDestructor = reg.rawDestructor;
+  var fieldRecords = reg.fields;
+  var fieldTypes = fieldRecords.map(field => field.getterReturnType).concat(fieldRecords.map(field => field.setterArgumentType));
+  whenDependentTypesAreResolved([ structType ], fieldTypes, fieldTypes => {
+    var fields = {};
+    fieldRecords.forEach((field, i) => {
+      var fieldName = field.fieldName;
+      var getterReturnType = fieldTypes[i];
+      var optional = fieldTypes[i].optional;
+      var getter = field.getter;
+      var getterContext = field.getterContext;
+      var setterArgumentType = fieldTypes[i + fieldRecords.length];
+      var setter = field.setter;
+      var setterContext = field.setterContext;
+      fields[fieldName] = {
+        read: ptr => getterReturnType["fromWireType"](getter(getterContext, ptr)),
+        write: (ptr, o) => {
+          var destructors = [];
+          setter(setterContext, ptr, setterArgumentType["toWireType"](destructors, o));
+          runDestructors(destructors);
+        },
+        optional
+      };
+    });
+    return [ {
+      name: reg.name,
+      "fromWireType": ptr => {
+        var rv = {};
+        for (var i in fields) {
+          rv[i] = fields[i].read(ptr);
+        }
+        rawDestructor(ptr);
+        return rv;
+      },
+      "toWireType": (destructors, o) => {
+        // todo: Here we have an opportunity for -O3 level "unsafe" optimizations:
+        // assume all fields are present without checking.
+        for (var fieldName in fields) {
+          if (!(fieldName in o) && !fields[fieldName].optional) {
+            throw new TypeError(`Missing field: "${fieldName}"`);
+          }
+        }
+        var ptr = rawConstructor();
+        for (fieldName in fields) {
+          fields[fieldName].write(ptr, o[fieldName]);
+        }
+        if (destructors !== null) {
+          destructors.push(rawDestructor, ptr);
+        }
+        return ptr;
+      },
+      argPackAdvance: GenericWireTypeSize,
+      "readValueFromPointer": readPointer,
+      destructorFunction: rawDestructor
+    } ];
+  });
+};
+
 var embindRepr = v => {
   if (v === null) {
     return "null";
@@ -3054,6 +3118,27 @@ var __embind_register_value_array = (rawType, name, constructorSignature, rawCon
 
 var __embind_register_value_array_element = (rawTupleType, getterReturnType, getterSignature, getter, getterContext, setterArgumentType, setterSignature, setter, setterContext) => {
   tupleRegistrations[rawTupleType].elements.push({
+    getterReturnType,
+    getter: embind__requireFunction(getterSignature, getter),
+    getterContext,
+    setterArgumentType,
+    setter: embind__requireFunction(setterSignature, setter),
+    setterContext
+  });
+};
+
+var __embind_register_value_object = (rawType, name, constructorSignature, rawConstructor, destructorSignature, rawDestructor) => {
+  structRegistrations[rawType] = {
+    name: readLatin1String(name),
+    rawConstructor: embind__requireFunction(constructorSignature, rawConstructor),
+    rawDestructor: embind__requireFunction(destructorSignature, rawDestructor),
+    fields: []
+  };
+};
+
+var __embind_register_value_object_field = (structType, fieldName, getterReturnType, getterSignature, getter, getterContext, setterArgumentType, setterSignature, setter, setterContext) => {
+  structRegistrations[structType].fields.push({
+    fieldName: readLatin1String(fieldName),
     getterReturnType,
     getter: embind__requireFunction(getterSignature, getter),
     getterContext,
@@ -6003,7 +6088,7 @@ MEMFS.doesNotExistError = new FS.ErrnoError(44);
 var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied, _environ_get, _environ_sizes_get, _fd_close, _fd_read, _fd_seek, _fd_write ];
 
 var ASM_CONSTS = {
-  54960: ($0, $1, $2) => {
+  56416: ($0, $1, $2) => {
     window.kayo.taskQueue.taskFinished($0, {
       byteOffset: $1,
       byteLength: $2
@@ -6027,6 +6112,7 @@ function assignWasmImports() {
     /** @export */ __resumeException: ___resumeException,
     /** @export */ _abort_js: __abort_js,
     /** @export */ _embind_finalize_value_array: __embind_finalize_value_array,
+    /** @export */ _embind_finalize_value_object: __embind_finalize_value_object,
     /** @export */ _embind_register_bigint: __embind_register_bigint,
     /** @export */ _embind_register_bool: __embind_register_bool,
     /** @export */ _embind_register_class: __embind_register_class,
@@ -6044,6 +6130,8 @@ function assignWasmImports() {
     /** @export */ _embind_register_std_wstring: __embind_register_std_wstring,
     /** @export */ _embind_register_value_array: __embind_register_value_array,
     /** @export */ _embind_register_value_array_element: __embind_register_value_array_element,
+    /** @export */ _embind_register_value_object: __embind_register_value_object,
+    /** @export */ _embind_register_value_object_field: __embind_register_value_object_field,
     /** @export */ _embind_register_void: __embind_register_void,
     /** @export */ _emscripten_init_main_thread_js: __emscripten_init_main_thread_js,
     /** @export */ _emscripten_notify_mailbox_postmessage: __emscripten_notify_mailbox_postmessage,

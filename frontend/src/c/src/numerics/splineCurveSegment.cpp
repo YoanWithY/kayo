@@ -8,7 +8,8 @@ EMSCRIPTEN_BINDINGS(KayoSplineCurveSegmentWASM) {
 	class_<FixedPoint::ConstantUniformSplineCurveSegment1D, base<FixedPoint::UniformSplineCurveSegment1D>>("ConstantUniformSplineCurve1D")
 		.function("sampleUniform", &FixedPoint::ConstantUniformSplineCurveSegment1D::sampleUniform);
 	class_<FixedPoint::NonUniformSplineCurveSegment1D>("NonUniformSplineCurveSegment1D")
-		.function("sampleNonUniform", &FixedPoint::NonUniformSplineCurveSegment1D::sampleNonUniform);
+		.function("sampleNonUniform", &FixedPoint::NonUniformSplineCurveSegment1D::sampleNonUniform)
+		.function("sampleRangeAuto", &FixedPoint::NonUniformSplineCurveSegment1D::sampleRangeAutoJS);
 	class_<FixedPoint::ConstantNonUniformSplineCurveSegment1D, base<FixedPoint::NonUniformSplineCurveSegment1D>>("ConstantNonUniformSplineCurve1D")
 		.function("sampleNonUniform", &FixedPoint::ConstantNonUniformSplineCurveSegment1D::sampleNonUniform);
 }

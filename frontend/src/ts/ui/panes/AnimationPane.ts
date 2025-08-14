@@ -11,12 +11,11 @@ export class AnimationRenderer implements Renderer {
 		this._kayo = kayo;
 	}
 	public renderViewport(_: number, viewport: Viewport2D): void {
+		const wasmx = this._kayo.wasmx;
 		const KN = this._kayo.wasmx.KN;
 		const ctx = viewport.canvasContext;
 		const canvas = ctx.canvas;
 		const dpr = viewport.window.devicePixelRatio;
-		ctx.lineWidth = dpr;
-		ctx.strokeStyle = "white";
 
 		const startXa = viewport.origin[0];
 		const startYa = viewport.origin[1];
@@ -26,16 +25,40 @@ export class AnimationRenderer implements Renderer {
 		const rangeYa = KN.ndiv(canvas.height, viewport.contentScale[1]);
 		const endYa = KN.add(startYa, rangeYa);
 		const curve = this._kayo.wasmx.kayoInstance.project.timeLine.simulationTimeVelocity.curve;
-		ctx.beginPath();
-		for (let x = 0; x < canvas.width; x += 1) {
-			const Xa = KN.nremap(x, 0, canvas.width, startXa, endXa);
-			const Ya = curve.sample(Xa);
-			const y = KN.remapn(Ya, startYa, endYa, 0, canvas.height);
 
-			if (x == 0) ctx.moveTo(x, y);
-			else ctx.lineTo(x, y);
+		const firstIndex = curve.getSegemtIndexAt(startXa);
+		const lastIndex = curve.getSegemtIndexAt(endXa);
+
+		for (let segmentIndex = firstIndex; segmentIndex <= lastIndex; segmentIndex++) {
+			const segment = curve.segments.get(segmentIndex);
+			if (!segment) continue;
+			const doublePtr = segment.sampleRangeAuto(
+				startXa,
+				endXa,
+				startYa,
+				endYa,
+				0,
+				canvas.width,
+				0,
+				canvas.height,
+				1,
+			);
+			const points = wasmx.getFloat64View(doublePtr);
+
+			ctx.beginPath();
+			ctx.arc(points[0], points[1], 5 * dpr, 0, 2 * Math.PI);
+			ctx.fillStyle = "white";
+			ctx.fill();
+
+			ctx.beginPath();
+			ctx.lineWidth = dpr;
+			ctx.strokeStyle = "white";
+			ctx.moveTo(points[0], points[1]);
+			for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1]);
+			ctx.stroke();
+
+			wasmx.deleteFloat64Array(doublePtr);
 		}
-		ctx.stroke();
 	}
 	public registerViewport(viewport: Viewport2D): void {
 		this.registeredViewports.add(viewport);

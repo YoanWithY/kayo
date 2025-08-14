@@ -3,6 +3,7 @@ import type {
 	KayoJSVCNumber,
 	KayoJSVCString,
 	KayoNumber,
+	KayoPointer,
 	KayoWASMInstance,
 	KayoWASMMinecraftModule,
 	MainModule,
@@ -42,6 +43,14 @@ export default class WASMX {
 
 	public getMemoryView(byteOffset: number, byteLength: number) {
 		return new Uint8Array(this.heap.buffer, byteOffset, byteLength);
+	}
+
+	public getFloat64View(ptr: KayoPointer) {
+		return new Float64Array(this.heap.buffer, ptr.byteOffset, ptr.byteLength / 8);
+	}
+
+	public deleteFloat64Array(ptr: KayoPointer) {
+		this._wasm.deleteArrayDouble(ptr.byteOffset);
 	}
 
 	public toWasmPath(stateVariableURL: string, variables: any = {}): WasmPath {

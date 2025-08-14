@@ -187,10 +187,20 @@ export interface KayoWASMMinecraftDimension extends ClassHandle {
 export interface KN extends ClassHandle {
 }
 
+export interface VectorNonUniformSplineCurveSegment1D extends ClassHandle {
+  push_back(_0: NonUniformSplineCurveSegment1D | null): void;
+  resize(_0: number, _1: NonUniformSplineCurveSegment1D | null): void;
+  size(): number;
+  get(_0: number): NonUniformSplineCurveSegment1D | undefined;
+  set(_0: number, _1: NonUniformSplineCurveSegment1D | null): boolean;
+}
+
 export interface UniformSplineCurve1D extends ClassHandle {
 }
 
 export interface NonUniformSplineCurve1D extends ClassHandle {
+  segments: VectorNonUniformSplineCurveSegment1D;
+  getSegemtIndexAt(_0: KayoNumber): number;
   sample(_0: KayoNumber): KayoNumber;
 }
 
@@ -204,6 +214,7 @@ export interface ConstantUniformSplineCurve1D extends UniformSplineCurveSegment1
 
 export interface NonUniformSplineCurveSegment1D extends ClassHandle {
   sampleNonUniform(_0: KN): KN;
+  sampleRangeAuto(_0: KayoNumber, _1: KayoNumber, _2: KayoNumber, _3: KayoNumber, _4: number, _5: number, _6: number, _7: number, _8: number): KayoPointer;
 }
 
 export interface ConstantNonUniformSplineCurve1D extends NonUniformSplineCurveSegment1D {
@@ -227,6 +238,11 @@ export interface ImageData extends ClassHandle {
 
 export interface ImageDataUint8 extends ImageData {
 }
+
+export type KayoPointer = {
+  byteOffset: number,
+  byteLength: number
+};
 
 export type KayoNumber = [ bigint, bigint ];
 
@@ -293,6 +309,9 @@ interface EmbindModule {
     divn(_0: KayoNumber, _1: number): KayoNumber;
     toString(_0: KayoNumber): string;
   };
+  VectorNonUniformSplineCurveSegment1D: {
+    new(): VectorNonUniformSplineCurveSegment1D;
+  };
   UniformSplineCurve1D: {};
   NonUniformSplineCurve1D: {};
   UniformSplineCurveSegment1D: {};
@@ -306,6 +325,7 @@ interface EmbindModule {
     empty(_0: number, _1: number, _2: number): ImageDataUint8 | null;
   };
   deleteArrayUint8(_0: number): void;
+  deleteArrayDouble(_0: number): void;
 }
 
 export type MainModule = WasmModule & typeof RuntimeExports & EmbindModule;

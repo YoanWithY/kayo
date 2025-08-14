@@ -38,7 +38,7 @@ void R3Manager::set(int32_t id, const mat4f& transformation, const vec4f& boundi
 
 void R3Manager::free(int32_t id) {
 	for (int32_t i = 0; i < int32_t(this->indexBlocks.size()); i++) {
-		IndexBlock& indexBlock = this->indexBlocks[size_t(i)];
+		kayo::memUtils::IndexBlock& indexBlock = this->indexBlocks[size_t(i)];
 		if (!(id >= indexBlock.start && id <= indexBlock.end))
 			continue;
 
@@ -57,7 +57,7 @@ void R3Manager::free(int32_t id) {
 			return;
 		}
 
-		this->indexBlocks.insert(this->indexBlocks.begin() + i, IndexBlock{id + 1, indexBlock.end});
+		this->indexBlocks.insert(this->indexBlocks.begin() + i, kayo::memUtils::IndexBlock{id + 1, indexBlock.end});
 		indexBlock.end = id - 1;
 		return;
 	}

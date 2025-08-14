@@ -13,7 +13,7 @@ class R3Manager {
   private:
 	std::vector<mat4f> transformations;
 	std::vector<vec4f> boundingSpheres;
-	std::vector<IndexBlock> indexBlocks;
+	std::vector<kayo::memUtils::IndexBlock> indexBlocks;
 
 	int64_t allocIndex();
 

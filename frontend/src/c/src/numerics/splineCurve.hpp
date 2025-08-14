@@ -37,6 +37,9 @@ class NonUniformSplineCurve {
 		}
 		return -1;
 	}
+	constexpr int32_t getSegmentIndexAtJS(NumberJSWireType u) {
+		return int32_t(this->getSegmentIndexAt(Number(u)));
+	}
 	constexpr NonUniformSplineCurveSegment<T>* getSegmentAt(Number u) const noexcept {
 		int64_t i = this->getSegmentIndexAt(u);
 		if (i < 0)
