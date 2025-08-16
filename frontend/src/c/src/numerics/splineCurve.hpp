@@ -12,10 +12,10 @@ class NonUniformSplineCurve {
 			return T(0);
 		return segment->sampleNonUniform(u);
 	}
-	constexpr NumberJSWireType sampleJS(NumberJSWireType n) const {
-		return static_cast<NumberJSWireType>(this->sample(Number(n)));
+	constexpr NumberWire sampleJS(NumberWire n) const {
+		return static_cast<NumberWire>(this->sample(Number(n)));
 	}
-	constexpr int64_t getSegmentIndexAt(Number u) const noexcept {
+	constexpr int32_t getSegmentIndexAt(Number u) const noexcept {
 		if (this->segments.empty())
 			return -1;
 		if (this->segments[0]->knot_start > u || this->segments.back()->knot_end < u)
@@ -28,7 +28,7 @@ class NonUniformSplineCurve {
 		while (current_start < current_end) {
 			const NonUniformSplineCurveSegment<T>* currentSegment = this->segments[current_index];
 			if (currentSegment->contains(u))
-				return current_index;
+				return int32_t(current_index);
 			if (u < currentSegment->knot_start)
 				current_end = current_index;
 			else
@@ -37,11 +37,11 @@ class NonUniformSplineCurve {
 		}
 		return -1;
 	}
-	constexpr int32_t getSegmentIndexAtJS(NumberJSWireType u) {
+	constexpr int32_t getSegmentIndexAtJS(NumberWire u) {
 		return int32_t(this->getSegmentIndexAt(Number(u)));
 	}
 	constexpr NonUniformSplineCurveSegment<T>* getSegmentAt(Number u) const noexcept {
-		int64_t i = this->getSegmentIndexAt(u);
+		int32_t i = this->getSegmentIndexAt(u);
 		if (i < 0)
 			return nullptr;
 		return this->segments[size_t(i)];

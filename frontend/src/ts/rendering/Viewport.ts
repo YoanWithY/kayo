@@ -46,5 +46,5 @@ export interface Viewport2D extends Viewport {
 	/**
 	 * The scale of the content relative to css px coordinates to display.
 	 */
-	contentScale: [KayoNumber, KayoNumber];
+	contentScale: [number, number];
 }

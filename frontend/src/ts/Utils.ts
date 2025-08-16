@@ -22,3 +22,7 @@ export function uint8ArrayToObject(data: Uint8Array): any {
 	}
 	return undefined;
 }
+
+export function getWindowZoom(window: Window) {
+	return window.outerWidth / window.innerWidth;
+}

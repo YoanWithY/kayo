@@ -14,6 +14,7 @@ export interface ClassHandle {
   clone(): this;
 }
 export interface FCurveSegment extends ClassHandle {
+  getCurveSegment(): NonUniformSplineCurveSegment1D | null;
 }
 
 export interface FCurveKnot extends ClassHandle {
@@ -38,7 +39,7 @@ export interface FCurveKnotVector extends ClassHandle {
 export interface FCurve extends ClassHandle {
   segments: FCurveSegmentVector;
   knots: FCurveKnotVector;
-  curve: NonUniformSplineCurve1D;
+  getSegmentIndexAt(_0: KayoNumber): number;
 }
 
 export interface TimeLine extends ClassHandle {
@@ -209,16 +210,16 @@ export interface UniformSplineCurveSegment1D extends ClassHandle {
 }
 
 export interface ConstantUniformSplineCurve1D extends UniformSplineCurveSegment1D {
-  sampleUniform(_0: KN): KN;
 }
 
 export interface NonUniformSplineCurveSegment1D extends ClassHandle {
+  readonly knotStart: KayoNumber;
+  readonly knotEnd: KayoNumber;
   sampleNonUniform(_0: KN): KN;
   sampleRangeAuto(_0: KayoNumber, _1: KayoNumber, _2: KayoNumber, _3: KayoNumber, _4: number, _5: number, _6: number, _7: number, _8: number): KayoPointer;
 }
 
 export interface ConstantNonUniformSplineCurve1D extends NonUniformSplineCurveSegment1D {
-  sampleNonUniform(_0: KN): KN;
 }
 
 export interface ImageData extends ClassHandle {
@@ -291,6 +292,9 @@ interface EmbindModule {
   KayoWASMMinecraftWorld: {};
   KayoWASMMinecraftDimension: {};
   KN: {
+    floor(_0: KayoNumber): KayoNumber;
+    ceil(_0: KayoNumber): KayoNumber;
+    mod(_0: KayoNumber, _1: KayoNumber): KayoNumber;
     add(_0: KayoNumber, _1: KayoNumber): KayoNumber;
     mul(_0: KayoNumber, _1: KayoNumber): KayoNumber;
     sub(_0: KayoNumber, _1: KayoNumber): KayoNumber;
@@ -299,6 +303,8 @@ interface EmbindModule {
     toDouble(_0: KayoNumber): number;
     nremap(_0: number, _1: number, _2: number, _3: KayoNumber, _4: KayoNumber): KayoNumber;
     remapn(_0: KayoNumber, _1: KayoNumber, _2: KayoNumber, _3: number, _4: number): number;
+    modn(_0: KayoNumber, _1: number): number;
+    nmod(_0: number, _1: KayoNumber): KayoNumber;
     nadd(_0: number, _1: KayoNumber): KayoNumber;
     addn(_0: KayoNumber, _1: number): KayoNumber;
     nmul(_0: number, _1: KayoNumber): KayoNumber;

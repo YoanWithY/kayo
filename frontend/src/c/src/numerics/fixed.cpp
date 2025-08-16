@@ -35,71 +35,91 @@ std::string Number::toString() const {
 	return oss.str();
 }
 
-NumberJSWireType Number::fromDoubleJS(double d) {
+NumberWire Number::fromDoubleJS(double d) {
 	const Number x = d;
-	return static_cast<NumberJSWireType>(x);
+	return static_cast<NumberWire>(x);
 }
 
-double Number::toDoubleJS(NumberJSWireType d) {
+double Number::toDoubleJS(NumberWire d) {
 	return static_cast<double>(Number(d));
 }
 
-std::string Number::toStringJS(NumberJSWireType d) {
+std::string Number::toStringJS(NumberWire d) {
 	return Number(d).toString();
 }
 
-NumberJSWireType Number::mulJS(NumberJSWireType a, NumberJSWireType b) {
-	return static_cast<NumberJSWireType>(Number(a) * Number(b));
+NumberWire Number::mulJS(NumberWire a, NumberWire b) {
+	return static_cast<NumberWire>(Number(a) * Number(b));
 }
-NumberJSWireType Number::nmulJS(double a, NumberJSWireType b) {
-	return static_cast<NumberJSWireType>(Number(a) * Number(b));
+NumberWire Number::nmulJS(double a, NumberWire b) {
+	return static_cast<NumberWire>(Number(a) * Number(b));
 }
-NumberJSWireType Number::mulnJS(NumberJSWireType a, double b) {
-	return static_cast<NumberJSWireType>(Number(a) * Number(b));
+NumberWire Number::mulnJS(NumberWire a, double b) {
+	return static_cast<NumberWire>(Number(a) * Number(b));
 }
-NumberJSWireType Number::addJS(NumberJSWireType a, NumberJSWireType b) {
-	return static_cast<NumberJSWireType>(Number(a) + Number(b));
+NumberWire Number::addJS(NumberWire a, NumberWire b) {
+	return static_cast<NumberWire>(Number(a) + Number(b));
 }
-NumberJSWireType Number::naddJS(double a, NumberJSWireType b) {
-	return static_cast<NumberJSWireType>(Number(a) + Number(b));
+NumberWire Number::naddJS(double a, NumberWire b) {
+	return static_cast<NumberWire>(Number(a) + Number(b));
 }
-NumberJSWireType Number::addnJS(NumberJSWireType a, double b) {
-	return static_cast<NumberJSWireType>(Number(a) + Number(b));
+NumberWire Number::addnJS(NumberWire a, double b) {
+	return static_cast<NumberWire>(Number(a) + Number(b));
 }
-NumberJSWireType Number::subJS(NumberJSWireType a, NumberJSWireType b) {
-	return static_cast<NumberJSWireType>(Number(a) - Number(b));
+NumberWire Number::subJS(NumberWire a, NumberWire b) {
+	return static_cast<NumberWire>(Number(a) - Number(b));
 }
-NumberJSWireType Number::nsubJS(double a, NumberJSWireType b) {
-	return static_cast<NumberJSWireType>(Number(a) - Number(b));
+NumberWire Number::nsubJS(double a, NumberWire b) {
+	return static_cast<NumberWire>(Number(a) - Number(b));
 }
-NumberJSWireType Number::subnJS(NumberJSWireType a, double b) {
-	return static_cast<NumberJSWireType>(Number(a) - Number(b));
+NumberWire Number::subnJS(NumberWire a, double b) {
+	return static_cast<NumberWire>(Number(a) - Number(b));
 }
-NumberJSWireType Number::divJS(NumberJSWireType a, NumberJSWireType b) {
-	return static_cast<NumberJSWireType>(Number(a) / Number(b));
+NumberWire Number::divJS(NumberWire a, NumberWire b) {
+	return static_cast<NumberWire>(Number(a) / Number(b));
 }
-NumberJSWireType Number::ndivJS(double a, NumberJSWireType b) {
-	return static_cast<NumberJSWireType>(Number(a) / Number(b));
+NumberWire Number::ndivJS(double a, NumberWire b) {
+	return static_cast<NumberWire>(Number(a) / Number(b));
 }
-NumberJSWireType Number::divnJS(NumberJSWireType a, double b) {
-	return static_cast<NumberJSWireType>(Number(a) / Number(b));
+NumberWire Number::divnJS(NumberWire a, double b) {
+	return static_cast<NumberWire>(Number(a) / Number(b));
 }
 
-NumberJSWireType Number::nremap(double x, double start_x, double end_x, NumberJSWireType start_new, NumberJSWireType end_new) {
+NumberWire Number::nremap(double x, double start_x, double end_x, NumberWire start_new, NumberWire end_new) {
 	Number s = Number(start_new);
-	return static_cast<NumberJSWireType>(Number(x - start_x / (end_x - start_x)) * (Number(end_new) - s) + s);
+	return static_cast<NumberWire>((Number((x - start_x) / (end_x - start_x)) * (Number(end_new) - s)) + s);
 }
 
-double Number::remapn(NumberJSWireType x, NumberJSWireType start_x, NumberJSWireType end_x, double start_new, double end_new) {
+double Number::remapn(NumberWire x, NumberWire start_x, NumberWire end_x, double start_new, double end_new) {
 	Number s = Number(start_x);
-	return double(Number(x) - s / (Number(end_x) - s)) * (end_new - start_new) + start_new;
+	return double((Number(x) - s) / (Number(end_x) - s)) * (end_new - start_new) + start_new;
+}
+
+NumberWire Number::floorJS(NumberWire a) {
+	return static_cast<NumberWire>(Number(a).floor());
+}
+
+NumberWire Number::ceilJS(NumberWire a) {
+	return static_cast<NumberWire>(Number(a).ceil());
+}
+
+NumberWire Number::modJS(NumberWire a, NumberWire b) {
+	return static_cast<NumberWire>(Number(a).mod(Number(b)));
+}
+
+double Number::modnJS(NumberWire a, double b) {
+	return static_cast<double>(Number(a).mod(Number(b)));
+}
+
+NumberWire Number::nmodJS(double a, NumberWire b) {
+	return static_cast<NumberWire>(Number(a).mod(Number(b)));
 }
 
 } // namespace FixedPoint
 
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(KayoFixedWASM) {
-	value_array<FixedPoint::NumberJSWireType>("KayoNumber")
+	value_array<FixedPoint::NumberWire>("KayoNumber")
 		.element(emscripten::index<0>())
 		.element(emscripten::index<1>());
 	class_<FixedPoint::Number>("KN")
@@ -108,6 +128,11 @@ EMSCRIPTEN_BINDINGS(KayoFixedWASM) {
 		.class_function("toString", &FixedPoint::Number::toStringJS)
 		.class_function("nremap", &FixedPoint::Number::nremap)
 		.class_function("remapn", &FixedPoint::Number::remapn)
+		.class_function("floor", &FixedPoint::Number::floorJS)
+		.class_function("ceil", &FixedPoint::Number::ceilJS)
+		.class_function("mod", &FixedPoint::Number::modJS)
+		.class_function("modn", &FixedPoint::Number::modnJS)
+		.class_function("nmod", &FixedPoint::Number::nmodJS)
 		.class_function("add", &FixedPoint::Number::addJS)
 		.class_function("nadd", &FixedPoint::Number::naddJS)
 		.class_function("addn", &FixedPoint::Number::addnJS)

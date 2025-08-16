@@ -38,7 +38,7 @@ class JSViewControlled {
 	}
 };
 
-typedef JSViewControlled<FixedPoint::Number, FixedPoint::NumberJSWireType> JSVCNumber;
+typedef JSViewControlled<FixedPoint::Number, FixedPoint::NumberWire> JSVCNumber;
 typedef JSViewControlled<std::string, std::string> JSVCString;
 typedef JSViewControlled<bool, bool> JSVCBoolean;
 
