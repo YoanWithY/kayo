@@ -25,7 +25,7 @@ import { NumberInput } from "./components/NumberInput";
 import { FileSystemPane } from "./panes/FileSystemPane";
 import { PerformancePane } from "./panes/PerformancePane";
 import { SplashScreen } from "./panes/SplashScreen";
-import { AnimationPane } from "./panes/AnimationPane";
+import { AnimationPane } from "./panes/animation/AnimationPane";
 
 export type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 

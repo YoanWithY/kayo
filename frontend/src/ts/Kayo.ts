@@ -8,7 +8,7 @@ import { RenderConfig } from "../c/KayoCorePP";
 import { Grid } from "./debug/Grid";
 import { ConcurrentTaskQueue } from "./ressourceManagement/ConcurrentTaskQueue";
 import { Viewport } from "./rendering/Viewport";
-import { AnimationRenderer } from "./ui/panes/AnimationRenderer";
+import { AnimationRenderer } from "./ui/panes/animation/AnimationRenderer";
 
 export interface Renderer {
 	renderViewport(timeStemp: number, viewport: Viewport): void;

@@ -10,6 +10,8 @@ class FCurveKnot {
 	JSVCNumber x;
 	JSVCNumber y;
 	JSVCBoolean mirror;
+	FCurveKnot() = default;
+	constexpr FCurveKnot(FixedPoint::Number x, FixedPoint::Number y, bool mirror) : x(JSVCNumber(x)), y(JSVCNumber(y)), mirror(mirror) {}
 };
 
 class FCurveSegment {
@@ -80,6 +82,13 @@ class FCurve {
 			delete a;
 		for (auto a : this->knots)
 			delete a;
+	}
+
+	constexpr bool hasKnotAt(const FixedPoint::Number& u) const {
+		for (FCurveKnot* k : this->knots)
+			if (k->x.value == u)
+				return true;
+		return false;
 	}
 
 	void insertKnotJS(FixedPoint::NumberWire x, FixedPoint::NumberWire y, bool mirror);

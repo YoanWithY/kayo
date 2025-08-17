@@ -1,7 +1,8 @@
-import { Kayo, Renderer } from "../../Kayo";
-import { linearStep } from "../../math/math";
-import { Viewport2D } from "../../rendering/Viewport";
-import { getWindowZoom } from "../../Utils";
+import { Kayo, Renderer } from "../../../Kayo";
+import { linearStep } from "../../../math/math";
+import { Viewport2D } from "../../../rendering/Viewport";
+import { getWindowZoom } from "../../../Utils";
+import { AnimationPane } from "./AnimationPane";
 
 const gridLineWidth = 1;
 const gridAlpha = 0.1;
@@ -127,13 +128,28 @@ export class AnimationRenderer implements Renderer {
 
 			ctx.beginPath();
 			ctx.lineWidth = dpr;
-			ctx.strokeStyle = "white";
+			ctx.strokeStyle = `white`;
 			ctx.moveTo(points[0], points[1]);
 			for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1]);
 			ctx.stroke();
 
 			wasmx.deleteFloat64Array(doublePtr);
 		}
+
+		ctx.beginPath();
+		ctx.fillStyle = "white";
+		for (let knotIndex = firstIndex - 1; knotIndex <= lastIndex; knotIndex++) {
+			if (knotIndex < 0 || knotIndex >= curve.knots.size()) continue;
+			const knot = curve.knots.get(knotIndex);
+			if (!knot) {
+				console.error("Knot is null!");
+				continue;
+			}
+			const p = (viewport as AnimationPane).mapToTarget(knot.x.getValue(), knot.y.getValue());
+			ctx.moveTo(p[0], p[1]);
+			ctx.arc(p[0], p[1], 3 * dpr, 0, 2 * Math.PI);
+		}
+		ctx.fill();
 	}
 	public registerViewport(viewport: Viewport2D): void {
 		this.registeredViewports.add(viewport);

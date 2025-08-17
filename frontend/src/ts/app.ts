@@ -22,7 +22,7 @@ loadPara.textContent = "Initi UI...";
 initUIClasses();
 
 window.name = "Kayo Main";
-loadPara.textContent = "Initi WebGPU";
+loadPara.textContent = "Init WebGPU";
 const gpux = await GPUX.requestGPUX();
 if (typeof gpux === "string") {
 	alert(`Could not initialize WebGPU with reason: ${gpux}`);
@@ -30,7 +30,7 @@ if (typeof gpux === "string") {
 }
 TextureUtils.init(gpux);
 
-loadPara.textContent = "Initi WASM...";
+loadPara.textContent = "Init WASM...";
 const wasmx = await initWasmx();
 
 const newRootName = randomString(16);

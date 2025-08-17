@@ -9,7 +9,7 @@ import APIPane from "./ApiPane";
 import { ViewportPane } from "./ViewportPane";
 import { FileSystemPane } from "./FileSystemPane";
 import { PerformancePane } from "./PerformancePane";
-import { AnimationPane } from "./AnimationPane";
+import { AnimationPane } from "./animation/AnimationPane";
 
 export default class PaneSelectorPane extends BasicPane {
 	public static createUIElement(win: Window, kayo: Kayo): PaneSelectorPane {

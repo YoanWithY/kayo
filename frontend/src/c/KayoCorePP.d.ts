@@ -18,6 +18,8 @@ export interface FCurveSegment extends ClassHandle {
 }
 
 export interface FCurveKnot extends ClassHandle {
+  x: KayoJSVCNumber;
+  y: KayoJSVCNumber;
 }
 
 export interface FCurveSegmentVector extends ClassHandle {
@@ -40,6 +42,7 @@ export interface FCurve extends ClassHandle {
   segments: FCurveSegmentVector;
   knots: FCurveKnotVector;
   getSegmentIndexAt(_0: KayoNumber): number;
+  insertKnot(_0: KayoNumber, _1: KayoNumber, _2: boolean): void;
 }
 
 export interface TimeLine extends ClassHandle {
