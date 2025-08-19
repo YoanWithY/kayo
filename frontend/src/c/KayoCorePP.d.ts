@@ -222,7 +222,10 @@ export interface NonUniformSplineCurveSegment1D extends ClassHandle {
   sampleRangeAuto(_0: KayoNumber, _1: KayoNumber, _2: KayoNumber, _3: KayoNumber, _4: number, _5: number, _6: number, _7: number, _8: number): KayoPointer;
 }
 
-export interface ConstantNonUniformSplineCurve1D extends NonUniformSplineCurveSegment1D {
+export interface ConstantNonUniformSplineCurveSegment1D extends NonUniformSplineCurveSegment1D {
+}
+
+export interface LinearNonUniformSplineCurveSegment1D extends NonUniformSplineCurveSegment1D {
 }
 
 export interface ImageData extends ClassHandle {
@@ -326,7 +329,8 @@ interface EmbindModule {
   UniformSplineCurveSegment1D: {};
   ConstantUniformSplineCurve1D: {};
   NonUniformSplineCurveSegment1D: {};
-  ConstantNonUniformSplineCurve1D: {};
+  ConstantNonUniformSplineCurveSegment1D: {};
+  LinearNonUniformSplineCurveSegment1D: {};
   ImageData: {
     fromImageData(_0: EmbindString, _1: boolean): ImageData | null;
   };

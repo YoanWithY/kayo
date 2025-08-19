@@ -6088,7 +6088,7 @@ MEMFS.doesNotExistError = new FS.ErrnoError(44);
 var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied, _environ_get, _environ_sizes_get, _fd_close, _fd_read, _fd_seek, _fd_write ];
 
 var ASM_CONSTS = {
-  56576: ($0, $1, $2) => {
+  56880: ($0, $1, $2) => {
     window.kayo.taskQueue.taskFinished($0, {
       byteOffset: $1,
       byteLength: $2

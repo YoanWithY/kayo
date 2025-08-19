@@ -82,9 +82,45 @@ class ConstantNonUniformSplineCurveSegment : public NonUniformSplineCurveSegment
 	}
 };
 
+template <typename T>
+class LinearNonUniformSplineCurveSegment : public NonUniformSplineCurveSegment<T> {
+  private:
+	T value_start;
+	T value_end;
+
+  public:
+	constexpr LinearNonUniformSplineCurveSegment(Number knot_start, Number knot_end, T value_start, T value_end) : NonUniformSplineCurveSegment<T>(knot_start, knot_end), value_start(value_start), value_end(value_end) {}
+	constexpr T sampleNonUniform(Number u) const override {
+		return lerp(this->value_start, this->value_end, (u - this->knot_start) / (this->knot_end - this->knot_start));
+	}
+	kayo::memUtils::KayoPointer sampleRangeAutoJS(
+		NumberWire src_start_x_wr,
+		NumberWire src_end_x_wr,
+		NumberWire src_start_y_wr,
+		NumberWire src_end_y_wr,
+		double dst_start_x,
+		double dst_end_x,
+		double dst_start_y,
+		double dst_end_y,
+		double _) const override;
+	constexpr void setValueStart(const T& v) {
+		this->value_start = v;
+	}
+	constexpr T getValueStart() const {
+		return this->value_start;
+	}
+	constexpr void setValueEnd(const T& v) {
+		this->value_end = v;
+	}
+	constexpr T getValueEnd() const {
+		return this->value_end;
+	}
+};
+
 typedef UniformSplineCurveSegment<Number> UniformSplineCurveSegment1D;
 typedef ConstantUniformSplineCurveSegment<Number> ConstantUniformSplineCurveSegment1D;
 typedef NonUniformSplineCurveSegment<Number> NonUniformSplineCurveSegment1D;
 typedef ConstantNonUniformSplineCurveSegment<Number> ConstantNonUniformSplineCurveSegment1D;
+typedef LinearNonUniformSplineCurveSegment<Number> LinearNonUniformSplineCurveSegment1D;
 
 } // namespace FixedPoint

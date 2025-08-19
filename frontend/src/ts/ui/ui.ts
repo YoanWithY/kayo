@@ -26,6 +26,7 @@ import { FileSystemPane } from "./panes/FileSystemPane";
 import { PerformancePane } from "./panes/PerformancePane";
 import { SplashScreen } from "./panes/SplashScreen";
 import { AnimationPane } from "./panes/animation/AnimationPane";
+import { RadioButton, RadioButtonWrapper } from "./components/RadioButton";
 
 export type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 
@@ -39,6 +40,8 @@ export function initUI() {
 	window.customElements.define(PaneStripe.getDomClass(), PaneStripe);
 	window.customElements.define(Checkbox.getDomClass(), Checkbox);
 	window.customElements.define(StateSelectBox.getDomClass(), StateSelectBox);
+	window.customElements.define(RadioButtonWrapper.getDomClass(), RadioButtonWrapper);
+	window.customElements.define(RadioButton.getDomClass(), RadioButton);
 	window.customElements.define(SelectBox.getDomClass(), SelectBox);
 	window.customElements.define(PTPTextInput.getDomClass(), PTPTextInput, { extends: "form" });
 	window.customElements.define(PTPChatContent.getDomClass(), PTPChatContent);

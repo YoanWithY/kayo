@@ -12,7 +12,6 @@ export abstract class AnimationTool {
 	public abstract handlePointerDown(e: PointerEvent): void;
 	public abstract handlePointerUp(e: PointerEvent): void;
 	public abstract handlePointerMove(e: PointerEvent): void;
-	public abstract handleWheel(e: WheelEvent): void;
 }
 
 export class ViewTool extends AnimationTool {
@@ -104,7 +103,6 @@ export class AddKnotTool extends AnimationTool {
 	}
 	public handlePointerUp(_: PointerEvent): void {}
 	public handlePointerMove(_: PointerEvent): void {}
-	public handleWheel(_: WheelEvent): void {}
 	public static get toolname() {
 		return "add";
 	}
@@ -114,7 +112,6 @@ export class EditTool extends AnimationTool {
 	public handlePointerDown(_: PointerEvent): void {}
 	public handlePointerUp(_: PointerEvent): void {}
 	public handlePointerMove(_: PointerEvent): void {}
-	public handleWheel(_: WheelEvent): void {}
 	public static get toolname() {
 		return "edit";
 	}
@@ -122,6 +119,6 @@ export class EditTool extends AnimationTool {
 
 export const animationTools = {
 	[ViewTool.toolname]: ViewTool,
-	[AddKnotTool.toolname]: ViewTool,
-	[EditTool.toolname]: ViewTool,
+	[AddKnotTool.toolname]: AddKnotTool,
+	[EditTool.toolname]: EditTool,
 };

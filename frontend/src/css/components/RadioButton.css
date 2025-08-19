@@ -1,0 +1,29 @@
+radio-button {
+    pointer-events: all;
+    display: flex;
+    padding: 10px;
+    backdrop-filter: blur(2px);
+    aspect-ratio: 1 / 1;
+    background-color: rgba(0,0,0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+}
+
+radio-button:state(active) {
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background-color: transparent;
+
+}
+
+radio-button-wrapper {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    left: 10px;
+    gap: 2px;
+    top: 10px;
+    flex: 1 0 0;
+    background: none;
+    overflow: auto;
+}

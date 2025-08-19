@@ -3,8 +3,9 @@ import BasicPane from "../BasicPane";
 import animationPaneTemplate from "./AnimationPane.json";
 import { Viewport2D } from "../../../rendering/Viewport";
 import { KayoNumber } from "../../../../c/KayoCorePP";
-import { AddKnotTool, AnimationTool, ViewTool } from "./AnimationTools";
+import { AnimationTool, animationTools, ViewTool } from "./AnimationTools";
 import { clamp } from "../../../math/math";
+import { RadioButton, RadioButtonWrapper } from "../../components/RadioButton";
 
 export type PointerEventMap = { [key: number]: PointerEvent };
 
@@ -16,6 +17,7 @@ export class AnimationPane extends BasicPane implements Viewport2D {
 	private _contentScale!: [number, number];
 	private _viewTool!: ViewTool;
 	private _activeTool!: AnimationTool;
+	private _toolRadio!: RadioButtonWrapper;
 
 	private _resizeCallback = (e: ResizeObserverEntry[]) => {
 		const size = e[0].devicePixelContentBoxSize[0];
@@ -143,7 +145,18 @@ export class AnimationPane extends BasicPane implements Viewport2D {
 		p._contentScale = [1, -1];
 		p.appendChild(p._canvas);
 		p._viewTool = new ViewTool(kayo, p);
-		p._activeTool = new AddKnotTool(kayo, p);
+		p._toolRadio = RadioButtonWrapper.createRadioButtonWrapper(win);
+
+		const radioButtons = [];
+		for (const toolName in animationTools) {
+			const radioButtonCallback = () => {
+				p._activeTool = new animationTools[toolName](kayo, p);
+			};
+			radioButtons.push(RadioButton.createRadioButton(win, p._toolRadio, toolName, radioButtonCallback));
+		}
+		p._toolRadio.setButtons(radioButtons);
+		p._toolRadio.setActive(ViewTool.toolname);
+		p.appendChild(p._toolRadio);
 		return p;
 	}
 

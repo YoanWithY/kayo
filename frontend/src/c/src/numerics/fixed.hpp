@@ -477,4 +477,8 @@ constexpr Number max(const Number& a, const Number& b) {
 	return a >= b ? a : b;
 }
 
+constexpr Number lerp(const Number& v1, const Number& v2, const Number& a) {
+	return ((1 - a) * v1) + (a * v2);
+}
+
 } // namespace FixedPoint

@@ -36,6 +36,7 @@ viewport-pane>canvas {
 }
 
 animation-pane {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 1px;

@@ -30,10 +30,10 @@ class FCurveSegment {
 class FCurveConstantSegment : public FCurveSegment {
   public:
 	constexpr FCurveConstantSegment(FixedPoint::ConstantNonUniformSplineCurveSegment1D* curve_segment) : FCurveSegment(curve_segment) {}
-	virtual constexpr FixedPoint::ConstantNonUniformSplineCurveSegment1D* getCurveSegment() override {
+	constexpr FixedPoint::ConstantNonUniformSplineCurveSegment1D* getCurveSegment() override {
 		return dynamic_cast<FixedPoint::ConstantNonUniformSplineCurveSegment1D*>(this->curve_segment);
 	}
-	virtual inline FCurveConstantSegment* split(FixedPoint::Number u, FixedPoint::Number y, bool _) override {
+	inline FCurveConstantSegment* split(FixedPoint::Number u, FixedPoint::Number y, bool _) override {
 		if (u <= this->curve_segment->knot_start || u >= this->curve_segment->knot_end)
 			return nullptr;
 
@@ -43,6 +43,26 @@ class FCurveConstantSegment : public FCurveSegment {
 			y);
 		this->curve_segment->knot_end = u;
 		auto new_seg = new FCurveConstantSegment(curve_seg);
+		return new_seg;
+	}
+};
+
+class FCurveLinearSegment : public FCurveSegment {
+	constexpr FCurveLinearSegment(FixedPoint::LinearNonUniformSplineCurveSegment1D* curve_segment) : FCurveSegment(curve_segment) {}
+	constexpr FixedPoint::LinearNonUniformSplineCurveSegment1D* getCurveSegment() override {
+		return dynamic_cast<FixedPoint::LinearNonUniformSplineCurveSegment1D*>(this->curve_segment);
+	}
+	inline FCurveLinearSegment* split(FixedPoint::Number u, FixedPoint::Number y, bool _) override {
+		if (u <= this->curve_segment->knot_start || u >= this->curve_segment->knot_end)
+			return nullptr;
+
+		auto curve_seg = new FixedPoint::LinearNonUniformSplineCurveSegment1D(
+			u,
+			this->curve_segment->knot_end,
+			y,
+			this->getCurveSegment()->getValueEnd());
+		this->curve_segment->knot_end = u;
+		auto new_seg = new FCurveLinearSegment(curve_seg);
 		return new_seg;
 	}
 };
