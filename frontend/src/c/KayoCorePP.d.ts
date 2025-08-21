@@ -13,13 +13,30 @@ export interface ClassHandle {
   isDeleted(): boolean;
   clone(): this;
 }
+export interface FCurveConstantSegmentModeValue<T extends number> {
+  value: T;
+}
+export type FCurveConstantSegmentMode = FCurveConstantSegmentModeValue<0>|FCurveConstantSegmentModeValue<1>|FCurveConstantSegmentModeValue<2>;
+
+export interface FCurveSegmentTypeValue<T extends number> {
+  value: T;
+}
+export type FCurveSegmentType = FCurveSegmentTypeValue<0>|FCurveSegmentTypeValue<1>|FCurveSegmentTypeValue<2>;
+
 export interface FCurveSegment extends ClassHandle {
+  readonly type: FCurveSegmentType;
   getCurveSegment(): NonUniformSplineCurveSegment1D | null;
 }
 
+export interface FCurveConstantSegment extends FCurveSegment {
+  valueMode: FCurveConstantSegmentMode;
+  value: KayoNumber;
+  setPointedValue(_0: KayoNumber): void;
+}
+
 export interface FCurveKnot extends ClassHandle {
-  x: KayoJSVCNumber;
-  y: KayoJSVCNumber;
+  x: KayoNumber;
+  y: KayoNumber;
 }
 
 export interface FCurveSegmentVector extends ClassHandle {
@@ -216,8 +233,6 @@ export interface ConstantUniformSplineCurve1D extends UniformSplineCurveSegment1
 }
 
 export interface NonUniformSplineCurveSegment1D extends ClassHandle {
-  readonly knotStart: KayoNumber;
-  readonly knotEnd: KayoNumber;
   sampleNonUniform(_0: KN): KN;
   sampleRangeAuto(_0: KayoNumber, _1: KayoNumber, _2: KayoNumber, _3: KayoNumber, _4: number, _5: number, _6: number, _7: number, _8: number): KayoPointer;
 }
@@ -254,7 +269,10 @@ export type KayoPointer = {
 export type KayoNumber = [ bigint, bigint ];
 
 interface EmbindModule {
+  FCurveConstantSegmentMode: {VALUE: FCurveConstantSegmentModeValue<0>, LEFT_KNOT: FCurveConstantSegmentModeValue<1>, RIGHT_KNOT: FCurveConstantSegmentModeValue<2>};
+  FCurveSegmentType: {CONSTANT: FCurveSegmentTypeValue<0>, LINEAR: FCurveSegmentTypeValue<1>, HERMITE: FCurveSegmentTypeValue<2>};
   FCurveSegment: {};
+  FCurveConstantSegment: {};
   FCurveKnot: {};
   FCurveSegmentVector: {
     new(): FCurveSegmentVector;

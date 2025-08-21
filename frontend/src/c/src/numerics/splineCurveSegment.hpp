@@ -7,8 +7,6 @@ namespace FixedPoint {
 template <typename T>
 class UniformSplineCurveSegment {
   public:
-	Number knot_start;
-	Number knot_end;
 	virtual T sampleUniform(Number t) const = 0;
 	virtual ~UniformSplineCurveSegment() = default;
 };
@@ -28,11 +26,11 @@ class ConstantUniformSplineCurveSegment : public UniformSplineCurveSegment<T> {
 template <typename T>
 class NonUniformSplineCurveSegment {
   public:
-	Number knot_start;
-	Number knot_end;
-	constexpr NonUniformSplineCurveSegment(Number knot_start, Number knot_end) : knot_start(knot_start), knot_end(knot_end) {}
+	Number* knot_start;
+	Number* knot_end;
+	constexpr NonUniformSplineCurveSegment(Number* knot_start, Number* knot_end) : knot_start(knot_start), knot_end(knot_end) {}
 	constexpr bool contains(Number u) const noexcept {
-		return this->knot_start <= u && this->knot_end >= u;
+		return *(this->knot_start) <= u && *(this->knot_end) >= u;
 	}
 	virtual inline kayo::memUtils::KayoPointer sampleRangeAutoJS(
 		NumberWire src_start_x_wr,
@@ -46,23 +44,15 @@ class NonUniformSplineCurveSegment {
 		double resolution) const = 0;
 	virtual T sampleNonUniform(Number t) const = 0;
 	virtual ~NonUniformSplineCurveSegment() = default;
-	constexpr FixedPoint::NumberWire getKnotStartJS() const noexcept {
-		return static_cast<NumberWire>(this->knot_start);
-	}
-	constexpr FixedPoint::NumberWire getKnotEndtJS() const noexcept {
-		return static_cast<NumberWire>(this->knot_end);
-	}
 };
 
 template <typename T>
 class ConstantNonUniformSplineCurveSegment : public NonUniformSplineCurveSegment<T> {
-  private:
-	T value;
-
   public:
-	constexpr ConstantNonUniformSplineCurveSegment(Number knot_start, Number knot_end, T value) : NonUniformSplineCurveSegment<T>(knot_start, knot_end), value(value) {}
+	T* value;
+	constexpr ConstantNonUniformSplineCurveSegment(Number* knot_start, Number* knot_end, T* value) : NonUniformSplineCurveSegment<T>(knot_start, knot_end), value(value) {}
 	constexpr T sampleNonUniform(Number _) const override {
-		return this->value;
+		return *(this->value);
 	}
 	kayo::memUtils::KayoPointer sampleRangeAutoJS(
 		NumberWire src_start_x_wr,
@@ -74,12 +64,6 @@ class ConstantNonUniformSplineCurveSegment : public NonUniformSplineCurveSegment
 		double dst_start_y,
 		double dst_end_y,
 		double _) const override;
-	constexpr void setValue(const T& v) {
-		this->value = v;
-	}
-	constexpr T getValue() const {
-		return this->value;
-	}
 };
 
 template <typename T>
@@ -89,9 +73,9 @@ class LinearNonUniformSplineCurveSegment : public NonUniformSplineCurveSegment<T
 	T value_end;
 
   public:
-	constexpr LinearNonUniformSplineCurveSegment(Number knot_start, Number knot_end, T value_start, T value_end) : NonUniformSplineCurveSegment<T>(knot_start, knot_end), value_start(value_start), value_end(value_end) {}
+	constexpr LinearNonUniformSplineCurveSegment(Number* knot_start, Number* knot_end, T* value_start, T* value_end) : NonUniformSplineCurveSegment<T>(knot_start, knot_end), value_start(value_start), value_end(value_end) {}
 	constexpr T sampleNonUniform(Number u) const override {
-		return lerp(this->value_start, this->value_end, (u - this->knot_start) / (this->knot_end - this->knot_start));
+		return lerp(this->value_start, this->value_end, (u - *this->knot_start) / (*this->knot_end - *this->knot_start));
 	}
 	kayo::memUtils::KayoPointer sampleRangeAutoJS(
 		NumberWire src_start_x_wr,

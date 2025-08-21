@@ -35,3 +35,56 @@ export function objectToUl(win: Window, obj: any): HTMLElement {
 	}
 	return ul;
 }
+
+/**
+ * The button property as described by https://www.w3.org/TR/pointerevents/#the-buttons-property
+ */
+export class PointerButtons {
+	/**
+	 * Button 1, Primary mouse button, touch contact, pen contact.
+	 */
+	public static get PRIMARY() {
+		return 1;
+	}
+	/**
+	 * Button 2, Secondary mouse button, pen barrel button
+	 */
+	public static get SECONDARY() {
+		return 2;
+	}
+	/**
+	 * Button 3, Middle mouse button.
+	 */
+	public static get MIDDEL() {
+		return 4;
+	}
+	/**
+	 * Button 4, X1 mouse (back)
+	 */
+	public static get BACK() {
+		return 8;
+	}
+	/**
+	 * BUtton 5, X2 mouse (forward)
+	 */
+	public static get FORWARD() {
+		return 16;
+	}
+	/**
+	 * Pen eraser button
+	 */
+	public static get ERASER() {
+		return 32;
+	}
+}
+
+/**
+ * You should use {@link PointerButtons} for named values.
+ */
+export function isPointerButtonDown(e: PointerEvent, button: number): boolean {
+	return (e.buttons & button) > 0;
+}
+
+export function isNoPointerButtonDown(e: PointerEvent): boolean {
+	return e.buttons === 0;
+}

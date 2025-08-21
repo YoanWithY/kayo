@@ -1,3 +1,4 @@
+import { FCurveSegment } from "../../../../c/KayoCorePP";
 import { Kayo, Renderer } from "../../../Kayo";
 import { linearStep } from "../../../math/math";
 import { Viewport2D } from "../../../rendering/Viewport";
@@ -76,7 +77,7 @@ export class AnimationRenderer implements Renderer {
 		ctx.globalAlpha = 1.0;
 	}
 
-	public renderViewport(_: number, viewport: Viewport2D): void {
+	public renderViewport(_: number, viewport: AnimationPane): void {
 		const wasmx = this._kayo.wasmx;
 		const KN = this._kayo.wasmx.KN;
 		const ctx = viewport.canvasContext;
@@ -102,17 +103,13 @@ export class AnimationRenderer implements Renderer {
 			return;
 		}
 
-		for (let segmentIndex = firstIndex; segmentIndex <= lastIndex; segmentIndex++) {
-			const segment = curve.segments.get(segmentIndex);
-			if (!segment) {
-				console.error("Curve segment is null!");
-				continue;
-			}
+		const drawSegment = (segment: FCurveSegment) => {
 			const curveSegment = segment.getCurveSegment();
 			if (!curveSegment) {
 				console.error("Curve segment curve is null!");
-				continue;
+				return;
 			}
+
 			const doublePtr = curveSegment.sampleRangeAuto(
 				startXa,
 				endXa,
@@ -127,17 +124,38 @@ export class AnimationRenderer implements Renderer {
 			const points = wasmx.getFloat64View(doublePtr);
 
 			ctx.beginPath();
-			ctx.lineWidth = dpr;
-			ctx.strokeStyle = `white`;
 			ctx.moveTo(points[0], points[1]);
 			for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1]);
 			ctx.stroke();
 
 			wasmx.deleteFloat64Array(doublePtr);
+		};
+
+		if (viewport.activeSegment) {
+			ctx.globalAlpha = 0.5;
+			ctx.lineWidth = dpr * 5;
+			ctx.strokeStyle = "yellow";
+			ctx.lineCap = "round";
+			drawSegment(viewport.activeSegment);
+		}
+
+		// regular segments
+		ctx.globalAlpha = 0.8;
+		ctx.lineWidth = dpr;
+		ctx.strokeStyle = "white";
+		ctx.lineCap = "round";
+		for (let segmentIndex = firstIndex; segmentIndex <= lastIndex; segmentIndex++) {
+			const segment = curve.segments.get(segmentIndex);
+			if (!segment) {
+				console.error("Curve segment is null!");
+				continue;
+			}
+			drawSegment(segment);
 		}
 
 		ctx.beginPath();
 		ctx.fillStyle = "white";
+		ctx.globalAlpha = 1;
 		for (let knotIndex = firstIndex - 1; knotIndex <= lastIndex; knotIndex++) {
 			if (knotIndex < 0 || knotIndex >= curve.knots.size()) continue;
 			const knot = curve.knots.get(knotIndex);
@@ -145,7 +163,7 @@ export class AnimationRenderer implements Renderer {
 				console.error("Knot is null!");
 				continue;
 			}
-			const p = (viewport as AnimationPane).mapToTarget(knot.x.getValue(), knot.y.getValue());
+			const p = (viewport as AnimationPane).mapToTarget(knot.x, knot.y);
 			ctx.moveTo(p[0], p[1]);
 			ctx.arc(p[0], p[1], 3 * dpr, 0, 2 * Math.PI);
 		}

@@ -2670,6 +2670,76 @@ var EmValType = {
 
 var __embind_register_emval = rawType => registerType(rawType, EmValType);
 
+var enumReadValueFromPointer = (name, width, signed) => {
+  switch (width) {
+   case 1:
+    return signed ? function(pointer) {
+      return this["fromWireType"](GROWABLE_HEAP_I8()[pointer]);
+    } : function(pointer) {
+      return this["fromWireType"](GROWABLE_HEAP_U8()[pointer]);
+    };
+
+   case 2:
+    return signed ? function(pointer) {
+      return this["fromWireType"](GROWABLE_HEAP_I16()[((pointer) >> 1)]);
+    } : function(pointer) {
+      return this["fromWireType"](GROWABLE_HEAP_U16()[((pointer) >> 1)]);
+    };
+
+   case 4:
+    return signed ? function(pointer) {
+      return this["fromWireType"](GROWABLE_HEAP_I32()[((pointer) >> 2)]);
+    } : function(pointer) {
+      return this["fromWireType"](GROWABLE_HEAP_U32()[((pointer) >> 2)]);
+    };
+
+   default:
+    throw new TypeError(`invalid integer width (${width}): ${name}`);
+  }
+};
+
+/** @suppress {globalThis} */ var __embind_register_enum = (rawType, name, size, isSigned) => {
+  name = readLatin1String(name);
+  function ctor() {}
+  ctor.values = {};
+  registerType(rawType, {
+    name,
+    constructor: ctor,
+    "fromWireType": function(c) {
+      return this.constructor.values[c];
+    },
+    "toWireType": (destructors, c) => c.value,
+    argPackAdvance: GenericWireTypeSize,
+    "readValueFromPointer": enumReadValueFromPointer(name, size, isSigned),
+    destructorFunction: null
+  });
+  exposePublicSymbol(name, ctor);
+};
+
+var requireRegisteredType = (rawType, humanName) => {
+  var impl = registeredTypes[rawType];
+  if (undefined === impl) {
+    throwBindingError(`${humanName} has unknown type ${getTypeName(rawType)}`);
+  }
+  return impl;
+};
+
+var __embind_register_enum_value = (rawEnumType, name, enumValue) => {
+  var enumType = requireRegisteredType(rawEnumType, "enum");
+  name = readLatin1String(name);
+  var Enum = enumType.constructor;
+  var Value = Object.create(enumType.constructor.prototype, {
+    value: {
+      value: enumValue
+    },
+    constructor: {
+      value: createNamedFunction(`${enumType.name}_${name}`, function() {})
+    }
+  });
+  Enum.values[enumValue] = Value;
+  Enum[name] = Value;
+};
+
 var floatReadValueFromPointer = (name, width) => {
   switch (width) {
    case 4:
@@ -3289,14 +3359,6 @@ var __emscripten_thread_cleanup = thread => {
 };
 
 var __emscripten_thread_set_strongref = thread => {};
-
-var requireRegisteredType = (rawType, humanName) => {
-  var impl = registeredTypes[rawType];
-  if (undefined === impl) {
-    throwBindingError(`${humanName} has unknown type ${getTypeName(rawType)}`);
-  }
-  return impl;
-};
 
 var __emval_take_value = (type, arg) => {
   type = requireRegisteredType(type, "_emval_take_value");
@@ -6088,7 +6150,7 @@ MEMFS.doesNotExistError = new FS.ErrnoError(44);
 var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied, _environ_get, _environ_sizes_get, _fd_close, _fd_read, _fd_seek, _fd_write ];
 
 var ASM_CONSTS = {
-  56880: ($0, $1, $2) => {
+  57296: ($0, $1, $2) => {
     window.kayo.taskQueue.taskFinished($0, {
       byteOffset: $1,
       byteLength: $2
@@ -6121,6 +6183,8 @@ function assignWasmImports() {
     /** @export */ _embind_register_class_function: __embind_register_class_function,
     /** @export */ _embind_register_class_property: __embind_register_class_property,
     /** @export */ _embind_register_emval: __embind_register_emval,
+    /** @export */ _embind_register_enum: __embind_register_enum,
+    /** @export */ _embind_register_enum_value: __embind_register_enum_value,
     /** @export */ _embind_register_float: __embind_register_float,
     /** @export */ _embind_register_function: __embind_register_function,
     /** @export */ _embind_register_integer: __embind_register_integer,

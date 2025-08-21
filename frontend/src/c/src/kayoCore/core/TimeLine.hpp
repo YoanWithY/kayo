@@ -5,13 +5,25 @@
 
 namespace kayo {
 
+class FCurveSegment;
+
+enum class FCurveSegmentType {
+	CONSTANT,
+	LINEAR,
+	HERMITE,
+};
+
 class FCurveKnot {
   public:
-	JSVCNumber x;
-	JSVCNumber y;
-	JSVCBoolean mirror;
-	FCurveKnot() = default;
-	constexpr FCurveKnot(FixedPoint::Number x, FixedPoint::Number y, bool mirror) : x(JSVCNumber(x)), y(JSVCNumber(y)), mirror(mirror) {}
+	FixedPoint::Number x;
+	FixedPoint::Number y;
+	bool mirror;
+	constexpr FCurveKnot() : x(0), y(0), mirror(false) {}
+	constexpr FCurveKnot(FixedPoint::Number x, FixedPoint::Number y, bool mirror) : x(x), y(y), mirror(mirror) {}
+	FixedPoint::NumberWire getXJS() const;
+	FixedPoint::NumberWire getYJS() const;
+	void setXJS(FixedPoint::NumberWire x);
+	void setYJS(FixedPoint::NumberWire y);
 };
 
 class FCurveSegment {
@@ -19,66 +31,75 @@ class FCurveSegment {
 	FixedPoint::NonUniformSplineCurveSegment1D* curve_segment;
 
   public:
-	constexpr FCurveSegment(FixedPoint::NonUniformSplineCurveSegment1D* curve_segment) : curve_segment(curve_segment) {}
+	const FCurveSegmentType type;
+	FCurveKnot* left_knot;
+	FCurveKnot* right_knot;
 	virtual ~FCurveSegment() = default;
+	constexpr FCurveSegment(FixedPoint::NonUniformSplineCurveSegment1D* curve_segment, FCurveSegmentType type) : curve_segment(curve_segment), type(type) {}
 	virtual constexpr FixedPoint::NonUniformSplineCurveSegment1D* getCurveSegment() {
 		return this->curve_segment;
 	}
-	virtual FCurveSegment* split(FixedPoint::Number u, FixedPoint::Number y, bool mirror) = 0;
+	virtual FCurveSegment* split(FCurveKnot* new_knot) = 0;
 };
 
+enum class FCurveConstantSegmentMode {
+	VALUE,
+	LEFT_KNOT,
+	RIGHT_KNOT
+};
 class FCurveConstantSegment : public FCurveSegment {
+
   public:
-	constexpr FCurveConstantSegment(FixedPoint::ConstantNonUniformSplineCurveSegment1D* curve_segment) : FCurveSegment(curve_segment) {}
+	FCurveConstantSegmentMode value_mode = FCurveConstantSegmentMode::VALUE;
+	FixedPoint::Number value;
+	constexpr FCurveConstantSegment(FixedPoint::ConstantNonUniformSplineCurveSegment1D* curve_segment) : FCurveSegment(curve_segment, FCurveSegmentType::CONSTANT) {}
 	constexpr FixedPoint::ConstantNonUniformSplineCurveSegment1D* getCurveSegment() override {
 		return dynamic_cast<FixedPoint::ConstantNonUniformSplineCurveSegment1D*>(this->curve_segment);
 	}
-	inline FCurveConstantSegment* split(FixedPoint::Number u, FixedPoint::Number y, bool _) override {
-		if (u <= this->curve_segment->knot_start || u >= this->curve_segment->knot_end)
-			return nullptr;
-
-		auto curve_seg = new FixedPoint::ConstantNonUniformSplineCurveSegment1D(
-			u,
+	inline FCurveConstantSegment* split(FCurveKnot* new_knot) override {
+		auto new_curve_seg = new FixedPoint::ConstantNonUniformSplineCurveSegment1D(
+			&(new_knot->x),
 			this->curve_segment->knot_end,
-			y);
-		this->curve_segment->knot_end = u;
-		auto new_seg = new FCurveConstantSegment(curve_seg);
+			&(new_knot->y));
+		this->curve_segment->knot_end = &(new_knot->x);
+
+		auto new_seg = new FCurveConstantSegment(new_curve_seg);
+		new_seg->value_mode = FCurveConstantSegmentMode::RIGHT_KNOT;
+		new_seg->left_knot = new_knot;
+		new_seg->right_knot = this->right_knot;
+		this->right_knot = new_knot;
 		return new_seg;
 	}
+	void setPointedValueJS(FixedPoint::NumberWire v_wr);
+	void setValueJS(FixedPoint::NumberWire v_wr);
+	FixedPoint::NumberWire getValueJS() const;
 };
 
 class FCurveLinearSegment : public FCurveSegment {
-	constexpr FCurveLinearSegment(FixedPoint::LinearNonUniformSplineCurveSegment1D* curve_segment) : FCurveSegment(curve_segment) {}
+	constexpr FCurveLinearSegment(FixedPoint::LinearNonUniformSplineCurveSegment1D* curve_segment) : FCurveSegment(curve_segment, FCurveSegmentType::LINEAR) {}
 	constexpr FixedPoint::LinearNonUniformSplineCurveSegment1D* getCurveSegment() override {
 		return dynamic_cast<FixedPoint::LinearNonUniformSplineCurveSegment1D*>(this->curve_segment);
 	}
-	inline FCurveLinearSegment* split(FixedPoint::Number u, FixedPoint::Number y, bool _) override {
-		if (u <= this->curve_segment->knot_start || u >= this->curve_segment->knot_end)
-			return nullptr;
-
-		auto curve_seg = new FixedPoint::LinearNonUniformSplineCurveSegment1D(
-			u,
-			this->curve_segment->knot_end,
-			y,
-			this->getCurveSegment()->getValueEnd());
-		this->curve_segment->knot_end = u;
-		auto new_seg = new FCurveLinearSegment(curve_seg);
-		return new_seg;
+	inline FCurveLinearSegment* split(FCurveKnot* _) override {
+		return nullptr;
 	}
 };
 
 class FCurve {
   private:
 	FixedPoint::NonUniformSplineCurve1D curve;
+	FixedPoint::Number start = FixedPoint::MIN_NUMBER;
+	FixedPoint::Number end = FixedPoint::MAX_NUMBER;
 
   public:
 	std::vector<FCurveSegment*> segments;
 	std::vector<FCurveKnot*> knots;
 
 	inline void create() {
-		FixedPoint::ConstantNonUniformSplineCurveSegment1D* seg1 = new FixedPoint::ConstantNonUniformSplineCurveSegment1D(FixedPoint::MIN_NUMBER, FixedPoint::MAX_NUMBER, 0);
-		this->curve.segments.push_back(seg1);
+		FixedPoint::ConstantNonUniformSplineCurveSegment1D* seg1 = new FixedPoint::ConstantNonUniformSplineCurveSegment1D(&(this->start), &(this->end), nullptr);
 		FCurveConstantSegment* fseg1 = new FCurveConstantSegment(seg1);
+		seg1->value = &(fseg1->value);
+		this->curve.segments.push_back(seg1);
 		this->segments.push_back(fseg1);
 	}
 
@@ -106,7 +127,7 @@ class FCurve {
 
 	constexpr bool hasKnotAt(const FixedPoint::Number& u) const {
 		for (FCurveKnot* k : this->knots)
-			if (k->x.value == u)
+			if (k->x == u)
 				return true;
 		return false;
 	}

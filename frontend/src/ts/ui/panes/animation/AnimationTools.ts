@@ -1,3 +1,4 @@
+import { FCurveConstantSegment } from "../../../../c/KayoCorePP";
 import { Kayo } from "../../../Kayo";
 import { getWindowZoom } from "../../../Utils";
 import { AnimationPane } from "./AnimationPane";
@@ -39,7 +40,7 @@ export class ViewTool extends AnimationTool {
 			const movementY = (e.offsetY - prevPointer.offsetY) * dpr;
 			origin[0] = KN.subn(origin[0], movementX / contentScale[0]);
 			origin[1] = KN.subn(origin[1], movementY / contentScale[1]);
-			this._kayo.project.requestAnimationFrameWith(this._animationPane);
+			this._kayo.project.fullRerender();
 		} else if (pointeCount === 2) {
 			const thisPointer = e;
 			const prevPointer = previousPointerEvents[thisPointer.pointerId];
@@ -67,7 +68,7 @@ export class ViewTool extends AnimationTool {
 			const newSource = this._animationPane.mapToSource(thisPointer.offsetX * dpr, thisPointer.offsetY * dpr);
 			origin[0] = KN.add(origin[0], KN.sub(oldSource[0], newSource[0]));
 			origin[1] = KN.add(origin[1], KN.sub(oldSource[1], newSource[1]));
-			this._kayo.project.requestAnimationFrameWith(this._animationPane);
+			this._kayo.project.fullRerender();
 		}
 	}
 	public handleWheel(e: WheelEvent): void {
@@ -85,7 +86,7 @@ export class ViewTool extends AnimationTool {
 			const newSource = this._animationPane.mapToSource(e.offsetX * dpr, e.offsetY * dpr);
 			origin[0] = KN.add(origin[0], KN.sub(oldSource[0], newSource[0]));
 			origin[1] = KN.add(origin[1], KN.sub(oldSource[1], newSource[1]));
-			this._kayo.project.requestAnimationFrameWith(this._animationPane);
+			this._kayo.project.fullRerender();
 		}
 	}
 	public static get toolname() {
@@ -99,7 +100,7 @@ export class AddKnotTool extends AnimationTool {
 		const source = this._animationPane.mapToSource(e.offsetX * dpr, e.offsetY * dpr);
 		const curve = this._kayo.wasmx.kayoInstance.project.timeLine.simulationTimeVelocity;
 		curve.insertKnot(source[0], source[1], true);
-		this._kayo.project.requestAnimationFrameWith(this._animationPane);
+		this._kayo.project.fullRerender();
 	}
 	public handlePointerUp(_: PointerEvent): void {}
 	public handlePointerMove(_: PointerEvent): void {}
@@ -109,9 +110,31 @@ export class AddKnotTool extends AnimationTool {
 }
 
 export class EditTool extends AnimationTool {
-	public handlePointerDown(_: PointerEvent): void {}
+	protected _handleNewLocation(e: PointerEvent) {
+		const active = this._animationPane.activeSegment;
+		if (!active) return;
+
+		const dpr = this._animationPane.window.devicePixelRatio;
+		const y = this._animationPane.mapToSourceY(e.offsetY * dpr);
+
+		const Type = this._kayo.wasmx.wasm.FCurveSegmentType;
+		switch (active.type.value) {
+			case Type.CONSTANT.value: {
+				(active as FCurveConstantSegment).setPointedValue(y);
+				break;
+			}
+		}
+		this._kayo.project.fullRerender();
+	}
+
+	public handlePointerDown(e: PointerEvent): void {
+		this._animationPane.setClosestActive(e);
+		this._handleNewLocation(e);
+	}
 	public handlePointerUp(_: PointerEvent): void {}
-	public handlePointerMove(_: PointerEvent): void {}
+	public handlePointerMove(e: PointerEvent): void {
+		this._handleNewLocation(e);
+	}
 	public static get toolname() {
 		return "edit";
 	}

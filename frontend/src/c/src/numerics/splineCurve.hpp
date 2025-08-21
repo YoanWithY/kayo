@@ -18,7 +18,7 @@ class NonUniformSplineCurve {
 	constexpr int32_t getSegmentIndexAt(Number u) const noexcept {
 		if (this->segments.empty())
 			return -1;
-		if (this->segments[0]->knot_start > u || this->segments.back()->knot_end < u)
+		if (*this->segments[0]->knot_start > u || *this->segments.back()->knot_end < u)
 			return -1;
 
 		size_t current_end = this->segments.size(); // exclusive
@@ -29,7 +29,7 @@ class NonUniformSplineCurve {
 			const NonUniformSplineCurveSegment<T>* currentSegment = this->segments[current_index];
 			if (currentSegment->contains(u))
 				return int32_t(current_index);
-			if (u < currentSegment->knot_start)
+			if (u < *currentSegment->knot_start)
 				current_end = current_index;
 			else
 				current_start = current_index + 1;

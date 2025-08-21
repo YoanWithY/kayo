@@ -2,10 +2,11 @@ import { Kayo } from "../../../Kayo";
 import BasicPane from "../BasicPane";
 import animationPaneTemplate from "./AnimationPane.json";
 import { Viewport2D } from "../../../rendering/Viewport";
-import { KayoNumber } from "../../../../c/KayoCorePP";
+import { FCurveSegment, KayoNumber } from "../../../../c/KayoCorePP";
 import { AnimationTool, animationTools, ViewTool } from "./AnimationTools";
 import { clamp } from "../../../math/math";
 import { RadioButton, RadioButtonWrapper } from "../../components/RadioButton";
+import { isNoPointerButtonDown, isPointerButtonDown, PointerButtons } from "../../UIUtils";
 
 export type PointerEventMap = { [key: number]: PointerEvent };
 
@@ -18,6 +19,8 @@ export class AnimationPane extends BasicPane implements Viewport2D {
 	private _viewTool!: ViewTool;
 	private _activeTool!: AnimationTool;
 	private _toolRadio!: RadioButtonWrapper;
+	private _selectedSegments: FCurveSegment[] = [];
+	private _activeSegment: FCurveSegment | undefined;
 
 	private _resizeCallback = (e: ResizeObserverEntry[]) => {
 		const size = e[0].devicePixelContentBoxSize[0];
@@ -44,6 +47,14 @@ export class AnimationPane extends BasicPane implements Viewport2D {
 	}
 	public get contentScale(): [number, number] {
 		return this._contentScale;
+	}
+
+	public get selectedSegments() {
+		return this._selectedSegments;
+	}
+
+	public get activeSegment() {
+		return this._activeSegment;
 	}
 
 	public mapToSourceX(x: number) {
@@ -82,22 +93,47 @@ export class AnimationPane extends BasicPane implements Viewport2D {
 		return [this.mapToTargetX(x), this.mapToTargetY(y)];
 	}
 
+	public setClosestActive(e: PointerEvent) {
+		const dpr = this.window.devicePixelRatio;
+		const source = this.mapToSourceX(e.offsetX * dpr);
+		const curve = this._kayo.wasmx.kayoInstance.project.timeLine.simulationTimeVelocity;
+		const index = curve.getSegmentIndexAt(source);
+		this._activeSegment = curve.segments.get(index);
+	}
+
 	private _previousPointerEvents: PointerEventMap = {};
 	public get previousPointerEvents() {
 		return this._previousPointerEvents;
 	}
 	private _pointerDownCallback = (e: PointerEvent) => {
-		this._activeTool.handlePointerDown(e);
+		if (isPointerButtonDown(e, PointerButtons.PRIMARY)) {
+			this._activeTool.handlePointerDown(e);
+		}
 		this._previousPointerEvents[e.pointerId] = e;
 	};
 	private _pointerUpCallback = (e: PointerEvent) => {
-		this._activeTool.handlePointerUp(e);
+		if (isPointerButtonDown(e, PointerButtons.PRIMARY)) {
+			this._activeTool.handlePointerUp(e);
+		}
 		delete this._previousPointerEvents[e.pointerId];
 	};
 
 	private _pointerMoveCallback = (e: PointerEvent) => {
-		this._activeTool.handlePointerMove(e);
-		if (this._previousPointerEvents[e.pointerId] !== undefined) this._previousPointerEvents[e.pointerId] = e;
+		if (isNoPointerButtonDown(e)) return;
+
+		if (isPointerButtonDown(e, PointerButtons.PRIMARY)) {
+			this._activeTool.handlePointerMove(e);
+		} else if (isPointerButtonDown(e, PointerButtons.MIDDEL)) {
+			this._viewTool.handlePointerMove(e);
+		} else if (isPointerButtonDown(e, PointerButtons.SECONDARY)) {
+			this._viewTool.handlePointerMove(e);
+		}
+
+		if (this._previousPointerEvents[e.pointerId] === undefined) {
+			console.error(`Unknown pointer event id "${e.pointerId}" during poiner move.`);
+		} else {
+			this._previousPointerEvents[e.pointerId] = e;
+		}
 	};
 
 	private _wheelCallback = (e: WheelEvent) => {
