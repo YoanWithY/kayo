@@ -16,10 +16,10 @@ uint32_t allocViewControlledID();
 template <typename T, typename W>
 class JSViewControlled {
   public:
-	T value;
 	uint32_t observation_id;
+	T value;
 	constexpr JSViewControlled() : observation_id(allocViewControlledID()) {}
-	constexpr JSViewControlled(T value) : value(value), observation_id(allocViewControlledID()) {}
+	constexpr JSViewControlled(T value) : observation_id(allocViewControlledID()), value(value) {}
 	void dispatchToObservers() {
 		kayoDispatchToObserver(this->observation_id);
 	}

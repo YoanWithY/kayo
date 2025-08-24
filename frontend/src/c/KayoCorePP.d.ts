@@ -25,18 +25,19 @@ export type FCurveSegmentType = FCurveSegmentTypeValue<0>|FCurveSegmentTypeValue
 
 export interface FCurveSegment extends ClassHandle {
   readonly type: FCurveSegmentType;
+  leftKnot: FCurveKnot | null;
+  rightKnot: FCurveKnot | null;
   getCurveSegment(): NonUniformSplineCurveSegment1D | null;
 }
 
 export interface FCurveConstantSegment extends FCurveSegment {
   valueMode: FCurveConstantSegmentMode;
-  value: KayoNumber;
-  setPointedValue(_0: KayoNumber): void;
+  value: KayoJSVCNumber;
 }
 
 export interface FCurveKnot extends ClassHandle {
-  x: KayoNumber;
-  y: KayoNumber;
+  x: KayoJSVCNumber;
+  y: KayoJSVCNumber;
 }
 
 export interface FCurveSegmentVector extends ClassHandle {

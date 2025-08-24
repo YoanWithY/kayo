@@ -3,23 +3,7 @@
 
 namespace kayo {
 
-FixedPoint::NumberWire FCurveKnot::getXJS() const {
-	return static_cast<FixedPoint::NumberWire>(this->x);
-}
-
-FixedPoint::NumberWire FCurveKnot::getYJS() const {
-	return static_cast<FixedPoint::NumberWire>(this->y);
-}
-
-void FCurveKnot::setXJS(FixedPoint::NumberWire x_wr) {
-	this->x = x_wr;
-}
-
-void FCurveKnot::setYJS(FixedPoint::NumberWire y_wr) {
-	this->y = y_wr;
-}
-
-void FCurve::insertKnotJS(FixedPoint::NumberWire x_wr, FixedPoint::NumberWire y_wr, bool mirror) {
+void FCurve::insertKnotJS(FixedPoint::NumberWire x_wr, FixedPoint::NumberWire y_wr, bool _) {
 	FixedPoint::Number x(x_wr);
 	FixedPoint::Number y(y_wr);
 	if (this->hasKnotAt(x))
@@ -29,25 +13,13 @@ void FCurve::insertKnotJS(FixedPoint::NumberWire x_wr, FixedPoint::NumberWire y_
 		return;
 	FCurveSegment* segment = this->segments[uint32_t(seg_index)];
 
-	FCurveKnot* new_knot = new FCurveKnot(x, y, mirror);
+	FCurveKnot* new_knot = new FCurveKnot(x, y);
 	this->knots.insert(this->knots.begin() + seg_index, new_knot);
 	auto new_seg = segment->split(new_knot);
 
 	int32_t new_seg_index = seg_index + 1;
 	this->segments.insert(this->segments.begin() + new_seg_index, new_seg);
 	this->curve.segments.insert(this->curve.segments.begin() + new_seg_index, new_seg->getCurveSegment());
-}
-
-FixedPoint::NumberWire FCurveConstantSegment::getValueJS() const {
-	return static_cast<FixedPoint::NumberWire>(this->value);
-}
-
-void FCurveConstantSegment::setValueJS(FixedPoint::NumberWire v_wr) {
-	this->value = v_wr;
-}
-
-void FCurveConstantSegment::setPointedValueJS(FixedPoint::NumberWire v_wr) {
-	*this->getCurveSegment()->value = v_wr;
 }
 
 } // namespace kayo
@@ -64,14 +36,15 @@ EMSCRIPTEN_BINDINGS(KayoTimeLineWASM) {
 		.value("HERMITE", kayo::FCurveSegmentType::HERMITE);
 	class_<kayo::FCurveSegment>("FCurveSegment")
 		.property("type", &kayo::FCurveSegment::type)
+		.property("leftKnot", &kayo::FCurveSegment::left_knot, allow_raw_pointers())
+		.property("rightKnot", &kayo::FCurveSegment::right_knot, allow_raw_pointers())
 		.function("getCurveSegment", &kayo::FCurveSegment::getCurveSegment, allow_raw_pointers());
 	class_<kayo::FCurveConstantSegment, base<kayo::FCurveSegment>>("FCurveConstantSegment")
 		.property("valueMode", &kayo::FCurveConstantSegment::value_mode)
-		.function("setPointedValue", &kayo::FCurveConstantSegment::setPointedValueJS)
-		.property("value", &kayo::FCurveConstantSegment::getValueJS, &kayo::FCurveConstantSegment::setValueJS);
+		.property("value", &kayo::FCurveConstantSegment::value, return_value_policy::reference());
 	class_<kayo::FCurveKnot>("FCurveKnot")
-		.property("x", &kayo::FCurveKnot::getXJS, &kayo::FCurveKnot::setXJS)
-		.property("y", &kayo::FCurveKnot::getYJS, &kayo::FCurveKnot::setYJS);
+		.property("x", &kayo::FCurveKnot::x, return_value_policy::reference())
+		.property("y", &kayo::FCurveKnot::y, return_value_policy::reference());
 	register_vector<kayo::FCurveSegment*>("FCurveSegmentVector");
 	register_vector<kayo::FCurveKnot*>("FCurveKnotVector");
 	class_<kayo::FCurve>("FCurve")

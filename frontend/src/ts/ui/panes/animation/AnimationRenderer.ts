@@ -81,6 +81,10 @@ export class AnimationRenderer implements Renderer {
 		const wasmx = this._kayo.wasmx;
 		const KN = this._kayo.wasmx.KN;
 		const ctx = viewport.canvasContext;
+		if (ctx.isContextLost()) {
+			console.error("Canvas 2D context lost.");
+			return;
+		}
 		const canvas = ctx.canvas;
 		const dpr = viewport.window.devicePixelRatio;
 		ctx.reset();
@@ -163,7 +167,7 @@ export class AnimationRenderer implements Renderer {
 				console.error("Knot is null!");
 				continue;
 			}
-			const p = (viewport as AnimationPane).mapToTarget(knot.x, knot.y);
+			const p = (viewport as AnimationPane).mapToTarget(knot.x.getValue(), knot.y.getValue());
 			ctx.moveTo(p[0], p[1]);
 			ctx.arc(p[0], p[1], 3 * dpr, 0, 2 * Math.PI);
 		}

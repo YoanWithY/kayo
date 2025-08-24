@@ -15,15 +15,11 @@ enum class FCurveSegmentType {
 
 class FCurveKnot {
   public:
-	FixedPoint::Number x;
-	FixedPoint::Number y;
-	bool mirror;
-	constexpr FCurveKnot() : x(0), y(0), mirror(false) {}
-	constexpr FCurveKnot(FixedPoint::Number x, FixedPoint::Number y, bool mirror) : x(x), y(y), mirror(mirror) {}
-	FixedPoint::NumberWire getXJS() const;
-	FixedPoint::NumberWire getYJS() const;
-	void setXJS(FixedPoint::NumberWire x);
-	void setYJS(FixedPoint::NumberWire y);
+	JSVCNumber x;
+	JSVCNumber y;
+	JSVCNumber slope;
+	constexpr FCurveKnot() : x(0), y(0) {}
+	constexpr FCurveKnot(FixedPoint::Number x, FixedPoint::Number y) : x(x), y(y) {}
 };
 
 class FCurveSegment {
@@ -51,28 +47,25 @@ class FCurveConstantSegment : public FCurveSegment {
 
   public:
 	FCurveConstantSegmentMode value_mode = FCurveConstantSegmentMode::VALUE;
-	FixedPoint::Number value;
+	JSVCNumber value;
 	constexpr FCurveConstantSegment(FixedPoint::ConstantNonUniformSplineCurveSegment1D* curve_segment) : FCurveSegment(curve_segment, FCurveSegmentType::CONSTANT) {}
 	constexpr FixedPoint::ConstantNonUniformSplineCurveSegment1D* getCurveSegment() override {
 		return dynamic_cast<FixedPoint::ConstantNonUniformSplineCurveSegment1D*>(this->curve_segment);
 	}
 	inline FCurveConstantSegment* split(FCurveKnot* new_knot) override {
 		auto new_curve_seg = new FixedPoint::ConstantNonUniformSplineCurveSegment1D(
-			&(new_knot->x),
+			&(new_knot->x.value),
 			this->curve_segment->knot_end,
-			&(new_knot->y));
-		this->curve_segment->knot_end = &(new_knot->x);
+			&(new_knot->y.value));
+		this->curve_segment->knot_end = &(new_knot->x.value);
 
 		auto new_seg = new FCurveConstantSegment(new_curve_seg);
-		new_seg->value_mode = FCurveConstantSegmentMode::RIGHT_KNOT;
+		new_seg->value_mode = FCurveConstantSegmentMode::LEFT_KNOT;
 		new_seg->left_knot = new_knot;
 		new_seg->right_knot = this->right_knot;
 		this->right_knot = new_knot;
 		return new_seg;
 	}
-	void setPointedValueJS(FixedPoint::NumberWire v_wr);
-	void setValueJS(FixedPoint::NumberWire v_wr);
-	FixedPoint::NumberWire getValueJS() const;
 };
 
 class FCurveLinearSegment : public FCurveSegment {
@@ -98,7 +91,7 @@ class FCurve {
 	inline void create() {
 		FixedPoint::ConstantNonUniformSplineCurveSegment1D* seg1 = new FixedPoint::ConstantNonUniformSplineCurveSegment1D(&(this->start), &(this->end), nullptr);
 		FCurveConstantSegment* fseg1 = new FCurveConstantSegment(seg1);
-		seg1->value = &(fseg1->value);
+		seg1->value = &(fseg1->value.value);
 		this->curve.segments.push_back(seg1);
 		this->segments.push_back(fseg1);
 	}
@@ -127,7 +120,7 @@ class FCurve {
 
 	constexpr bool hasKnotAt(const FixedPoint::Number& u) const {
 		for (FCurveKnot* k : this->knots)
-			if (k->x == u)
+			if (k->x.value == u)
 				return true;
 		return false;
 	}

@@ -38,16 +38,16 @@ export class Project {
 		if (this.requestedAnimationFrameForWindow.get(viewport.window)) return;
 		this.requestedAnimationFrameForWindow.set(viewport.window, true);
 
-		viewport.window.requestAnimationFrame((ts: number) => {
+		const windowAnimationFrame = (ts: number) => {
 			for (const v of this.viewportsToUpdate) {
 				if (v.window != viewport.window) continue;
-				const renderer = this.kayo.renderers[viewport.rendererKey];
+				const renderer = this.kayo.renderers[v.rendererKey];
 				if (!renderer) {
-					console.error(`Renderer with key "${viewport.rendererKey}" is not know to kayo.`);
+					console.error(`Renderer with key "${v.rendererKey}" is not know to kayo.`);
 					continue;
 				}
-				if (!renderer.registeredViewports.has(viewport)) {
-					console.error(`Viewport "${viewport}" is not registered on renderer ${renderer}`);
+				if (!renderer.registeredViewports.has(v)) {
+					console.error(`Viewport "${v}" is not registered on renderer ${renderer}`);
 					continue;
 				}
 				renderer.renderViewport(ts, v);
@@ -55,9 +55,9 @@ export class Project {
 			}
 
 			for (const p of this.performancePanes) p.render();
-
 			this.requestedAnimationFrameForWindow.set(viewport.window, false);
-		});
+		};
+		viewport.window.requestAnimationFrame(windowAnimationFrame);
 	}
 
 	private _viewports = new Set<Viewport>();

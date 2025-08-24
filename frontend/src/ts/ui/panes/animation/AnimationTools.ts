@@ -120,7 +120,26 @@ export class EditTool extends AnimationTool {
 		const Type = this._kayo.wasmx.wasm.FCurveSegmentType;
 		switch (active.type.value) {
 			case Type.CONSTANT.value: {
-				(active as FCurveConstantSegment).setPointedValue(y);
+				const constant = active as FCurveConstantSegment;
+				const SegmentMode = this._kayo.wasmx.wasm.FCurveConstantSegmentMode;
+				if (constant.valueMode.value == SegmentMode.VALUE.value) {
+					constant.value.setValue(y);
+				} else if (constant.valueMode.value == SegmentMode.LEFT_KNOT.value) {
+					const leftKnot = constant.leftKnot;
+					if (!leftKnot) {
+						console.error("No left knot!");
+						return;
+					}
+					leftKnot.y.setValue(y);
+				} else {
+					const rightKnot = constant.rightKnot;
+					if (!rightKnot) {
+						console.error("No right knot!");
+						return;
+					}
+					rightKnot.y.setValue(y);
+				}
+
 				break;
 			}
 		}
