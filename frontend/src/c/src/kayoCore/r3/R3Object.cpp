@@ -8,9 +8,9 @@ R3Object::R3Object(
 	const FixedPoint::vec3& position) : parent(nullptr),
 										ressource_id(ressource_id),
 										position(Vector3(
-											JSVCNumber(position.x),
-											JSVCNumber(position.y),
-											JSVCNumber(position.z))) {};
+											FixedPoint::Number(position.x),
+											FixedPoint::Number(position.y),
+											FixedPoint::Number(position.z))) {};
 R3Object* R3Object::getParent() {
 	return this->parent;
 }

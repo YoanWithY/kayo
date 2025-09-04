@@ -1,12 +1,12 @@
 #pragma once
 #include "TimeLine.hpp"
 #include "jsMap.hpp"
-#include "renderState.hpp"
+#include "renderConfig.hpp"
 
 namespace kayo {
 class Project {
   public:
-	JsMap<kayo::state::RenderState> renderStates;
+	JsMap<kayo::config::RenderConfig> renderConfigs;
 	TimeLine timeLine;
 	Project();
 };

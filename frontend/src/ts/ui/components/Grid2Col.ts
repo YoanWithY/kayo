@@ -1,13 +1,12 @@
 import { Kayo } from "../../Kayo";
-import WASMX, { KayoJSVC, WasmValue } from "../../WASMX";
+import WASMX, { WasmPath } from "../../WASMX";
 import { buildUIElement, MarkUneffectiveEntry } from "../ui";
 
 export default class Grid2Col extends HTMLElement {
 	private _wasmx!: WASMX;
 	private _uneffectiveIfAny!: MarkUneffectiveEntry[];
 	private _internals: ElementInternals;
-	private _stateWasmPathVariables: any;
-	private _additionalCallbacks: { jsvc: KayoJSVC; callback: (v: WasmValue) => void }[] = [];
+	private _additionalCallbacks: { path: WasmPath; callback: (v: any) => void }[] = [];
 
 	public constructor() {
 		super();
@@ -15,11 +14,13 @@ export default class Grid2Col extends HTMLElement {
 	}
 
 	protected connectedCallback() {
-		for (const entry of this._additionalCallbacks) this._wasmx.addChangeListener(entry.jsvc, entry.callback, true);
+		for (const entry of this._additionalCallbacks)
+			this._wasmx.addChangeListenerByPath(entry.path, entry.callback, true);
 	}
 
 	protected disconnectedCallback() {
-		for (const entry of this._additionalCallbacks) this._wasmx.removeChangeListener(entry.jsvc, entry.callback);
+		for (const entry of this._additionalCallbacks)
+			this._wasmx.removeChangeListenerByPath(entry.path, entry.callback);
 	}
 
 	public setMarkUneffective(markUneffective: boolean) {
@@ -33,27 +34,22 @@ export default class Grid2Col extends HTMLElement {
 
 	private _checkMarkUneffective() {
 		for (const entry of this._uneffectiveIfAny) {
-			const path = this._wasmx.toWasmPath(entry.stateVariableURL, this._stateWasmPathVariables);
-			const val = this._wasmx.getModelReference(path).getValue().toString();
-			for (let compValue of entry.anyOf) {
-				if (typeof compValue == "number") compValue = this._wasmx.KN.fromDouble(compValue).toString();
-				if (val == compValue) return true;
-			}
+			const path = this._wasmx.toWasmPath(entry.stateVariableURL);
+			const val = this._wasmx.getValueByPath(path);
+			for (const compValue of entry.anyOf) if (val == compValue) return true;
 		}
 		return false;
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any) {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any) {
 		const p = win.document.createElement(this.getDomClass()) as Grid2Col;
 		p._wasmx = kayo.wasmx;
-		p._stateWasmPathVariables = variables;
-
 		p._uneffectiveIfAny = obj.uneffectiveIfAny;
 
 		if (p._uneffectiveIfAny !== undefined) {
 			for (const entry of obj.uneffectiveIfAny) {
 				p._additionalCallbacks.push({
-					jsvc: kayo.wasmx.getModelReference(kayo.wasmx.toWasmPath(entry.stateVariableURL, variables)),
+					path: kayo.wasmx.toWasmPath(entry.stateVariableURL),
 					callback: p._checkDisablingCallback,
 				});
 			}
@@ -61,7 +57,7 @@ export default class Grid2Col extends HTMLElement {
 
 		const children = obj.children;
 		if (children === undefined) return p;
-		for (const child of children) p.appendChild(buildUIElement(win, kayo, child, variables));
+		for (const child of children) p.appendChild(buildUIElement(win, kayo, child));
 		return p;
 	}
 

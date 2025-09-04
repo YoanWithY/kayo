@@ -13,31 +13,28 @@ export interface ClassHandle {
   isDeleted(): boolean;
   clone(): this;
 }
-export interface FCurveConstantSegmentModeValue<T extends number> {
-  value: T;
+export interface FCurveConstantSegmentMode extends ClassHandle {
 }
-export type FCurveConstantSegmentMode = FCurveConstantSegmentModeValue<0>|FCurveConstantSegmentModeValue<1>|FCurveConstantSegmentModeValue<2>;
 
-export interface FCurveSegmentTypeValue<T extends number> {
-  value: T;
+export interface FCurveSegmentType extends ClassHandle {
 }
-export type FCurveSegmentType = FCurveSegmentTypeValue<0>|FCurveSegmentTypeValue<1>|FCurveSegmentTypeValue<2>;
 
 export interface FCurveSegment extends ClassHandle {
-  readonly type: FCurveSegmentType;
   leftKnot: FCurveKnot | null;
   rightKnot: FCurveKnot | null;
+  readonly type: number;
   getCurveSegment(): NonUniformSplineCurveSegment1D | null;
 }
 
 export interface FCurveConstantSegment extends FCurveSegment {
-  valueMode: FCurveConstantSegmentMode;
-  value: KayoJSVCNumber;
+  readonly valueMode: number;
+  value: KayoNumber;
 }
 
 export interface FCurveKnot extends ClassHandle {
-  x: KayoJSVCNumber;
-  y: KayoJSVCNumber;
+  x: KayoNumber;
+  y: KayoNumber;
+  slope: KayoNumber;
 }
 
 export interface FCurveSegmentVector extends ClassHandle {
@@ -69,24 +66,6 @@ export interface TimeLine extends ClassHandle {
   framesPerSecond: KN;
 }
 
-export interface KayoJSVCNumber extends ClassHandle {
-  getObservationID(): number;
-  getValue(): KayoNumber;
-  setValue(_0: KayoNumber): void;
-}
-
-export interface KayoJSVCString extends ClassHandle {
-  getObservationID(): number;
-  getValue(): string;
-  setValue(_0: EmbindString): void;
-}
-
-export interface KayoJSVCBoolean extends ClassHandle {
-  getValue(): boolean;
-  setValue(_0: boolean): void;
-  getObservationID(): number;
-}
-
 export interface KayoWASMModule extends ClassHandle {
 }
 
@@ -95,32 +74,39 @@ export interface KayoWASMInstance extends ClassHandle {
   registerModule(_0: KayoWASMModule): number;
 }
 
-export interface RenderStatesMap extends ClassHandle {
-  get(_0: EmbindString): RenderState | null;
+export interface RenderConfigMap extends ClassHandle {
+  get(_0: EmbindString): RenderConfig | null;
 }
 
 export interface ProjectConfig extends ClassHandle {
-  renderStates: RenderStatesMap;
+  renderConfigs: RenderConfigMap;
   timeLine: TimeLine;
 }
 
 export interface SwapChainConfig extends ClassHandle {
   bitDepth: number;
+  readonly bitDepth_ptr: number;
+  readonly colorSpace_ptr: number;
+  readonly toneMappingMode_ptr: number;
   get colorSpace(): string;
   set colorSpace(value: EmbindString);
   get toneMappingMode(): string;
   set toneMappingMode(value: EmbindString);
 }
 
-export interface CustomColorQuantisationConfig extends ClassHandle {
-  readonly useCustomColorQuantisation: boolean;
-  readonly useDithering: boolean;
-}
-
 export interface AntialiasingConfig extends ClassHandle {
   msaa: number;
+  readonly msaa_ptr: number;
+  readonly interpolation_ptr: number;
   get interpolation(): string;
   set interpolation(value: EmbindString);
+}
+
+export interface CustomColorQuantisationConfig extends ClassHandle {
+  useCustomColorQuantisation: boolean;
+  useDithering: boolean;
+  readonly useCustomColorQuantisation_ptr: number;
+  readonly useDithering_ptr: number;
 }
 
 export interface GeneralConfig extends ClassHandle {
@@ -129,6 +115,8 @@ export interface GeneralConfig extends ClassHandle {
 }
 
 export interface SpecificRendererConfig extends ClassHandle {
+  get rendererName(): string;
+  set rendererName(value: EmbindString);
 }
 
 export interface RealtimeConfig extends SpecificRendererConfig {
@@ -136,47 +124,8 @@ export interface RealtimeConfig extends SpecificRendererConfig {
 }
 
 export interface RenderConfig extends ClassHandle {
+  specificRenderConfig: SpecificRendererConfig | null;
   general: GeneralConfig;
-  specificRenderer: SpecificRendererConfig | null;
-  needsContextReconfiguration: boolean;
-  needsPipelineRebuild: boolean;
-}
-
-export interface SwapChainState extends ClassHandle {
-  bitDepth: KayoJSVCNumber;
-  colorSpace: KayoJSVCString;
-  toneMappingMode: KayoJSVCString;
-}
-
-export interface AntialiasingState extends ClassHandle {
-  msaa: KayoJSVCNumber;
-  interpolation: KayoJSVCString;
-}
-
-export interface CustomColorQuantisationState extends ClassHandle {
-  useCustomColorQuantisation: KayoJSVCBoolean;
-  useDithering: KayoJSVCBoolean;
-}
-
-export interface GeneralState extends ClassHandle {
-  swapChain: SwapChainState;
-  customColorQuantisation: CustomColorQuantisationState;
-}
-
-export interface SpecificRendererState extends ClassHandle {
-  get rendererName(): string;
-  set rendererName(value: EmbindString);
-}
-
-export interface RealtimeState extends SpecificRendererState {
-  antialiasing: AntialiasingState;
-}
-
-export interface RenderState extends ClassHandle {
-  config: RenderConfig;
-  specificRenderer: SpecificRendererState | null;
-  general: GeneralState;
-  applyToConfig(): void;
 }
 
 export interface KayoR3Object extends ClassHandle {
@@ -270,8 +219,16 @@ export type KayoPointer = {
 export type KayoNumber = [ bigint, bigint ];
 
 interface EmbindModule {
-  FCurveConstantSegmentMode: {VALUE: FCurveConstantSegmentModeValue<0>, LEFT_KNOT: FCurveConstantSegmentModeValue<1>, RIGHT_KNOT: FCurveConstantSegmentModeValue<2>};
-  FCurveSegmentType: {CONSTANT: FCurveSegmentTypeValue<0>, LINEAR: FCurveSegmentTypeValue<1>, HERMITE: FCurveSegmentTypeValue<2>};
+  FCurveConstantSegmentMode: {
+    VALUE: number;
+    LEFT_KNOT: number;
+    RIGHT_KNOT: number;
+  };
+  FCurveSegmentType: {
+    CONSTANT: number;
+    LINEAR: number;
+    HERMITE: number;
+  };
   FCurveSegment: {};
   FCurveConstantSegment: {};
   FCurveKnot: {};
@@ -283,29 +240,19 @@ interface EmbindModule {
   };
   FCurve: {};
   TimeLine: {};
-  KayoJSVCNumber: {};
-  KayoJSVCString: {};
-  KayoJSVCBoolean: {};
   KayoWASMModule: {};
   KayoWASMInstance: {
     new(): KayoWASMInstance;
   };
-  RenderStatesMap: {};
+  RenderConfigMap: {};
   ProjectConfig: {};
   SwapChainConfig: {};
-  CustomColorQuantisationConfig: {};
   AntialiasingConfig: {};
+  CustomColorQuantisationConfig: {};
   GeneralConfig: {};
   SpecificRendererConfig: {};
   RealtimeConfig: {};
   RenderConfig: {};
-  SwapChainState: {};
-  AntialiasingState: {};
-  CustomColorQuantisationState: {};
-  GeneralState: {};
-  SpecificRendererState: {};
-  RealtimeState: {};
-  RenderState: {};
   KayoR3Object: {};
   WasmTask: {};
   WasmCreateAtlasTask: {
@@ -358,6 +305,7 @@ interface EmbindModule {
   };
   deleteArrayUint8(_0: number): void;
   deleteArrayDouble(_0: number): void;
+  readFixedPointFromHeap(_0: number): KayoNumber;
 }
 
 export type MainModule = WasmModule & typeof RuntimeExports & EmbindModule;

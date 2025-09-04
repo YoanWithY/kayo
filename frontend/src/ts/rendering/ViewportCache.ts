@@ -1,4 +1,4 @@
-import { GeneralConfig, RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
+import { GeneralConfig, RealtimeConfig, RenderConfig } from "../../c/KayoCorePP";
 import { getElement } from "../GPUX";
 import { WebGPUViewport } from "./Viewport";
 import RealtimeRenderer from "./RealtimeRenderer";
@@ -47,7 +47,7 @@ export class RealtimeViewportCache {
 		});
 
 		this.reconfigureContext(
-			(this._kayo.wasmx.kayoInstance.project.renderStates.get(RealtimeRenderer.rendererKey) as RenderState).config
+			(this._kayo.wasmx.kayoInstance.project.renderConfigs.get(RealtimeRenderer.rendererKey) as RenderConfig)
 				.general,
 		);
 	}
@@ -55,7 +55,7 @@ export class RealtimeViewportCache {
 	public conditionalFrambebufferUpdate(config: RenderConfig) {
 		const w = this.viewport.getCurrentTexture().width;
 		const h = this.viewport.getCurrentTexture().height;
-		const specificRenderer: RealtimeConfig = config.specificRenderer as RealtimeConfig;
+		const specificRenderer: RealtimeConfig = config.specificRenderConfig as RealtimeConfig;
 		if (specificRenderer == null) {
 			console.error("Specific render config is null!");
 			return;
@@ -135,7 +135,7 @@ export class RealtimeViewportCache {
 
 	private conditionalColorAttachmentUpdate(w: number, h: number, config: RenderConfig) {
 		const currentFormat = this._kayo.gpux.getSwapChainFormat(config.general.swapChain.bitDepth);
-		const msaa = (config.specificRenderer as RealtimeConfig).antialiasing.msaa;
+		const msaa = (config.specificRenderConfig as RealtimeConfig).antialiasing.msaa;
 		if (
 			w === this.prevWidth &&
 			h === this.prevHeight &&
@@ -185,7 +185,7 @@ export class RealtimeViewportCache {
 		compositingRenderPassDescriptor: GPURenderPassDescriptor,
 		config: RenderConfig,
 	) {
-		const specificRenderer: RealtimeConfig = config.specificRenderer as RealtimeConfig;
+		const specificRenderer: RealtimeConfig = config.specificRenderConfig as RealtimeConfig;
 		if (specificRenderer === null) {
 			console.error("Specific renderer config is null!");
 			return;

@@ -42,8 +42,7 @@ export class Kayo {
 		this._rootName = rootName;
 		this._project = new Project(this);
 
-		const config = this._wasmx.kayoInstance.project.renderStates.get(RealtimeRenderer.rendererKey)
-			?.config as RenderConfig;
+		const config = this._wasmx.kayoInstance.project.renderConfigs.get(RealtimeRenderer.rendererKey) as RenderConfig;
 		this._project.scene.setRepresentation(
 			new SceneRealtimeRepresentation(this, realtimeRenderer, this._project.scene, config),
 		);

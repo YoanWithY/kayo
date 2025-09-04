@@ -4,7 +4,7 @@ import { CompositingPipeline } from "./CompositingPipeline";
 import { ResolvePipeline } from "./ResolvePipeline";
 import Camera from "../Viewport/Camera";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
-import { RealtimeConfig, RenderConfig, RenderState } from "../../c/KayoCorePP";
+import { RealtimeConfig, RenderConfig } from "../../c/KayoCorePP";
 import { Kayo, Renderer } from "../Kayo";
 import { RepresentationConcept } from "../project/Representation";
 import { GPUX } from "../GPUX";
@@ -49,7 +49,7 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 		this._kayo = kayo;
 		this.gpuDevice = kayo.gpux.gpuDevice;
 		this.reconfigureContext(
-			(this._kayo.wasmx.kayoInstance.project.renderStates.get(this.rendererKey) as RenderState).config,
+			this._kayo.wasmx.kayoInstance.project.renderConfigs.get(this.rendererKey) as RenderConfig,
 		);
 		this.viewUBO = this.gpuDevice.createBuffer({
 			label: "View UBO",
@@ -319,23 +319,78 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 
 	public jsTime = "";
 	public frame = 0;
+	private _configCache: {
+		toneMapping: string;
+		colorSpace: string;
+		bitDepth: number;
+		useCustomColorQuantisation?: boolean;
+		useDithering?: boolean;
+		msaa: number;
+		interpolation: string;
+	} = {
+		toneMapping: "",
+		colorSpace: "",
+		bitDepth: -1,
+		useCustomColorQuantisation: undefined,
+		useDithering: undefined,
+		msaa: -1,
+		interpolation: "",
+	};
+
+	private _compareAndUpdateConfigCache(config: RenderConfig) {
+		let needsPipelineRebuild = false;
+		let needsContextReconfiguration = false;
+		const general = config.general;
+		const realtimeConfig = config.specificRenderConfig as RealtimeConfig;
+
+		if (general.swapChain.bitDepth !== this._configCache.bitDepth) {
+			needsContextReconfiguration = true;
+			needsPipelineRebuild = true;
+		}
+		this._configCache.bitDepth = general.swapChain.bitDepth;
+
+		if (general.swapChain.toneMappingMode !== this._configCache.toneMapping) needsContextReconfiguration = true;
+		this._configCache.toneMapping = general.swapChain.toneMappingMode;
+
+		if (general.swapChain.colorSpace !== this._configCache.colorSpace) {
+			needsPipelineRebuild = true;
+			needsContextReconfiguration = true;
+		}
+		this._configCache.colorSpace = general.swapChain.colorSpace;
+
+		if (general.customColorQuantisation.useCustomColorQuantisation !== this._configCache.useCustomColorQuantisation)
+			needsPipelineRebuild = true;
+		this._configCache.useCustomColorQuantisation = general.customColorQuantisation.useCustomColorQuantisation;
+
+		if (general.customColorQuantisation.useDithering !== this._configCache.useDithering)
+			needsPipelineRebuild = true;
+		this._configCache.useDithering = general.customColorQuantisation.useDithering;
+
+		if (realtimeConfig.antialiasing.msaa !== this._configCache.msaa) needsPipelineRebuild = true;
+		this._configCache.msaa = realtimeConfig.antialiasing.msaa;
+
+		if (realtimeConfig.antialiasing.interpolation !== this._configCache.interpolation) needsPipelineRebuild = true;
+		this._configCache.interpolation = realtimeConfig.antialiasing.interpolation;
+
+		return { needsContextReconfiguration, needsPipelineRebuild };
+	}
+
 	public renderViewport(_: number, viewport: WebGPUViewport) {
 		const start = performance.now();
-		const renderState = this._kayo.wasmx.kayoInstance.project.renderStates.get(viewport.rendererKey);
-		if (renderState === null) {
+		const config = this._kayo.wasmx.kayoInstance.project.renderConfigs.get(viewport.rendererKey);
+		if (config === null) {
 			console.error(`The render config key ${viewport.rendererKey} is unknown.`);
 			return;
 		}
-		renderState.applyToConfig();
-		const config = renderState.config;
-		const specificRenderer: RealtimeConfig = config.specificRenderer as RealtimeConfig;
-		if (specificRenderer === null) {
+
+		const realtimeConfig: RealtimeConfig = config.specificRenderConfig as RealtimeConfig;
+		if (realtimeConfig === null) {
 			console.error("Specific renderer config is null!");
 			return;
 		}
-
-		if (config.needsPipelineRebuild) this._kayo.project.scene.updateRepresentation(this, config);
-		if (config.needsContextReconfiguration) this.reconfigureContext(config);
+		const { needsContextReconfiguration, needsPipelineRebuild } = this._compareAndUpdateConfigCache(config);
+		if (needsPipelineRebuild) this._kayo.project.scene.updateRepresentation(this, config);
+		if (needsContextReconfiguration) this.reconfigureContext(config);
 
 		viewport.updateView(this.viewUBO, this.frame);
 

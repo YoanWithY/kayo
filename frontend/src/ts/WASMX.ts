@@ -1,19 +1,10 @@
-import type {
-	KayoJSVCBoolean,
-	KayoJSVCNumber,
-	KayoJSVCString,
-	KayoNumber,
-	KayoPointer,
-	KayoWASMInstance,
-	KayoWASMMinecraftModule,
-	MainModule,
-} from "../c/KayoCorePP";
-export type WasmPath = string[][];
-export type KayoJSVC = KayoJSVCNumber | KayoJSVCString | KayoJSVCBoolean;
-export type WasmValue = string | KayoNumber | boolean;
+import type { KayoPointer, KayoWASMInstance, KayoWASMMinecraftModule, MainModule } from "../c/KayoCorePP";
+import { Kayo } from "./Kayo";
+export type WasmPath = { map: boolean; val: string }[];
+export type KayoAddress = number;
 
 export default class WASMX {
-	private _bindings: Map<number, { jsvc: KayoJSVC; callbacks: Set<(v: WasmValue) => void> }> = new Map();
+	private _bindings: Map<number, Set<(v: any) => void>> = new Map();
 
 	public kayoInstance: KayoWASMInstance;
 	public minecraftModule: KayoWASMMinecraftModule;
@@ -53,56 +44,94 @@ export default class WASMX {
 		this._wasm.deleteArrayDouble(ptr.byteOffset);
 	}
 
-	public toWasmPath(stateVariableURL: string, variables: any = {}): WasmPath {
-		return stateVariableURL.split(".").map((val: string) => {
-			const pathPart = val.split(":");
-			for (let i = 1; i < pathPart.length; i++) {
-				const variableSubstitution = variables[pathPart[i]];
-				if (variableSubstitution === undefined) {
-					console.error(`WasmPath variable "${pathPart[i]}" is no known variable.`);
-				} else {
-					pathPart[i] = variableSubstitution;
-				}
-			}
-			return pathPart;
+	public toWasmPath(stateVariableURL: string): WasmPath {
+		return stateVariableURL.split(/(?=[.:])/).map((s) => {
+			return { map: s[0] == ":", val: s[0] == ":" || s[0] == "." ? s.substring(1) : s };
 		});
 	}
 
-	public getModelReference(wasmPath: WasmPath): KayoJSVC {
+	public getWasmParentByPath(wasmPath: WasmPath) {
 		let obj: any = this.kayoInstance.project;
-		for (const pathSegment of wasmPath) {
-			obj = obj[pathSegment[0]];
-			for (let i = 1; i < pathSegment.length; i++) obj = obj.get(pathSegment[i]);
+		const max = wasmPath.length - 1;
+		for (let i = 0; i < max; i++) {
+			const segment = wasmPath[i];
+			if (segment.map) obj = obj.get(segment.val);
+			else obj = obj[segment.val];
 		}
 		return obj;
 	}
 
-	public addChangeListener(jsvc: KayoJSVC, f: (v: WasmValue) => void, fireImmediately: boolean) {
-		const observationID = jsvc.getObservationID();
+	public getAddressFromPath(wasmPath: WasmPath): KayoAddress {
+		const parent = this.getWasmParentByPath(wasmPath);
+		const address = parent[(wasmPath.at(-1) as { val: string }).val + "_ptr"];
+		if (!address) console.error(`Address under "${wasmPath.map((v) => v.val)}" is unknown`);
+		return address;
+	}
 
-		let binding = this._bindings.get(observationID);
-		if (!binding) {
-			binding = { jsvc, callbacks: new Set<(v: WasmValue) => void>() };
-			this._bindings.set(observationID, binding);
+	public getValueByPath(wasmPath: WasmPath) {
+		let obj: any = this.kayoInstance.project;
+		for (const segment of wasmPath) {
+			if (segment.map) obj = obj.get(segment.val);
+			else obj = obj[segment.val];
 		}
-		binding.callbacks.add(f);
-		if (fireImmediately) f(jsvc.getValue());
+		return obj;
 	}
 
-	public addChangeListenerByPath(wasmPath: WasmPath, f: (v: WasmValue) => void, fireImmediately: boolean) {
-		this.addChangeListener(this.getModelReference(wasmPath), f, fireImmediately);
+	public setValueByPath(wasmPath: WasmPath, value: any) {
+		const parent = this.getWasmParentByPath(wasmPath);
+		parent[(wasmPath.at(-1) as { val: string }).val] = value;
 	}
 
-	public removeChangeListener(jsvc: KayoJSVC, f: (v: WasmValue) => void) {
-		const observationID = jsvc.getObservationID();
-		const bound = this._bindings.get(observationID);
+	public addChangeListener(address: KayoAddress, f: (v: any) => void) {
+		let binding = this._bindings.get(address);
+		if (!binding) {
+			binding = new Set<(v: any) => void>();
+			this._bindings.set(address, binding);
+		}
+		binding.add(f);
+	}
+
+	public addChangeListenerByPath(wasmPath: WasmPath, f: (v: any) => void, fireImmediately: boolean) {
+		this.addChangeListener(this.getAddressFromPath(wasmPath), f);
+		if (fireImmediately) f(this.getValueByPath(wasmPath));
+	}
+
+	public removeChangeListener(address: KayoAddress, f: (v: any) => void) {
+		const bound = this._bindings.get(address);
 		if (!bound) return;
-		bound.callbacks.delete(f);
+		bound.delete(f);
 	}
 
-	public vcDispatch(id: number) {
-		const bound = this._bindings.get(id);
+	public removeChangeListenerByPath(wasmPath: WasmPath, f: (v: any) => void) {
+		this.removeChangeListener(this.getAddressFromPath(wasmPath), f);
+	}
+
+	protected dispatchUint32ToObserver(ptr: number, value: number) {
+		const bound = this._bindings.get(ptr);
 		if (!bound) return;
-		for (const callback of bound.callbacks) callback(bound.jsvc.getValue());
+		for (const callback of bound) callback(value);
+		((window as any).kayo as Kayo).project.fullRerender();
+	}
+
+	protected dispatchBooleanToObserver(ptr: number, value: boolean) {
+		const bound = this._bindings.get(ptr);
+		if (!bound) return;
+		for (const callback of bound) callback(value);
+		((window as any).kayo as Kayo).project.fullRerender();
+	}
+
+	protected dispatchStringToObserver(ptr: number, value: string) {
+		const bound = this._bindings.get(ptr);
+		if (!bound) return;
+		for (const callback of bound) callback(value);
+		((window as any).kayo as Kayo).project.fullRerender();
+	}
+
+	protected dispatchFixedPointToObserver(ptr: number) {
+		const bound = this._bindings.get(ptr);
+		if (!bound) return;
+		const value = this.wasm.readFixedPointFromHeap(ptr);
+		for (const callback of bound) callback(value);
+		((window as any).kayo as Kayo).project.fullRerender();
 	}
 }

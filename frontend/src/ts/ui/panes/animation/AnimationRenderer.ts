@@ -167,7 +167,7 @@ export class AnimationRenderer implements Renderer {
 				console.error("Knot is null!");
 				continue;
 			}
-			const p = (viewport as AnimationPane).mapToTarget(knot.x.getValue(), knot.y.getValue());
+			const p = (viewport as AnimationPane).mapToTarget(knot.x, knot.y);
 			ctx.moveTo(p[0], p[1]);
 			ctx.arc(p[0], p[1], 3 * dpr, 0, 2 * Math.PI);
 		}

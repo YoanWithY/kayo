@@ -22,7 +22,7 @@
 										},
 										{
 											"class": "state-select-box",
-											"stateVariableURL": "renderStates:renderState.general.swapChain.colorSpace",
+											"stateVariableURL": "renderConfigs:realtime.general.swapChain.colorSpace",
 											"options": [
 												{
 													"value": "display-p3",
@@ -43,7 +43,7 @@
 										},
 										{
 											"class": "state-select-box",
-											"stateVariableURL": "renderStates:renderState.general.swapChain.bitDepth",
+											"stateVariableURL": "renderConfigs:realtime.general.swapChain.bitDepth",
 											"options": [
 												{
 													"value": 8,
@@ -64,7 +64,7 @@
 										},
 										{
 											"class": "state-select-box",
-											"stateVariableURL": "renderStates:renderState.general.swapChain.toneMappingMode",
+											"stateVariableURL": "renderConfigs:realtime.general.swapChain.toneMappingMode",
 											"options": [
 												{
 													"value": "standard",
@@ -77,7 +77,7 @@
 											],
 											"uneffectiveIfAny": [
 												{
-													"stateVariableURL": "renderStates:renderState.general.swapChain.bitDepth",
+													"stateVariableURL": "renderConfigs:realtime.general.swapChain.bitDepth",
 													"anyOf": [
 														8
 													]
@@ -98,7 +98,7 @@
 								"text": "Custom Color Quantisation",
 								"checkbox": {
 									"class": "check-box",
-									"stateVariableURL": "renderStates:renderState.general.customColorQuantisation.useCustomColorQuantisation",
+									"stateVariableURL": "renderConfigs:realtime.general.customColorQuantisation.useCustomColorQuantisation",
 									"tooltip": {
 										"description": "Wether or not to use custom qunatisation."
 									}
@@ -122,7 +122,7 @@
 										},
 										{
 											"class": "check-box",
-											"stateVariableURL": "renderStates:renderState.general.customColorQuantisation.useDithering",
+											"stateVariableURL": "renderConfigs:realtime.general.customColorQuantisation.useDithering",
 											"tooltip": {
 												"description": "Wether or not to use (blue noise) dithering for quantisation."
 											}
@@ -130,7 +130,7 @@
 									],
 									"uneffectiveIfAny": [
 										{
-											"stateVariableURL": "renderStates:renderState.general.customColorQuantisation.useCustomColorQuantisation",
+											"stateVariableURL": "renderConfigs:realtime.general.customColorQuantisation.useCustomColorQuantisation",
 											"anyOf": [
 												false
 											]
@@ -162,7 +162,7 @@
 										},
 										{
 											"class": "state-select-box",
-											"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.msaa",
+											"stateVariableURL": "renderConfigs:realtime.specificRenderConfig.antialiasing.msaa",
 											"options": [
 												{
 													"value": 1,
@@ -183,7 +183,7 @@
 										},
 										{
 											"class": "state-select-box",
-											"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.interpolation",
+											"stateVariableURL": "renderConfigs:realtime.specificRenderConfig.antialiasing.interpolation",
 											"options": [
 												{
 													"value": "center",
@@ -200,7 +200,7 @@
 											],
 											"uneffectiveIfAny": [
 												{
-													"stateVariableURL": "renderStates:renderState.specificRenderer.antialiasing.msaa",
+													"stateVariableURL": "renderConfigs:realtime.specificRenderConfig.antialiasing.msaa",
 													"anyOf": [
 														1
 													]

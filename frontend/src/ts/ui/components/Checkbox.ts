@@ -1,15 +1,13 @@
 import { Kayo } from "../../Kayo";
-import WASMX, { WasmValue } from "../../WASMX";
+import WASMX, { WasmPath } from "../../WASMX";
 import { IconedToggleButton } from "./IconedToggleButton";
 import Tooltip, { SerialTooltip } from "./Tooltip";
-
 import emptyIcon from "../../../svg/empty.svg?raw";
 import checkIcon from "../../../svg/check.svg?raw";
-import { KayoJSVCBoolean } from "../../../c/KayoCorePP";
 
 export default class Checkbox extends IconedToggleButton {
 	private _wasmx!: WASMX;
-	private _stateJSVC!: KayoJSVCBoolean;
+	private _stateWasmPath!: WasmPath;
 	private _internals: ElementInternals;
 
 	public constructor() {
@@ -17,8 +15,7 @@ export default class Checkbox extends IconedToggleButton {
 		this._internals = this.attachInternals();
 	}
 
-	private _stateChangeCallback = (value: WasmValue) => {
-		console.log(value);
+	private _stateChangeCallback = (value: boolean) => {
 		if (value) {
 			this._internals.states.add("checked");
 			this.setStateUIOnly(1);
@@ -30,31 +27,29 @@ export default class Checkbox extends IconedToggleButton {
 
 	protected connectedCallback() {
 		super.connectedCallback();
-		this._wasmx.addChangeListener(this._stateJSVC, this._stateChangeCallback, true);
+		this._wasmx.addChangeListenerByPath(this._stateWasmPath, this._stateChangeCallback, true);
 	}
 
 	protected disconnectedCallback() {
 		super.disconnectedCallback();
-		this._wasmx.removeChangeListener(this._stateJSVC, this._stateChangeCallback);
+		this._wasmx.removeChangeListenerByPath(this._stateWasmPath, this._stateChangeCallback);
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any): Checkbox {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any): Checkbox {
 		const p = win.document.createElement(this.getDomClass()) as Checkbox;
 		if (obj.tooltip) Tooltip.register(win, obj.tooltip as SerialTooltip, p, obj);
 		p._wasmx = kayo.wasmx;
 
-		p._stateJSVC = kayo.wasmx.getModelReference(
-			kayo.wasmx.toWasmPath(obj.stateVariableURL, variables),
-		) as KayoJSVCBoolean;
+		p._stateWasmPath = kayo.wasmx.toWasmPath(obj.stateVariableURL);
 		p._state = 0;
 		p._states = [
 			{
 				svgIcon: emptyIcon,
-				callback: () => p._stateJSVC.setValue(false),
+				callback: () => p._wasmx.setValueByPath(p._stateWasmPath, false),
 			},
 			{
 				svgIcon: checkIcon,
-				callback: () => p._stateJSVC.setValue(true),
+				callback: () => p._wasmx.setValueByPath(p._stateWasmPath, true),
 			},
 		];
 		return p;

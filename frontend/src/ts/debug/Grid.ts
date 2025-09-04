@@ -79,7 +79,7 @@ export class GridRealtimePipeline extends AbstractRenderingPipeline {
 			targets: targets,
 			constants: constants,
 		};
-		this.multisample.count = (config.specificRenderer as RealtimeConfig).antialiasing.msaa;
+		this.multisample.count = (config.specificRenderConfig as RealtimeConfig).antialiasing.msaa;
 		this.buildPipeline(gpux.gpuDevice, layout);
 	}
 }

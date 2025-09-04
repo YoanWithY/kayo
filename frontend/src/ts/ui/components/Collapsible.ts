@@ -17,10 +17,10 @@ export default class Collapsible extends HTMLElement {
 		}
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any) {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any) {
 		const p = win.document.createElement(this.getDomClass()) as Collapsible;
 
-		p.collapsibleButton = CollapsibleButton.createCollapsibleButton(win, kayo, obj.checkbox, variables);
+		p.collapsibleButton = CollapsibleButton.createCollapsibleButton(win, kayo, obj.checkbox);
 		p.collapsibleButton.collapsible = p;
 		const text = win.document.createElement("span");
 		text.textContent = obj.text;
@@ -32,8 +32,7 @@ export default class Collapsible extends HTMLElement {
 		) as CollapsibleContentContainer;
 
 		const content = obj.content;
-		if (content !== undefined)
-			p.collapsibleContentContainer.appendChild(buildUIElement(win, kayo, obj.content, variables));
+		if (content !== undefined) p.collapsibleContentContainer.appendChild(buildUIElement(win, kayo, obj.content));
 
 		const tooltip = obj.tooltip;
 		if (tooltip !== undefined) {
@@ -59,11 +58,11 @@ export class CollapsibleButton extends HTMLElement {
 		});
 	}
 
-	public static createCollapsibleButton(win: Window, kayo: Kayo, checkbox: any, variables: any) {
+	public static createCollapsibleButton(win: Window, kayo: Kayo, checkbox: any) {
 		const p = win.document.createElement(this.getDomClass()) as CollapsibleButton;
 		p.setAttribute("state", "open");
 		if (checkbox !== undefined) {
-			const c = Checkbox.createUIElement(win, kayo, checkbox, variables);
+			const c = Checkbox.createUIElement(win, kayo, checkbox);
 			p.appendChild(c);
 		}
 		return p;

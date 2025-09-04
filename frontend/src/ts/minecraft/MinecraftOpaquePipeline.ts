@@ -84,7 +84,7 @@ export class MinecraftRealtimeRenderingPipeline extends AbstractRenderingPipelin
 			constants: constants,
 			entryPoint: fragmentEntryPoint,
 		};
-		this.multisample.count = (config.specificRenderer as RealtimeConfig).antialiasing.msaa;
+		this.multisample.count = (config.specificRenderConfig as RealtimeConfig).antialiasing.msaa;
 		this.buildPipeline(gpux.gpuDevice, layout);
 	}
 }
@@ -140,7 +140,7 @@ export class MinecraftRealtimeRepresentation
 			label: "minecraft realtime",
 			colorFormats: RealtimeRenderer.getColorFormats(config, this._kayo.gpux),
 			depthStencilFormat: "depth24plus",
-			sampleCount: (config.specificRenderer as RealtimeConfig).antialiasing.msaa,
+			sampleCount: (config.specificRenderConfig as RealtimeConfig).antialiasing.msaa,
 		});
 		renderBundleEncoder.setBindGroup(0, this.representationConcept.bindGroup0);
 

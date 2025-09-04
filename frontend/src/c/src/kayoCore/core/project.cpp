@@ -3,8 +3,8 @@
 
 namespace kayo {
 Project::Project() {
-	using namespace state;
-	this->renderStates.set("realtime", new RenderState());
+	using namespace config;
+	this->renderConfigs.set("realtime", new RenderConfig());
 	this->timeLine.framesPerSecond = 30;
 	this->timeLine.simulationTime = 0;
 	this->timeLine.simulationTimeVelocity.create();
@@ -13,9 +13,9 @@ Project::Project() {
 
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(KayoProjectWASM) {
-	class_<kayo::JsMap<kayo::state::RenderState>>("RenderStatesMap")
-		.function("get", &kayo::JsMap<kayo::state::RenderState>::get, allow_raw_pointers());
+	class_<kayo::JsMap<kayo::config::RenderConfig>>("RenderConfigMap")
+		.function("get", &kayo::JsMap<kayo::config::RenderConfig>::get, allow_raw_pointers());
 	class_<kayo::Project>("ProjectConfig")
-		.property("renderStates", &kayo::Project::renderStates, return_value_policy::reference())
+		.property("renderConfigs", &kayo::Project::renderConfigs, return_value_policy::reference())
 		.property("timeLine", &kayo::Project::timeLine, return_value_policy::reference());
 }

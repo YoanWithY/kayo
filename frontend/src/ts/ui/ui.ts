@@ -96,13 +96,13 @@ const nameClassMap: { [key: string]: UIElement } = {
 	[NumberInput.getDomClass()]: NumberInput,
 };
 
-export function buildUIElement(win: Window, kayo: Kayo, obj: any, variables: any): HTMLElement {
-	return nameClassMap[obj.class].createUIElement(win, kayo, obj, variables);
+export function buildUIElement(win: Window, kayo: Kayo, obj: any): HTMLElement {
+	return nameClassMap[obj.class].createUIElement(win, kayo, obj);
 }
 
 export interface UIElement {
 	new (): unknown;
-	createUIElement(win: Window, kayo: Kayo, obj: any, variables?: any): HTMLElement;
+	createUIElement(win: Window, kayo: Kayo, obj: any): HTMLElement;
 	getDomClass(): string;
 }
 

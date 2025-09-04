@@ -38,16 +38,18 @@ export class SceneRealtimeRepresentation extends SceneRepresentation<RealtimeRen
 	}
 
 	public addGrid(grid: Grid): void {
-		const config = this._kayo.wasmx.kayoInstance.project.renderStates.get(RealtimeRenderer.rendererKey)
-			?.config as RenderConfig;
+		const config = this._kayo.wasmx.kayoInstance.project.renderConfigs.get(
+			RealtimeRenderer.rendererKey,
+		) as RenderConfig;
 		const realtimeGrid = new GridRelatimeRepresentation(this._kayo, this._representationConcept, grid, config);
 		grid.setRepresentation(realtimeGrid);
 		this._grids.push(realtimeGrid);
 	}
 
 	public addMinecraftWorld(minecraftWorld: MinecraftWorld): void {
-		const config = this._kayo.wasmx.kayoInstance.project.renderStates.get(RealtimeRenderer.rendererKey)
-			?.config as RenderConfig;
+		const config = this._kayo.wasmx.kayoInstance.project.renderConfigs.get(
+			RealtimeRenderer.rendererKey,
+		) as RenderConfig;
 		const minecraftWorldRealtimeRepresentation = new MinecraftWorldRealtimeRepresentation(
 			this._kayo,
 			this._representationConcept,

@@ -1,27 +1,33 @@
 #include "jsViewControlled.hpp"
-#include "emscripten/bind.h"
-#include <emscripten/em_asm.h>
+#include "../../numerics/fixedMath.hpp"
+#include <stdint.h>
+#include <string>
+
+extern "C" {
+extern void kayoDispatchUint32ToObserver(uintptr_t ptr, uint32_t value);
+extern void kayoDispatchFixedPointToObserver(uintptr_t ptr);
+extern void kayoDispatchStringToObserver(uintptr_t ptr, const char* value);
+extern void kayoDispatchBooleanToObserver(uintptr_t ptr, bool value);
+}
 
 namespace kayo {
-static uint32_t static_counter = 0;
-uint32_t allocViewControlledID() {
-	return static_counter++;
+template <>
+void dispatchToJS<uint32_t>(uint32_t* v) {
+	kayoDispatchUint32ToObserver(reinterpret_cast<uintptr_t>(v), *v);
 }
 
+template <>
+void dispatchToJS<FixedPoint::Number>(FixedPoint::Number* v) {
+	kayoDispatchFixedPointToObserver(reinterpret_cast<uintptr_t>(v));
+}
+
+template <>
+void dispatchToJS<std::string>(std::string* v) {
+	kayoDispatchStringToObserver(reinterpret_cast<uintptr_t>(v), v->c_str());
+}
+
+template <>
+void dispatchToJS<bool>(bool* v) {
+	kayoDispatchBooleanToObserver(reinterpret_cast<uintptr_t>(v), *v);
+}
 } // namespace kayo
-
-using namespace emscripten;
-EMSCRIPTEN_BINDINGS(KayoWASMJSVC) {
-	class_<kayo::JSVCNumber>("KayoJSVCNumber")
-		.function("getObservationID", &kayo::JSVCNumber::getObservationID)
-		.function("getValue", &kayo::JSVCNumber::getValueJS)
-		.function("setValue", &kayo::JSVCNumber::setValueJS);
-	class_<kayo::JSVCString>("KayoJSVCString")
-		.function("getObservationID", &kayo::JSVCString::getObservationID)
-		.function("getValue", &kayo::JSVCString::getValueJS)
-		.function("setValue", &kayo::JSVCString::setValueJS);
-	class_<kayo::JSVCBoolean>("KayoJSVCBoolean")
-		.function("getObservationID", &kayo::JSVCBoolean::getObservationID)
-		.function("getValue", &kayo::JSVCBoolean::getValueJS)
-		.function("setValue", &kayo::JSVCBoolean::setValueJS);
-}
