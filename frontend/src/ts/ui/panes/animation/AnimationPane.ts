@@ -1,16 +1,16 @@
 import { Kayo } from "../../../Kayo";
-import BasicPane from "../BasicPane";
-import animationPaneTemplate from "./AnimationPane.json";
 import { Viewport2D } from "../../../rendering/Viewport";
 import { FCurveSegment, KayoNumber } from "../../../../c/KayoCorePP";
 import { AnimationTool, animationTools, ViewTool } from "./AnimationTools";
 import { clamp } from "../../../math/math";
 import { RadioButton, RadioButtonWrapper } from "../../components/RadioButton";
 import { isNoPointerButtonDown, isPointerButtonDown, PointerButtons } from "../../UIUtils";
+import { AnimationRenderer } from "./AnimationRenderer";
 
 export type PointerEventMap = { [key: number]: PointerEvent };
 
-export class AnimationPane extends BasicPane implements Viewport2D {
+export class AnimationPane extends HTMLElement implements Viewport2D {
+	private _kayo!: Kayo;
 	private _ctx!: CanvasRenderingContext2D;
 	private _win!: Window;
 	private _canvas!: HTMLCanvasElement;
@@ -40,7 +40,7 @@ export class AnimationPane extends BasicPane implements Viewport2D {
 		return this._win;
 	}
 	public get rendererKey(): string {
-		return "animation";
+		return AnimationRenderer.rendererKey;
 	}
 	public get origin(): [KayoNumber, KayoNumber] {
 		return this._origin;
@@ -167,7 +167,8 @@ export class AnimationPane extends BasicPane implements Viewport2D {
 	}
 
 	public static createUIElement(win: Window, kayo: Kayo): AnimationPane {
-		const p = super.createUIElement(win, kayo, animationPaneTemplate) as AnimationPane;
+		const p = win.document.createElement(this.getDomClass()) as AnimationPane;
+		p._kayo = kayo;
 		p._win = win;
 		p._canvas = win.document.createElement("canvas");
 		const ctx = p._canvas.getContext("2d", { desynchronized: false, alpha: true, willReadFrequently: false });

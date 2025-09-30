@@ -2,7 +2,6 @@ import { PTPChatPane } from "../../collaborative/PTPChatPannel";
 import { Kayo } from "../../Kayo";
 import { SplitablePane } from "../splitpane/SplitablePane";
 import { UIPaneElement } from "../ui";
-import BasicPane from "./BasicPane";
 import OutlinerPane from "./OutlinerPane";
 import OutputPane from "./OutpuPane";
 import APIPane from "./ApiPane";
@@ -11,9 +10,9 @@ import { FileSystemPane } from "./FileSystemPane";
 import { PerformancePane } from "./PerformancePane";
 import { AnimationPane } from "./animation/AnimationPane";
 
-export default class PaneSelectorPane extends BasicPane {
+export default class PaneSelectorPane extends HTMLElement {
 	public static createUIElement(win: Window, kayo: Kayo): PaneSelectorPane {
-		const p = super.createUIElement(win, kayo, { class: this.getDomClass() });
+		const p = win.document.createElement(this.getDomClass());
 		for (const key in panesNameClassMap) {
 			const button = win.document.createElement("button");
 			button.className = "selectorButton";

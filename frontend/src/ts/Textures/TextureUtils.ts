@@ -48,12 +48,16 @@ export default class TextureUtils {
 	}
 
 	public static async loadImageBitmap(imageUrl: string) {
+		// eslint-disable-next-line local/no-await
 		const response = await fetch(imageUrl);
+		// eslint-disable-next-line local/no-await
 		const blob = await response.blob();
+		// eslint-disable-next-line local/no-await
 		return await createImageBitmap(blob);
 	}
 
 	public static async loadImageTexture(imageUrl: string, genMipMaps: boolean): Promise<GPUTexture> {
+		// eslint-disable-next-line local/no-await
 		return this.imageToTexture(await this.loadImageBitmap(imageUrl), genMipMaps);
 	}
 

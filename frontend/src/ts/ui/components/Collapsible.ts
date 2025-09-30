@@ -17,10 +17,10 @@ export default class Collapsible extends HTMLElement {
 		}
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any) {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any, varMap?: { [key: string]: string }) {
 		const p = win.document.createElement(this.getDomClass()) as Collapsible;
 
-		p.collapsibleButton = CollapsibleButton.createCollapsibleButton(win, kayo, obj.checkbox);
+		p.collapsibleButton = CollapsibleButton.createCollapsibleButton(win, kayo, obj.checkbox, varMap);
 		p.collapsibleButton.collapsible = p;
 		const text = win.document.createElement("span");
 		text.textContent = obj.text;
@@ -32,7 +32,8 @@ export default class Collapsible extends HTMLElement {
 		) as CollapsibleContentContainer;
 
 		const content = obj.content;
-		if (content !== undefined) p.collapsibleContentContainer.appendChild(buildUIElement(win, kayo, obj.content));
+		if (content !== undefined)
+			p.collapsibleContentContainer.appendChild(buildUIElement(win, kayo, obj.content, varMap));
 
 		const tooltip = obj.tooltip;
 		if (tooltip !== undefined) {
@@ -50,19 +51,24 @@ export default class Collapsible extends HTMLElement {
 
 export class CollapsibleButton extends HTMLElement {
 	public collapsible!: Collapsible;
-	public constructor() {
-		super();
-		this.addEventListener("click", () => {
-			this.collapsible.toggleCollaps();
-			this.setAttribute("state", this.collapsible.opend ? "open" : "closed");
-		});
+	private _clickCallback = () => {
+		this.collapsible.toggleCollaps();
+		this.setAttribute("state", this.collapsible.opend ? "open" : "closed");
+	};
+
+	protected connectedCallback() {
+		this.addEventListener("click", this._clickCallback);
 	}
 
-	public static createCollapsibleButton(win: Window, kayo: Kayo, checkbox: any) {
+	protected disconnectedCallback() {
+		this.removeEventListener("click", this._clickCallback);
+	}
+
+	public static createCollapsibleButton(win: Window, kayo: Kayo, checkbox: any, varMap?: { [key: string]: string }) {
 		const p = win.document.createElement(this.getDomClass()) as CollapsibleButton;
 		p.setAttribute("state", "open");
 		if (checkbox !== undefined) {
-			const c = Checkbox.createUIElement(win, kayo, checkbox);
+			const c = Checkbox.createUIElement(win, kayo, checkbox, varMap);
 			p.appendChild(c);
 		}
 		return p;

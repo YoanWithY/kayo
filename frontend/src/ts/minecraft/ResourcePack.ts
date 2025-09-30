@@ -151,10 +151,11 @@ export class ResourcePack {
 					pending++;
 
 					const namespace = r.getNamespace(nameParts[1]);
-					entries[key].json().then((object) => {
+					const entryCallback = (object: any) => {
 						namespace.blockstates[filename.substring(0, filename.length - 5)] = object;
 						update(key);
-					});
+					};
+					entries[key].json().then(entryCallback);
 
 					break;
 				}
@@ -170,12 +171,12 @@ export class ResourcePack {
 						typeContainer = {};
 						namespace.models[modelType] = typeContainer;
 					}
-
-					entries[key].json().then((object) => {
+					const entryCallback = (object: any) => {
 						const blockName = filename.substring(0, filename.length - 5);
 						typeContainer[blockName] = new ParsedBlockModel(blockName, object);
 						update(key);
-					});
+					};
+					entries[key].json().then(entryCallback);
 					break;
 				}
 				case "textures": {
@@ -191,11 +192,12 @@ export class ResourcePack {
 					}
 
 					const textureName = filename.substring(0, filename.length - 4);
-					entries[key].arrayBuffer().then((pngData) => {
+					const bufferCallback = (pngData: ArrayBuffer) => {
 						const imageData = kayo.wasmx.imageData.fromImageData(pngData, true) as ImageData;
 						typeContainer[textureName] = new MinecraftTexture(kayo, textureName, imageData);
 						update(key);
-					});
+					};
+					entries[key].arrayBuffer().then(bufferCallback);
 
 					break;
 				}

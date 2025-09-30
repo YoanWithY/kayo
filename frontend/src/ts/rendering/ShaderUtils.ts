@@ -11,14 +11,15 @@ const snippets: { [key: string]: string } = {
 };
 
 export function resolveIncludes(code: string): string {
-	return code.replace(/#include\s*<([^>]+)>/g, (match, p1) => {
+	const replacer = (match: string, p1: string) => {
 		const includedCode = snippets[p1];
 		if (!includedCode) {
 			console.error("Could not resolve:", match);
 			return match;
 		}
 		return resolveIncludes(includedCode);
-	});
+	};
+	return code.replace(/#include\s*<([^>]+)>/g, replacer);
 }
 
 export function resolveVariables(code: string, map: { [key: string]: string }): string {

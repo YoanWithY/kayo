@@ -73,8 +73,9 @@ class Realtime : public SpecificRenderConfig {
 class RenderConfig {
   public:
 	SpecificRenderConfig* specificRenderConfig;
+	std::string configName;
 	General general;
-	inline RenderConfig() : specificRenderConfig(new config::Realtime()) {};
+	inline RenderConfig(std::string name) : specificRenderConfig(new config::Realtime()), configName(name) {};
 };
 
 } // namespace config

@@ -81,9 +81,11 @@ export class Follower extends Role {
 			});
 		};
 
+		// eslint-disable-next-line local/no-await
 		await this.leaderConnection.setRemoteDescription(offer);
-
+		// eslint-disable-next-line local/no-await
 		const answer = await this.leaderConnection.createAnswer();
+		// eslint-disable-next-line local/no-await
 		await this.leaderConnection.setLocalDescription(answer);
 		const backOffer = this.leaderConnection.localDescription;
 		if (!backOffer) {

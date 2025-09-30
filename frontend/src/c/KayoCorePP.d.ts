@@ -126,6 +126,8 @@ export interface RealtimeConfig extends SpecificRendererConfig {
 export interface RenderConfig extends ClassHandle {
   specificRenderConfig: SpecificRendererConfig | null;
   general: GeneralConfig;
+  get name(): string;
+  set name(value: EmbindString);
 }
 
 export interface KayoR3Object extends ClassHandle {

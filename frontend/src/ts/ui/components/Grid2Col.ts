@@ -4,6 +4,7 @@ import { buildUIElement, MarkUneffectiveEntry } from "../ui";
 
 export default class Grid2Col extends HTMLElement {
 	private _wasmx!: WASMX;
+	private _varMap?: { [key: string]: string };
 	private _uneffectiveIfAny!: MarkUneffectiveEntry[];
 	private _internals: ElementInternals;
 	private _additionalCallbacks: { path: WasmPath; callback: (v: any) => void }[] = [];
@@ -34,22 +35,23 @@ export default class Grid2Col extends HTMLElement {
 
 	private _checkMarkUneffective() {
 		for (const entry of this._uneffectiveIfAny) {
-			const path = this._wasmx.toWasmPath(entry.stateVariableURL);
+			const path = this._wasmx.toWasmPath(entry.stateVariableURL, this._varMap);
 			const val = this._wasmx.getValueByPath(path);
 			for (const compValue of entry.anyOf) if (val == compValue) return true;
 		}
 		return false;
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any) {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any, varMap?: { [key: string]: string }) {
 		const p = win.document.createElement(this.getDomClass()) as Grid2Col;
+		p._varMap = varMap;
 		p._wasmx = kayo.wasmx;
 		p._uneffectiveIfAny = obj.uneffectiveIfAny;
 
 		if (p._uneffectiveIfAny !== undefined) {
 			for (const entry of obj.uneffectiveIfAny) {
 				p._additionalCallbacks.push({
-					path: kayo.wasmx.toWasmPath(entry.stateVariableURL),
+					path: kayo.wasmx.toWasmPath(entry.stateVariableURL, varMap),
 					callback: p._checkDisablingCallback,
 				});
 			}
@@ -57,7 +59,7 @@ export default class Grid2Col extends HTMLElement {
 
 		const children = obj.children;
 		if (children === undefined) return p;
-		for (const child of children) p.appendChild(buildUIElement(win, kayo, child));
+		for (const child of children) p.appendChild(buildUIElement(win, kayo, child, varMap));
 		return p;
 	}
 

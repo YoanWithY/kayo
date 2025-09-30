@@ -4,7 +4,7 @@
 namespace kayo {
 Project::Project() {
 	using namespace config;
-	this->renderConfigs.set("realtime", new RenderConfig());
+	this->renderConfigs.set("realtime default", new RenderConfig("realtime default"));
 	this->timeLine.framesPerSecond = 30;
 	this->timeLine.simulationTime = 0;
 	this->timeLine.simulationTimeVelocity.create();

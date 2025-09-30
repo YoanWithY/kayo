@@ -107,5 +107,6 @@ EMSCRIPTEN_BINDINGS(KayoStateWASM) {
 		.property("antialiasing", &kayo::config::Realtime::antialiasing, return_value_policy::reference());
 	class_<kayo::config::RenderConfig>("RenderConfig")
 		.property("specificRenderConfig", &kayo::config::RenderConfig::specificRenderConfig, return_value_policy::reference())
+		.property("name", &kayo::config::RenderConfig::configName)
 		.property("general", &kayo::config::RenderConfig::general, return_value_policy::reference());
 }

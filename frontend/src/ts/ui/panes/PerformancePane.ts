@@ -1,6 +1,4 @@
 import { Kayo } from "../../Kayo";
-import BasicPane from "./BasicPane";
-import performancePaneTemplate from "./PerformancePane.json";
 import { ViewportPane } from "./ViewportPane";
 
 type TimeEntry = { [subtask: string]: number };
@@ -15,17 +13,19 @@ interface DrawVerticalStackedBarsOpts {
 	chartHeight: number; // total height of bars
 }
 
-export class PerformancePane extends BasicPane {
+export class PerformancePane extends HTMLElement {
+	private _kayo!: Kayo;
 	private _win!: Window;
 	private _canvas!: HTMLCanvasElement;
 	private _ctx!: CanvasRenderingContext2D;
 
-	private _resizeObserver: ResizeObserver = new ResizeObserver((e) => {
+	private _resizeCallback: ResizeObserverCallback = (e) => {
 		const size = e[0].devicePixelContentBoxSize[0];
 		this._canvas.width = size.inlineSize;
 		this._canvas.height = size.blockSize;
 		this.render();
-	});
+	};
+	private _resizeObserver: ResizeObserver = new ResizeObserver(this._resizeCallback);
 
 	public get window() {
 		return this._win;
@@ -38,7 +38,12 @@ export class PerformancePane extends BasicPane {
 		const barWidth = availableWidth > 0 ? Math.floor(availableWidth / count) : 0;
 
 		// Compute maximum total duration for scaling Y-axis
-		const totals = data.map((e) => subtasksOrder.reduce((s, k) => s + (e[k] || 0), 0));
+
+		const mapping = (e: TimeEntry) => {
+			const reducer = (s: any, k: string) => s + (e[k] || 0);
+			return subtasksOrder.reduce(reducer, 0);
+		};
+		const totals = data.map(mapping);
 		const maxTotal = Math.ceil(Math.max(...totals, 1) / 10) * 10;
 		const scaleY = chartHeight / maxTotal;
 
@@ -66,11 +71,13 @@ export class PerformancePane extends BasicPane {
 		ctx.fillRect(0, chartY, availableWidth, chartHeight);
 
 		// Draw bars
-		data.forEach((entry, i) => {
+
+		let i = 0;
+		for (const entry of data) {
 			const x = i * barWidth;
 			let accumulatedPx = 0;
 
-			subtasksOrder.forEach((key) => {
+			for (const key of subtasksOrder) {
 				const value = entry[key] || 0;
 				const h = value * scaleY;
 				if (h > 0) {
@@ -78,8 +85,9 @@ export class PerformancePane extends BasicPane {
 					ctx.fillRect(x, chartY + chartHeight - accumulatedPx - h, barWidth, h);
 				}
 				accumulatedPx += h;
-			});
-		});
+			}
+			i++;
+		}
 
 		ctx.lineWidth = this._win.devicePixelRatio;
 		for (let value = 0; value <= maxTotal; value++) {
@@ -139,7 +147,7 @@ export class PerformancePane extends BasicPane {
 	}
 
 	public static createUIElement(win: Window, kayo: Kayo): PerformancePane {
-		const p = super.createUIElement(win, kayo, performancePaneTemplate) as PerformancePane;
+		const p = win.document.createElement(this.getDomClass()) as PerformancePane;
 		p._win = win;
 		p._kayo = kayo;
 		p._canvas = win.document.createElement("canvas");

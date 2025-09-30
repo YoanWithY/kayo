@@ -1,15 +1,13 @@
 export function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
 	let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-	return (...args: Parameters<T>): void => {
-		if (timeoutId !== null) {
-			clearTimeout(timeoutId);
-		}
-
-		timeoutId = setTimeout(() => {
+	const debundWrapped = (...args: Parameters<T>): void => {
+		if (timeoutId !== null) clearTimeout(timeoutId);
+		const deboundTimeoutHandler = () => {
 			func(...args);
-		}, wait);
+		};
+		timeoutId = setTimeout(deboundTimeoutHandler, wait);
 	};
+	return debundWrapped;
 }
 
 const decoder = new TextDecoder();

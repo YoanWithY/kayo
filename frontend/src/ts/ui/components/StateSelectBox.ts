@@ -17,6 +17,7 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 	private _optionWrapper!: SelectOptionWrapper;
 	private _internals: ElementInternals;
 	private _valueNameMap: Map<string, string> = new Map();
+	private _varMap?: { [key: string]: string } | undefined;
 
 	public constructor() {
 		super();
@@ -66,7 +67,7 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 
 	private _checkMarkUneffective() {
 		for (const entry of this._uneffectiveIfAny) {
-			const path = this._wasmx.toWasmPath(entry.stateVariableURL);
+			const path = this._wasmx.toWasmPath(entry.stateVariableURL, this._varMap);
 			const val = this._wasmx.getValueByPath(path);
 			for (const compValue of entry.anyOf) if (val == compValue) return true;
 		}
@@ -82,12 +83,18 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 		this.setMarkUneffective(this._checkMarkUneffective());
 	};
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any): StateSelectBox {
+	public static createUIElement(
+		win: Window,
+		kayo: Kayo,
+		obj: any,
+		varMap?: { [key: string]: string },
+	): StateSelectBox {
 		const selectBox = win.document.createElement(this.getDomClass()) as StateSelectBox;
 		selectBox._win = win;
+		selectBox._varMap = varMap;
 		selectBox._optionWrapper = SelectOptionWrapper.createSelectOptionWrapper(win);
 		selectBox._wasmx = kayo.wasmx;
-		selectBox._stateWasmPath = kayo.wasmx.toWasmPath(obj.stateVariableURL);
+		selectBox._stateWasmPath = kayo.wasmx.toWasmPath(obj.stateVariableURL, varMap);
 
 		selectBox._uneffectiveIfAny = obj.uneffectiveIfAny;
 		selectBox.callbacks.push({ path: selectBox._stateWasmPath, callback: selectBox._stateChangeCallback });
@@ -95,7 +102,7 @@ export class StateSelectBox extends HTMLElement implements ISelectBox {
 		if (selectBox._uneffectiveIfAny !== undefined) {
 			for (const entry of obj.uneffectiveIfAny) {
 				selectBox.callbacks.push({
-					path: kayo.wasmx.toWasmPath(entry.stateVariableURL),
+					path: kayo.wasmx.toWasmPath(entry.stateVariableURL, varMap),
 					callback: selectBox._checkDisablingCallback,
 				});
 			}

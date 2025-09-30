@@ -1,6 +1,4 @@
 import { Kayo } from "../Kayo";
-import BasicPane from "../ui/panes/BasicPane";
-import ptpChatTemplate from "./ptpChatPaneTemplate.json";
 
 export type PTPMessage = { text: string; sender: number };
 
@@ -46,7 +44,7 @@ export class PTPChatContent extends HTMLElement {
 		if (newMessage === undefined) return;
 
 		if (newMessage.sender === this._kayo.project.ptpBase.role.id) return;
-		Notification.requestPermission().then((permission) => {
+		const permissionCallback = (permission: NotificationPermission) => {
 			if (permission === "granted") {
 				new Notification(`${newMessage.sender}:`, {
 					body: newMessage.text,
@@ -54,7 +52,8 @@ export class PTPChatContent extends HTMLElement {
 					badge: "./favicon.ico",
 				});
 			}
-		});
+		};
+		Notification.requestPermission().then(permissionCallback);
 	}
 
 	public static createUIElement(win: Window, kayo: Kayo, _: any): PTPChatContent {
@@ -85,10 +84,11 @@ export class PTPTextInput extends HTMLFormElement {
 		sendButton.setAttribute("type", "submit");
 		sendButton.setAttribute("value", "Send");
 		p.appendChild(sendButton);
-		p.addEventListener("submit", (e: SubmitEvent) => {
+		const submitCallback = (e: SubmitEvent) => {
 			e.preventDefault();
 			p.reset();
-		});
+		};
+		p.addEventListener("submit", submitCallback);
 		return p;
 	}
 
@@ -97,9 +97,9 @@ export class PTPTextInput extends HTMLFormElement {
 	}
 }
 
-export class PTPChatPane extends BasicPane {
-	public static createUIElement(win: Window, kayo: Kayo): PTPChatPane {
-		return super.createUIElement(win, kayo, ptpChatTemplate) as PTPChatPane;
+export class PTPChatPane extends HTMLElement {
+	public static createUIElement(win: Window, _: Kayo): PTPChatPane {
+		return win.document.createElement(this.getDomClass()) as PTPChatPane;
 	}
 	public static getDomClass() {
 		return "ptp-chat";

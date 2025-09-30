@@ -1,7 +1,6 @@
 import { GeneralConfig, RealtimeConfig, RenderConfig } from "../../c/KayoCorePP";
 import { getElement } from "../GPUX";
 import { WebGPUViewport } from "./Viewport";
-import RealtimeRenderer from "./RealtimeRenderer";
 import { Kayo } from "../Kayo";
 
 export class RealtimeViewportCache {
@@ -25,7 +24,7 @@ export class RealtimeViewportCache {
 	protected _kayo: Kayo;
 	public prevUseOverlays: boolean = false;
 	public gpuDevice: GPUDevice;
-	public constructor(kayo: Kayo, viewport: WebGPUViewport) {
+	public constructor(kayo: Kayo, viewport: WebGPUViewport, config: RenderConfig) {
 		this._kayo = kayo;
 		this.viewport = viewport;
 		this.gpuDevice = this._kayo.gpux.gpuDevice;
@@ -46,10 +45,7 @@ export class RealtimeViewportCache {
 			usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
 		});
 
-		this.reconfigureContext(
-			(this._kayo.wasmx.kayoInstance.project.renderConfigs.get(RealtimeRenderer.rendererKey) as RenderConfig)
-				.general,
-		);
+		this.reconfigureContext(config.general);
 	}
 
 	public conditionalFrambebufferUpdate(config: RenderConfig) {
@@ -299,7 +295,7 @@ export class RealtimeViewportCache {
 	public asyncGPUPerformanceUpdate(jsTime: number) {
 		if (this.timeStempMapBuffer.mapState !== "unmapped") return;
 
-		this.timeStempMapBuffer.mapAsync(GPUMapMode.READ).then(() => {
+		const mapBufferCallback = () => {
 			const times = new BigInt64Array(this.timeStempMapBuffer.getMappedRange());
 			const r3Time = Number(times[1] - times[0]) / 1000000;
 			const r16Time = Number(times[3] - times[2]) / 1000000;
@@ -323,7 +319,8 @@ export class RealtimeViewportCache {
 				Overlays: overlayTime,
 				compositingTime: compositingTime,
 			});
-		});
+		};
+		this.timeStempMapBuffer.mapAsync(GPUMapMode.READ).then(mapBufferCallback);
 	}
 
 	public destroy() {}

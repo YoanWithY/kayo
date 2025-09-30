@@ -1,3 +1,4 @@
+/* eslint-disable local/no-await */
 export class GPUX {
 	private readonly _gpu: GPU;
 	private readonly _gpuAdapter: GPUAdapter;

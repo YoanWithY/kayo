@@ -44,10 +44,15 @@ export default class WASMX {
 		this._wasm.deleteArrayDouble(ptr.byteOffset);
 	}
 
-	public toWasmPath(stateVariableURL: string): WasmPath {
-		return stateVariableURL.split(/(?=[.:])/).map((s) => {
+	public toWasmPath(stateVariableURL: string, varMap?: { [key: string]: string }): WasmPath {
+		const mapping = (s: string) => {
 			return { map: s[0] == ":", val: s[0] == ":" || s[0] == "." ? s.substring(1) : s };
-		});
+		};
+
+		if (varMap) {
+			for (const varName in varMap) stateVariableURL = stateVariableURL.replaceAll(varName, varMap[varName]);
+		}
+		return stateVariableURL.split(/(?=[.:])/).map(mapping);
 	}
 
 	public getWasmParentByPath(wasmPath: WasmPath) {
@@ -64,7 +69,8 @@ export default class WASMX {
 	public getAddressFromPath(wasmPath: WasmPath): KayoAddress {
 		const parent = this.getWasmParentByPath(wasmPath);
 		const address = parent[(wasmPath.at(-1) as { val: string }).val + "_ptr"];
-		if (!address) console.error(`Address under "${wasmPath.map((v) => v.val)}" is unknown`);
+		const mapping = (v: { map: boolean; val: string }) => v.val;
+		if (!address) console.error(`Address under "${wasmPath.map(mapping)}" is unknown`);
 		return address;
 	}
 

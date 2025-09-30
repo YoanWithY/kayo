@@ -28,6 +28,7 @@ export class Leader extends Role {
 			console.error("Unknown follower", originIdentity, ". Map is:", this.connectionsMap);
 			return;
 		}
+		// eslint-disable-next-line local/no-await
 		await followerConnection.setRemoteDescription(offer);
 
 		const dataChannel = this.datachannelMap.get(originIdentity.id);
@@ -73,30 +74,28 @@ export class Leader extends Role {
 
 		this.connectionsMap.set(identity.id, peerConnection);
 		this.datachannelMap.set(identity.id, dataChannel);
-
-		peerConnection
-			.createOffer()
-			.then((offerInit: RTCSessionDescriptionInit) => {
-				return peerConnection.setLocalDescription(offerInit);
-			})
-			.then(() => {
-				const description = peerConnection.localDescription;
-				if (!description) {
-					console.error("Description is null.");
-					return;
-				}
-				console.log(peerConnection.localDescription.sdp);
-				this.base.sendWS<WSServerRTCOfferMessage>({
-					type: "offer",
-					content: {
-						targetIdentity: identity,
-						offer: description,
-					},
-				});
-			})
-			.catch((error: Error) => {
-				console.error(error);
+		const offerCallback = (offerInit: RTCSessionDescriptionInit) => {
+			return peerConnection.setLocalDescription(offerInit);
+		};
+		const descriptionCallback = () => {
+			const description = peerConnection.localDescription;
+			if (!description) {
+				console.error("Description is null.");
+				return;
+			}
+			console.log(peerConnection.localDescription.sdp);
+			this.base.sendWS<WSServerRTCOfferMessage>({
+				type: "offer",
+				content: {
+					targetIdentity: identity,
+					offer: description,
+				},
 			});
+		};
+		const errorCallback = (error: Error) => {
+			console.error(error);
+		};
+		peerConnection.createOffer().then(offerCallback).then(descriptionCallback).catch(errorCallback);
 	}
 
 	public addIceCandidate(wsICECandidate: WSClientIceCandidate) {

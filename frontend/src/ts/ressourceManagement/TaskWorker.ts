@@ -1,3 +1,4 @@
+/* eslint-disable local/no-await */
 /// <reference lib="webworker" />
 type ReturnValueType = { returnValue: any; transfer: Transferable[] };
 let systemRoot!: FileSystemDirectoryHandle;

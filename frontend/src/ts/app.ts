@@ -1,3 +1,4 @@
+/* eslint-disable local/no-await */
 import { initUI as initUIClasses } from "./ui/ui";
 import { Kayo } from "./Kayo";
 import initWasmx from "./ressourceManagement/KayoWasmLoader";
@@ -7,14 +8,20 @@ import { StoreFileTask as StoreFileTask } from "./ressourceManagement/jsTasks/St
 import { SplashScreen } from "./ui/panes/SplashScreen";
 import TextureUtils from "./Textures/TextureUtils";
 import { ConcurrentTaskQueue } from "./ressourceManagement/ConcurrentTaskQueue";
-import { DirectoryEntry, FSEntry, QueryFileSystemTask } from "./ressourceManagement/jsTasks/QuereyFileSystemTask";
+import {
+	DirectoryEntry,
+	FileEntry,
+	FSEntry,
+	QueryFileSystemTask,
+} from "./ressourceManagement/jsTasks/QuereyFileSystemTask";
 import { LoadFileTask, LoadFileTaskFinishedCallback } from "./ressourceManagement/jsTasks/LoadFileTask";
 import { uint8ArrayToObject } from "./Utils";
 import { DeleteFSEntryFinishedCallback, DeleteFSEntryTask } from "./ressourceManagement/jsTasks/DeleteFSEntryTask";
 
 function randomString(length: number): string {
 	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-	return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+	const randomIterator = () => chars[Math.floor(Math.random() * chars.length)];
+	return Array.from({ length }, randomIterator).join("");
 }
 
 const loadPara = window.document.getElementById("loadingParagraph") as HTMLParagraphElement;
@@ -24,6 +31,7 @@ initUIClasses();
 window.name = "Kayo Main";
 loadPara.textContent = "Init WebGPU";
 const gpux = await GPUX.requestGPUX();
+
 if (typeof gpux === "string") {
 	alert(`Could not initialize WebGPU with reason: ${gpux}`);
 	throw new Error("Could not initialize WebGPU!", { cause: gpux });
@@ -54,10 +62,12 @@ const fileSystemQuereyCallback = (dir: DirectoryEntry | undefined) => {
 		return;
 	}
 
-	const unserializedProjects = dir.children.filter((projectEntry: FSEntry) => {
+	const dirFilter = (projectEntry: FSEntry) => {
 		if (projectEntry.kind === "file") return false;
-		return projectEntry.children.find((e) => e.name == "project.kp") === undefined;
-	}) as DirectoryEntry[];
+		const predicate = (e: DirectoryEntry | FileEntry) => e.name == "project.kp";
+		return projectEntry.children.find(predicate) === undefined;
+	};
+	const unserializedProjects = dir.children.filter(dirFilter) as DirectoryEntry[];
 
 	const timedProjects: { project: DirectoryEntry; time: string }[] = [];
 	for (const project of unserializedProjects) {
@@ -73,7 +83,11 @@ const fileSystemQuereyCallback = (dir: DirectoryEntry | undefined) => {
 
 			if (timedProjects.length !== unserializedProjects.length) return;
 
-			timedProjects.sort((a, b) => a.time.localeCompare(b.time, undefined, { sensitivity: "base" })).reverse();
+			const sortCallback = (
+				a: { project: DirectoryEntry; time: string },
+				b: { project: DirectoryEntry; time: string },
+			) => a.time.localeCompare(b.time, undefined, { sensitivity: "base" });
+			timedProjects.sort(sortCallback).reverse();
 			const delArray = timedProjects.slice(Math.min(timedProjects.length, 3));
 			if (delArray.length === 0) removeLoadingScreen();
 
@@ -109,8 +123,9 @@ taskQueue.queueTask(
 
 (window as any).kayo = kayo;
 
-window.addEventListener("beforeunload", (_) => {
+const beforeUnloadCallback = (_: any) => {
 	if (kayo.windows.size > 1) kayo.closeAllSecondaryWindows(window);
-});
+};
+window.addEventListener("beforeunload", beforeUnloadCallback);
 
 kayo.registerWindow(window, ViewportPane.getName(), true);

@@ -2,11 +2,11 @@ import { Kayo } from "../../Kayo";
 import { buildUIElement } from "../ui";
 
 export default class VBox extends HTMLElement {
-	public static createUIElement(win: Window, kayo: Kayo, obj: any) {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any, argMap?: { [key: string]: string }) {
 		const p = win.document.createElement(this.getDomClass());
 		const children = obj.children;
 		if (children === undefined) return p;
-		for (const child of children) p.appendChild(buildUIElement(win, kayo, child));
+		for (const child of children) p.appendChild(buildUIElement(win, kayo, child, argMap));
 		return p;
 	}
 

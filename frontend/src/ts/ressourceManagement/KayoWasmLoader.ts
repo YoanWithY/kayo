@@ -1,3 +1,4 @@
+/* eslint-disable local/no-await */
 import KayoWASM from "../../c/KayoCorePP";
 import WASMX from "../WASMX";
 

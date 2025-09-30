@@ -1,9 +1,8 @@
 import { Kayo } from "../../Kayo";
 import { DirectoryEntry, QueryFileSystemTask } from "../../ressourceManagement/jsTasks/QuereyFileSystemTask";
-import BasicPane from "./BasicPane";
-import ressourcePaneTemplate from "./FileSystemPane.json";
 
-export class FileSystemPane extends BasicPane {
+export class FileSystemPane extends HTMLElement {
+	private _kayo!: Kayo;
 	private _ul!: HTMLUListElement;
 	private _win!: Window;
 
@@ -39,7 +38,8 @@ export class FileSystemPane extends BasicPane {
 	}
 
 	public static createUIElement(win: Window, kayo: Kayo): FileSystemPane {
-		const p = super.createUIElement(win, kayo, ressourcePaneTemplate) as FileSystemPane;
+		const p = win.document.createElement(this.getDomClass()) as FileSystemPane;
+		p._kayo = kayo;
 		p._win = win;
 		p._ul = win.document.createElement("ul");
 		p.appendChild(p._ul);

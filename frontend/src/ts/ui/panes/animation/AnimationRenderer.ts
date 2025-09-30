@@ -179,5 +179,5 @@ export class AnimationRenderer implements Renderer {
 	public unregisterViewport(viewport: Viewport2D): void {
 		this.registeredViewports.delete(viewport);
 	}
-	public static readonly rendererKey = "animation";
+	public static readonly rendererKey = "__kayo__animation";
 }

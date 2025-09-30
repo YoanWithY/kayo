@@ -15,7 +15,7 @@ export function objectToUl(win: Window, obj: any): HTMLElement {
 		if (Array.isArray(value)) {
 			li.textContent = `${key}:`;
 			const arrayUl = win.document.createElement("ul");
-			value.forEach((item) => {
+			for (const item of value) {
 				const arrayLi = win.document.createElement("li");
 				if (typeof item === "object" && item !== null) {
 					arrayLi.appendChild(objectToUl(win, item));
@@ -23,7 +23,7 @@ export function objectToUl(win: Window, obj: any): HTMLElement {
 					arrayLi.textContent = item.toString() + ":";
 				}
 				arrayUl.appendChild(arrayLi);
-			});
+			}
 			li.appendChild(arrayUl);
 		} else if (typeof value === "object" && value !== null) {
 			li.textContent = `${key}:`;

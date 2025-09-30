@@ -103,7 +103,7 @@ export class PTPBase {
 			type: "start of file",
 			content: { target: target, fileName: file.name },
 		});
-		file.arrayBuffer().then((buffer: ArrayBuffer) => {
+		const bufferCallback = (buffer: ArrayBuffer) => {
 			let offset = 0;
 			let bytesSend = 0;
 			const chunkSize = 16777216;
@@ -127,7 +127,8 @@ export class PTPBase {
 
 			func();
 			const interval = setInterval(func, 200);
-		});
+		};
+		file.arrayBuffer().then(bufferCallback);
 	}
 
 	public sendRT<T extends RTMessage>(dataChannel: RTCDataChannel, message: T) {
@@ -195,12 +196,13 @@ export class PTPBase {
 		id: number = 0,
 		update?: (byteSend: number, id: number) => void,
 	) {
-		file.arrayBuffer().then((buffer) => {
+		const bufferCallback = (buffer: ArrayBuffer) => {
 			this.sendRT<RTStartOfFile>(dataChannel, { type: "start of file", content: file.name });
-			this.sendRTLarge(dataChannel, buffer, connection, id, update, (dataChannel: RTCDataChannel) =>
-				this.sendRT<RTEndOfFile>(dataChannel, { type: "end of file", content: null }),
-			);
-		});
+			const finishCallback = (dataChannel: RTCDataChannel) =>
+				this.sendRT<RTEndOfFile>(dataChannel, { type: "end of file", content: null });
+			this.sendRTLarge(dataChannel, buffer, connection, id, update, finishCallback);
+		};
+		file.arrayBuffer().then(bufferCallback);
 	}
 
 	public multicastRTFile(
@@ -208,16 +210,17 @@ export class PTPBase {
 		connections: { dataChanel: RTCDataChannel; connection: RTCPeerConnection; id: number }[],
 		update?: (bytesSend: number, id: number) => void,
 	) {
-		file.arrayBuffer().then((buffer) => {
+		const bufferCallback = (buffer: ArrayBuffer) => {
 			for (let i = 0; i < connections.length; i++) {
 				const con = connections[i];
 				const dataChannel = con.dataChanel;
 				const connection = con.connection;
 				this.sendRT<RTStartOfFile>(dataChannel, { type: "start of file", content: file.name });
-				this.sendRTLarge(dataChannel, buffer, connection, con.id, update, (dataChannel: RTCDataChannel) =>
-					this.sendRT<RTEndOfFile>(dataChannel, { type: "end of file", content: null }),
-				);
+				const finishCallback = (dataChannel: RTCDataChannel) =>
+					this.sendRT<RTEndOfFile>(dataChannel, { type: "end of file", content: null });
+				this.sendRTLarge(dataChannel, buffer, connection, con.id, update, finishCallback);
 			}
-		});
+		};
+		file.arrayBuffer().then(bufferCallback);
 	}
 }

@@ -1,9 +1,8 @@
 import { Kayo } from "../../Kayo";
-import BasicPane from "./BasicPane";
 
-export default class OutlinerPane extends BasicPane {
-	public static createUIElement(win: Window, kayo: Kayo, obj: any): OutlinerPane {
-		return super.createUIElement(win, kayo, obj);
+export default class OutlinerPane extends HTMLElement {
+	public static createUIElement(win: Window, __: Kayo, _: any): OutlinerPane {
+		return win.document.createElement(this.getDomClass());
 	}
 
 	public static getDomClass() {

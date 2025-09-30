@@ -14,7 +14,6 @@ export class SplitPaneContainer extends HTMLElement {
 		} else {
 			c.style.width = rect.width + "px";
 		}
-
 		return c;
 	}
 
@@ -48,7 +47,7 @@ export class SplitPaneContainer extends HTMLElement {
 		} else if (orientation == "vertical") {
 			let minWidth = 0;
 			let minHeight = 0;
-			this.childNodes.forEach((sp) => {
+			for (const sp of this.childNodes) {
 				if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
 					sp.style.height = "";
 					if (sp.nextElementSibling) {
@@ -63,16 +62,15 @@ export class SplitPaneContainer extends HTMLElement {
 				} else if (sp instanceof SplitPaneDivider) {
 					minWidth += SplitPaneDivider.size;
 				}
-			});
+			}
 			this.style.minWidth = minWidth + "px";
 			this.style.minHeight = minHeight + "px";
 		} else {
 			let minWidth = 0;
 			let minHeight = 0;
-			this.childNodes.forEach((sp) => {
+			for (const sp of this.childNodes) {
 				if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
 					sp.style.width = "";
-
 					if (sp.nextElementSibling) {
 						sp.style.height = sp.getBoundingClientRect().height + "px";
 					} else {
@@ -85,7 +83,7 @@ export class SplitPaneContainer extends HTMLElement {
 				} else if (sp instanceof SplitPaneDivider) {
 					minHeight += SplitPaneDivider.size;
 				}
-			});
+			}
 			this.style.minWidth = minWidth + "px";
 			this.style.minHeight = minHeight + "px";
 		}

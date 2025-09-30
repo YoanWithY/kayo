@@ -32,9 +32,10 @@ export class ConcurrentTaskQueue {
 		const promices: Promise<void>[] = [];
 		for (let i = 0; i < this._numThreads; i++) {
 			let externalResolve: (value: void | PromiseLike<void>) => void;
-			const promice = new Promise<void>((res) => {
+			const executorCallback = (res: any) => {
 				externalResolve = res;
-			});
+			};
+			const promice = new Promise<void>(executorCallback);
 			promices.push(promice);
 
 			const worker = new Worker(new URL("./TaskWorker.ts", import.meta.url), {
@@ -73,9 +74,10 @@ export class ConcurrentTaskQueue {
 
 		// SVT Worker
 		let externalResolve: (value: void | PromiseLike<void>) => void;
-		const promice = new Promise<void>((res) => {
+		const executorCallback = (res: any) => {
 			externalResolve = res;
-		});
+		};
+		const promice = new Promise<void>(executorCallback);
 		promices.push(promice);
 
 		const svtWorkerCallback = (e: MessageEvent) => {
@@ -96,12 +98,13 @@ export class ConcurrentTaskQueue {
 		this._svtWorker.addEventListener("message", svtInitCallback);
 		this._svtWorker.postMessage({ func: "initWorker", taskID: -1, args: { projectRootName: newRootName } });
 
-		// await compleation
+		// eslint-disable-next-line local/no-await
 		await Promise.all(promices);
 	}
 
 	private _occupyJSWorker(): number {
-		const i = this._jsWorkers.findIndex((v) => !v.isRunning) as number;
+		const predicate = (v: WorkerEntry) => !v.isRunning;
+		const i = this._jsWorkers.findIndex(predicate) as number;
 		this._jsWorkers[i].isRunning = true;
 		return i;
 	}

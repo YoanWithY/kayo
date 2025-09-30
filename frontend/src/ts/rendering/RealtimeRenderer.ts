@@ -9,12 +9,14 @@ import { Kayo, Renderer } from "../Kayo";
 import { RepresentationConcept } from "../project/Representation";
 import { GPUX } from "../GPUX";
 import { BackgroundRealtimeRepresentation } from "../lights/Background";
-import { SceneRealtimeRepresentation } from "./SceneRealtimeRenderingRepresentation";
+import { SceneRealtimeRepresentation } from "./SceneRealtimeRepresentation";
 import { GridRelatimeRepresentation } from "../debug/Grid";
 import { MinecraftRealtimeRepresentation } from "../minecraft/MinecraftOpaquePipeline";
-const thresholdMapURL = "/beyer_2px_16bit.png";
+const thresholdMapURL = "/beyer_4px_16bit.png";
 
+// eslint-disable-next-line local/no-await
 const thresholdMapBlob = await fetch(thresholdMapURL);
+// eslint-disable-next-line local/no-await
 const thresholdMapBytes = await thresholdMapBlob.bytes();
 
 export default class RealtimeRenderer implements RepresentationConcept, Renderer {
@@ -30,6 +32,7 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 	private viewportCache = new Map<Viewport, RealtimeViewportCache>();
 	private viewUBO: GPUBuffer;
 	private gpuDevice: GPUDevice;
+	private _config: RenderConfig;
 	public bindGroup0!: GPUBindGroup;
 	public bindGroup0Layout: GPUBindGroupLayout;
 	public bindGroupR3Layout: GPUBindGroupLayout;
@@ -45,12 +48,10 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 	public blueNoiseTexture!: GPUTexture;
 	public blueNoiseView!: GPUTextureView;
 
-	public constructor(kayo: Kayo) {
+	public constructor(kayo: Kayo, config: RenderConfig) {
 		this._kayo = kayo;
 		this.gpuDevice = kayo.gpux.gpuDevice;
-		this.reconfigureContext(
-			this._kayo.wasmx.kayoInstance.project.renderConfigs.get(this.rendererKey) as RenderConfig,
-		);
+		this._config = config;
 		this.viewUBO = this.gpuDevice.createBuffer({
 			label: "View UBO",
 			size: (3 * 16 + 4 * 4) * 4,
@@ -378,8 +379,8 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 	public renderViewport(_: number, viewport: WebGPUViewport) {
 		const start = performance.now();
 		const config = this._kayo.wasmx.kayoInstance.project.renderConfigs.get(viewport.rendererKey);
-		if (config === null) {
-			console.error(`The render config key ${viewport.rendererKey} is unknown.`);
+		if (!config) {
+			console.error(`The render config key "${viewport.rendererKey}" is unknown.`);
 			return;
 		}
 
@@ -437,7 +438,7 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 		if (this.registeredViewports.has(viewport)) return;
 
 		this.registeredViewports.add(viewport);
-		this.viewportCache.set(viewport, new RealtimeViewportCache(this._kayo, viewport));
+		this.viewportCache.set(viewport, new RealtimeViewportCache(this._kayo, viewport, this._config));
 	}
 
 	public unregisterViewport(viewport: WebGPUViewport) {
@@ -507,9 +508,10 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 		this.gpuDevice.queue.writeBuffer(viewUBO, this.viewBuffer.byteLength, this.viewTimeBuffer);
 	}
 
-	public get rendererKey() {
-		return RealtimeRenderer.rendererKey;
+	public get config() {
+		return this._config;
 	}
+
 	public get representationConeceptID() {
 		return "realtime rendering";
 	}

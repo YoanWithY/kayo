@@ -541,12 +541,13 @@ export class ObjMap<T> {
 	}
 
 	public find(key: any): T | undefined {
-		const res = this.keyValuePairs.filter((val) => {
+		const predicate = (val: { key: any; value: T }) => {
 			for (const subKey in val.key) {
 				if (val.key[subKey] !== key[subKey]) return false;
 			}
 			return true;
-		});
+		};
+		const res = this.keyValuePairs.filter(predicate);
 		if (res.length >= 1) return res[0].value;
 		return undefined;
 	}
@@ -728,10 +729,10 @@ export class MinecraftBlock {
 	public constructor(name: string, blockStateModels: ParsedBlockStateModel[]) {
 		this.name = name;
 		this.parsedBlockStateModels = blockStateModels;
-		this.isFullOpaque =
-			blockStateModels.find(
-				(m) => m.builtModel.elements.find((e) => e.isFullBlock && e.isOpaque) !== undefined,
-			) !== undefined;
+		const blockModelPredicate = (e: BuiltBlockModelElement) => e.isFullBlock && e.isOpaque;
+		const blockStatePredicate = (m: ParsedBlockStateModel) =>
+			m.builtModel.elements.find(blockModelPredicate) !== undefined;
+		this.isFullOpaque = blockStateModels.find(blockStatePredicate) !== undefined;
 	}
 
 	public build(

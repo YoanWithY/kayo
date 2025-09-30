@@ -11,16 +11,22 @@ export abstract class SplitButton extends HTMLElement {
 	protected uiRoot!: WrappingPane;
 	protected clickX = NaN;
 	protected clickY = NaN;
-	protected constructor() {
-		super();
-		this.ondragstart = () => {
-			return false;
-		};
+	protected _dragStartCallback = () => {
+		return false;
+	};
+	protected _pointerDownCallback = (e: PointerEvent) => {
+		this.clickX = e.screenX;
+		this.clickY = e.screenY;
+	};
 
-		this.addEventListener("pointerdown", (e) => {
-			this.clickX = e.screenX;
-			this.clickY = e.screenY;
-		});
+	protected connectedCallback() {
+		this.addEventListener("dragstart", this._dragStartCallback);
+		this.addEventListener("pointerdown", this._pointerDownCallback);
+	}
+
+	protected disconnectedCallback() {
+		this.removeEventListener("dragstart", this._dragStartCallback);
+		this.removeEventListener("pointerdown", this._pointerDownCallback);
 	}
 
 	public static checkContainerForSingle(container: SplitPaneContainer, splitablePane: SplitablePane) {

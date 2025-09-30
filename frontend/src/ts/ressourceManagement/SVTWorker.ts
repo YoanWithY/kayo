@@ -1,3 +1,4 @@
+/* eslint-disable local/no-await */
 /// <reference lib="webworker" />
 
 let systemRoot!: FileSystemDirectoryHandle;

@@ -34,9 +34,10 @@ export class Footer extends HTMLElement {
 			0,
 		);
 
-		win.addEventListener("fullscreenchange", () => {
+		const fullscreenChangeCallback = () => {
 			if (!win.document.fullscreenElement) fullScreenButton.setStateUIOnly(0);
-		});
+		};
+		win.addEventListener("fullscreenchange", fullscreenChangeCallback);
 
 		p._end.appendChild(fullScreenButton);
 

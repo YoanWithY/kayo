@@ -79,7 +79,7 @@ fn applyCustomQuantisation(final_color: vec3f, frag_coord: vec2u) -> vec3f {
 	if (use_color_quantisation == 0) {
 		return final_color;
 	}
-	let factor = vec3f(view.red_quant, view.green_quant, view.blue_quant)- 1;
+	let factor = vec3f(view.red_quant, view.green_quant, view.blue_quant) - 1;
 	var scaled = final_color * factor;
 	if (use_dithering != 0) {
 		let pixel_coord: vec2u = vec2u(frag_coord) % textureDimensions(blue_noise_texture, 0);
@@ -91,10 +91,17 @@ fn applyCustomQuantisation(final_color: vec3f, frag_coord: vec2u) -> vec3f {
 }
 
 fn createOutputFragment(linear_rgb: vec4f, frag_coord: vec2u, premultiply: bool) -> vec4f {
-	let exposure_applied = linear_rgb.rgb * pow(2.0, view.exposure);
-	let color = convertToTargetColorSpace(exposure_applied);
-	let oe_color = select(color, sRGB_OETF(color), output_component_transfere == 1);
-	let final_high_res_color = pow(oe_color, vec3f(1.0 / view.gamma));
-	let quantized = applyCustomQuantisation(final_high_res_color, frag_coord);
-	return select(vec4f(quantized, linear_rgb.a), vec4f(quantized * linear_rgb.a, linear_rgb.a), premultiply);
+	var color = linear_rgb.rgb * view.exposure;
+	color = convertToTargetColorSpace(color);
+	if (output_component_transfere == 1) {
+		color = sRGB_OETF(color);
+	}
+	color = applyCustomQuantisation(color, frag_coord);
+	color = pow(color, vec3f(view.gamma));
+
+	if (premultiply) {
+		color *= linear_rgb.a;
+	}
+
+	return vec4f(color, linear_rgb.a);
 }

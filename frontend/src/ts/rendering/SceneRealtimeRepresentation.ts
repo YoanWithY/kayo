@@ -13,19 +13,14 @@ export class SceneRealtimeRepresentation extends SceneRepresentation<RealtimeRen
 	protected _grids: GridRelatimeRepresentation[];
 	protected _minecraftWorlds: MinecraftWorldRealtimeRepresentation[];
 
-	public constructor(
-		kayo: Kayo,
-		representationConcept: RealtimeRenderer,
-		representationSubject: Scene,
-		userData: RenderConfig,
-	) {
+	public constructor(kayo: Kayo, representationConcept: RealtimeRenderer, representationSubject: Scene) {
 		super(representationConcept, representationSubject);
 		this._kayo = kayo;
 		this._background = new BackgroundRealtimeRepresentation(
 			this._kayo,
 			representationConcept,
 			representationSubject.background,
-			userData,
+			representationConcept.config,
 		);
 		this._grids = [];
 		this._minecraftWorlds = [];
@@ -38,23 +33,22 @@ export class SceneRealtimeRepresentation extends SceneRepresentation<RealtimeRen
 	}
 
 	public addGrid(grid: Grid): void {
-		const config = this._kayo.wasmx.kayoInstance.project.renderConfigs.get(
-			RealtimeRenderer.rendererKey,
-		) as RenderConfig;
-		const realtimeGrid = new GridRelatimeRepresentation(this._kayo, this._representationConcept, grid, config);
+		const realtimeGrid = new GridRelatimeRepresentation(
+			this._kayo,
+			this._representationConcept,
+			grid,
+			this.representationConcept.config,
+		);
 		grid.setRepresentation(realtimeGrid);
 		this._grids.push(realtimeGrid);
 	}
 
 	public addMinecraftWorld(minecraftWorld: MinecraftWorld): void {
-		const config = this._kayo.wasmx.kayoInstance.project.renderConfigs.get(
-			RealtimeRenderer.rendererKey,
-		) as RenderConfig;
 		const minecraftWorldRealtimeRepresentation = new MinecraftWorldRealtimeRepresentation(
 			this._kayo,
 			this._representationConcept,
 			minecraftWorld,
-			config,
+			this.representationConcept.config,
 		);
 		minecraftWorld.setRepresentation(minecraftWorldRealtimeRepresentation);
 		this._minecraftWorlds.push(minecraftWorldRealtimeRepresentation);

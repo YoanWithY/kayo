@@ -72,13 +72,9 @@ export class MinecraftSection {
 			this.getBlock = () => undefined;
 		}
 
-		this._blocks = Array(16)
-			.fill(undefined)
-			.map(() =>
-				Array(16)
-					.fill(undefined)
-					.map(() => Array(16).fill(undefined)),
-			);
+		const mapped2 = () => Array(16).fill(undefined);
+		const mapped1 = () => Array(16).fill(undefined).map(mapped2);
+		this._blocks = Array(16).fill(undefined).map(mapped1);
 
 		if (palette.length === 1) {
 			const paletteEntry = palette[0];

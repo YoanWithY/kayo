@@ -35,12 +35,12 @@ export default class Checkbox extends IconedToggleButton {
 		this._wasmx.removeChangeListenerByPath(this._stateWasmPath, this._stateChangeCallback);
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, obj: any): Checkbox {
+	public static createUIElement(win: Window, kayo: Kayo, obj: any, varMap?: { [key: string]: string }): Checkbox {
 		const p = win.document.createElement(this.getDomClass()) as Checkbox;
 		if (obj.tooltip) Tooltip.register(win, obj.tooltip as SerialTooltip, p, obj);
 		p._wasmx = kayo.wasmx;
 
-		p._stateWasmPath = kayo.wasmx.toWasmPath(obj.stateVariableURL);
+		p._stateWasmPath = kayo.wasmx.toWasmPath(obj.stateVariableURL, varMap);
 		p._state = 0;
 		p._states = [
 			{

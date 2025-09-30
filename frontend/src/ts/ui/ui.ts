@@ -27,13 +27,15 @@ import { PerformancePane } from "./panes/PerformancePane";
 import { SplashScreen } from "./panes/SplashScreen";
 import { AnimationPane } from "./panes/animation/AnimationPane";
 import { RadioButton, RadioButtonWrapper } from "./components/RadioButton";
+import { TabbedPanel } from "./components/TabbedPanel";
 
 export type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 
 export function initUI() {
-	window.document.addEventListener("contextmenu", (e) => {
+	const contextMenuCallback = (e: MouseEvent) => {
 		e.preventDefault();
-	});
+	};
+	window.document.addEventListener("contextmenu", contextMenuCallback);
 	window.customElements.define("tool-tip", Tooltip);
 	window.customElements.define(Grid2Col.getDomClass(), Grid2Col);
 	window.customElements.define(NumberInput.getDomClass(), NumberInput);
@@ -46,6 +48,7 @@ export function initUI() {
 	window.customElements.define(PTPTextInput.getDomClass(), PTPTextInput, { extends: "form" });
 	window.customElements.define(PTPChatContent.getDomClass(), PTPChatContent);
 	window.customElements.define(PTPMessageElement.getDomClass(), PTPMessageElement);
+	window.customElements.define(TabbedPanel.getDomClass(), TabbedPanel);
 	window.customElements.define("select-option-wrapper", SelectOptionWrapper);
 	window.customElements.define("select-option", SelectOption);
 	window.customElements.define("iconed-toggle-button", IconedToggleButton);
@@ -96,13 +99,13 @@ const nameClassMap: { [key: string]: UIElement } = {
 	[NumberInput.getDomClass()]: NumberInput,
 };
 
-export function buildUIElement(win: Window, kayo: Kayo, obj: any): HTMLElement {
-	return nameClassMap[obj.class].createUIElement(win, kayo, obj);
+export function buildUIElement(win: Window, kayo: Kayo, obj: any, argMap?: { [key: string]: string }): HTMLElement {
+	return nameClassMap[obj.class].createUIElement(win, kayo, obj, argMap);
 }
 
 export interface UIElement {
 	new (): unknown;
-	createUIElement(win: Window, kayo: Kayo, obj: any): HTMLElement;
+	createUIElement(win: Window, kayo: Kayo, obj: any, argMap?: { [key: string]: string }): HTMLElement;
 	getDomClass(): string;
 }
 

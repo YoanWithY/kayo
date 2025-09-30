@@ -48,7 +48,8 @@ export class ViewTool extends AnimationTool {
 				console.error("Could not find previous poiner!");
 				return;
 			}
-			const otherPointer = Object.values(previousPointerEvents).find((v) => v.pointerId != thisPointer.pointerId);
+			const findCallback = (v: PointerEvent) => v.pointerId != thisPointer.pointerId;
+			const otherPointer = Object.values(previousPointerEvents).find(findCallback);
 			if (otherPointer === undefined) {
 				console.error("Could not find other pointer!");
 				return;

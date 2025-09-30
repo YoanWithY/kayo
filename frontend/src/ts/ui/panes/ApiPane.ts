@@ -1,46 +1,52 @@
 import { Kayo } from "../../Kayo";
 import { objectToUl } from "../UIUtils";
-import BasicPane from "./BasicPane";
-import ressourcePaneTemplate from "./WebAPIPane.json";
 
 function groupBy(array: any[], key: string) {
-	return array.reduce((accumulator, value) => {
+	const reduceCallback = (accumulator: any, value: any) => {
 		const group = value[key];
 		if (accumulator[group] === undefined) accumulator[group] = [];
 		accumulator[group].push(value);
 		return accumulator;
-	}, {});
+	};
+	return array.reduce(reduceCallback, {});
 }
 
 async function checkPermissions() {
+	// eslint-disable-next-line local/no-await
 	const camera = await navigator.permissions.query({ name: "camera" });
+	// eslint-disable-next-line local/no-await
 	const microphone = await navigator.permissions.query({ name: "microphone" });
 	return camera.state == "granted" && microphone.state == "granted";
 }
 
-export default class APIPane extends BasicPane {
-	private tree: HTMLElement | null = null;
+export default class APIPane extends HTMLElement {
+	private _kayo!: Kayo;
+	private _tree: HTMLElement | null = null;
 	private _win!: Window;
 
 	private buildCallback = async () => {
-		if (this.tree && this.contains(this.tree)) this.removeChild(this.tree);
+		if (this._tree && this.contains(this._tree)) this.removeChild(this._tree);
 		const gpux = this._kayo.gpux;
 		const gpu = gpux.gpu;
 		const gpuAdapter = gpux.gpuAdapter;
 		const gpuDevice = gpux.gpuDevice;
 		const audioContext = this._kayo.audioContext;
 
+		// eslint-disable-next-line local/no-await
 		if (!(await checkPermissions())) {
+			// eslint-disable-next-line local/no-await
 			const stream = await navigator.mediaDevices.getUserMedia({
 				audio: true,
 				video: true,
 			});
-			stream.getTracks().forEach((track) => track.stop());
+			for (const track of stream.getTracks()) track.stop();
 		}
+		// eslint-disable-next-line local/no-await
 		const outputs = await navigator.mediaDevices.enumerateDevices();
 		const groupedDevices: { [key: string]: any[] } = groupBy(outputs, "kind");
 		for (const key in groupedDevices) {
-			groupedDevices[key] = groupedDevices[key].map((dev) => dev.label);
+			const mapping = (dev: any) => dev.label;
+			groupedDevices[key] = groupedDevices[key].map(mapping);
 		}
 
 		const obj = {
@@ -88,12 +94,13 @@ export default class APIPane extends BasicPane {
 			},
 			Outputs: groupedDevices,
 		};
-		this.tree = objectToUl(this._win, obj);
-		this.appendChild(this.tree);
+		this._tree = objectToUl(this._win, obj);
+		this.appendChild(this._tree);
 	};
 
 	public static createUIElement(win: Window, kayo: Kayo): APIPane {
-		const p = super.createUIElement(win, kayo, ressourcePaneTemplate) as APIPane;
+		const p = win.document.createElement(this.getDomClass()) as APIPane;
+		p._kayo = kayo;
 		p._win = win;
 		return p;
 	}

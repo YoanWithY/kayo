@@ -3,7 +3,7 @@ import { Project } from "./project/Project";
 import WASMX from "./WASMX";
 import { VirtualTextureSystem } from "./Textures/VirtualTextureSystem";
 import RealtimeRenderer from "./rendering/RealtimeRenderer";
-import { SceneRealtimeRepresentation } from "./rendering/SceneRealtimeRenderingRepresentation";
+import { SceneRealtimeRepresentation } from "./rendering/SceneRealtimeRepresentation";
 import { RenderConfig } from "../c/KayoCorePP";
 import { Grid } from "./debug/Grid";
 import { ConcurrentTaskQueue } from "./ressourceManagement/ConcurrentTaskQueue";
@@ -34,17 +34,19 @@ export class Kayo {
 		this._taskQueue = taskQueue;
 		this._audioContext = new AudioContext({ latencyHint: "interactive" });
 		this._virtualTextureSystem = new VirtualTextureSystem(this);
-		const realtimeRenderer = new RealtimeRenderer(this);
+		const realtimeRenderer = new RealtimeRenderer(
+			this,
+			wasmx.kayoInstance.project.renderConfigs.get("realtime default") as RenderConfig,
+		);
 		const animationRenderer = new AnimationRenderer(this);
-		this._renderers[RealtimeRenderer.rendererKey] = realtimeRenderer;
+		this._renderers["realtime default"] = realtimeRenderer;
 		this._renderers[AnimationRenderer.rendererKey] = animationRenderer;
 		this._windows = new Set();
 		this._rootName = rootName;
 		this._project = new Project(this);
 
-		const config = this._wasmx.kayoInstance.project.renderConfigs.get(RealtimeRenderer.rendererKey) as RenderConfig;
 		this._project.scene.setRepresentation(
-			new SceneRealtimeRepresentation(this, realtimeRenderer, this._project.scene, config),
+			new SceneRealtimeRepresentation(this, realtimeRenderer, this._project.scene),
 		);
 		this._project.scene.addGrid(new Grid());
 	}
@@ -69,6 +71,9 @@ export class Kayo {
 		return this._virtualTextureSystem;
 	}
 
+	/**
+	 * The registrated renderer instances, indexed by the render config key.
+	 */
 	public get renderers() {
 		return this._renderers;
 	}

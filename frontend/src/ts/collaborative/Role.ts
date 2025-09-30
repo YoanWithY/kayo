@@ -27,6 +27,6 @@ export abstract class Role {
 	}
 
 	public dispatchMessage(value: string): void {
-		this.messageListener.forEach((c) => c(value));
+		for (const c of this.messageListener) c(value);
 	}
 }

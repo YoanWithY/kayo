@@ -21,6 +21,7 @@ export class WrappingPane extends HTMLElement {
 		const project = this._kayo.project;
 
 		for (const file of fi.files) {
+			// eslint-disable-next-line local/no-await
 			const fileData = await file.arrayBuffer();
 
 			if (file.type == "image/png") {
@@ -44,26 +45,23 @@ export class WrappingPane extends HTMLElement {
 				const task = new StoreFileTask(project.getFSPathTo("raw"), file.name, new Uint8Array(fileData));
 				this._kayo.taskQueue.queueTask(task);
 
-				const atlasTas = new CreateAtlasTask(
-					this._kayo.wasmx,
-					imageData,
-					(atlasData: { byteOffset: number; byteLength: number }) => {
-						imageData.delete();
+				const atlasFinishedCallback = (atlasData: { byteOffset: number; byteLength: number }) => {
+					imageData.delete();
 
-						const view = this._kayo.wasmx.getMemoryView(atlasData.byteOffset, atlasData.byteLength);
-						vt.makeResident(view, 0, 0, 0);
-						project.fullRerender();
+					const view = this._kayo.wasmx.getMemoryView(atlasData.byteOffset, atlasData.byteLength);
+					vt.makeResident(view, 0, 0, 0);
+					project.fullRerender();
 
-						const svtWriteFinishedCallback = (writeResult: number) => {
-							if (writeResult !== 0) {
-								console.error(`SVT Write failed.`);
-								return;
-							}
-							this._kayo.wasmx.wasm.deleteArrayUint8(atlasData.byteOffset);
-						};
-						vt.writeToFileSystem(view, 0, 0, 0, svtWriteFinishedCallback);
-					},
-				);
+					const svtWriteFinishedCallback = (writeResult: number) => {
+						if (writeResult !== 0) {
+							console.error(`SVT Write failed.`);
+							return;
+						}
+						this._kayo.wasmx.wasm.deleteArrayUint8(atlasData.byteOffset);
+					};
+					vt.writeToFileSystem(view, 0, 0, 0, svtWriteFinishedCallback);
+				};
+				const atlasTas = new CreateAtlasTask(this._kayo.wasmx, imageData, atlasFinishedCallback);
 				this._kayo.taskQueue.queueTask(atlasTas);
 				continue;
 			}
@@ -72,6 +70,7 @@ export class WrappingPane extends HTMLElement {
 				const audio = this._kayo.audioContext;
 				const bufferSource = this._kayo.audioContext.createBufferSource();
 				bufferSource.connect(audio.destination);
+				// eslint-disable-next-line local/no-await
 				bufferSource.buffer = await audio.decodeAudioData(fileData);
 				bufferSource.start();
 			}
@@ -79,20 +78,21 @@ export class WrappingPane extends HTMLElement {
 			if (file.type === "application/x-zip-compressed") {
 				const n = performance.now();
 
+				// eslint-disable-next-line local/no-await
 				const zipInfo = await unzip(fileData);
 
 				const onDone = () => {
 					ressourecePack.initialize(this._kayo.virtualTextureSystem);
 					console.log("in", performance.now() - n, ressourecePack);
 				};
-
+				const onProgress = () => {};
 				ressourecePack = ResourcePack.parse(
 					this._kayo,
 					zipInfo,
 					file.name.substring(0, file.name.lastIndexOf(".")),
 					undefined,
 					onDone,
-					() => {},
+					onProgress,
 				);
 				return;
 			}
@@ -151,7 +151,8 @@ export class WrappingPane extends HTMLElement {
 			fi.addEventListener("change", p._handleFile);
 
 			const openButton = win.document.createElement("button");
-			openButton.addEventListener("click", () => fi.click());
+			const fileClickCallback = () => fi.click();
+			openButton.addEventListener("click", fileClickCallback);
 			openButton.textContent = "File";
 
 			p._header.appendChild(openButton);
