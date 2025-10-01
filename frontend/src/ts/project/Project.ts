@@ -1,28 +1,90 @@
 import Scene from "./Scene";
 import { WrappingPane } from "../ui/Wrapping/WrappingPane";
-import { GPUX } from "../GPUX";
 import { Kayo } from "../Kayo";
+import { Renderer } from "../Renderer";
 import { PTPBase } from "../collaborative/PTPBase";
-import WASMX from "../WASMX";
 import { PerformancePane } from "../ui/panes/PerformancePane";
 import { Viewport } from "../rendering/Viewport";
+import { ConcurrentTaskQueue } from "../ressourceManagement/ConcurrentTaskQueue";
+import { StoreFileTask } from "../ressourceManagement/jsTasks/StoreFileTask";
+import { SceneRealtimeRepresentation } from "../rendering/SceneRealtimeRepresentation";
+import RealtimeRenderer from "../rendering/RealtimeRenderer";
+import { Grid } from "../debug/Grid";
+import { AnimationRenderer } from "../ui/panes/animation/AnimationRenderer";
+import { RenderConfig } from "../../c/KayoCorePP";
 
 export class Project {
 	private _name: string;
+	private _fsRootName: string;
+	private _taskQueue!: ConcurrentTaskQueue;
+	private _renderers: { [key: string]: Renderer } = {};
 	protected kayo: Kayo;
-	protected gpux: GPUX;
-	protected wasmx: WASMX;
 	public scene!: Scene;
 	public ptpBase: PTPBase;
 
-	public constructor(kayo: Kayo) {
+	public constructor(kayo: Kayo, fsRootName: string) {
 		this._name = "Unnamed Project";
-		window.document.title = `Kayo Engine - ${this._name}`;
+		this._fsRootName = fsRootName;
 		this.kayo = kayo;
-		this.gpux = kayo.gpux;
-		this.wasmx = kayo.wasmx;
 		this.ptpBase = new PTPBase(this);
 		this.scene = new Scene();
+	}
+
+	public get name() {
+		return this._name;
+	}
+	public get fsRootName(): string {
+		return this._fsRootName;
+	}
+	public get taskQueue() {
+		return this._taskQueue;
+	}
+	public get renderers() {
+		return this._renderers;
+	}
+
+	public open(onFinishCallback?: () => void) {
+		const taskQueue = new ConcurrentTaskQueue(this);
+		const initCallback = () => {
+			this._taskQueue = taskQueue;
+			const storeMetaCallback = (success: true | undefined) => {
+				if (!success) {
+					console.error("Could not write meta file.");
+					return;
+				}
+			};
+			taskQueue.queueTask(
+				new StoreFileTask(
+					this.fsRootName,
+					"meta.json",
+					new TextEncoder().encode(JSON.stringify({ created: new Date().toISOString() })),
+					storeMetaCallback,
+				),
+			);
+			const realtimeRenderer = new RealtimeRenderer(
+				this.kayo,
+				this.kayo.wasmx.kayoInstance.project.renderConfigs.get("realtime default") as RenderConfig,
+			);
+			const animationRenderer = new AnimationRenderer(this.kayo);
+			this._renderers["realtime default"] = realtimeRenderer;
+			this._renderers[AnimationRenderer.rendererKey] = animationRenderer;
+			this.scene.setRepresentation(
+				new SceneRealtimeRepresentation(
+					this.kayo,
+					this.kayo.renderers["realtime default"] as RealtimeRenderer,
+					this.scene,
+				),
+			);
+			this.scene.addGrid(new Grid());
+
+			if (onFinishCallback) onFinishCallback();
+		};
+		taskQueue.initWorkers().then(initCallback);
+	}
+
+	public close(onFinishCallback?: () => void) {
+		// TODO: clean up renderes and workers and other ressources.;
+		if (onFinishCallback) onFinishCallback();
 	}
 
 	public requestUI(win: Window, defaultPane: string, useHeader: boolean) {
@@ -90,6 +152,6 @@ export class Project {
 	}
 
 	public getFSPathTo(localPath: string) {
-		return `${this.kayo.rootName}/${localPath}`;
+		return `${this._fsRootName}/${localPath}`;
 	}
 }

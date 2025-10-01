@@ -2,53 +2,22 @@ import { GPUX } from "./GPUX";
 import { Project } from "./project/Project";
 import WASMX from "./WASMX";
 import { VirtualTextureSystem } from "./Textures/VirtualTextureSystem";
-import RealtimeRenderer from "./rendering/RealtimeRenderer";
-import { SceneRealtimeRepresentation } from "./rendering/SceneRealtimeRepresentation";
-import { RenderConfig } from "../c/KayoCorePP";
-import { Grid } from "./debug/Grid";
 import { ConcurrentTaskQueue } from "./ressourceManagement/ConcurrentTaskQueue";
-import { Viewport } from "./rendering/Viewport";
-import { AnimationRenderer } from "./ui/panes/animation/AnimationRenderer";
-
-export interface Renderer {
-	renderViewport(timeStemp: number, viewport: Viewport): void;
-	registeredViewports: Set<Viewport>;
-	registerViewport(viewport: Viewport): void;
-	unregisterViewport(viewport: Viewport): void;
-}
 
 export class Kayo {
 	private _gpux: GPUX;
 	private _wasmx: WASMX;
-	private _taskQueue: ConcurrentTaskQueue;
 	private _audioContext: AudioContext;
-	private _virtualTextureSystem: VirtualTextureSystem;
-	private _renderers: { [key: string]: Renderer } = {};
+	private _virtualTextureSystem: VirtualTextureSystem; // todo move to wasm
 	private _windows: Set<Window>;
-	private _rootName: string;
-	private _project: Project;
+	private _project!: Project;
 
-	public constructor(gpux: GPUX, wasmx: WASMX, taskQueue: ConcurrentTaskQueue, rootName: string) {
+	public constructor(gpux: GPUX, wasmx: WASMX) {
 		this._wasmx = wasmx;
 		this._gpux = gpux;
-		this._taskQueue = taskQueue;
 		this._audioContext = new AudioContext({ latencyHint: "interactive" });
 		this._virtualTextureSystem = new VirtualTextureSystem(this);
-		const realtimeRenderer = new RealtimeRenderer(
-			this,
-			wasmx.kayoInstance.project.renderConfigs.get("realtime default") as RenderConfig,
-		);
-		const animationRenderer = new AnimationRenderer(this);
-		this._renderers["realtime default"] = realtimeRenderer;
-		this._renderers[AnimationRenderer.rendererKey] = animationRenderer;
 		this._windows = new Set();
-		this._rootName = rootName;
-		this._project = new Project(this);
-
-		this._project.scene.setRepresentation(
-			new SceneRealtimeRepresentation(this, realtimeRenderer, this._project.scene),
-		);
-		this._project.scene.addGrid(new Grid());
 	}
 
 	public get gpux(): GPUX {
@@ -60,7 +29,11 @@ export class Kayo {
 	}
 
 	public get taskQueue(): ConcurrentTaskQueue {
-		return this._taskQueue;
+		return this.project.taskQueue;
+	}
+
+	public get renderers() {
+		return this.project.renderers;
 	}
 
 	public get audioContext(): AudioContext {
@@ -71,23 +44,25 @@ export class Kayo {
 		return this._virtualTextureSystem;
 	}
 
-	/**
-	 * The registrated renderer instances, indexed by the render config key.
-	 */
-	public get renderers() {
-		return this._renderers;
-	}
-
 	public get project(): Project {
 		return this._project;
 	}
 
-	public get rootName(): string {
-		return this._rootName;
-	}
-
 	public get windows(): Set<Window> {
 		return this._windows;
+	}
+
+	public openProject(project: Project, onFinishCallback?: () => void) {
+		const installProject = () => {
+			window.document.title = `Kayo Engine - ${project.name}`;
+			this._project = project;
+			project.open(onFinishCallback);
+		};
+		if (this.project) {
+			this.project.close(installProject);
+		} else {
+			installProject();
+		}
 	}
 
 	public openNewWindow(): void {

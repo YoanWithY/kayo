@@ -1,5 +1,6 @@
 import { FCurveSegment } from "../../../../c/KayoCorePP";
-import { Kayo, Renderer } from "../../../Kayo";
+import { Kayo } from "../../../Kayo";
+import { Renderer } from "../../../Renderer";
 import { linearStep } from "../../../math/math";
 import { Viewport2D } from "../../../rendering/Viewport";
 import { getWindowZoom } from "../../../Utils";

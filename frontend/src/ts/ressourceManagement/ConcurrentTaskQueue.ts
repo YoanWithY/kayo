@@ -1,3 +1,4 @@
+import { Project } from "../project/Project";
 import { SVTFSTask } from "./jsTasks/SVTFSTask";
 import { WasmTask, JsTask } from "./Task";
 
@@ -13,8 +14,10 @@ export class ConcurrentTaskQueue {
 	private _taskQueue: ConcurrentTask[];
 	private _jsWorkers: WorkerEntry[];
 	private _svtWorker: Worker;
+	private _project: Project;
 
-	public constructor() {
+	public constructor(project: Project) {
+		this._project = project;
 		this._numThreads = navigator.hardwareConcurrency;
 		this._taskID = 0;
 		this._numRunningThreads = 0;
@@ -28,7 +31,7 @@ export class ConcurrentTaskQueue {
 		});
 	}
 
-	public async initWorkers(newRootName: string) {
+	public async initWorkers() {
 		const promices: Promise<void>[] = [];
 		for (let i = 0; i < this._numThreads; i++) {
 			let externalResolve: (value: void | PromiseLike<void>) => void;
@@ -96,7 +99,11 @@ export class ConcurrentTaskQueue {
 		};
 
 		this._svtWorker.addEventListener("message", svtInitCallback);
-		this._svtWorker.postMessage({ func: "initWorker", taskID: -1, args: { projectRootName: newRootName } });
+		this._svtWorker.postMessage({
+			func: "initWorker",
+			taskID: -1,
+			args: { projectRootName: this._project.fsRootName },
+		});
 
 		// eslint-disable-next-line local/no-await
 		await Promise.all(promices);
