@@ -1,5 +1,7 @@
-import { Kayo } from "../../Kayo";
-import { ViewportPane } from "./ViewportPane";
+import { Kayo } from "../../../Kayo";
+import { Renderer } from "../../../Renderer";
+import { ViewportPane } from "../ViewportPane";
+import { PerformancePane } from "./PerformancePane";
 
 type TimeEntry = { [subtask: string]: number };
 interface DrawVerticalStackedBarsOpts {
@@ -13,25 +15,20 @@ interface DrawVerticalStackedBarsOpts {
 	chartHeight: number; // total height of bars
 }
 
-export class PerformancePane extends HTMLElement {
-	private _kayo!: Kayo;
-	private _win!: Window;
-	private _canvas!: HTMLCanvasElement;
-	private _ctx!: CanvasRenderingContext2D;
-
-	private _resizeCallback: ResizeObserverCallback = (e) => {
-		const size = e[0].devicePixelContentBoxSize[0];
-		this._canvas.width = size.inlineSize;
-		this._canvas.height = size.blockSize;
-		this.render();
-	};
-	private _resizeObserver: ResizeObserver = new ResizeObserver(this._resizeCallback);
-
-	public get window() {
-		return this._win;
+export class PerformanceRenderer implements Renderer {
+	public static readonly rendererKey = "__kayo__performance";
+	private _registeredViewports: Set<PerformancePane>;
+	private _kayo: Kayo;
+	public constructor(kayo: Kayo) {
+		this._kayo = kayo;
+		this._registeredViewports = new Set();
 	}
 
-	private _drawVerticalStackedBars(opts: DrawVerticalStackedBarsOpts): void {
+	public get registeredViewports() {
+		return this._registeredViewports;
+	}
+
+	private _drawVerticalStackedBars(viewport: PerformancePane, opts: DrawVerticalStackedBarsOpts): void {
 		const { canvas, ctx, data, subtasksOrder, subtaskColors, label, startY, chartHeight } = opts;
 		const count = data.length;
 		const availableWidth = canvas.width;
@@ -55,7 +52,7 @@ export class PerformancePane extends HTMLElement {
 		}
 
 		// Draw label
-		ctx.font = `${this._win.devicePixelRatio}em sans-serif`;
+		ctx.font = `${viewport.window.devicePixelRatio}em sans-serif`;
 		ctx.textBaseline = "top";
 		ctx.fillStyle = "rgb(200, 200, 200)";
 		ctx.fillText(
@@ -89,7 +86,7 @@ export class PerformancePane extends HTMLElement {
 			i++;
 		}
 
-		ctx.lineWidth = this._win.devicePixelRatio;
+		ctx.lineWidth = viewport.window.devicePixelRatio;
 		for (let value = 0; value <= maxTotal; value++) {
 			ctx.strokeStyle = `rgb(0 0 0 / ${value % 5 === 0 ? 100 : 50}%)`;
 			const y = chartY + chartHeight - value * scaleY + 0.5; // center to avoid blur :contentReference[oaicite:1]{index=1}
@@ -100,21 +97,22 @@ export class PerformancePane extends HTMLElement {
 		}
 	}
 
-	public render() {
-		this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+	public renderViewport(_: number, viewport: PerformancePane): void {
+		const ctx = viewport.canvasContext;
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-		const chartHeight = 100 * this._win.devicePixelRatio;
-		let h = 10 * this._win.devicePixelRatio;
+		const chartHeight = 100 * viewport.window.devicePixelRatio;
+		let h = 10 * viewport.window.devicePixelRatio;
 		let i = 1;
-		for (const v of this._kayo.project.viewportPanes) {
+		for (const v of this._kayo.project.viewports) {
 			if (!(v instanceof ViewportPane)) continue;
 			const d = [];
 			for (let i = 0; i < v.timeRingeCach.length; i++)
 				d.push(v.timeRingeCach[(v.timeRingeCachCurrentIndex + i) % v.timeRingeCach.length]);
 
-			this._drawVerticalStackedBars({
-				canvas: this._canvas,
-				ctx: this._ctx,
+			this._drawVerticalStackedBars(viewport, {
+				canvas: ctx.canvas,
+				ctx,
 				data: d,
 				subtasksOrder: ["JavaScript", "Render", "indexResolve", "Selection", "Overlays", "compositingTime"],
 				subtaskColors: {
@@ -129,38 +127,13 @@ export class PerformancePane extends HTMLElement {
 				startY: h,
 				chartHeight,
 			});
-			h += chartHeight + 50 * this._win.devicePixelRatio;
+			h += chartHeight + 50 * viewport.window.devicePixelRatio;
 		}
 	}
-
-	protected connectedCallback() {
-		this._kayo.project.performancePanes.add(this);
-		this._resizeObserver.observe(this, {
-			box: "device-pixel-content-box",
-		});
-		this._kayo.project.fullRerender();
+	public registerViewport(viewport: PerformancePane): void {
+		this._registeredViewports.add(viewport);
 	}
-
-	protected disconnectedCallback() {
-		this._kayo.project.performancePanes.delete(this);
-		this._resizeObserver.unobserve(this);
-	}
-
-	public static createUIElement(win: Window, kayo: Kayo): PerformancePane {
-		const p = win.document.createElement(this.getDomClass()) as PerformancePane;
-		p._win = win;
-		p._kayo = kayo;
-		p._canvas = win.document.createElement("canvas");
-		p._ctx = p._canvas.getContext("2d") as CanvasRenderingContext2D;
-		p.appendChild(p._canvas);
-		return p;
-	}
-
-	public static getDomClass(): string {
-		return "performance-pane";
-	}
-
-	public static getName() {
-		return "Performance";
+	public unregisterViewport(viewport: PerformancePane): void {
+		this._registeredViewports.delete(viewport);
 	}
 }

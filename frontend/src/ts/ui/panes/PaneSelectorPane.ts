@@ -7,7 +7,7 @@ import OutputPane from "./OutpuPane";
 import APIPane from "./ApiPane";
 import { ViewportPane } from "./ViewportPane";
 import { FileSystemPane } from "./FileSystemPane";
-import { PerformancePane } from "./PerformancePane";
+import { PerformancePane } from "./performance/PerformancePane";
 import { AnimationPane } from "./animation/AnimationPane";
 
 export default class PaneSelectorPane extends HTMLElement {

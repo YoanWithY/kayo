@@ -3,7 +3,6 @@ import { WrappingPane } from "../ui/Wrapping/WrappingPane";
 import { Kayo } from "../Kayo";
 import { Renderer } from "../Renderer";
 import { PTPBase } from "../collaborative/PTPBase";
-import { PerformancePane } from "../ui/panes/PerformancePane";
 import { Viewport } from "../rendering/Viewport";
 import { TaskQueue } from "../ressourceManagement/TaskQueue";
 import { SceneRealtimeRepresentation } from "../rendering/SceneRealtimeRepresentation";
@@ -11,6 +10,7 @@ import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import { Grid } from "../debug/Grid";
 import { AnimationRenderer } from "../ui/panes/animation/AnimationRenderer";
 import { RenderConfig } from "../../c/KayoCorePP";
+import { PerformanceRenderer } from "../ui/panes/performance/PerformanceRenderer";
 
 export class Project {
 	private _name: string;
@@ -52,8 +52,10 @@ export class Project {
 				this.kayo.wasmx.kayoInstance.project.renderConfigs.get("realtime default") as RenderConfig,
 			);
 			const animationRenderer = new AnimationRenderer(this.kayo);
+			const performanceRenderer = new PerformanceRenderer(this.kayo);
 			this._renderers["realtime default"] = realtimeRenderer;
 			this._renderers[AnimationRenderer.rendererKey] = animationRenderer;
+			this._renderers[PerformanceRenderer.rendererKey] = performanceRenderer;
 			this.scene.setRepresentation(
 				new SceneRealtimeRepresentation(
 					this.kayo,
@@ -79,7 +81,6 @@ export class Project {
 
 	private requestedAnimationFrameForWindow: Map<Window, boolean> = new Map<Window, boolean>();
 	private viewportsToUpdate = new Set<Viewport>();
-	public performancePanes = new Set<PerformancePane>();
 	public requestAnimationFrameWith(viewport: Viewport) {
 		this.viewportsToUpdate.add(viewport);
 
@@ -102,7 +103,6 @@ export class Project {
 				this.viewportsToUpdate.delete(v);
 			}
 
-			for (const p of this.performancePanes) p.render();
 			this.requestedAnimationFrameForWindow.set(viewport.window, false);
 		};
 		viewport.window.requestAnimationFrame(windowAnimationFrame);
@@ -129,7 +129,7 @@ export class Project {
 		renderer.unregisterViewport(viewport);
 	}
 
-	public get viewportPanes() {
+	public get viewports() {
 		return this._viewports;
 	}
 

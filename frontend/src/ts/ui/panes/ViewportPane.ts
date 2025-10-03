@@ -92,6 +92,11 @@ export class ViewportPane extends HTMLElement implements Viewport {
 	public setGPUTime(times: any): void {
 		this._timeRingCach[this._timeRingCurrentIndex] = times;
 		this._timeRingCurrentIndex = (this._timeRingCurrentIndex + 1) % this._timeRingCach.length;
+
+		for (const v of this._kayo.project.viewports) {
+			if (!(v.lable == "Performance Pane")) continue;
+			this._kayo.project.requestAnimationFrameWith(v);
+		}
 	}
 
 	public get timeRingeCach() {

@@ -23,7 +23,7 @@ import { PTPChatContent, PTPChatPane, PTPMessageElement, PTPTextInput } from "..
 import VBox from "./components/VBox";
 import { NumberInput } from "./components/NumberInput";
 import { FileSystemPane } from "./panes/FileSystemPane";
-import { PerformancePane } from "./panes/PerformancePane";
+import { PerformancePane } from "./panes/performance/PerformancePane";
 import { SplashScreen } from "./panes/SplashScreen";
 import { AnimationPane } from "./panes/animation/AnimationPane";
 import { RadioButton, RadioButtonWrapper } from "./components/RadioButton";
