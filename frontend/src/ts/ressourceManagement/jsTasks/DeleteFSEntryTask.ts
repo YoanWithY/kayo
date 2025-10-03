@@ -1,9 +1,9 @@
-import { ConcurrentTaskQueue } from "../ConcurrentTaskQueue";
-import { JsTask } from "../Task";
+import { postFSMessage } from "../TaskQueue";
+import { FSTask } from "../Task";
 
 export type DeleteFSEntryFinishedCallback = (succsses: true | undefined) => void;
 
-export class DeleteFSEntryTask extends JsTask {
+export class DeleteFSEntryTask extends FSTask {
 	private _path: string;
 	private _entry: string;
 	private _taskID!: number;
@@ -16,9 +16,9 @@ export class DeleteFSEntryTask extends JsTask {
 		this._finishedCallback = finishedCallback;
 	}
 
-	public run(taskQueue: ConcurrentTaskQueue, taskID: number, workerID: number): void {
+	public run(taskID: number, worker: Worker): void {
 		this._taskID = taskID;
-		taskQueue.remoteJSCall(workerID, taskID, "deleteFSEntry", { path: this._path, entry: this._entry }, []);
+		postFSMessage(worker, taskID, "deleteFSEntry", { path: this._path, entry: this._entry }, []);
 	}
 
 	public progressCallback(progress: number, maximum: number) {

@@ -40,7 +40,7 @@ export class MinecraftTexture {
 		};
 
 		const atlasTas = new CreateAtlasTask(kayo.wasmx, imageData, createAtlasFinishedCallbakc);
-		kayo.taskQueue.queueTask(atlasTas);
+		kayo.taskQueue.queueWasmTask(atlasTas);
 		this.virtualTexture = virtualTexture;
 	}
 

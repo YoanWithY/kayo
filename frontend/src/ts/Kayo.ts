@@ -2,7 +2,10 @@ import { GPUX } from "./GPUX";
 import { Project } from "./project/Project";
 import WASMX from "./WASMX";
 import { VirtualTextureSystem } from "./Textures/VirtualTextureSystem";
-import { ConcurrentTaskQueue } from "./ressourceManagement/ConcurrentTaskQueue";
+import { TaskQueue } from "./ressourceManagement/TaskQueue";
+import { DirectoryEntry, QueryFileSystemTask } from "./ressourceManagement/jsTasks/QuereyFileSystemTask";
+import { DeleteFSEntryTask } from "./ressourceManagement/jsTasks/DeleteFSEntryTask";
+import { CheckSyncLockTask } from "./ressourceManagement/jsTasks/CheckSyncLockTask";
 
 export class Kayo {
 	private _gpux: GPUX;
@@ -28,7 +31,7 @@ export class Kayo {
 		return this._wasmx;
 	}
 
-	public get taskQueue(): ConcurrentTaskQueue {
+	public get taskQueue(): TaskQueue {
 		return this.project.taskQueue;
 	}
 
@@ -83,5 +86,23 @@ export class Kayo {
 		}
 		this._windows.clear();
 		this._windows.add(window);
+	}
+
+	public cleanUpFileSystem() {
+		const queryFinishedCallback = (root: DirectoryEntry | undefined) => {
+			if (!root) return;
+			for (const projectRoot of root.children) {
+				const lockQueryFinishedCallback = (locked: boolean | undefined) => {
+					if (locked === undefined) return;
+					if (locked) return;
+
+					this.taskQueue.queueFSTask(new DeleteFSEntryTask("", projectRoot.name));
+				};
+				this.taskQueue.queueFSTask(
+					new CheckSyncLockTask(projectRoot.name, "project.json", lockQueryFinishedCallback),
+				);
+			}
+		};
+		this.taskQueue.queueFSTask(new QueryFileSystemTask("", 0, queryFinishedCallback));
 	}
 }

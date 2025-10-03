@@ -1,9 +1,9 @@
-import { ConcurrentTaskQueue } from "../ConcurrentTaskQueue";
-import { JsTask } from "../Task";
+import { postFSMessage } from "../TaskQueue";
+import { FSTask } from "../Task";
 
 type CallbackType = (returnValue: true | undefined) => void;
 
-export class StoreFileTask extends JsTask {
+export class StoreFileTask extends FSTask {
 	private _path: string;
 	private _fileName: string;
 	private _data: Uint8Array<ArrayBufferLike>;
@@ -30,10 +30,10 @@ export class StoreFileTask extends JsTask {
 		this._finishedCallback = finishedCallback;
 	}
 
-	public run(taskQueue: ConcurrentTaskQueue, taskID: number, workerID: number) {
+	public run(taskID: number, worker: Worker) {
 		this._taskID = taskID;
-		taskQueue.remoteJSCall(
-			workerID,
+		postFSMessage(
+			worker,
 			this._taskID,
 			"storeFile",
 			{

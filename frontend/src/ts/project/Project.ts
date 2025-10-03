@@ -5,8 +5,7 @@ import { Renderer } from "../Renderer";
 import { PTPBase } from "../collaborative/PTPBase";
 import { PerformancePane } from "../ui/panes/PerformancePane";
 import { Viewport } from "../rendering/Viewport";
-import { ConcurrentTaskQueue } from "../ressourceManagement/ConcurrentTaskQueue";
-import { StoreFileTask } from "../ressourceManagement/jsTasks/StoreFileTask";
+import { TaskQueue } from "../ressourceManagement/TaskQueue";
 import { SceneRealtimeRepresentation } from "../rendering/SceneRealtimeRepresentation";
 import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import { Grid } from "../debug/Grid";
@@ -16,7 +15,7 @@ import { RenderConfig } from "../../c/KayoCorePP";
 export class Project {
 	private _name: string;
 	private _fsRootName: string;
-	private _taskQueue!: ConcurrentTaskQueue;
+	private _taskQueue!: TaskQueue;
 	private _renderers: { [key: string]: Renderer } = {};
 	protected kayo: Kayo;
 	public scene!: Scene;
@@ -44,23 +43,10 @@ export class Project {
 	}
 
 	public open(onFinishCallback?: () => void) {
-		const taskQueue = new ConcurrentTaskQueue(this);
+		const taskQueue = new TaskQueue(this);
 		const initCallback = () => {
 			this._taskQueue = taskQueue;
-			const storeMetaCallback = (success: true | undefined) => {
-				if (!success) {
-					console.error("Could not write meta file.");
-					return;
-				}
-			};
-			taskQueue.queueTask(
-				new StoreFileTask(
-					this.fsRootName,
-					"meta.json",
-					new TextEncoder().encode(JSON.stringify({ created: new Date().toISOString() })),
-					storeMetaCallback,
-				),
-			);
+
 			const realtimeRenderer = new RealtimeRenderer(
 				this.kayo,
 				this.kayo.wasmx.kayoInstance.project.renderConfigs.get("realtime default") as RenderConfig,
@@ -149,9 +135,5 @@ export class Project {
 
 	public fullRerender() {
 		for (const vp of this._viewports) this.requestAnimationFrameWith(vp);
-	}
-
-	public getFSPathTo(localPath: string) {
-		return `${this._fsRootName}/${localPath}`;
 	}
 }

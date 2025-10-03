@@ -1,30 +1,27 @@
-import { ConcurrentTaskQueue } from "../ConcurrentTaskQueue";
-import { JsTask } from "../Task";
+import { postFSMessage } from "../TaskQueue";
+import { FSTask } from "../Task";
 
 export type FileEntry = { kind: "file"; name: string };
 export type DirectoryEntry = { kind: "directory"; name: string; children: (FileEntry | DirectoryEntry)[] };
 export type FSEntry = FileEntry | DirectoryEntry;
+export type QueryFileSystemTaskFinishedCallback = (returnValue: DirectoryEntry | undefined) => void;
 
-export class QueryFileSystemTask extends JsTask {
+export class QueryFileSystemTask extends FSTask {
 	private _path: string;
 	private _maxDepth: number;
 	private _taskID!: number;
-	private _finishedCallback: (returnValue: DirectoryEntry | undefined) => void;
+	private _finishedCallback: QueryFileSystemTaskFinishedCallback;
 
-	public constructor(
-		path: string,
-		maxDepth: number,
-		finishedCallback: (returnValue: DirectoryEntry | undefined) => void,
-	) {
+	public constructor(path: string, maxDepth: number, finishedCallback: QueryFileSystemTaskFinishedCallback) {
 		super();
 		this._path = path;
 		this._maxDepth = maxDepth;
 		this._finishedCallback = finishedCallback;
 	}
 
-	public run(taskQueue: ConcurrentTaskQueue, taskID: number, workerID: number): void {
+	public run(taskID: number, worker: Worker): void {
 		this._taskID = taskID;
-		taskQueue.remoteJSCall(workerID, taskID, "queryFileSystem", { path: this._path, maxDepth: this._maxDepth }, []);
+		postFSMessage(worker, taskID, "queryFileSystem", { path: this._path, maxDepth: this._maxDepth }, []);
 	}
 
 	public progressCallback(progress: number, maximum: number) {

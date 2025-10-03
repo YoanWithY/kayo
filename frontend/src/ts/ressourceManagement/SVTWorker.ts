@@ -1,8 +1,6 @@
 /* eslint-disable local/no-await */
 /// <reference lib="webworker" />
 
-let systemRoot!: FileSystemDirectoryHandle;
-let projectDir!: FileSystemDirectoryHandle;
 let svtFile!: FileSystemFileHandle;
 let svtHandle!: FileSystemSyncAccessHandle;
 
@@ -11,9 +9,10 @@ function svtTileKey(textureID: string, mip: number, tileX: number, tileY: number
 }
 
 async function initWorker({ projectRootName }: { projectRootName: string }) {
-	systemRoot = await navigator.storage.getDirectory();
-	projectDir = await systemRoot.getDirectoryHandle(projectRootName, { create: true });
-	svtFile = await projectDir.getFileHandle("svt_cache", { create: true });
+	const systemRoot = await navigator.storage.getDirectory();
+	const projectDir = await systemRoot.getDirectoryHandle(projectRootName, { create: true });
+	const cacheDir = await projectDir.getDirectoryHandle("cache", { create: true });
+	svtFile = await cacheDir.getFileHandle("SVT", { create: true });
 	svtHandle = await svtFile.createSyncAccessHandle();
 	return `Initialized SVT Worker for dir ${projectRootName}`;
 }

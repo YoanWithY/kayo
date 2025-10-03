@@ -38,11 +38,12 @@ const beforeUnloadCallback = (_: any) => {
 };
 window.addEventListener("beforeunload", beforeUnloadCallback);
 
+loadPara.textContent = "Init Project...";
 const project = new Project(kayo, randomString(16));
-
 const projectOpendCallback = () => {
 	kayo.registerWindow(window, ViewportPane.getName(), true);
 	window.document.body.appendChild(SplashScreen.createUIElement(window, kayo));
 	window.document.body.removeChild(window.document.getElementById("kayoLoading") as HTMLDivElement);
+	kayo.cleanUpFileSystem();
 };
 kayo.openProject(project, projectOpendCallback);

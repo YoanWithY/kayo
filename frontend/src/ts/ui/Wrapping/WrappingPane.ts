@@ -42,8 +42,8 @@ export class WrappingPane extends HTMLElement {
 				const imageData = this._kayo.wasmx.imageData.fromImageData(fileData, true);
 				if (imageData === null) continue;
 
-				const task = new StoreFileTask(project.getFSPathTo("raw"), file.name, new Uint8Array(fileData));
-				this._kayo.taskQueue.queueTask(task);
+				const task = new StoreFileTask("./raw", file.name, new Uint8Array(fileData));
+				this._kayo.taskQueue.queueFSTask(task);
 
 				const atlasFinishedCallback = (atlasData: { byteOffset: number; byteLength: number }) => {
 					imageData.delete();
@@ -62,7 +62,7 @@ export class WrappingPane extends HTMLElement {
 					vt.writeToFileSystem(view, 0, 0, 0, svtWriteFinishedCallback);
 				};
 				const atlasTas = new CreateAtlasTask(this._kayo.wasmx, imageData, atlasFinishedCallback);
-				this._kayo.taskQueue.queueTask(atlasTas);
+				this._kayo.taskQueue.queueWasmTask(atlasTas);
 				continue;
 			}
 

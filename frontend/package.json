@@ -1,7 +1,7 @@
 {
   "name": "kayo",
   "private": true,
-  "version": "0.0.42",
+  "version": "0.0.43",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -29,6 +29,10 @@
     "vite-svg-loader": "^5.1.0"
   },
   "dependencies": {
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.4",
     "unzipit": "^1.4.3"
   }
 }
