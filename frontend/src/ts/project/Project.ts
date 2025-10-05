@@ -11,12 +11,14 @@ import { Grid } from "../debug/Grid";
 import { AnimationRenderer } from "../ui/panes/animation/AnimationRenderer";
 import { RenderConfig } from "../../c/KayoCorePP";
 import { PerformanceRenderer } from "../ui/panes/performance/PerformanceRenderer";
+import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 
 export class Project {
 	private _name: string;
 	private _fsRootName: string;
 	private _taskQueue!: TaskQueue;
 	private _renderers: { [key: string]: Renderer } = {};
+	private _virtualTextureSystem: VirtualTextureSystem;
 	protected kayo: Kayo;
 	public scene!: Scene;
 	public ptpBase: PTPBase;
@@ -27,6 +29,7 @@ export class Project {
 		this.kayo = kayo;
 		this.ptpBase = new PTPBase(this);
 		this.scene = new Scene();
+		this._virtualTextureSystem = new VirtualTextureSystem(kayo);
 	}
 
 	public get name() {
@@ -40,6 +43,9 @@ export class Project {
 	}
 	public get renderers() {
 		return this._renderers;
+	}
+	public get virtualTextureSystem() {
+		return this._virtualTextureSystem;
 	}
 
 	public open(onFinishCallback?: () => void) {

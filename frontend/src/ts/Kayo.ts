@@ -11,7 +11,6 @@ export class Kayo {
 	private _gpux: GPUX;
 	private _wasmx: WASMX;
 	private _audioContext: AudioContext;
-	private _virtualTextureSystem: VirtualTextureSystem; // todo move to wasm
 	private _windows: Set<Window>;
 	private _project!: Project;
 
@@ -19,7 +18,6 @@ export class Kayo {
 		this._wasmx = wasmx;
 		this._gpux = gpux;
 		this._audioContext = new AudioContext({ latencyHint: "interactive" });
-		this._virtualTextureSystem = new VirtualTextureSystem(this);
 		this._windows = new Set();
 	}
 
@@ -44,7 +42,7 @@ export class Kayo {
 	}
 
 	public get virtualTextureSystem(): VirtualTextureSystem {
-		return this._virtualTextureSystem;
+		return this.project.virtualTextureSystem;
 	}
 
 	public get project(): Project {

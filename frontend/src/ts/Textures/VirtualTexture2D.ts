@@ -54,8 +54,8 @@ export class VirtualTexture2D implements Texture2D {
 		};
 		this.maxMipLevels = TextureUtils.getFullMipPyramidLevels(this.width, this.height);
 		this.firstAtlasedLevel = Math.max(
-			TextureUtils.getFirstAtlasedLevel(this.width, this.virtualTextureSystem.largestAtlasedMipSize),
-			TextureUtils.getFirstAtlasedLevel(this.height, this.virtualTextureSystem.largestAtlasedMipSize),
+			TextureUtils.getFirstAtlasedLevel(this.width, this.virtualTextureSystem.largestAtlasMipSize),
+			TextureUtils.getFirstAtlasedLevel(this.height, this.virtualTextureSystem.largestAtlasMipSize),
 		);
 	}
 
@@ -76,8 +76,8 @@ export class VirtualTexture2D implements Texture2D {
 					texture: ph.gpuTexture,
 					origin: [coord[0] * tileSize, coord[1] * tileSize, 0],
 				},
-				image,
-				{ offset: 0, bytesPerRow: tileSize * 4, rowsPerImage: tileSize },
+				image.buffer,
+				{ offset: image.byteOffset, bytesPerRow: tileSize * 4, rowsPerImage: tileSize },
 				[tileSize, tileSize, 1],
 			);
 		}

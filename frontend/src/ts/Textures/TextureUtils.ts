@@ -3,10 +3,6 @@ import { fragmentEntryPoint, vertexEntryPoint } from "../rendering/AbstractRende
 import { resolveShader } from "../rendering/ShaderUtils";
 import mipmapCode from "./mipmap.wgsl?raw";
 
-const canvas = new OffscreenCanvas(1, 1);
-const context = canvas.getContext("2d", { willReadFrequently: true })!;
-context.globalCompositeOperation = "copy";
-
 export default class TextureUtils {
 	private static mipMapPipelines: { [key: string]: GPURenderPipeline } = {};
 	private static mipMapModule: GPUShaderModule;
@@ -37,51 +33,6 @@ export default class TextureUtils {
 
 	public static getFirstAtlasedLevel(resolutionAtLevel0: number, largestAtlasMipSize: number): number {
 		return Math.max(Math.ceil(Math.log2(resolutionAtLevel0 / largestAtlasMipSize)), 0);
-	}
-
-	public static getImagePixels(imageBitmap: ImageBitmap): Uint8ClampedArray {
-		canvas.width = imageBitmap.width;
-		canvas.height = imageBitmap.height;
-		context.drawImage(imageBitmap, 0, 0);
-		const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-		return imageData.data;
-	}
-
-	public static async loadImageBitmap(imageUrl: string) {
-		// eslint-disable-next-line local/no-await
-		const response = await fetch(imageUrl);
-		// eslint-disable-next-line local/no-await
-		const blob = await response.blob();
-		// eslint-disable-next-line local/no-await
-		return await createImageBitmap(blob);
-	}
-
-	public static async loadImageTexture(imageUrl: string, genMipMaps: boolean): Promise<GPUTexture> {
-		// eslint-disable-next-line local/no-await
-		return this.imageToTexture(await this.loadImageBitmap(imageUrl), genMipMaps);
-	}
-
-	public static imageToTexture(image: ImageBitmap, genMipMaps: boolean, name?: string) {
-		const texture = this.gpuDevice.createTexture({
-			label: name,
-			size: [image.width, image.height, 1],
-			mipLevelCount: TextureUtils.getFullMipPyramidLevels(image.width, image.height),
-			format: "rgba8unorm",
-			usage:
-				GPUTextureUsage.TEXTURE_BINDING |
-				GPUTextureUsage.COPY_DST |
-				GPUTextureUsage.COPY_SRC |
-				GPUTextureUsage.RENDER_ATTACHMENT,
-		});
-
-		this.gpuDevice.queue.copyExternalImageToTexture({ source: image, flipY: true }, { texture: texture }, [
-			image.width,
-			image.height,
-		]);
-
-		if (genMipMaps) this.generateMipMap(texture);
-
-		return texture;
 	}
 
 	public static generateMipMap(texture: GPUTexture) {

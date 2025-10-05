@@ -13,6 +13,13 @@ export interface ClassHandle {
   isDeleted(): boolean;
   clone(): this;
 }
+export interface SVTConfig extends ClassHandle {
+  tileBorder: number;
+  logicalTileSize: number;
+  physicalTileSize: number;
+  largestAtlasMipSize: number;
+}
+
 export interface FCurveConstantSegmentMode extends ClassHandle {
 }
 
@@ -80,6 +87,7 @@ export interface RenderConfigMap extends ClassHandle {
 
 export interface ProjectConfig extends ClassHandle {
   renderConfigs: RenderConfigMap;
+  svtConfig: SVTConfig;
   timeLine: TimeLine;
 }
 
@@ -221,6 +229,7 @@ export type KayoPointer = {
 export type KayoNumber = [ bigint, bigint ];
 
 interface EmbindModule {
+  SVTConfig: {};
   FCurveConstantSegmentMode: {
     VALUE: number;
     LEFT_KNOT: number;
@@ -258,7 +267,7 @@ interface EmbindModule {
   KayoR3Object: {};
   WasmTask: {};
   WasmCreateAtlasTask: {
-    new(_0: number, _1: ImageDataUint8): WasmCreateAtlasTask;
+    new(_0: number, _1: ImageDataUint8, _2: SVTConfig | null): WasmCreateAtlasTask;
   };
   KayoWASMMinecraftModule: {
     new(_0: KayoWASMInstance): KayoWASMMinecraftModule;

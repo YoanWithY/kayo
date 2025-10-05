@@ -1,5 +1,4 @@
 import { GPUX } from "../GPUX";
-import TextureUtils from "./TextureUtils";
 import { TextureSVTData as TextureSVTData } from "./TextureSVTData";
 import { IndirectionTableAtlas } from "./IndirectionTableAtlas";
 import { PhysicalTexture } from "./PhysicalTexture";
@@ -11,21 +10,7 @@ export class VirtualTextureSystem {
 	private _kayo: Kayo;
 	private _gpux: GPUX;
 	private _wasmx: WASMX;
-	public largestAtlasedMipSize: number; // must be power of two
-	public numberOfMipsInMipAtlas: number;
 
-	/**
-	 * The logical image size (= width = height) of a tile in texels.
-	 */
-	private _logicalTileSize = 128;
-	/**
-	 * Border per side of each tile in texels.
-	 */
-	private _tileBorder = 16;
-	/**
-	 * The physical image size (= width = height) of a tile in texels.
-	 */
-	private _physicalTileSize = this._logicalTileSize + 2 * this._tileBorder; // 2 pixels padding at each side for mip maps and liner filtering.
 	/**
 	 * The number of layers of the physical texture. This can be chose based on preference.
 	 */
@@ -52,27 +37,16 @@ export class VirtualTextureSystem {
 	public textureSVTData: TextureSVTData;
 	public bindGroupEntries: GPUBindGroupEntry[];
 
-	public atlasOffsets: [number, number][] = [
-		[16, 16],
-		[112, 16],
-		[112, 80],
-		[16, 128],
-		[56, 128],
-		[96, 128],
-		[136, 128],
-	];
 	public constructor(kayo: Kayo) {
 		// Construction order is relevant!
 		this._kayo = kayo;
 		this._gpux = this._kayo.gpux;
 		this._wasmx = this._kayo.wasmx;
-		this.largestAtlasedMipSize = 64;
-		this.numberOfMipsInMipAtlas = TextureUtils.getFullMipPyramidLevels(this.largestAtlasedMipSize);
 
-		if (Math.floor(this._gpux.gpuDevice.limits.maxTextureDimension2D / this._physicalTileSize) > 256)
-			this._physicalLayerSize = this._physicalTileSize * 256;
+		if (Math.floor(this._gpux.gpuDevice.limits.maxTextureDimension2D / this.physicalTileSize) > 256)
+			this._physicalLayerSize = this.physicalTileSize * 256;
 		else this._physicalLayerSize = this._gpux.gpuDevice.limits.maxTextureDimension2D;
-		this._tilesPerDimension = Math.floor(this._physicalLayerSize / this._physicalTileSize);
+		this._tilesPerDimension = Math.floor(this._physicalLayerSize / this.physicalTileSize);
 		this._tilesPerLayer = this._tilesPerDimension * this._tilesPerDimension;
 		this._tilesInTotal = this._tilesPerLayer * this._physicalLayers;
 
@@ -199,47 +173,42 @@ export class VirtualTextureSystem {
 	public get kayo() {
 		return this._kayo;
 	}
-
 	public get gpux() {
 		return this._gpux;
 	}
-
 	public get wasmx() {
 		return this._wasmx;
 	}
-
+	public get svtConfig() {
+		return this._wasmx.kayoInstance.project.svtConfig;
+	}
 	public get logicalTileSize() {
-		return this._logicalTileSize;
+		return this.svtConfig.logicalTileSize;
 	}
-
 	public get tileBorder() {
-		return this._tileBorder;
+		return this.svtConfig.tileBorder;
 	}
-
 	public get physicalTileSize() {
-		return this._physicalTileSize;
+		return this.svtConfig.physicalTileSize;
 	}
-
+	public get largestAtlasMipSize() {
+		return this.svtConfig.largestAtlasMipSize;
+	}
 	public get physicalLayerSize() {
 		return this._physicalLayerSize;
 	}
-
 	public get layers() {
 		return this._physicalLayers;
 	}
-
 	public get tilesPerDimension() {
 		return this._tilesPerDimension;
 	}
-
 	public get tilesPerLayer() {
 		return this._tilesPerLayer;
 	}
-
 	public get tilesInTotal() {
 		return this._tilesInTotal;
 	}
-
 	public static readonly bindGroupLayoutEntries: GPUBindGroupLayoutEntry[] = [
 		{
 			binding: 128,

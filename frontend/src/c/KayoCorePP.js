@@ -6080,19 +6080,19 @@ function _fd_write(fd, iov, iovcnt, pnum) {
 }
 
 function _kayoDispatchBooleanToObserver(ptr, value) {
-  const kayo = window.kayo.wasmx.dispatchBooleanToObserver(ptr, value);
+  window.kayo.wasmx.dispatchBooleanToObserver(ptr, value);
 }
 
 function _kayoDispatchFixedPointToObserver(ptr) {
-  const kayo = window.kayo.wasmx.dispatchFixedPointToObserver(ptr);
+  window.kayo.wasmx.dispatchFixedPointToObserver(ptr);
 }
 
 function _kayoDispatchStringToObserver(ptr, value) {
-  const kayo = window.kayo.wasmx.dispatchStringToObserver(ptr, UTF8ToString(value));
+  window.kayo.wasmx.dispatchStringToObserver(ptr, UTF8ToString(value));
 }
 
 function _kayoDispatchUint32ToObserver(ptr, value) {
-  const kayo = window.kayo.wasmx.dispatchUint32ToObserver(ptr, value);
+  window.kayo.wasmx.dispatchUint32ToObserver(ptr, value);
 }
 
 PThread.init();
@@ -6144,8 +6144,8 @@ MEMFS.doesNotExistError = new FS.ErrnoError(44);
 var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied, _environ_get, _environ_sizes_get, _fd_close, _fd_read, _fd_seek, _fd_write ];
 
 var ASM_CONSTS = {
-  55552: ($0, $1, $2) => {
-    window.kayo.taskQueue.taskFinished($0, {
+  55696: ($0, $1, $2) => {
+    window.kayo.taskQueue.wasmTaskFinished($0, {
       byteOffset: $1,
       byteLength: $2
     });

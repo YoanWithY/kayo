@@ -22,7 +22,11 @@ export class CreateAtlasTask extends WasmTask {
 
 	public run(taskID: number): void {
 		this._taskID = taskID;
-		this._wasmTask = new this._wasmx.wasm.WasmCreateAtlasTask(taskID, this._imageData);
+		this._wasmTask = new this._wasmx.wasm.WasmCreateAtlasTask(
+			taskID,
+			this._imageData,
+			this._wasmx.kayoInstance.project.svtConfig,
+		);
 		this._wasmTask.run();
 	}
 	public progressCallback(progress: number, maximum: number): void {
