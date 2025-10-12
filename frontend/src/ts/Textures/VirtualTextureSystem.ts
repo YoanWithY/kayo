@@ -209,32 +209,34 @@ export class VirtualTextureSystem {
 	public get tilesInTotal() {
 		return this._tilesInTotal;
 	}
-	public static readonly bindGroupLayoutEntries: GPUBindGroupLayoutEntry[] = [
-		{
-			binding: 128,
-			visibility: GPUShaderStage.FRAGMENT,
-			buffer: { type: "read-only-storage", hasDynamicOffset: false },
-		},
-		{
-			binding: 130,
-			visibility: GPUShaderStage.FRAGMENT,
-			texture: { viewDimension: "2d-array", sampleType: "uint" },
-		},
-		{
-			binding: 131,
-			visibility: GPUShaderStage.FRAGMENT,
-			texture: { viewDimension: "2d-array", sampleType: "float" },
-		},
-		{ binding: 132, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
-		{ binding: 133, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
-		{ binding: 134, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
-		{ binding: 135, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
-		{ binding: 136, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
-		{ binding: 137, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
-		{ binding: 138, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
-		{ binding: 139, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
-		{ binding: 140, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
-	];
+	public static get bindGroupLayoutEntries(): GPUBindGroupLayoutEntry[] {
+		return [
+			{
+				binding: 128,
+				visibility: GPUShaderStage.FRAGMENT,
+				buffer: { type: "read-only-storage", hasDynamicOffset: false },
+			},
+			{
+				binding: 130,
+				visibility: GPUShaderStage.FRAGMENT,
+				texture: { viewDimension: "2d-array", sampleType: "uint" },
+			},
+			{
+				binding: 131,
+				visibility: GPUShaderStage.FRAGMENT,
+				texture: { viewDimension: "2d-array", sampleType: "float" },
+			},
+			{ binding: 132, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+			{ binding: 133, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+			{ binding: 134, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+			{ binding: 135, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+			{ binding: 136, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+			{ binding: 137, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+			{ binding: 138, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+			{ binding: 139, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+			{ binding: 140, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+		];
+	}
 
 	public allocateVirtualTexture(
 		uid: string,

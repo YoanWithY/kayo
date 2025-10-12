@@ -142,6 +142,16 @@ export interface KayoR3Object extends ClassHandle {
   getParent(): KayoR3Object | null;
 }
 
+export interface Projection extends ClassHandle {
+  width: number;
+  height: number;
+  getProjection(): KayoPointer;
+  setNear(_0: KayoNumber): void;
+  getNear(): KayoNumber;
+  setNear(_0: KayoNumber): void;
+  getNear(): KayoNumber;
+}
+
 export interface WasmTask extends ClassHandle {
   run(): void;
 }
@@ -265,6 +275,7 @@ interface EmbindModule {
   RealtimeConfig: {};
   RenderConfig: {};
   KayoR3Object: {};
+  Projection: {};
   WasmTask: {};
   WasmCreateAtlasTask: {
     new(_0: number, _1: ImageDataUint8, _2: SVTConfig | null): WasmCreateAtlasTask;

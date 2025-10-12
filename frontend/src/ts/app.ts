@@ -23,6 +23,7 @@ loadPara.textContent = "Init WebGPU";
 const gpux = await GPUX.requestGPUX();
 
 if (typeof gpux === "string") {
+	loadPara.textContent = "Your browser does not support Kayo!";
 	alert(`Could not initialize WebGPU with reason: ${gpux}`);
 	throw new Error("Could not initialize WebGPU!", { cause: gpux });
 }
