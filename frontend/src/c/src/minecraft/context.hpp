@@ -1,5 +1,4 @@
 #pragma once
-#include "../kayoCore/core/kayoCore.hpp"
 #include "nbt.hpp"
 #include <emscripten/bind.h>
 
@@ -32,18 +31,6 @@ class WorldData {
   public:
 	std::string name;
 	WorldData(std::string world_name);
-	DimensionData& createDimensionData(std::string dimension_name, int32_t index);
-};
-
-class WASMMinecraftModule : kayo::KayoModule {
-	std::map<std::string, WorldData> worlds;
-
-  public:
-	WASMMinecraftModule(KayoInstance& instance);
-	WorldData& createWorldData(std::string name);
-	int32_t pre_registration() override;
-	int32_t post_registration() override;
-	~WASMMinecraftModule() override;
 };
 
 } // namespace minecraft

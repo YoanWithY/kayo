@@ -40,7 +40,7 @@ FixedPoint::NumberWire FCurveConstantSegment::getValueJS() const {
 
 void FCurveConstantSegment::setValueJS(FixedPoint::NumberWire v) {
 	this->value = v;
-	dispatchToJS(&this->value);
+	// dispatchToJS(&this->value);
 }
 uint32_t FCurveConstantSegment::getValueModeJS() const {
 	return static_cast<uint32_t>(this->value_mode);
@@ -48,7 +48,7 @@ uint32_t FCurveConstantSegment::getValueModeJS() const {
 
 void FCurveKnot::setXJS(FixedPoint::NumberWire v) {
 	this->x = v;
-	dispatchToJS(&this->x);
+	// dispatchToJS(&this->x);
 }
 FixedPoint::NumberWire FCurveKnot::getXJS() const {
 	return static_cast<FixedPoint::NumberWire>(this->x);
@@ -56,7 +56,7 @@ FixedPoint::NumberWire FCurveKnot::getXJS() const {
 
 void FCurveKnot::setYJS(FixedPoint::NumberWire v) {
 	this->y = v;
-	dispatchToJS(&this->y);
+	// dispatchToJS(&this->y);
 }
 FixedPoint::NumberWire FCurveKnot::getYJS() const {
 	return static_cast<FixedPoint::NumberWire>(this->y);
@@ -64,7 +64,7 @@ FixedPoint::NumberWire FCurveKnot::getYJS() const {
 
 void FCurveKnot::setSlopeJS(FixedPoint::NumberWire v) {
 	this->slope = v;
-	dispatchToJS(&this->slope);
+	// dispatchToJS(&this->slope);
 }
 FixedPoint::NumberWire FCurveKnot::getSlopeJS() const {
 	return static_cast<FixedPoint::NumberWire>(this->slope);

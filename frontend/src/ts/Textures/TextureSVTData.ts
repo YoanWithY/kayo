@@ -26,7 +26,7 @@ export class TextureSVTData {
 	/**
 	 * The image info data in row-column memory layout.
 	 */
-	private _svtData: Uint32Array;
+	private _svtData: Uint32Array<ArrayBuffer>;
 	/**
 	 * Each element marks the start and end of a block allocated tiles (inclusiv), such that the tile after the end is definitely free.
 	 */

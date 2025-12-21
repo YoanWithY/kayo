@@ -4,7 +4,6 @@ import { CompositingPipeline } from "./CompositingPipeline";
 import { ResolvePipeline } from "./ResolvePipeline";
 import Camera from "../Viewport/Camera";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
-import { RealtimeConfig, RenderConfig } from "../../c/KayoCorePP";
 import { Kayo } from "../Kayo";
 import { Renderer } from "../Renderer";
 import { RepresentationConcept } from "../project/Representation";
@@ -13,6 +12,8 @@ import { BackgroundRealtimeRepresentation } from "../lights/Background";
 import { SceneRealtimeRepresentation } from "./SceneRealtimeRepresentation";
 import { GridRelatimeRepresentation } from "../debug/Grid";
 import { MinecraftRealtimeRepresentation } from "../minecraft/MinecraftOpaquePipeline";
+import { RenderConfig } from "./config/RenderConfig";
+import { RealtimeSpecificRenderConfig } from "./config/RealtimeRenderConfig";
 const thresholdMapURL = "/beyer_4px_16bit.png";
 
 // eslint-disable-next-line local/no-await
@@ -343,7 +344,7 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 		let needsPipelineRebuild = false;
 		let needsContextReconfiguration = false;
 		const general = config.general;
-		const realtimeConfig = config.specificRenderConfig as RealtimeConfig;
+		const realtimeConfig = config.specific as RealtimeSpecificRenderConfig;
 
 		if (general.swapChain.bitDepth !== this._configCache.bitDepth) {
 			needsContextReconfiguration = true;
@@ -379,15 +380,9 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 
 	public renderViewport(_: number, viewport: WebGPUViewport) {
 		const start = performance.now();
-		const config = this._kayo.wasmx.kayoInstance.project.renderConfigs.get(viewport.rendererKey);
+		const config = this._kayo.project.renderConfigs.get(viewport.rendererKey);
 		if (!config) {
 			console.error(`The render config key "${viewport.rendererKey}" is unknown.`);
-			return;
-		}
-
-		const realtimeConfig: RealtimeConfig = config.specificRenderConfig as RealtimeConfig;
-		if (realtimeConfig === null) {
-			console.error("Specific renderer config is null!");
 			return;
 		}
 		const { needsContextReconfiguration, needsPipelineRebuild } = this._compareAndUpdateConfigCache(config);
@@ -530,7 +525,7 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 			output_color_space: config.general.swapChain.colorSpace == "srgb" ? 0 : 1,
 			use_color_quantisation: config.general.customColorQuantisation.useCustomColorQuantisation ? 1 : 0,
 			use_dithering: config.general.customColorQuantisation.useDithering ? 1 : 0,
-			output_component_transfere: config.general.swapChain.toneMappingMode == "linear" ? 0 : 1,
+			output_component_transfere: 1,
 		};
 	}
 

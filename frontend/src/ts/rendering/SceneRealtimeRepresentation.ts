@@ -1,11 +1,11 @@
 import RealtimeRenderer from "./RealtimeRenderer";
 import Scene, { SceneRepresentation } from "../project/Scene";
-import { RenderConfig } from "../../c/KayoCorePP";
 import { BackgroundRealtimeRepresentation } from "../lights/Background";
 import { Kayo } from "../Kayo";
 import { Grid, GridRelatimeRepresentation } from "../debug/Grid";
 import { MinecraftWorld } from "../minecraft/MinecraftWorld";
 import { MinecraftRealtimeRepresentation as MinecraftWorldRealtimeRepresentation } from "../minecraft/MinecraftOpaquePipeline";
+import { RenderConfig } from "./config/RenderConfig";
 
 export class SceneRealtimeRepresentation extends SceneRepresentation<RealtimeRenderer, Scene> {
 	protected _kayo: Kayo;

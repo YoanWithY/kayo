@@ -1,8 +1,9 @@
-import { RealtimeConfig, RenderConfig } from "../../c/KayoCorePP";
 import { GPUX } from "../GPUX";
 import { Kayo } from "../Kayo";
 import { Representation } from "../project/Representation";
 import { AbstractRenderingPipeline } from "../rendering/AbstractRenderingPipeline";
+import { RealtimeSpecificRenderConfig } from "../rendering/config/RealtimeRenderConfig";
+import { RenderConfig } from "../rendering/config/RenderConfig";
 import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import Renderable from "../rendering/Renderable";
 import { resolveShader } from "../rendering/ShaderUtils";
@@ -84,7 +85,7 @@ export class MinecraftRealtimeRenderingPipeline extends AbstractRenderingPipelin
 			constants: constants,
 			entryPoint: fragmentEntryPoint,
 		};
-		this.multisample.count = (config.specificRenderConfig as RealtimeConfig).antialiasing.msaa;
+		this.multisample.count = (config.specific as RealtimeSpecificRenderConfig).antialiasing.msaa;
 		this.buildPipeline(gpux.gpuDevice, layout);
 	}
 }
@@ -140,7 +141,7 @@ export class MinecraftRealtimeRepresentation
 			label: "minecraft realtime",
 			colorFormats: RealtimeRenderer.getColorFormats(config, this._kayo.gpux),
 			depthStencilFormat: "depth24plus",
-			sampleCount: (config.specificRenderConfig as RealtimeConfig).antialiasing.msaa,
+			sampleCount: (config.specific as RealtimeSpecificRenderConfig).antialiasing.msaa,
 		});
 		renderBundleEncoder.setBindGroup(0, this.representationConcept.bindGroup0);
 

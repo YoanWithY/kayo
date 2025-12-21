@@ -1,7 +1,8 @@
-import { GeneralConfig, RealtimeConfig, RenderConfig } from "../../c/KayoCorePP";
 import { getElement } from "../GPUX";
 import { WebGPUViewport } from "./Viewport";
 import { Kayo } from "../Kayo";
+import { GeneralRenderConfig, RenderConfig } from "./config/RenderConfig";
+import { RealtimeSpecificRenderConfig } from "./config/RealtimeRenderConfig";
 
 export class RealtimeViewportCache {
 	public viewport: WebGPUViewport;
@@ -51,16 +52,13 @@ export class RealtimeViewportCache {
 	public conditionalFrambebufferUpdate(config: RenderConfig) {
 		const w = this.viewport.getCurrentTexture().width;
 		const h = this.viewport.getCurrentTexture().height;
-		const specificRenderer: RealtimeConfig = config.specificRenderConfig as RealtimeConfig;
-		if (specificRenderer == null) {
-			console.error("Specific render config is null!");
-			return;
-		}
+		const specificConfig = config.specific as RealtimeSpecificRenderConfig;
+
 		this.conditionalColorAttachmentUpdate(w, h, config);
 		if (
 			w === this.prevWidth &&
 			h === this.prevHeight &&
-			specificRenderer.antialiasing.msaa === this.prevMSAA &&
+			specificConfig.antialiasing.msaa === this.prevMSAA &&
 			this.prevUseOverlays === this.viewport.useOverlays
 		)
 			return;
@@ -102,13 +100,13 @@ export class RealtimeViewportCache {
 			usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 		});
 
-		if (specificRenderer.antialiasing.msaa > 1) {
+		if (specificConfig.antialiasing.msaa > 1) {
 			if (this.idTextureMS) this.idTextureMS.destroy();
 			this.idTextureMS = this.gpuDevice.createTexture({
 				label: "multisample id attachment texture",
 				size: [w, h, 1],
 				format: "r16uint",
-				sampleCount: specificRenderer.antialiasing.msaa,
+				sampleCount: specificConfig.antialiasing.msaa,
 				usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
 			});
 
@@ -119,19 +117,19 @@ export class RealtimeViewportCache {
 				format: "depth24plus",
 				usage: GPUTextureUsage.RENDER_ATTACHMENT,
 				label: "multisample render depth Attachment texture",
-				sampleCount: specificRenderer.antialiasing.msaa,
+				sampleCount: specificConfig.antialiasing.msaa,
 			});
 		}
 
 		this.prevWidth = w;
 		this.prevHeight = h;
-		this.prevMSAA = specificRenderer.antialiasing.msaa;
+		this.prevMSAA = specificConfig.antialiasing.msaa;
 		this.prevUseOverlays = this.viewport.useOverlays;
 	}
 
 	private conditionalColorAttachmentUpdate(w: number, h: number, config: RenderConfig) {
 		const currentFormat = this._kayo.gpux.getSwapChainFormat(config.general.swapChain.bitDepth);
-		const msaa = (config.specificRenderConfig as RealtimeConfig).antialiasing.msaa;
+		const msaa = (config.specific as RealtimeSpecificRenderConfig).antialiasing.msaa;
 		if (
 			w === this.prevWidth &&
 			h === this.prevHeight &&
@@ -160,15 +158,15 @@ export class RealtimeViewportCache {
 		});
 	}
 
-	public reconfigureContext(generalConfig: GeneralConfig) {
+	public reconfigureContext(generalConfig: GeneralRenderConfig) {
 		const context = this.viewport.canvasContext;
 		if (!context) return;
 		context.unconfigure();
 		context.configure({
 			device: this.gpuDevice,
 			format: this._kayo.gpux.getSwapChainFormat(generalConfig.swapChain.bitDepth),
-			colorSpace: generalConfig.swapChain.colorSpace as PredefinedColorSpace,
-			toneMapping: { mode: generalConfig.swapChain.toneMappingMode as GPUCanvasToneMappingMode },
+			colorSpace: generalConfig.swapChain.colorSpace,
+			toneMapping: { mode: generalConfig.swapChain.toneMappingMode },
 			usage: GPUTextureUsage.RENDER_ATTACHMENT,
 		});
 	}
@@ -181,7 +179,7 @@ export class RealtimeViewportCache {
 		compositingRenderPassDescriptor: GPURenderPassDescriptor,
 		config: RenderConfig,
 	) {
-		const specificRenderer: RealtimeConfig = config.specificRenderConfig as RealtimeConfig;
+		const specificRenderer = config.specific as RealtimeSpecificRenderConfig;
 		if (specificRenderer === null) {
 			console.error("Specific renderer config is null!");
 			return;

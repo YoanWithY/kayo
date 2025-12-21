@@ -1,14 +1,15 @@
 addToLibrary({
-	kayoDispatchUint32ToObserver: function kayoDispatchUint32ToObserver(ptr, value) {
-		window.kayo.wasmx.dispatchUint32ToObserver(ptr, value);
+	kayoDispatchUint32ToObserver: function kayoDispatchUint32ToObserver(pub_id, value) {
+		window.kayo.project.dispatchValueToSubscribers(pub_id, value);
 	},
-	kayoDispatchFixedPointToObserver: function kayoDispatchFixedPointToObserver(ptr) {
-		window.kayo.wasmx.dispatchFixedPointToObserver(ptr);
+	kayoDispatchFixedPointToObserver: function kayoDispatchFixedPointToObserver(pub_id, ptr) {
+		const kayo = window.kayo;
+		kayo.project.dispatchValueToSubscribers(pub_id, kayo.wasmx.wasm.readFixedPointFromHeap(ptr));
 	},
-	kayoDispatchStringToObserver: function kayoDispatchStringToObserver(ptr, value) {
-		window.kayo.wasmx.dispatchStringToObserver(ptr, UTF8ToString(value));
+	kayoDispatchStringToObserver: function kayoDispatchStringToObserver(pub_id, value) {
+		window.kayo.project.dispatchValueToSubscribers(pub_id, UTF8ToString(value));
 	},
-	kayoDispatchBooleanToObserver: function kayoDispatchBooleanToObserver(ptr, value) {
-		window.kayo.wasmx.dispatchBooleanToObserver(ptr, value);
+	kayoDispatchBooleanToObserver: function kayoDispatchBooleanToObserver(pub_id, value) {
+		window.kayo.project.dispatchValueToSubscribers(pub_id, value);
 	},
 });

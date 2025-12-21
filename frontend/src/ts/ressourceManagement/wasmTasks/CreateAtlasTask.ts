@@ -25,7 +25,7 @@ export class CreateAtlasTask extends WasmTask {
 		this._wasmTask = new this._wasmx.wasm.WasmCreateAtlasTask(
 			taskID,
 			this._imageData,
-			this._wasmx.kayoInstance.project.svtConfig,
+			this._wasmx.projectData.svtConfig,
 		);
 		this._wasmTask.run();
 	}

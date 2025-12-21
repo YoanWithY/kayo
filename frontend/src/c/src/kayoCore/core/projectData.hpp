@@ -2,14 +2,12 @@
 #include "SVTConfig.hpp"
 #include "TimeLine.hpp"
 #include "jsMap.hpp"
-#include "renderConfig.hpp"
 
 namespace kayo {
-class Project {
+class ProjectData {
   public:
-	JsMap<kayo::config::RenderConfig> renderConfigs;
 	TimeLine timeLine;
 	SVTConfig svt_config;
-	Project();
+	ProjectData();
 };
 } // namespace kayo

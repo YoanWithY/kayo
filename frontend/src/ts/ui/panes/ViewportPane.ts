@@ -1,4 +1,3 @@
-import { RenderConfig } from "../../../c/KayoCorePP";
 import { Kayo } from "../../Kayo";
 import { debounce } from "../../Utils";
 import ViewportCamera from "../../Viewport/ViewportCamera";
@@ -6,6 +5,7 @@ import vec2 from "../../math/vec2";
 import vec3 from "../../math/vec3";
 import { Project } from "../../project/Project";
 import { Viewport } from "../../rendering/Viewport";
+import { RenderConfig } from "../../rendering/config/RenderConfig";
 import LookAtTransform from "../../transformation/LookAt";
 
 export class ViewportPane extends HTMLElement implements Viewport {
@@ -279,7 +279,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 		p.focus();
 		p.project = p._kayo.project;
 		p.appendChild(p.canvas);
-		p.config = kayo.wasmx.kayoInstance.project.renderConfigs.get("realtime default") as RenderConfig;
+		p.config = kayo.project.renderConfigs.get("realtime default") as RenderConfig;
 		return p;
 	}
 

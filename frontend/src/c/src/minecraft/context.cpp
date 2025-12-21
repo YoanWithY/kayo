@@ -147,41 +147,17 @@ void DimensionData::openRegion(int32_t region_x, int32_t region_z, std::string f
 }
 
 DimensionData::DimensionData(std::string name, int32_t index) : name(name), index(index) {}
-
 WorldData::WorldData(std::string name) : name(name) {}
-
-DimensionData& WorldData::createDimensionData(std::string dimension_name, int32_t index) {
-	this->dimensions.emplace(std::make_pair(index, DimensionData(dimension_name, index)));
-	return this->dimensions.at(index);
-}
-
-WASMMinecraftModule::WASMMinecraftModule(KayoInstance& instance) : kayo::KayoModule(instance) {}
-int32_t WASMMinecraftModule::pre_registration() {
-	return 0;
-}
-
-int32_t WASMMinecraftModule::post_registration() {
-	return 0;
-}
-
-WASMMinecraftModule::~WASMMinecraftModule() {}
-
-WorldData& kayo::minecraft::WASMMinecraftModule::createWorldData(std::string name) {
-	this->worlds.emplace(std::make_pair(name, WorldData(name)));
-	return this->worlds.at(name);
-}
 
 } // namespace minecraft
 } // namespace kayo
 
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(KayoWasmMinecraft) {
-	class_<kayo::minecraft::WASMMinecraftModule>("KayoWASMMinecraftModule")
-		.constructor<kayo::KayoInstance&>()
-		.function("createWorldData", &kayo::minecraft::WASMMinecraftModule::createWorldData);
 	class_<kayo::minecraft::WorldData>("KayoWASMMinecraftWorld")
-		.function("createDimensionData", &kayo::minecraft::WorldData::createDimensionData);
+		.constructor<std::string>();
 	class_<kayo::minecraft::DimensionData>("KayoWASMMinecraftDimension")
+		.constructor<std::string, int32_t>()
 		.function("openRegion", &kayo::minecraft::DimensionData::openRegion)
 		.function("buildChunk", &kayo::minecraft::DimensionData::buildChunk)
 		.function("getPalette", &kayo::minecraft::DimensionData::getPalette)

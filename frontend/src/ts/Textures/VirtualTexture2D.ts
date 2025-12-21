@@ -1,5 +1,5 @@
 import { SVTWriteTask } from "../ressourceManagement/jsTasks/SVTFSTask";
-import { Texture2D } from "./TextureLoader";
+import { Texture2D } from "./Texture2D";
 import TextureUtils from "./TextureUtils";
 import { VirtualTextureSystem } from "./VirtualTextureSystem";
 

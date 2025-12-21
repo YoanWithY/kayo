@@ -180,7 +180,7 @@ export class VirtualTextureSystem {
 		return this._wasmx;
 	}
 	public get svtConfig() {
-		return this._wasmx.kayoInstance.project.svtConfig;
+		return this._wasmx.projectData.svtConfig;
 	}
 	public get logicalTileSize() {
 		return this.svtConfig.logicalTileSize;

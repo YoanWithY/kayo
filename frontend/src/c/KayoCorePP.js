@@ -6079,22 +6079,6 @@ function _fd_write(fd, iov, iovcnt, pnum) {
   }
 }
 
-function _kayoDispatchBooleanToObserver(ptr, value) {
-  window.kayo.wasmx.dispatchBooleanToObserver(ptr, value);
-}
-
-function _kayoDispatchFixedPointToObserver(ptr) {
-  window.kayo.wasmx.dispatchFixedPointToObserver(ptr);
-}
-
-function _kayoDispatchStringToObserver(ptr, value) {
-  window.kayo.wasmx.dispatchStringToObserver(ptr, UTF8ToString(value));
-}
-
-function _kayoDispatchUint32ToObserver(ptr, value) {
-  window.kayo.wasmx.dispatchUint32ToObserver(ptr, value);
-}
-
 PThread.init();
 
 embind_init_charCodes();
@@ -6144,7 +6128,7 @@ MEMFS.doesNotExistError = new FS.ErrnoError(44);
 var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied, _environ_get, _environ_sizes_get, _fd_close, _fd_read, _fd_seek, _fd_write ];
 
 var ASM_CONSTS = {
-  55872: ($0, $1, $2) => {
+  53536: ($0, $1, $2) => {
     window.kayo.taskQueue.wasmTaskFinished($0, {
       byteOffset: $1,
       byteLength: $2
@@ -6236,10 +6220,6 @@ function assignWasmImports() {
     /** @export */ invoke_viiiiiii,
     /** @export */ invoke_viiiiiiiiii,
     /** @export */ invoke_viiiiiiiiiiiiiii,
-    /** @export */ kayoDispatchBooleanToObserver: _kayoDispatchBooleanToObserver,
-    /** @export */ kayoDispatchFixedPointToObserver: _kayoDispatchFixedPointToObserver,
-    /** @export */ kayoDispatchStringToObserver: _kayoDispatchStringToObserver,
-    /** @export */ kayoDispatchUint32ToObserver: _kayoDispatchUint32ToObserver,
     /** @export */ memory: wasmMemory
   };
 }

@@ -73,69 +73,9 @@ export interface TimeLine extends ClassHandle {
   framesPerSecond: KN;
 }
 
-export interface KayoWASMModule extends ClassHandle {
-}
-
-export interface KayoWASMInstance extends ClassHandle {
-  project: ProjectConfig;
-  registerModule(_0: KayoWASMModule): number;
-}
-
-export interface RenderConfigMap extends ClassHandle {
-  get(_0: EmbindString): RenderConfig | null;
-}
-
-export interface ProjectConfig extends ClassHandle {
-  renderConfigs: RenderConfigMap;
+export interface ProjectData extends ClassHandle {
   svtConfig: SVTConfig;
   timeLine: TimeLine;
-}
-
-export interface SwapChainConfig extends ClassHandle {
-  bitDepth: number;
-  readonly bitDepth_ptr: number;
-  readonly colorSpace_ptr: number;
-  readonly toneMappingMode_ptr: number;
-  get colorSpace(): string;
-  set colorSpace(value: EmbindString);
-  get toneMappingMode(): string;
-  set toneMappingMode(value: EmbindString);
-}
-
-export interface AntialiasingConfig extends ClassHandle {
-  msaa: number;
-  readonly msaa_ptr: number;
-  readonly interpolation_ptr: number;
-  get interpolation(): string;
-  set interpolation(value: EmbindString);
-}
-
-export interface CustomColorQuantisationConfig extends ClassHandle {
-  useCustomColorQuantisation: boolean;
-  useDithering: boolean;
-  readonly useCustomColorQuantisation_ptr: number;
-  readonly useDithering_ptr: number;
-}
-
-export interface GeneralConfig extends ClassHandle {
-  swapChain: SwapChainConfig;
-  customColorQuantisation: CustomColorQuantisationConfig;
-}
-
-export interface SpecificRendererConfig extends ClassHandle {
-  get rendererName(): string;
-  set rendererName(value: EmbindString);
-}
-
-export interface RealtimeConfig extends SpecificRendererConfig {
-  antialiasing: AntialiasingConfig;
-}
-
-export interface RenderConfig extends ClassHandle {
-  specificRenderConfig: SpecificRendererConfig | null;
-  general: GeneralConfig;
-  get name(): string;
-  set name(value: EmbindString);
 }
 
 export interface KayoR3Object extends ClassHandle {
@@ -160,12 +100,7 @@ export interface WasmCreateAtlasTask extends WasmTask {
   run(): void;
 }
 
-export interface KayoWASMMinecraftModule extends ClassHandle {
-  createWorldData(_0: EmbindString): KayoWASMMinecraftWorld;
-}
-
 export interface KayoWASMMinecraftWorld extends ClassHandle {
-  createDimensionData(_0: EmbindString, _1: number): KayoWASMMinecraftDimension;
 }
 
 export interface KayoWASMMinecraftDimension extends ClassHandle {
@@ -261,30 +196,21 @@ interface EmbindModule {
   };
   FCurve: {};
   TimeLine: {};
-  KayoWASMModule: {};
-  KayoWASMInstance: {
-    new(): KayoWASMInstance;
+  ProjectData: {
+    new(): ProjectData;
   };
-  RenderConfigMap: {};
-  ProjectConfig: {};
-  SwapChainConfig: {};
-  AntialiasingConfig: {};
-  CustomColorQuantisationConfig: {};
-  GeneralConfig: {};
-  SpecificRendererConfig: {};
-  RealtimeConfig: {};
-  RenderConfig: {};
   KayoR3Object: {};
   Projection: {};
   WasmTask: {};
   WasmCreateAtlasTask: {
     new(_0: number, _1: ImageDataUint8, _2: SVTConfig | null): WasmCreateAtlasTask;
   };
-  KayoWASMMinecraftModule: {
-    new(_0: KayoWASMInstance): KayoWASMMinecraftModule;
+  KayoWASMMinecraftWorld: {
+    new(_0: EmbindString): KayoWASMMinecraftWorld;
   };
-  KayoWASMMinecraftWorld: {};
-  KayoWASMMinecraftDimension: {};
+  KayoWASMMinecraftDimension: {
+    new(_0: EmbindString, _1: number): KayoWASMMinecraftDimension;
+  };
   KN: {
     floor(_0: KayoNumber): KayoNumber;
     ceil(_0: KayoNumber): KayoNumber;
@@ -322,9 +248,7 @@ interface EmbindModule {
   ImageData: {
     fromImageData(_0: EmbindString, _1: boolean): ImageData | null;
   };
-  ImageDataUint8: {
-    empty(_0: number, _1: number, _2: number): ImageDataUint8 | null;
-  };
+  ImageDataUint8: {};
   deleteArrayUint8(_0: number): void;
   deleteArrayDouble(_0: number): void;
   readFixedPointFromHeap(_0: number): KayoNumber;

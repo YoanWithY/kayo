@@ -6,7 +6,8 @@ import { resolveShader } from "../rendering/ShaderUtils";
 import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import { Representable, Representation } from "../project/Representation";
 import { Kayo } from "../Kayo";
-import { RealtimeConfig, RenderConfig } from "../../c/KayoCorePP";
+import { RenderConfig } from "../rendering/config/RenderConfig";
+import { RealtimeSpecificRenderConfig } from "../rendering/config/RealtimeRenderConfig";
 
 const vertexBufferLayout: GPUVertexBufferLayout[] = [
 	{
@@ -50,7 +51,7 @@ class BackgroundRealtimeRenderingPipeline extends AbstractRenderingPipeline {
 			targets: RealtimeRenderer.getRenderingFragmentTargetsFromConfig(renderConfig, gpux),
 		};
 
-		this.multisample.count = (renderConfig.specificRenderConfig as RealtimeConfig).antialiasing.msaa;
+		this.multisample.count = (renderConfig.specific as RealtimeSpecificRenderConfig).antialiasing.msaa;
 
 		this.buildPipeline(gpux.gpuDevice, layout);
 	}

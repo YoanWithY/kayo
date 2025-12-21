@@ -1,7 +1,7 @@
 {
   "name": "kayo",
   "private": true,
-  "version": "0.0.46",
+  "version": "0.0.47",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,10 +11,10 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.31.0",
-    "@types/node": "^22.16.0",
+    "@types/node": "^25.0.3",
     "@typescript-eslint/eslint-plugin": "^8.36.0",
     "@typescript-eslint/parser": "^8.36.0",
-    "@webgpu/types": "^0.1.63",
+    "@webgpu/types": "^0.1.68",
     "eslint": "^9.31.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.1",
@@ -22,7 +22,7 @@
     "prettier": "^3.6.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.36.0",
-    "vite": "^6.3.5",
+    "vite": "^7.3.0",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-pwa": "^1.0.1",
     "vite-plugin-static-copy": "^3.1.0",

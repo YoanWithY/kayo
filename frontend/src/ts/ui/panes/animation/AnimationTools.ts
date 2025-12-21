@@ -99,7 +99,7 @@ export class AddKnotTool extends AnimationTool {
 	public handlePointerDown(e: PointerEvent): void {
 		const dpr = this._animationPane.window.devicePixelRatio;
 		const source = this._animationPane.mapToSource(e.offsetX * dpr, e.offsetY * dpr);
-		const curve = this._kayo.wasmx.kayoInstance.project.timeLine.simulationTimeVelocity;
+		const curve = this._kayo.wasmx.projectData.timeLine.simulationTimeVelocity;
 		curve.insertKnot(source[0], source[1], true);
 		this._kayo.project.fullRerender();
 	}

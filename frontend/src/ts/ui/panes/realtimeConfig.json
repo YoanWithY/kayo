@@ -159,7 +159,7 @@
 								},
 								{
 									"class": "state-select-box",
-									"stateVariableURL": "renderConfigs:$config.specificRenderConfig.antialiasing.msaa",
+									"stateVariableURL": "renderConfigs:$config.specific.antialiasing.msaa",
 									"options": [
 										{
 											"value": 1,
@@ -180,7 +180,7 @@
 								},
 								{
 									"class": "state-select-box",
-									"stateVariableURL": "renderConfigs:$config.specificRenderConfig.antialiasing.interpolation",
+									"stateVariableURL": "renderConfigs:$config.specific.antialiasing.interpolation",
 									"options": [
 										{
 											"value": "center",
@@ -197,7 +197,7 @@
 									],
 									"uneffectiveIfAny": [
 										{
-											"stateVariableURL": "renderConfigs:$config.specificRenderConfig.antialiasing.msaa",
+											"stateVariableURL": "renderConfigs:$config.specific.antialiasing.msaa",
 											"anyOf": [
 												1
 											]

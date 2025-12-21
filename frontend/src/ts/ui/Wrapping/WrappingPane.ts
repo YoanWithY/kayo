@@ -99,12 +99,12 @@ export class WrappingPane extends HTMLElement {
 			if (file.name.endsWith(".mca")) {
 				console.log(".msc");
 				try {
-					const world = this._kayo.wasmx.minecraftModule.createWorldData("My World");
-					const dimension = world.createDimensionData("Overworld", 0);
+					// const world = new this._kayo.wasmx.wasm.KayoWASMMinecraftWorld("My World");
+					const dimension = new this._kayo.wasmx.wasm.KayoWASMMinecraftDimension("Overworld", 0);
 					dimension.openRegion(0, 0, fileData);
-					const mWorld = new MinecraftWorld(project, "World", ressourecePack, 8);
-					for (let x = 0; x < 8; x++) {
-						for (let z = 0; z < 8; z++) {
+					const mWorld = new MinecraftWorld(project, "World", ressourecePack, 16);
+					for (let x = 0; x < 32; x++) {
+						for (let z = 0; z < 32; z++) {
 							const status = dimension.buildChunk(x, z);
 							if (status !== 0) continue;
 

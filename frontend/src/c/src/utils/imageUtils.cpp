@@ -105,6 +105,5 @@ EMSCRIPTEN_BINDINGS(KayoImageUtilsWASM) {
 		.function("getMipWidth", &kayo::ImageData::getMipWidth)
 		.function("getMipHeight", &kayo::ImageData::getMipHeight)
 		.function("getMipBytesPerRow", &kayo::ImageData::getMipBytesPerRow);
-	class_<kayo::ImageDataImplementation<uint8_t>, base<kayo::ImageData>>("ImageDataUint8")
-		.class_function("empty", &kayo::ImageDataImplementation<uint8_t>::empty, return_value_policy::reference());
+	class_<kayo::ImageDataImplementation<uint8_t>, base<kayo::ImageData>>("ImageDataUint8");
 }

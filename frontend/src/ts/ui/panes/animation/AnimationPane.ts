@@ -96,7 +96,7 @@ export class AnimationPane extends HTMLElement implements Viewport2D {
 	public setClosestActive(e: PointerEvent) {
 		const dpr = this.window.devicePixelRatio;
 		const source = this.mapToSourceX(e.offsetX * dpr);
-		const curve = this._kayo.wasmx.kayoInstance.project.timeLine.simulationTimeVelocity;
+		const curve = this._kayo.wasmx.projectData.timeLine.simulationTimeVelocity;
 		const index = curve.getSegmentIndexAt(source);
 		this._activeSegment = curve.segments.get(index);
 	}

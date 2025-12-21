@@ -98,7 +98,7 @@ export class AnimationRenderer implements Renderer {
 		const endXa = KN.addn(startXa, rangeXa);
 		const rangeYa = canvas.height / viewport.contentScale[1];
 		const endYa = KN.addn(startYa, rangeYa);
-		const curve = this._kayo.wasmx.kayoInstance.project.timeLine.simulationTimeVelocity;
+		const curve = this._kayo.wasmx.projectData.timeLine.simulationTimeVelocity;
 
 		const firstIndex = curve.getSegmentIndexAt(startXa);
 		const lastIndex = curve.getSegmentIndexAt(endXa);

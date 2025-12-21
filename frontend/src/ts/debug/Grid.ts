@@ -7,7 +7,8 @@ import { resolveShader } from "../rendering/ShaderUtils";
 import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import { Representable, Representation } from "../project/Representation";
 import { Kayo } from "../Kayo";
-import { RealtimeConfig, RenderConfig } from "../../c/KayoCorePP";
+import { RenderConfig } from "../rendering/config/RenderConfig";
+import { RealtimeSpecificRenderConfig } from "../rendering/config/RealtimeRenderConfig";
 
 const vertexBufferLayout: GPUVertexBufferLayout[] = [
 	{
@@ -79,7 +80,7 @@ export class GridRealtimePipeline extends AbstractRenderingPipeline {
 			targets: targets,
 			constants: constants,
 		};
-		this.multisample.count = (config.specificRenderConfig as RealtimeConfig).antialiasing.msaa;
+		this.multisample.count = (config.specific as RealtimeSpecificRenderConfig).antialiasing.msaa;
 		this.buildPipeline(gpux.gpuDevice, layout);
 	}
 }
