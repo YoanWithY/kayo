@@ -1,0 +1,35 @@
+tabbed-panel {
+    background: none;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 1px;
+}
+
+.tabbed-panel-navigator {
+    display: flex;
+    margin-bottom: var(--var-padding);
+}
+
+.tabbed-panel-tab {
+    display: inline;
+    background: var(--pane-background-color);
+    padding: var(--var-padding);
+    background: rgba(0,0,0,0.5);
+}
+
+.tabbed-panel-tab:hover{
+    background: rgba(255,255,255,0.2);
+}
+
+.active-tab {
+    border-style: solid;
+    border-color: var(--accent-color);
+    border-width: 0px 0px 1px 0px;
+    background: rgba(255,255,255,0.1);
+}
+
+.tabbed-panel-content {
+    display: flex;
+    flex: 1 1 0px;
+    overflow: auto;
+}

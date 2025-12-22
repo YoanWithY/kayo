@@ -9,12 +9,13 @@ import { SceneRealtimeRepresentation } from "../rendering/SceneRealtimeRepresent
 import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import { Grid } from "../debug/Grid";
 import { AnimationRenderer } from "../ui/panes/animation/AnimationRenderer";
-import { PerformanceRenderer } from "../ui/panes/performance/PerformanceRenderer";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
 import WASMX, { KayoWasmAddress, StatePath } from "../WASMX";
 import { PubID } from "../PubSub";
 import { RenderConfig } from "../rendering/config/RenderConfig";
 import { RealtimeSpecificRenderConfig } from "../rendering/config/RealtimeRenderConfig";
+import { PerformanceRenderer } from "../ui/panes/debug/performance/PerformanceRenderer";
+import { SVTDebugRenderer } from "../ui/panes/debug/svtDebug/SVTDebugRenderer";
 
 export class Project {
 	private _name: string;
@@ -75,9 +76,12 @@ export class Project {
 			);
 			const animationRenderer = new AnimationRenderer(this._kayo);
 			const performanceRenderer = new PerformanceRenderer(this._kayo);
+			SVTDebugRenderer.init(this._kayo.gpux, this.virtualTextureSystem);
+			const svtDebugRenderer = new SVTDebugRenderer(this._kayo);
 			this._renderers.set("realtime default", realtimeRenderer);
 			this._renderers.set(AnimationRenderer.rendererKey, animationRenderer);
 			this._renderers.set(PerformanceRenderer.rendererKey, performanceRenderer);
+			this._renderers.set(SVTDebugRenderer.rendererKey, svtDebugRenderer);
 			this.scene.setRepresentation(
 				new SceneRealtimeRepresentation(
 					this._kayo,

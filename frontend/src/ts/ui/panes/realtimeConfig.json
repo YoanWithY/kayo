@@ -215,17 +215,6 @@
 			"tooltip": {
 				"description": "Settings that are specific to the output of the realtime rendering engine."
 			}
-		},
-		{
-			"class": "collapsible-element",
-			"text": "Integral",
-			"content": {
-				"class": "v-box",
-				"children": []
-			},
-			"tooltip": {
-				"description": "Settings that are specific to the output of the Integral rendering engine."
-			}
 		}
 	]
 }

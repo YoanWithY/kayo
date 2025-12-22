@@ -4,11 +4,9 @@ import { SplitablePane } from "../splitpane/SplitablePane";
 import { UIPaneElement } from "../ui";
 import OutlinerPane from "./OutlinerPane";
 import OutputPane from "./OutpuPane";
-import APIPane from "./ApiPane";
 import { ViewportPane } from "./ViewportPane";
-import { FileSystemPane } from "./FileSystemPane";
-import { PerformancePane } from "./performance/PerformancePane";
 import { AnimationPane } from "./animation/AnimationPane";
+import { DebugPane } from "./debug/DebugPane";
 
 export default class PaneSelectorPane extends HTMLElement {
 	public static createUIElement(win: Window, kayo: Kayo): PaneSelectorPane {
@@ -37,13 +35,11 @@ export default class PaneSelectorPane extends HTMLElement {
 }
 
 export const panesNameClassMap: { [key: string]: UIPaneElement } = {
+	[PaneSelectorPane.getName()]: PaneSelectorPane,
+	[AnimationPane.getName()]: AnimationPane,
 	[ViewportPane.getName()]: ViewportPane,
-	[APIPane.getName()]: APIPane,
 	[OutputPane.getName()]: OutputPane,
 	[OutlinerPane.getName()]: OutlinerPane,
 	[PTPChatPane.getName()]: PTPChatPane,
-	[PaneSelectorPane.getName()]: PaneSelectorPane,
-	[FileSystemPane.getName()]: FileSystemPane,
-	[PerformancePane.getName()]: PerformancePane,
-	[AnimationPane.getName()]: AnimationPane,
+	[DebugPane.getName()]: DebugPane,
 };

@@ -1,7 +1,7 @@
-import { Kayo } from "../../../Kayo";
-import { Renderer } from "../../../Renderer";
-import { ViewportPane } from "../ViewportPane";
-import { PerformancePane } from "./PerformancePane";
+import { Kayo } from "../../../../Kayo";
+import { Renderer } from "../../../../Renderer";
+import { ViewportPane } from "../../ViewportPane";
+import { PerformancePanel } from "./PerformancePanel";
 
 type TimeEntry = { [subtask: string]: number };
 interface DrawVerticalStackedBarsOpts {
@@ -17,7 +17,7 @@ interface DrawVerticalStackedBarsOpts {
 
 export class PerformanceRenderer implements Renderer {
 	public static readonly rendererKey = "__kayo__performance";
-	private _registeredViewports: Set<PerformancePane>;
+	private _registeredViewports: Set<PerformancePanel>;
 	private _kayo: Kayo;
 	public constructor(kayo: Kayo) {
 		this._kayo = kayo;
@@ -28,7 +28,7 @@ export class PerformanceRenderer implements Renderer {
 		return this._registeredViewports;
 	}
 
-	private _drawVerticalStackedBars(viewport: PerformancePane, opts: DrawVerticalStackedBarsOpts): void {
+	private _drawVerticalStackedBars(viewport: PerformancePanel, opts: DrawVerticalStackedBarsOpts): void {
 		const { canvas, ctx, data, subtasksOrder, subtaskColors, label, startY, chartHeight } = opts;
 		const count = data.length;
 		const availableWidth = canvas.width;
@@ -97,7 +97,7 @@ export class PerformanceRenderer implements Renderer {
 		}
 	}
 
-	public renderViewport(_: number, viewport: PerformancePane): void {
+	public renderViewport(_: number, viewport: PerformancePanel): void {
 		const ctx = viewport.canvasContext;
 		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -130,10 +130,10 @@ export class PerformanceRenderer implements Renderer {
 			h += chartHeight + 50 * viewport.window.devicePixelRatio;
 		}
 	}
-	public registerViewport(viewport: PerformancePane): void {
+	public registerViewport(viewport: PerformancePanel): void {
 		this._registeredViewports.add(viewport);
 	}
-	public unregisterViewport(viewport: PerformancePane): void {
+	public unregisterViewport(viewport: PerformancePanel): void {
 		this._registeredViewports.delete(viewport);
 	}
 }

@@ -1,13 +1,13 @@
 import { EditorState } from "@codemirror/state";
-import { Kayo } from "../../Kayo";
-import { LoadFileTask } from "../../ressourceManagement/jsTasks/LoadFileTask";
-import { DirectoryEntry, QueryFileSystemTask } from "../../ressourceManagement/jsTasks/QuereyFileSystemTask";
+import { Kayo } from "../../../Kayo";
+import { LoadFileTask } from "../../../ressourceManagement/jsTasks/LoadFileTask";
+import { DirectoryEntry, QueryFileSystemTask } from "../../../ressourceManagement/jsTasks/QuereyFileSystemTask";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 
-export class FileSystemPane extends HTMLElement {
+export class FileSystemPanel extends HTMLElement {
 	private _kayo!: Kayo;
 	private _ul!: HTMLUListElement;
 	private _win!: Window;
@@ -106,8 +106,8 @@ export class FileSystemPane extends HTMLElement {
 		this._kayo.taskQueue.queueFSTask(new LoadFileTask("./", "project.json", loadCallback));
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo): FileSystemPane {
-		const p = win.document.createElement(this.getDomClass()) as FileSystemPane;
+	public static createUIElement(win: Window, kayo: Kayo): FileSystemPanel {
+		const p = win.document.createElement(this.getDomClass()) as FileSystemPanel;
 		p._kayo = kayo;
 		p._win = win;
 		p._ul = win.document.createElement("ul");
@@ -116,7 +116,7 @@ export class FileSystemPane extends HTMLElement {
 	}
 
 	public static getDomClass(): string {
-		return "file-system-pane";
+		return "file-system-panel";
 	}
 
 	public static getName() {

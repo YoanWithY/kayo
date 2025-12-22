@@ -1,5 +1,5 @@
-import { Kayo } from "../../Kayo";
-import { objectToUl } from "../UIUtils";
+import { Kayo } from "../../../Kayo";
+import { objectToUl } from "../../UIUtils";
 
 function groupBy(array: any[], key: string) {
 	const reduceCallback = (accumulator: any, value: any) => {
@@ -19,7 +19,7 @@ async function checkPermissions() {
 	return camera.state == "granted" && microphone.state == "granted";
 }
 
-export default class APIPane extends HTMLElement {
+export default class APIPanel extends HTMLElement {
 	private _kayo!: Kayo;
 	private _tree: HTMLElement | null = null;
 	private _win!: Window;
@@ -98,21 +98,6 @@ export default class APIPane extends HTMLElement {
 		this.appendChild(this._tree);
 	};
 
-	public static createUIElement(win: Window, kayo: Kayo): APIPane {
-		const p = win.document.createElement(this.getDomClass()) as APIPane;
-		p._kayo = kayo;
-		p._win = win;
-		return p;
-	}
-
-	public static getDomClass(): string {
-		return "api-pane";
-	}
-
-	public static getName() {
-		return "Web API";
-	}
-
 	protected connectedCallback() {
 		this.buildCallback();
 		this._win.addEventListener("resize", this.buildCallback);
@@ -120,5 +105,20 @@ export default class APIPane extends HTMLElement {
 
 	protected disconnectedCallback() {
 		this._win.removeEventListener("resize", this.buildCallback);
+	}
+
+	public static createUIElement(win: Window, kayo: Kayo): APIPanel {
+		const p = win.document.createElement(this.getDomClass()) as APIPanel;
+		p._kayo = kayo;
+		p._win = win;
+		return p;
+	}
+
+	public static getDomClass(): string {
+		return "api-panel";
+	}
+
+	public static getName() {
+		return "Web API";
 	}
 }

@@ -1,12 +1,12 @@
-import { Kayo } from "../../../Kayo";
-import { Viewport } from "../../../rendering/Viewport";
-import { PerformanceRenderer } from "./PerformanceRenderer";
+import { Kayo } from "../../../../Kayo";
+import { Viewport } from "../../../../rendering/Viewport";
+import { SVTDebugRenderer } from "./SVTDebugRenderer";
 
-export class PerformancePane extends HTMLElement implements Viewport {
+export class SVTDebugPanel extends HTMLElement implements Viewport {
 	private _kayo!: Kayo;
 	private _win!: Window;
 	private _canvas!: HTMLCanvasElement;
-	private _ctx!: CanvasRenderingContext2D;
+	private _canvasContext!: GPUCanvasContext;
 
 	private _resizeCallback: ResizeObserverCallback = (e) => {
 		const size = e[0].devicePixelContentBoxSize[0];
@@ -16,16 +16,16 @@ export class PerformancePane extends HTMLElement implements Viewport {
 	};
 	private _resizeObserver: ResizeObserver = new ResizeObserver(this._resizeCallback);
 	public get rendererKey(): string {
-		return PerformanceRenderer.rendererKey;
-	}
-	public get canvasContext(): CanvasRenderingContext2D {
-		return this._ctx;
+		return SVTDebugRenderer.rendererKey;
 	}
 	public get lable(): string {
-		return "Performance Pane";
+		return "SVT Debug Panel";
 	}
 	public get window() {
 		return this._win;
+	}
+	public get canvasContext() {
+		return this._canvasContext;
 	}
 
 	protected connectedCallback() {
@@ -41,21 +41,31 @@ export class PerformancePane extends HTMLElement implements Viewport {
 		this._kayo.project.unregisterViewport(this);
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo): PerformancePane {
-		const p = win.document.createElement(this.getDomClass()) as PerformancePane;
+	public static createUIElement(win: Window, kayo: Kayo): SVTDebugPanel {
+		const p = win.document.createElement(this.getDomClass()) as SVTDebugPanel;
 		p._win = win;
 		p._kayo = kayo;
 		p._canvas = win.document.createElement("canvas");
-		p._ctx = p._canvas.getContext("2d") as CanvasRenderingContext2D;
 		p.appendChild(p._canvas);
+		p._canvasContext = p._canvas.getContext("webgpu") as GPUCanvasContext;
+		p._canvasContext.configure({
+			device: kayo.gpux.gpuDevice,
+			format: kayo.gpux.gpu.getPreferredCanvasFormat(),
+			alphaMode: "opaque",
+			colorSpace: "srgb",
+			toneMapping: {
+				mode: "standard",
+			},
+		});
+
 		return p;
 	}
 
 	public static getDomClass(): string {
-		return "performance-pane";
+		return "svt-panel";
 	}
 
 	public static getName() {
-		return "Performance";
+		return "SVT";
 	}
 }

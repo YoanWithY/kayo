@@ -1,6 +1,6 @@
 import { ViewportPane } from "./panes/ViewportPane";
 import OutlinerPane, { OutlinerElement } from "./panes/OutlinerPane";
-import APIPane from "./panes/ApiPane";
+import APIPanel from "./panes/debug/ApiPanel";
 import PaneSelectorPane from "./panes/PaneSelectorPane";
 import { SplitPaneContainer } from "./splitpane/SplitPaneContainer";
 import { SplitButtonLL, SplitButtonLR, SplitButtonUL, SplitButtonUR } from "./splitpane/SplitButton";
@@ -22,12 +22,14 @@ import SpanElement from "./components/SpanElement";
 import { PTPChatContent, PTPChatPane, PTPMessageElement, PTPTextInput } from "../collaborative/PTPChatPannel";
 import VBox from "./components/VBox";
 import { NumberInput } from "./components/NumberInput";
-import { FileSystemPane } from "./panes/FileSystemPane";
-import { PerformancePane } from "./panes/performance/PerformancePane";
+import { FileSystemPanel } from "./panes/debug/FileSystemPanel";
 import { SplashScreen } from "./panes/SplashScreen";
 import { AnimationPane } from "./panes/animation/AnimationPane";
 import { RadioButton, RadioButtonWrapper } from "./components/RadioButton";
 import { TabbedPanel } from "./components/TabbedPanel";
+import { PerformancePanel } from "./panes/debug/performance/PerformancePanel";
+import { DebugPane } from "./panes/debug/DebugPane";
+import { SVTDebugPanel } from "./panes/debug/svtDebug/SVTDebugPanel";
 
 export type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 
@@ -54,15 +56,18 @@ export function initUI() {
 	window.customElements.define("iconed-toggle-button", IconedToggleButton);
 
 	window.customElements.define(ViewportPane.getDomClass(), ViewportPane);
-	window.customElements.define(FileSystemPane.getDomClass(), FileSystemPane);
-	window.customElements.define(PerformancePane.getDomClass(), PerformancePane);
-	window.customElements.define(APIPane.getDomClass(), APIPane);
 	window.customElements.define(OutputPane.getDomClass(), OutputPane);
 	window.customElements.define(PaneSelectorPane.getDomClass(), PaneSelectorPane);
 	window.customElements.define(OutlinerPane.getDomClass(), OutlinerPane);
 	window.customElements.define(PTPChatPane.getDomClass(), PTPChatPane);
 	window.customElements.define(SplashScreen.getDomClass(), SplashScreen);
 	window.customElements.define(AnimationPane.getDomClass(), AnimationPane);
+
+	window.customElements.define(DebugPane.getDomClass(), DebugPane);
+	window.customElements.define(APIPanel.getDomClass(), APIPanel);
+	window.customElements.define(PerformancePanel.getDomClass(), PerformancePanel);
+	window.customElements.define(FileSystemPanel.getDomClass(), FileSystemPanel);
+	window.customElements.define(SVTDebugPanel.getDomClass(), SVTDebugPanel);
 
 	window.customElements.define("wrapping-pane", WrappingPane);
 	window.customElements.define("full-strech", FullStretch);
@@ -85,9 +90,10 @@ export function initUI() {
 
 const nameClassMap: { [key: string]: UIElement } = {
 	[AnimationPane.getDomClass()]: AnimationPane,
+	[DebugPane.getDomClass()]: DebugPane,
+	[FileSystemPanel.getDomClass()]: FileSystemPanel,
+	[PerformancePanel.getDomClass()]: PerformancePanel,
 	[OutputPane.getDomClass()]: OutputPane,
-	[FileSystemPane.getDomClass()]: FileSystemPane,
-	[PerformancePane.getDomClass()]: PerformancePane,
 	[Collapsible.getDomClass()]: Collapsible,
 	[Grid2Col.getDomClass()]: Grid2Col,
 	[SpanElement.getDomClass()]: SpanElement,
