@@ -21,29 +21,86 @@ export class GridRealtimePipeline extends AbstractRenderingPipeline {
 	protected primiteState: GPUPrimitiveState;
 	protected vertexState: GPUVertexState;
 	protected fragmentState: GPUFragmentState;
-	public static pushRotation(arr: number[], outer: number, inner: number) {
-		arr.push(
-			-outer,
-			-outer,
-			-inner,
-			-inner,
-			-outer,
-			outer,
-			-inner,
-			inner,
-			outer,
-			outer,
-			inner,
-			inner,
-			outer,
-			-outer,
-			inner,
-			-inner,
-			-outer,
-			-outer,
-			-inner,
-			-inner,
-		);
+	public static pushRotation(arr: number[], outer: number, inner: number, splitMiddle = false) {
+		if (splitMiddle)
+			arr.push(
+				-outer,
+				-outer,
+
+				-inner,
+				-inner,
+
+				-outer,
+				0,
+
+				-inner,
+				0,
+
+				-outer,
+				outer,
+
+				-inner,
+				inner,
+
+				0,
+				outer,
+
+				0,
+				inner,
+
+				outer,
+				outer,
+
+				inner,
+				inner,
+
+				outer,
+				0,
+
+				inner,
+				0,
+
+				outer,
+				-outer,
+
+				inner,
+				-inner,
+
+				0,
+				-outer,
+
+				0,
+				-inner,
+
+				-outer,
+				-outer,
+
+				-inner,
+				-inner,
+			);
+		else
+			arr.push(
+				-outer,
+				-outer,
+				-inner,
+				-inner,
+				-outer,
+				outer,
+				-inner,
+				inner,
+				outer,
+				outer,
+				inner,
+				inner,
+				outer,
+				-outer,
+				inner,
+				-inner,
+				-outer,
+				-outer,
+				-inner,
+				-inner,
+			);
 	}
 	public constructor(
 		label: string,
@@ -127,9 +184,9 @@ export class GridRelatimeRepresentation extends Representation<RealtimeRenderer,
 	public static vertexBuffer: GPUBuffer;
 	public static vertexData: number[] = [];
 	public static init(gpux: GPUX, bindGroup0Layout: GPUBindGroupLayout) {
-		GridRealtimePipeline.pushRotation(this.vertexData, 10000, 1000);
-		GridRealtimePipeline.pushRotation(this.vertexData, 1000, 100);
-		GridRealtimePipeline.pushRotation(this.vertexData, 100, 10);
+		GridRealtimePipeline.pushRotation(this.vertexData, 10000, 1000, true);
+		GridRealtimePipeline.pushRotation(this.vertexData, 1000, 100, true);
+		GridRealtimePipeline.pushRotation(this.vertexData, 100, 10, true);
 		this.vertexData.push(-10, -10, -10, 10, 10, -10, 10, 10);
 
 		this.vertexBuffer = gpux.gpuDevice.createBuffer({

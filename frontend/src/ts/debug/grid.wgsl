@@ -15,38 +15,59 @@ fn vertex_main(@builtin(vertex_index) index: u32, @location(0) ls_pos: vec2f) ->
 }
 
 const line_thickness = 1.0;
-fn getGrid(w: vec4f, line_thickness: f32) -> vec4f {
+const x_grid_color = vec4f(0.25);
+const y_grid_color = vec4f(0.25);
+const x_axis_color = vec4f(1.0, 0.25, 0.25, 0.5);
+const y_axis_color = vec4f(0.25, 1.0, 0.25, 0.5);
+fn getGrid(w: vec4f, line_thickness: f32) -> vec2f {
+	// grid
 	let val = abs(fract(w.zw - 0.5) - 0.5) / w.xy - (line_thickness - 1);
-	return vec4(clamp(1.0 - val, vec2f(0), vec2f(1)), w.xy);
+	let g_2d = clamp(1.0 - val, vec2f(0), vec2f(1));
+	// coverage
+	return g_2d / (w.xy * 100.0 + 1.0);
 }
 
-fn getAlpha(g_2d: vec4f, grad_factor: f32) -> f32 {
-	let coverage = g_2d.xy / (g_2d.zw * 100.0 + 1.0);
-	return max(coverage.x, coverage.y) * grad_factor;
+fn blendTogether(a: vec4f, b: vec4f) -> vec4f {
+	return vec4f(max(a.rgb * a.a, b.rgb * b.a), max(a.a, b.a));
+}
+
+fn fWidthEuclid(w: vec2f) -> vec2f {
+	let dx = dpdxFine(w);
+	let dy = dpdyFine(w);
+	return vec2f(length(vec2f(dx.x, dy.x)), length(vec2f(dx.y, dy.y)));
+}
+
+fn fWidthMax(w: vec2f) -> vec2f {
+	let dx = abs(dpdxFine(w));
+	let dy = abs(dpdyFine(w));
+	return vec2f(max(dx.x, dy.x), max(dx.y, dy.y));
 }
 
 @fragment
 fn fragment_main(fragment: VertexOut) -> R3FragmentOutput {
 	let accurate_line_thickness = line_thickness * view.dpr;
 	let lt = max(accurate_line_thickness, 1.0);
+	let subpixel_line_compensation = accurate_line_thickness / lt;
 	let ws_pos = fragment.ws_position;
 	
-	let grad_factor = smoothstep(view.far_clipping, 0, length(fragment.cs_position));
-	let coord_data = vec4f(fwidthFine(ws_pos), ws_pos);
+	let grad_factor = pow(max(1.0 + fragment.cs_position.z / (view.far_clipping * 0.7), 0), 8);
+	let coord_data = vec4f(fWidthEuclid(ws_pos), ws_pos);
 	
-	let g_1000_2d = getGrid(coord_data / 1000.0, lt);
-	let a1000 = getAlpha(g_1000_2d, grad_factor);
+	let a1000 = getGrid(coord_data * 0.001, lt);
 	let a = max(max(max(
-		getAlpha(getGrid(coord_data, lt), grad_factor),
-		getAlpha(getGrid(coord_data / 10.0, lt), grad_factor)),
-		getAlpha(getGrid(coord_data / 100.0, lt), grad_factor)),
-		a1000);
-	if(a <= 0) {
-		discard;
-	}
-	let isAxis = (abs(ws_pos) < vec2f(500.0)) & (g_1000_2d.xy >= g_1000_2d.yx);
-	let color = select(vec3f(0.5), select(select(vec3f(0.9, 0.05, 0.05), vec3f(0.05 , 0.9 , 0.05), isAxis.x), vec3f(0.9, 0.9, 0.1), all(isAxis)), a1000 > 0 && (any(isAxis)));
+		getGrid(coord_data, lt),
+		getGrid(coord_data * 0.1, lt)),
+		getGrid(coord_data * 0.01, lt)),
+		a1000) * grad_factor * subpixel_line_compensation;
 
-	let out_color = createOutputFragment(vec4f(color, a * (accurate_line_thickness / lt)), vec2u(fragment.position.xy), true);
+	let is_axis = (a1000 > vec2f(0)) & (abs(ws_pos) < vec2f(500.0));
+	let x_color = select(x_grid_color, y_axis_color, is_axis.x);
+	let y_color = select(y_grid_color, x_axis_color, is_axis.y);
+
+	let out_color = createOutputFragment(
+		blendTogether(
+			vec4(x_color.rgb, x_color.a * a.x),
+			vec4(y_color.rgb, y_color.a * a.y)),
+		vec2u(fragment.position.xy), false);
 	return R3FragmentOutput(out_color, 0);
 }
