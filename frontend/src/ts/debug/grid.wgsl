@@ -17,8 +17,8 @@ fn vertex_main(@builtin(vertex_index) index: u32, @location(0) ls_pos: vec2f) ->
 const line_thickness = 1.0;
 const x_grid_color = vec4f(0.25);
 const y_grid_color = vec4f(0.25);
-const x_axis_color = vec4f(1.0, 0.25, 0.25, 0.5);
-const y_axis_color = vec4f(0.25, 1.0, 0.25, 0.5);
+const x_axis_color = vec4f(1.0, 0.125, 0.125, 1.0);
+const y_axis_color = vec4f(0.125, 1.0, 0.125, 1.0);
 fn getGrid(w: vec4f, line_thickness: f32) -> vec2f {
 	// grid
 	let val = abs(fract(w.zw - 0.5) - 0.5) / w.xy - (line_thickness - 1);
