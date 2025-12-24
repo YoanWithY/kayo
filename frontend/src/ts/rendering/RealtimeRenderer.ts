@@ -8,10 +8,10 @@ import { Kayo } from "../Kayo";
 import { Renderer } from "../Renderer";
 import { RepresentationConcept } from "../project/Representation";
 import { GPUX } from "../GPUX";
-import { BackgroundRealtimeRepresentation } from "../lights/Background";
+import { BackgroundRealtimeRenderingRepresentation } from "../lights/Background";
 import { SceneRealtimeRepresentation } from "./SceneRealtimeRepresentation";
 import { GridRelatimeRepresentation } from "../debug/Grid";
-import { MinecraftRealtimeRepresentation } from "../minecraft/MinecraftOpaquePipeline";
+import { MinecraftWorldRealtimeRenderingRepresentation } from "../minecraft/MinecraftOpaquePipeline";
 import { RenderConfig } from "./config/RenderConfig";
 import { RealtimeSpecificRenderConfig } from "./config/RealtimeRenderConfig";
 const thresholdMapURL = "/beyer_4px_16bit.png";
@@ -311,9 +311,9 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 
 		imageData.deleteLater();
 
-		BackgroundRealtimeRepresentation.init(this._kayo.gpux, this.bindGroup0Layout);
+		BackgroundRealtimeRenderingRepresentation.init(this._kayo.gpux, this.bindGroup0Layout);
 		GridRelatimeRepresentation.init(this._kayo.gpux, this.bindGroup0Layout);
-		MinecraftRealtimeRepresentation.init(this._kayo.gpux, this.bindGroup0Layout);
+		MinecraftWorldRealtimeRenderingRepresentation.init(this._kayo.gpux, this.bindGroup0Layout);
 	}
 
 	public reconfigureContext(config: RenderConfig) {
@@ -386,7 +386,14 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 			return;
 		}
 		const { needsContextReconfiguration, needsPipelineRebuild } = this._compareAndUpdateConfigCache(config);
-		if (needsPipelineRebuild) this._kayo.project.scene.updateRepresentation(this, config);
+		if (needsPipelineRebuild) {
+			const realtimeScene = this._kayo.project.scene.getRepresentation(this) as SceneRealtimeRepresentation;
+			if (!realtimeScene) {
+				console.error(`Scene does not have a representation for ${this}`);
+				return;
+			}
+			realtimeScene.updateConfig(config);
+		}
 		if (needsContextReconfiguration) this.reconfigureContext(config);
 
 		viewport.updateView(this.viewUBO, this.frame);

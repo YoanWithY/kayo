@@ -1,6 +1,6 @@
 import { Kayo } from "../Kayo";
 import { MinecraftBlock } from "./MinecraftBlock";
-import { MinecraftRealtimeRepresentation } from "./MinecraftOpaquePipeline";
+import { MinecraftWorldRealtimeRenderingRepresentation } from "./MinecraftOpaquePipeline";
 import { MinecraftWorld, PaletteEntry } from "./MinecraftWorld";
 export class MinecraftSection {
 	private _minecraftWorld: MinecraftWorld;
@@ -64,7 +64,7 @@ export class MinecraftSection {
 		this._bindGroup1 = this.gpuDevice.createBindGroup({
 			label: "section bind group 1",
 			entries: [{ binding: 0, resource: { buffer: this._sectionBuffer } }],
-			layout: MinecraftRealtimeRepresentation.bindGroup1Layout,
+			layout: MinecraftWorldRealtimeRenderingRepresentation.bindGroup1Layout,
 		});
 
 		let i = 0;
@@ -173,7 +173,7 @@ export class MinecraftSection {
 		this._bindGroup1 = this.gpuDevice.createBindGroup({
 			label: `section (${this._x}, ${this._y}, ${this._z}) bind group 1`,
 			entries: [{ binding: 0, resource: { buffer: this._sectionBuffer } }],
-			layout: MinecraftRealtimeRepresentation.bindGroup1Layout,
+			layout: MinecraftWorldRealtimeRenderingRepresentation.bindGroup1Layout,
 		});
 	}
 

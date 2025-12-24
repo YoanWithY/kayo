@@ -4,8 +4,8 @@ import { Representation } from "../project/Representation";
 import { AbstractRenderingPipeline } from "../rendering/AbstractRenderingPipeline";
 import { RealtimeSpecificRenderConfig } from "../rendering/config/RealtimeRenderConfig";
 import { RenderConfig } from "../rendering/config/RenderConfig";
+import RealtimeRenderable from "../rendering/RealtimeRenderable";
 import RealtimeRenderer from "../rendering/RealtimeRenderer";
-import Renderable from "../rendering/Renderable";
 import { resolveShader } from "../rendering/ShaderUtils";
 import staticShaderCode from "./minecraftOpaque.wgsl?raw";
 import { MinecraftWorld } from "./MinecraftWorld";
@@ -90,9 +90,9 @@ export class MinecraftRealtimeRenderingPipeline extends AbstractRenderingPipelin
 	}
 }
 
-export class MinecraftRealtimeRepresentation
+export class MinecraftWorldRealtimeRenderingRepresentation
 	extends Representation<RealtimeRenderer, MinecraftWorld>
-	implements Renderable
+	implements RealtimeRenderable
 {
 	protected _kayo: Kayo;
 	protected _currentPipeline: MinecraftRealtimeRenderingPipeline;
@@ -113,12 +113,12 @@ export class MinecraftRealtimeRepresentation
 	protected _buildRenderingPipeline(config: RenderConfig) {
 		return new MinecraftRealtimeRenderingPipeline(
 			`Minecraft Realtime Opaque`,
-			MinecraftRealtimeRepresentation.shaderModule,
+			MinecraftWorldRealtimeRenderingRepresentation.shaderModule,
 			vertexEntryPoint,
 			fragmentEntryPoint,
 			config,
 			this._kayo.gpux,
-			MinecraftRealtimeRepresentation.renderPipelineLayout,
+			MinecraftWorldRealtimeRenderingRepresentation.renderPipelineLayout,
 		);
 	}
 
@@ -158,7 +158,7 @@ export class MinecraftRealtimeRepresentation
 	public static shaderModule: GPUShaderModule;
 	public static bindGroup1Layout: GPUBindGroupLayout;
 	public static renderPipelineLayout: GPUPipelineLayout;
-	public static metaPipeline: MinecraftRealtimeRepresentation;
+	public static metaPipeline: MinecraftWorldRealtimeRenderingRepresentation;
 	public static init(gpux: GPUX, bindGroup0Layout: GPUBindGroupLayout) {
 		this.bindGroup1Layout = gpux.gpuDevice.createBindGroupLayout({
 			label: "minecraft bind group 1 layout",
@@ -174,7 +174,7 @@ export class MinecraftRealtimeRepresentation
 		});
 		this.renderPipelineLayout = gpux.gpuDevice.createPipelineLayout({
 			label: "Minecraft opaque pipeline layout",
-			bindGroupLayouts: [bindGroup0Layout, MinecraftRealtimeRepresentation.bindGroup1Layout],
+			bindGroupLayouts: [bindGroup0Layout, MinecraftWorldRealtimeRenderingRepresentation.bindGroup1Layout],
 		});
 		this.shaderModule = gpux.gpuDevice.createShaderModule({
 			code: preProzessedShaderCoder,
@@ -182,11 +182,11 @@ export class MinecraftRealtimeRepresentation
 			compilationHints: [
 				{
 					entryPoint: vertexEntryPoint,
-					layout: MinecraftRealtimeRepresentation.renderPipelineLayout,
+					layout: MinecraftWorldRealtimeRenderingRepresentation.renderPipelineLayout,
 				},
 				{
 					entryPoint: fragmentEntryPoint,
-					layout: MinecraftRealtimeRepresentation.renderPipelineLayout,
+					layout: MinecraftWorldRealtimeRenderingRepresentation.renderPipelineLayout,
 				},
 			],
 		});

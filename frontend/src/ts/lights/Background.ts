@@ -1,4 +1,3 @@
-import Renderable from "../rendering/Renderable";
 import { AbstractRenderingPipeline } from "../rendering/AbstractRenderingPipeline";
 import { GPUX } from "../GPUX";
 import staticShaderCode from "./background.wgsl?raw";
@@ -8,6 +7,7 @@ import { Representable, Representation } from "../project/Representation";
 import { Kayo } from "../Kayo";
 import { RenderConfig } from "../rendering/config/RenderConfig";
 import { RealtimeSpecificRenderConfig } from "../rendering/config/RealtimeRenderConfig";
+import RealtimeRenderable from "../rendering/RealtimeRenderable";
 
 const vertexBufferLayout: GPUVertexBufferLayout[] = [
 	{
@@ -57,9 +57,9 @@ class BackgroundRealtimeRenderingPipeline extends AbstractRenderingPipeline {
 	}
 }
 
-export class BackgroundRealtimeRepresentation
+export class BackgroundRealtimeRenderingRepresentation
 	extends Representation<RealtimeRenderer, Backgrund>
-	implements Renderable
+	implements RealtimeRenderable
 {
 	protected _kayo: Kayo;
 	protected _currentPipeline: BackgroundRealtimeRenderingPipeline;
@@ -77,8 +77,8 @@ export class BackgroundRealtimeRepresentation
 
 	public recordForwardRendering(renderPassEnoder: GPURenderPassEncoder): void {
 		renderPassEnoder.setPipeline(this._currentPipeline.gpuPipeline);
-		renderPassEnoder.setVertexBuffer(0, BackgroundRealtimeRepresentation._vertexBuffer);
-		renderPassEnoder.setIndexBuffer(BackgroundRealtimeRepresentation._indexBuffer, "uint16");
+		renderPassEnoder.setVertexBuffer(0, BackgroundRealtimeRenderingRepresentation._vertexBuffer);
+		renderPassEnoder.setIndexBuffer(BackgroundRealtimeRenderingRepresentation._indexBuffer, "uint16");
 		renderPassEnoder.setBindGroup(0, this.representationConcept.bindGroup0);
 		renderPassEnoder.drawIndexed(6 * 2 * 3, 1);
 	}
@@ -86,10 +86,10 @@ export class BackgroundRealtimeRepresentation
 	private _buildPipeline(config: RenderConfig) {
 		return new BackgroundRealtimeRenderingPipeline(
 			"background",
-			BackgroundRealtimeRepresentation.shaderModule,
+			BackgroundRealtimeRenderingRepresentation.shaderModule,
 			config,
 			this._kayo.gpux,
-			BackgroundRealtimeRepresentation.pipelineLayout,
+			BackgroundRealtimeRenderingRepresentation.pipelineLayout,
 		);
 	}
 

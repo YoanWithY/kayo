@@ -1,4 +1,3 @@
-import Renderable from "../rendering/Renderable";
 import { AbstractRenderingPipeline } from "../rendering/AbstractRenderingPipeline";
 import staticShaderCode from "./grid.wgsl?raw";
 
@@ -9,6 +8,7 @@ import { Representable, Representation } from "../project/Representation";
 import { Kayo } from "../Kayo";
 import { RenderConfig } from "../rendering/config/RenderConfig";
 import { RealtimeSpecificRenderConfig } from "../rendering/config/RealtimeRenderConfig";
+import RealtimeRenderable from "../rendering/RealtimeRenderable";
 
 const vertexBufferLayout: GPUVertexBufferLayout[] = [
 	{
@@ -144,7 +144,7 @@ export class GridRealtimePipeline extends AbstractRenderingPipeline {
 
 const preProzessedShaderCoder = resolveShader(staticShaderCode);
 
-export class GridRelatimeRepresentation extends Representation<RealtimeRenderer, Grid> implements Renderable {
+export class GridRelatimeRepresentation extends Representation<RealtimeRenderer, Grid> implements RealtimeRenderable {
 	protected _kayo: Kayo;
 	protected _currentPipeline: GridRealtimePipeline;
 	public constructor(

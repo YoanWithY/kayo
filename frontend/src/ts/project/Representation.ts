@@ -18,11 +18,6 @@ export abstract class Representable {
 	public setRepresentation(representation: Representation<RepresentationConcept, this>) {
 		this._representations.set(representation.representationConcept.representationConeceptID, representation);
 	}
-	public updateRepresentation<T extends RepresentationConcept>(representationConecept: T, userData: any) {
-		const representation = this.getRepresentation(representationConecept);
-		if (representation) representation.update(userData);
-		else console.error(this, "has no representation for", representationConecept);
-	}
 }
 
 export abstract class Representation<T extends RepresentationConcept, K extends Representable> {
@@ -44,6 +39,4 @@ export abstract class Representation<T extends RepresentationConcept, K extends 
 	public get represenationSubject() {
 		return this._representationSubject;
 	}
-
-	public abstract update(userData: any): void;
 }
