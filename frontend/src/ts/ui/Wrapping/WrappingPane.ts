@@ -7,6 +7,9 @@ import { MinecraftWorld, PaletteEntry } from "../../minecraft/MinecraftWorld";
 import { Kayo } from "../../Kayo";
 import { StoreFileTask } from "../../ressourceManagement/jsTasks/StoreFileTask";
 import { CreateAtlasTask } from "../../ressourceManagement/wasmTasks/CreateAtlasTask";
+import { ParseObjTask } from "../../ressourceManagement/wasmTasks/ParseObjTask";
+import { VectorMesh } from "../../../c/KayoCorePP";
+import { MeshObject } from "../../mesh/MeshObject";
 
 let ressourecePack!: ResourcePack;
 
@@ -23,6 +26,20 @@ export class WrappingPane extends HTMLElement {
 		for (const file of fi.files) {
 			// eslint-disable-next-line local/no-await
 			const fileData = await file.arrayBuffer();
+			if (file.type == "") {
+				if (file.name.toLowerCase().endsWith(".obj")) {
+					const meshCallback = (val: { meshes: VectorMesh }) => {
+						for (let i = 0; i < val.meshes.size(); i++) {
+							const mesh = val.meshes.get(i);
+							if (!mesh) continue;
+							this._kayo.project.scene.addMeshObject(new MeshObject(mesh));
+						}
+						this._kayo.project.fullRerender();
+					};
+					const task = new ParseObjTask(this._kayo.wasmx, fileData, meshCallback);
+					this._kayo.taskQueue.queueWasmTask(task);
+				}
+			}
 
 			if (file.type == "image/png") {
 				const vts = this._kayo.virtualTextureSystem;
@@ -42,13 +59,13 @@ export class WrappingPane extends HTMLElement {
 				const imageData = this._kayo.wasmx.imageData.fromImageData(fileData, true);
 				if (imageData === null) continue;
 
-				const task = new StoreFileTask("./raw", file.name, new Uint8Array(fileData));
-				this._kayo.taskQueue.queueFSTask(task);
+				const storeFileTask = new StoreFileTask("./raw", file.name, new Uint8Array(fileData));
+				this._kayo.taskQueue.queueFSTask(storeFileTask);
 
 				const atlasFinishedCallback = (atlasData: { byteOffset: number; byteLength: number }) => {
 					imageData.delete();
 
-					const view = this._kayo.wasmx.getMemoryView(atlasData.byteOffset, atlasData.byteLength);
+					const view = this._kayo.wasmx.getUint8View(atlasData.byteOffset, atlasData.byteLength);
 					vt.makeResident(view, 0, 0, 0);
 					project.fullRerender();
 

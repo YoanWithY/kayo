@@ -1,5 +1,5 @@
-#include "Task.hpp"
-#include "../../utils/memUtils.hpp"
+#include "task.hpp"
+#include "../utils/memUtils.hpp"
 #include <emscripten/bind.h>
 #include <emscripten/em_asm.h>
 #include <iostream>

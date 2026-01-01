@@ -92,12 +92,65 @@ export interface Projection extends ClassHandle {
   getNear(): KayoNumber;
 }
 
-export interface WasmTask extends ClassHandle {
-  run(): void;
+export interface VectorString extends ClassHandle {
+  size(): number;
+  get(_0: number): EmbindString | undefined;
+  push_back(_0: EmbindString): void;
+  resize(_0: number, _1: EmbindString): void;
+  set(_0: number, _1: EmbindString): boolean;
 }
 
-export interface WasmCreateAtlasTask extends WasmTask {
-  run(): void;
+export interface UvMap extends ClassHandle {
+  get name(): string;
+  set name(value: EmbindString);
+}
+
+export interface VectorUvMap extends ClassHandle {
+  push_back(_0: UvMap | null): void;
+  resize(_0: number, _1: UvMap | null): void;
+  size(): number;
+  get(_0: number): UvMap | undefined;
+  set(_0: number, _1: UvMap | null): boolean;
+}
+
+export interface Mesh extends ClassHandle {
+  materials: VectorString;
+  uvMaps: VectorUvMap;
+  get name(): string;
+  set name(value: EmbindString);
+}
+
+export interface VectorMesh extends ClassHandle {
+  push_back(_0: Mesh | null): void;
+  resize(_0: number, _1: Mesh | null): void;
+  size(): number;
+  get(_0: number): Mesh | undefined;
+  set(_0: number, _1: Mesh | null): boolean;
+}
+
+export interface VectorVertexAttribute extends ClassHandle {
+  size(): number;
+  get(_0: number): VertexAttribute | undefined;
+  push_back(_0: VertexAttribute): void;
+  resize(_0: number, _1: VertexAttribute): void;
+  set(_0: number, _1: VertexAttribute): boolean;
+}
+
+export interface VertexBuffer extends ClassHandle {
+  attributes: VectorVertexAttribute;
+  arrayStride: number;
+  numVertices: number;
+  bytesTotal: number;
+  readonly data: KayoPointer;
+  get stepMode(): string;
+  set stepMode(value: EmbindString);
+}
+
+export interface RealtimeData extends ClassHandle {
+  position: VertexBuffer;
+  uvs: VertexBuffer;
+  tangentSpace: VertexBuffer;
+  build(): void;
 }
 
 export interface KayoWASMMinecraftWorld extends ClassHandle {
@@ -148,6 +201,29 @@ export interface ConstantNonUniformSplineCurveSegment1D extends NonUniformSpline
 export interface LinearNonUniformSplineCurveSegment1D extends NonUniformSplineCurveSegment1D {
 }
 
+export interface Vec2f extends ClassHandle {
+  x: number;
+  y: number;
+}
+
+export interface Vec3f extends ClassHandle {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface WasmTask extends ClassHandle {
+  run(): void;
+}
+
+export interface WasmParseObjTask extends WasmTask {
+  run(): void;
+}
+
+export interface WasmCreateAtlasTask extends WasmTask {
+  run(): void;
+}
+
 export interface ImageData extends ClassHandle {
   readonly width: number;
   readonly height: number;
@@ -172,6 +248,12 @@ export type KayoPointer = {
 };
 
 export type KayoNumber = [ bigint, bigint ];
+
+export type VertexAttribute = {
+  format: EmbindString,
+  offset: number,
+  shaderLocation: number
+};
 
 interface EmbindModule {
   SVTConfig: {};
@@ -201,9 +283,23 @@ interface EmbindModule {
   };
   KayoR3Object: {};
   Projection: {};
-  WasmTask: {};
-  WasmCreateAtlasTask: {
-    new(_0: number, _1: ImageDataUint8, _2: SVTConfig | null): WasmCreateAtlasTask;
+  VectorString: {
+    new(): VectorString;
+  };
+  UvMap: {};
+  VectorUvMap: {
+    new(): VectorUvMap;
+  };
+  Mesh: {};
+  VectorMesh: {
+    new(): VectorMesh;
+  };
+  VectorVertexAttribute: {
+    new(): VectorVertexAttribute;
+  };
+  VertexBuffer: {};
+  RealtimeData: {
+    new(_0: Mesh | null): RealtimeData;
   };
   KayoWASMMinecraftWorld: {
     new(_0: EmbindString): KayoWASMMinecraftWorld;
@@ -245,10 +341,20 @@ interface EmbindModule {
   NonUniformSplineCurveSegment1D: {};
   ConstantNonUniformSplineCurveSegment1D: {};
   LinearNonUniformSplineCurveSegment1D: {};
+  Vec2f: {};
+  Vec3f: {};
+  WasmTask: {};
+  WasmParseObjTask: {
+    new(_0: number, _1: EmbindString): WasmParseObjTask;
+  };
+  WasmCreateAtlasTask: {
+    new(_0: number, _1: ImageDataUint8, _2: SVTConfig | null): WasmCreateAtlasTask;
+  };
   ImageData: {
     fromImageData(_0: EmbindString, _1: boolean): ImageData | null;
   };
   ImageDataUint8: {};
+  staticCastVectorMesh(_0: number): VectorMesh | null;
   deleteArrayUint8(_0: number): void;
   deleteArrayDouble(_0: number): void;
   readFixedPointFromHeap(_0: number): KayoNumber;

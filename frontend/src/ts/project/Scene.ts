@@ -1,6 +1,7 @@
 import { Grid } from "../debug/Grid";
 import HeightFieldR3 from "../dynamicObject/heightField/HeightFieldR3";
 import { Backgrund } from "../lights/Background";
+import { Material } from "../mesh/Material";
 import { MeshObject } from "../mesh/MeshObject";
 import { MinecraftWorld } from "../minecraft/MinecraftWorld";
 import { Representable, Representation, RepresentationConcept } from "./Representation";
@@ -12,6 +13,7 @@ export abstract class SceneRepresentation<
 	public abstract addGrid(grid: Grid): void;
 	public abstract addMinecraftWorld(minecraftWorld: MinecraftWorld): void;
 	public abstract addMeshObject(meshOject: MeshObject): void;
+	public abstract addMaterial(material: Material): void;
 }
 
 export default class Scene extends Representable {
@@ -20,6 +22,7 @@ export default class Scene extends Representable {
 	protected _minecraftWorlds: MinecraftWorld[];
 	protected _background: Backgrund;
 	protected _meshObjects = new Set<MeshObject>();
+	protected _materials: Material[] = [];
 
 	public constructor() {
 		super();
@@ -49,6 +52,13 @@ export default class Scene extends Representable {
 		}
 	}
 
+	public addMaterial(material: Material) {
+		this._materials.push(material);
+		for (const representation of this._representations.values() as MapIterator<SceneRepresentation<any, any>>) {
+			representation.addMaterial(material);
+		}
+	}
+
 	public get background() {
 		return this._background;
 	}
@@ -63,5 +73,9 @@ export default class Scene extends Representable {
 
 	public get meshObjects() {
 		return this._meshObjects.values();
+	}
+
+	public get materials() {
+		return this._materials;
 	}
 }

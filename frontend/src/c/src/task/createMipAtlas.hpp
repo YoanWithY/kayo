@@ -1,7 +1,7 @@
 #pragma once
-#include "../../utils/imageUtils.hpp"
-#include "../core/SVTConfig.hpp"
-#include "Task.hpp"
+#include "../kayoCore/core/SVTConfig.hpp"
+#include "../utils/imageUtils.hpp"
+#include "task.hpp"
 #include <cstdint>
 #include <string>
 

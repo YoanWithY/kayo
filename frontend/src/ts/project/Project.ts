@@ -16,6 +16,7 @@ import { RenderConfig } from "../rendering/config/RenderConfig";
 import { RealtimeSpecificRenderConfig } from "../rendering/config/RealtimeRenderConfig";
 import { PerformanceRenderer } from "../ui/panes/debug/performance/PerformanceRenderer";
 import { SVTDebugRenderer } from "../ui/panes/debug/svtDebug/SVTDebugRenderer";
+import { Material } from "../mesh/Material";
 
 export class Project {
 	private _name: string;
@@ -90,6 +91,7 @@ export class Project {
 				),
 			);
 			this.scene.addGrid(new Grid());
+			this.scene.addMaterial(new Material("default"));
 
 			if (onFinishCallback) onFinishCallback();
 		};

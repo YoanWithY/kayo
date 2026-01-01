@@ -28,7 +28,7 @@ target_compile_options(KayoCorePP PRIVATE
   -Wnull-dereference
   -Wold-style-cast
   -Woverloaded-virtual
-  -O0
+  -O3
   -gsource-map
   -pthread   
 )

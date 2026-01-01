@@ -25,7 +25,7 @@ export class MinecraftTexture {
 
 		const createAtlasFinishedCallbakc = (atlasData: { byteOffset: number; byteLength: number }) => {
 			imageData.delete();
-			const atlasMemoryView = kayo.wasmx.getMemoryView(atlasData.byteOffset, atlasData.byteLength);
+			const atlasMemoryView = kayo.wasmx.getUint8View(atlasData.byteOffset, atlasData.byteLength);
 			virtualTexture.makeResident(atlasMemoryView, 0, 0, 0);
 			kayo.project.fullRerender();
 

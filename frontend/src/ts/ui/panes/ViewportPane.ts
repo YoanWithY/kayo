@@ -17,7 +17,7 @@ export class ViewportPane extends HTMLElement implements Viewport {
 	public project!: Project;
 	public window!: Window;
 	public config!: RenderConfig;
-	protected _lookAt = new LookAtTransform(new vec3(8, 8, 8), 5);
+	protected _lookAt = new LookAtTransform(new vec3(0, 0, 0), 10, 1, 1);
 
 	private _resizeCallback = (e: ResizeObserverEntry[]) => {
 		const size = e[0].devicePixelContentBoxSize[0];

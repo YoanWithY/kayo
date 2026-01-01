@@ -8,6 +8,8 @@ import { MinecraftWorldRealtimeRenderingRepresentation as MinecraftWorldRealtime
 import { RenderConfig } from "./config/RenderConfig";
 import { MeshObject } from "../mesh/MeshObject";
 import { MeshObjectRealtimeRenderingRepresentation } from "../mesh/MeshObjectRealtimeRenderingRepresentation";
+import { Material } from "../mesh/Material";
+import { MaterialRealtimeRenderingRepresentation } from "../mesh/MaterialRealtimeRenderingRepresentation";
 
 export class SceneRealtimeRepresentation extends SceneRepresentation<RealtimeRenderer, Scene> {
 	protected _kayo: Kayo;
@@ -15,6 +17,7 @@ export class SceneRealtimeRepresentation extends SceneRepresentation<RealtimeRen
 	protected _grids: GridRelatimeRepresentation[];
 	protected _minecraftWorlds: MinecraftWorldRealtimeRepresentation[];
 	protected _meshObjects: MeshObjectRealtimeRenderingRepresentation[];
+	protected _materials: MaterialRealtimeRenderingRepresentation[];
 
 	public constructor(kayo: Kayo, representationConcept: RealtimeRenderer, representationSubject: Scene) {
 		super(representationConcept, representationSubject);
@@ -28,6 +31,7 @@ export class SceneRealtimeRepresentation extends SceneRepresentation<RealtimeRen
 		this._grids = [];
 		this._minecraftWorlds = [];
 		this._meshObjects = [];
+		this._materials = [];
 	}
 
 	public updateConfig(config: RenderConfig): void {
@@ -60,12 +64,22 @@ export class SceneRealtimeRepresentation extends SceneRepresentation<RealtimeRen
 
 	public addMeshObject(meshOject: MeshObject): void {
 		const meshObjectRealtimeRepresentation = new MeshObjectRealtimeRenderingRepresentation(
-			this._kayo.gpux,
+			this._kayo,
 			this._representationConcept,
 			meshOject,
 		);
 		meshOject.setRepresentation(meshObjectRealtimeRepresentation);
 		this._meshObjects.push(meshObjectRealtimeRepresentation);
+	}
+
+	public addMaterial(material: Material): void {
+		const materialRealtimeRenderingRepresentation = new MaterialRealtimeRenderingRepresentation(
+			this._kayo,
+			this._representationConcept,
+			material,
+		);
+		material.setRepresentation(materialRealtimeRenderingRepresentation);
+		this._materials.push(materialRealtimeRenderingRepresentation);
 	}
 
 	public get background() {
@@ -78,5 +92,9 @@ export class SceneRealtimeRepresentation extends SceneRepresentation<RealtimeRen
 
 	public get minecraftWorlds() {
 		return this._minecraftWorlds;
+	}
+
+	public get meshObjects() {
+		return this._meshObjects;
 	}
 }

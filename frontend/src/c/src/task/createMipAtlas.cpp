@@ -13,6 +13,7 @@ constexpr uint32_t getFirstAtlasLevel(uint32_t width, uint32_t height, uint32_t 
 }
 
 static void* createMipAtlas(void* arg) {
+	pthread_detach(pthread_self());
 	CreateMipAtlasTask* task = reinterpret_cast<CreateMipAtlasTask*>(arg);
 	const ImageDataImplementation<uint8_t>& image_data = task->image_data;
 	const SVTConfig* svt_config = task->svt_config;
@@ -44,18 +45,14 @@ static void* createMipAtlas(void* arg) {
 #pragma GCC diagnostic ignored "-Wdollar-in-identifier-extension"
 	MAIN_THREAD_ASYNC_EM_ASM({ window.kayo.taskQueue.wasmTaskFinished($0, {byteOffset : $1, byteLength : $2}); }, task->task_id, write_view.mip_data, byte_size);
 #pragma GCC diagnostic pop
-	pthread_detach(pthread_self());
 	return nullptr;
 }
 
 void CreateMipAtlasTask::run() {
 	pthread_t thread;
 	int result = pthread_create(&thread, nullptr, &createMipAtlas, this);
-	if (result != 0) {
+	if (result != 0)
 		std::cerr << "Error: Unable to create thread, " << result << std::endl;
-		return;
-	}
-	return;
 }
 } // namespace kayo
 

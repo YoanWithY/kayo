@@ -6128,7 +6128,13 @@ MEMFS.doesNotExistError = new FS.ErrnoError(44);
 var proxiedFunctionTable = [ _proc_exit, exitOnMainThread, pthreadCreateProxied, _environ_get, _environ_sizes_get, _fd_close, _fd_read, _fd_seek, _fd_write ];
 
 var ASM_CONSTS = {
-  53536: ($0, $1, $2) => {
+  58680: ($0, $1) => {
+    const vector = window.kayo.wasmx.wasm.staticCastVectorMesh($1);
+    window.kayo.taskQueue.wasmTaskFinished($0, {
+      meshes: vector
+    });
+  },
+  58811: ($0, $1, $2) => {
     window.kayo.taskQueue.wasmTaskFinished($0, {
       byteOffset: $1,
       byteLength: $2
@@ -6180,7 +6186,6 @@ function assignWasmImports() {
     /** @export */ _emscripten_thread_cleanup: __emscripten_thread_cleanup,
     /** @export */ _emscripten_thread_mailbox_await: __emscripten_thread_mailbox_await,
     /** @export */ _emscripten_thread_set_strongref: __emscripten_thread_set_strongref,
-    /** @export */ _emval_decref: __emval_decref,
     /** @export */ _emval_take_value: __emval_take_value,
     /** @export */ _tzset_js: __tzset_js,
     /** @export */ clock_time_get: _clock_time_get,
@@ -6264,20 +6269,20 @@ var __emscripten_stack_alloc = a0 => (__emscripten_stack_alloc = wasmExports["_e
 
 var _emscripten_stack_get_current = () => (_emscripten_stack_get_current = wasmExports["emscripten_stack_get_current"])();
 
+var ___cxa_free_exception = a0 => (___cxa_free_exception = wasmExports["__cxa_free_exception"])(a0);
+
 var ___cxa_decrement_exception_refcount = a0 => (___cxa_decrement_exception_refcount = wasmExports["__cxa_decrement_exception_refcount"])(a0);
 
 var ___cxa_increment_exception_refcount = a0 => (___cxa_increment_exception_refcount = wasmExports["__cxa_increment_exception_refcount"])(a0);
-
-var ___cxa_free_exception = a0 => (___cxa_free_exception = wasmExports["__cxa_free_exception"])(a0);
 
 var ___cxa_can_catch = (a0, a1, a2) => (___cxa_can_catch = wasmExports["__cxa_can_catch"])(a0, a1, a2);
 
 var ___cxa_get_exception_ptr = a0 => (___cxa_get_exception_ptr = wasmExports["__cxa_get_exception_ptr"])(a0);
 
-function invoke_ii(index, a1) {
+function invoke_iii(index, a1, a2) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1);
+    return getWasmTableEntry(index)(a1, a2);
   } catch (e) {
     stackRestore(sp);
     if (e !== e + 0) throw e;
@@ -6285,10 +6290,10 @@ function invoke_ii(index, a1) {
   }
 }
 
-function invoke_iii(index, a1, a2) {
+function invoke_ii(index, a1) {
   var sp = stackSave();
   try {
-    return getWasmTableEntry(index)(a1, a2);
+    return getWasmTableEntry(index)(a1);
   } catch (e) {
     stackRestore(sp);
     if (e !== e + 0) throw e;

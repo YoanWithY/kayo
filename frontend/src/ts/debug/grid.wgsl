@@ -15,16 +15,21 @@ fn vertex_main(@builtin(vertex_index) index: u32, @location(0) ls_pos: vec2f) ->
 }
 
 const line_thickness = 1.0;
-const x_grid_color = vec4f(0.25);
-const y_grid_color = vec4f(0.25);
-const x_axis_color = vec4f(1.0, 0.125, 0.125, 1.0);
-const y_axis_color = vec4f(0.125, 1.0, 0.125, 1.0);
+const grid_base = vec4f(0.25, 0.25, 0.25, 0.5);
+const x_axis_color = vec4f(0.75, -0.1, -0.1, 0.2);
+const y_axis_color = vec4f(-0.1, 0.75, -0.1, 0.2);
 fn getGrid(w: vec4f, line_thickness: f32) -> vec2f {
 	// grid
 	let val = abs(fract(w.zw - 0.5) - 0.5) / w.xy - (line_thickness - 1);
 	let g_2d = clamp(1.0 - val, vec2f(0), vec2f(1));
 	// coverage
-	return g_2d / (w.xy * 100.0 + 1.0);
+	return g_2d / (w.xy * 64.0 + 1.0);
+}
+
+fn getAxis(w: vec4f, line_thickness: f32) -> vec2f {
+	let val = abs(w.zw) / w.xy - (line_thickness - 1);
+	let g_2d = clamp(1.0 - val, vec2f(0), vec2f(1));
+	return g_2d;
 }
 
 fn blendTogether(a: vec4f, b: vec4f) -> vec4f {
@@ -50,24 +55,20 @@ fn fragment_main(fragment: VertexOut) -> R3FragmentOutput {
 	let subpixel_line_compensation = accurate_line_thickness / lt;
 	let ws_pos = fragment.ws_position;
 	
-	let grad_factor = pow(max(1.0 + fragment.cs_position.z / (view.far_clipping * 0.7), 0), 8);
+	let grad_factor = max(1.0 + fragment.cs_position.z / view.far_clipping, 0);
 	let coord_data = vec4f(fWidthEuclid(ws_pos), ws_pos);
 	
-	let a1000 = getGrid(coord_data * 0.001, lt);
-	let a = max(max(max(
-		getGrid(coord_data, lt),
-		getGrid(coord_data * 0.1, lt)),
-		getGrid(coord_data * 0.01, lt)),
-		a1000) * grad_factor * subpixel_line_compensation;
+	let axis = getAxis(coord_data, lt);
+	let a = max(
+				max(
+						getGrid(coord_data, lt),
+						getGrid(coord_data * 0.1, lt)),
+				getGrid(coord_data * 0.01, lt)
+				) * grad_factor * subpixel_line_compensation;
 
-	let is_axis = (a1000 > vec2f(0)) & (abs(ws_pos) < vec2f(500.0));
-	let x_color = select(x_grid_color, y_axis_color, is_axis.x);
-	let y_color = select(y_grid_color, x_axis_color, is_axis.y);
-
+	let pixel_color = min(grid_base + axis.x * x_axis_color + axis.y * y_axis_color, vec4f(1.0));
 	let out_color = createOutputFragment(
-		blendTogether(
-			vec4(x_color.rgb, x_color.a * a.x),
-			vec4(y_color.rgb, y_color.a * a.y)),
-		vec2u(fragment.position.xy), false);
+		vec4f(pixel_color.rgb, pixel_color.a * max(a.x, a.y)),
+		vec2u(fragment.position.xy), true);
 	return R3FragmentOutput(out_color, 0);
 }

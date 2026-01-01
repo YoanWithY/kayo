@@ -13,6 +13,7 @@ class Vec2 {
   public:
 	T x;
 	T y;
+	Vec2() = default;
 	constexpr Vec2(const T& a) : x(a), y(a) {}
 	constexpr Vec2(const T& x, const T& y) : x(x), y(y) {}
 	template <class K>

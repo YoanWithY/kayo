@@ -14,6 +14,7 @@ class Vec3 {
 	T x;
 	T y;
 	T z;
+	Vec3() = default;
 	constexpr Vec3(const T& a) : x(a), y(a), z(a) {}
 	constexpr Vec3(const T& x, const T& y, const T& z) : x(x), y(y), z(z) {}
 	constexpr Vec3(const Vec2<T>& a, const T& b) : x(a.x), y(a.y), z(b) {}

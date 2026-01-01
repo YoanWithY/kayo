@@ -30,13 +30,20 @@ export default class WASMX {
 	public get projectData() {
 		return this._projectData;
 	}
+	public get memory() {
+		return this.heap.buffer;
+	}
 
-	public getMemoryView(byteOffset: number, byteLength: number) {
+	public getUint8View(byteOffset: number, byteLength: number) {
 		return new Uint8Array(this.heap.buffer, byteOffset, byteLength);
 	}
 
 	public getFloat64View(ptr: KayoPointer) {
 		return new Float64Array(this.heap.buffer, ptr.byteOffset, ptr.byteLength / 8);
+	}
+
+	public getFloat32View(ptr: KayoPointer) {
+		return new Float32Array(this.heap.buffer, ptr.byteOffset, ptr.byteLength / 4);
 	}
 
 	public deleteFloat64Array(ptr: KayoPointer) {

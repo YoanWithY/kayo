@@ -426,6 +426,7 @@ export default class RealtimeRenderer implements RepresentationConcept, Renderer
 
 		for (const world of realtimeScene.minecraftWorlds) world.recordForwardRendering(r3renderPassEncoder);
 		realtimeScene.background.recordForwardRendering(r3renderPassEncoder);
+		for (const meshObj of realtimeScene.meshObjects) meshObj.recordForwardRendering(r3renderPassEncoder);
 		for (const grid of realtimeScene.grids) grid.recordForwardRendering(r3renderPassEncoder);
 
 		r3renderPassEncoder.end();
