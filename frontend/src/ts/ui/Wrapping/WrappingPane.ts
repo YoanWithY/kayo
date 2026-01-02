@@ -10,6 +10,7 @@ import { CreateAtlasTask } from "../../ressourceManagement/wasmTasks/CreateAtlas
 import { ParseObjTask } from "../../ressourceManagement/wasmTasks/ParseObjTask";
 import { VectorMesh } from "../../../c/KayoCorePP";
 import { MeshObject } from "../../mesh/MeshObject";
+import { Material } from "../../mesh/Material";
 
 let ressourecePack!: ResourcePack;
 
@@ -32,6 +33,12 @@ export class WrappingPane extends HTMLElement {
 						for (let i = 0; i < val.meshes.size(); i++) {
 							const mesh = val.meshes.get(i);
 							if (!mesh) continue;
+							for (let i = 0; i < mesh.materials.size(); i++) {
+								const matName = mesh.materials.get(i);
+								if (!matName) continue;
+								this._kayo.project.scene.addMaterial(new Material(matName as string));
+							}
+
 							this._kayo.project.scene.addMeshObject(new MeshObject(mesh));
 						}
 						this._kayo.project.fullRerender();
@@ -120,8 +127,8 @@ export class WrappingPane extends HTMLElement {
 					const dimension = new this._kayo.wasmx.wasm.KayoWASMMinecraftDimension("Overworld", 0);
 					dimension.openRegion(0, 0, fileData);
 					const mWorld = new MinecraftWorld(project, "World", ressourecePack, 16);
-					for (let x = 0; x < 32; x++) {
-						for (let z = 0; z < 32; z++) {
+					for (let x = 0; x < 4; x++) {
+						for (let z = 0; z < 4; z++) {
 							const status = dimension.buildChunk(x, z);
 							if (status !== 0) continue;
 

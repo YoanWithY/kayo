@@ -36,8 +36,9 @@ export class SceneRealtimeRepresentation extends SceneRepresentation<RealtimeRen
 
 	public updateConfig(config: RenderConfig): void {
 		this._background.update(config);
-		for (const grid of this._grids) grid.update(config);
-		for (const world of this._minecraftWorlds) world.update(config);
+		for (const grid of this._grids) grid.update();
+		for (const world of this._minecraftWorlds) world.update();
+		for (const material of this._materials) material.update();
 	}
 
 	public addGrid(grid: Grid): void {

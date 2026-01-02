@@ -53,7 +53,7 @@ class BackgroundRealtimeRenderingPipeline extends AbstractRenderingPipeline {
 
 		this.multisample.count = (renderConfig.specific as RealtimeSpecificRenderConfig).antialiasing.msaa;
 
-		this.buildPipeline(gpux.gpuDevice, layout);
+		this.buildOrRebuildPipeline(gpux.gpuDevice, layout);
 	}
 }
 

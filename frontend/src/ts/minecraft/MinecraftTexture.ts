@@ -19,7 +19,7 @@ export class MinecraftTexture {
 			"linear",
 			"nearest",
 			"linear",
-			false,
+			true,
 		);
 		if (virtualTexture === undefined) return;
 

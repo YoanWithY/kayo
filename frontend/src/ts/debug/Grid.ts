@@ -138,7 +138,7 @@ export class GridRealtimePipeline extends AbstractRenderingPipeline {
 			constants: constants,
 		};
 		this.multisample.count = (config.specific as RealtimeSpecificRenderConfig).antialiasing.msaa;
-		this.buildPipeline(gpux.gpuDevice, layout);
+		this.buildOrRebuildPipeline(gpux.gpuDevice, layout);
 	}
 }
 
@@ -168,8 +168,8 @@ export class GridRelatimeRepresentation extends Representation<RealtimeRenderer,
 		);
 	}
 
-	public update(config: RenderConfig): void {
-		this._currentPipeline = this._buildPipeline(config);
+	public update(): void {
+		this._currentPipeline = this._buildPipeline(this.representationConcept.config);
 	}
 
 	public recordForwardRendering(renderPassEnoder: GPURenderPassEncoder): void {

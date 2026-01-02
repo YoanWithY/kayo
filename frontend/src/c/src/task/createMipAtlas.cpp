@@ -37,8 +37,8 @@ static void* createMipAtlas(void* arg) {
 			svt_config->atlas_offsets[atlas_index][0],
 			svt_config->atlas_offsets[atlas_index][1],
 			int32_t(svt_config->tile_border_px),
-			ImageWrapMode::repeat,
-			ImageWrapMode::repeat);
+			ImageWrapMode::clamp_edge,
+			ImageWrapMode::clamp_edge);
 	}
 
 #pragma GCC diagnostic push

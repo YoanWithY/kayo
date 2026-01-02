@@ -86,7 +86,7 @@ export class MinecraftRealtimeRenderingPipeline extends AbstractRenderingPipelin
 			entryPoint: fragmentEntryPoint,
 		};
 		this.multisample.count = (config.specific as RealtimeSpecificRenderConfig).antialiasing.msaa;
-		this.buildPipeline(gpux.gpuDevice, layout);
+		this.buildOrRebuildPipeline(gpux.gpuDevice, layout);
 	}
 }
 
@@ -150,9 +150,9 @@ export class MinecraftWorldRealtimeRenderingRepresentation
 		return renderBundleEncoder.finish({ label: "Minecraft World bundle" });
 	}
 
-	public update(config: RenderConfig): void {
-		this._currentPipeline = this._buildRenderingPipeline(config);
-		this._currentRenderBundle = this._buildRenderBundle(config);
+	public update(): void {
+		this._currentPipeline = this._buildRenderingPipeline(this.representationConcept.config);
+		this._currentRenderBundle = this._buildRenderBundle(this.representationConcept.config);
 	}
 
 	public static shaderModule: GPUShaderModule;

@@ -8,12 +8,19 @@ import { MeshObjectRealtimeRenderingRepresentation } from "./MeshObjectRealtimeR
 import staticShaderCode from "./default.wgsl?raw";
 import { resolveShader } from "../rendering/ShaderUtils";
 
-class RealtimePipelineCompilationCach {
-	private _materialRealtimeRenderingRepresentation: MaterialRealtimeRenderingRepresentation;
+/**
+ * The representation of the Material for an instance of a RealtimeRenderer.
+ * This maintains a cach for various versions of {@link MeshObjectRealtimeRenderingPipeline}s that
+ * may need to be created due to different requirements from the Mesh (geometry, attributes...) for the GPU pipeline.
+ */
+export class MaterialRealtimeRenderingRepresentation extends Representation<RealtimeRenderer, Material> {
 	private _pipelines: MeshObjectRealtimeRenderingPipeline[];
-	public constructor(materialRealtimeRenderingRepresentation: MaterialRealtimeRenderingRepresentation) {
+	private _kayo: Kayo;
+
+	public constructor(kayo: Kayo, representationConcept: RealtimeRenderer, representationSubject: Material) {
+		super(representationConcept, representationSubject);
 		this._pipelines = [];
-		this._materialRealtimeRenderingRepresentation = materialRealtimeRenderingRepresentation;
+		this._kayo = kayo;
 	}
 
 	public getOrCreatePipelineFor(meshObject: MeshObjectRealtimeRenderingRepresentation) {
@@ -21,27 +28,18 @@ class RealtimePipelineCompilationCach {
 		const e = (v: MeshObjectRealtimeRenderingPipeline) => equalByValue(vertexLayout, v.vertexBufferLayout);
 		let pipeline = this._pipelines.find(e);
 		if (pipeline) return pipeline;
-		pipeline = this._materialRealtimeRenderingRepresentation.compileFor(meshObject);
+		pipeline = this._createPipelineFor(meshObject);
 		this._pipelines.push(pipeline);
 		return pipeline;
 	}
-}
 
-export class MaterialRealtimeRenderingRepresentation extends Representation<RealtimeRenderer, Material> {
-	private _compilationCach: RealtimePipelineCompilationCach;
-	private _kayo: Kayo;
-
-	public constructor(kayo: Kayo, representationConcept: RealtimeRenderer, representationSubject: Material) {
-		super(representationConcept, representationSubject);
-		this._compilationCach = new RealtimePipelineCompilationCach(this);
-		this._kayo = kayo;
+	public update() {
+		for (const pipeline of this._pipelines) pipeline.update(this.representationConcept.config);
 	}
 
-	public get compilationCach() {
-		return this._compilationCach;
-	}
-
-	public compileFor(meshObject: MeshObjectRealtimeRenderingRepresentation): MeshObjectRealtimeRenderingPipeline {
+	private _createPipelineFor(
+		meshObject: MeshObjectRealtimeRenderingRepresentation,
+	): MeshObjectRealtimeRenderingPipeline {
 		// this should be replaced by an actual compiler
 		const gpux = this._kayo.gpux;
 		const vertexEntryPoint = "vertex_main";

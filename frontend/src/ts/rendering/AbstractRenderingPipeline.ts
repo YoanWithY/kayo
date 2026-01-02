@@ -45,8 +45,7 @@ export abstract class AbstractRenderingPipeline {
 		this.shaderModule = shaderModule;
 	}
 
-	protected buildPipeline(gpuDevice: GPUDevice, layout: GPUPipelineLayout): GPURenderPipeline {
-		if (this._gpuPipeline) return this._gpuPipeline;
+	protected buildOrRebuildPipeline(gpuDevice: GPUDevice, layout: GPUPipelineLayout): GPURenderPipeline {
 		const renderPipelineDescritor: GPURenderPipelineDescriptor = {
 			label: this.label,
 			primitive: this.primiteState,

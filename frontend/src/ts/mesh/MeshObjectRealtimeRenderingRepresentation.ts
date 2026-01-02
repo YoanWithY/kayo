@@ -54,7 +54,7 @@ export class MeshObjectRealtimeRenderingRepresentation
 				console.error("No material realtime representation!");
 				continue;
 			}
-			this._pipeline = materialRealtimeRepresentation.compilationCach.getOrCreatePipelineFor(this);
+			this._pipeline = materialRealtimeRepresentation.getOrCreatePipelineFor(this);
 		}
 	}
 
