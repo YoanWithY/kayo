@@ -1,4 +1,6 @@
 import { Kayo } from "../Kayo";
+import { Follower } from "./Follower";
+import { Leader } from "./Leader";
 
 export type PTPMessage = { text: string; sender: number };
 
@@ -22,7 +24,7 @@ export class PTPChatContent extends HTMLElement {
 		this.texts.length = 0;
 		for (const v of value) {
 			const p = PTPMessageElement.createUIElement(this._win);
-			p._internals.states.add(v.sender === this._kayo.project.ptpBase.role.id ? "own" : "other");
+			p._internals.states.add(v.sender === this._kayo.project.ptpx.role.id ? "own" : "other");
 			const name = this._win.document.createElement("h6");
 			name.textContent = String(v.sender);
 			const text = this._win.document.createElement("p");
@@ -43,7 +45,7 @@ export class PTPChatContent extends HTMLElement {
 		const newMessage = value[value.length - 1];
 		if (newMessage === undefined) return;
 
-		if (newMessage.sender === this._kayo.project.ptpBase.role.id) return;
+		if (newMessage.sender === this._kayo.project.ptpx.role.id) return;
 		const permissionCallback = (permission: NotificationPermission) => {
 			if (permission === "granted") {
 				new Notification(`${newMessage.sender}:`, {
@@ -56,7 +58,7 @@ export class PTPChatContent extends HTMLElement {
 		Notification.requestPermission().then(permissionCallback);
 	}
 
-	public static createUIElement(win: Window, kayo: Kayo, _: any): PTPChatContent {
+	public static createUIElement(win: Window, kayo: Kayo): PTPChatContent {
 		const p = win.document.createElement(this.getDomClass()) as PTPChatContent;
 		p._win = win;
 		p._kayo = kayo;
@@ -74,7 +76,7 @@ export class PTPTextInput extends HTMLFormElement {
 		this.classList.add(PTPTextInput.getDomClass());
 	}
 
-	public static createUIElement(win: Window, _: Kayo, _1: any): PTPTextInput {
+	public static createUIElement(win: Window, _: Kayo): PTPTextInput {
 		const p = win.document.createElement("form", { is: this.getDomClass() }) as PTPTextInput;
 		const textInput = win.document.createElement("input");
 		textInput.setAttribute("type", "text");
@@ -98,8 +100,41 @@ export class PTPTextInput extends HTMLFormElement {
 }
 
 export class PTPChatPane extends HTMLElement {
-	public static createUIElement(win: Window, _: Kayo): PTPChatPane {
-		return win.document.createElement(this.getDomClass()) as PTPChatPane;
+	public static createUIElement(win: Window, kayo: Kayo): PTPChatPane {
+		const p = win.document.createElement(this.getDomClass()) as PTPChatPane;
+		// const ptpChatContent = PTPChatContent.createUIElement(win, kayo);
+		// const ptpChatInput = PTPTextInput.createUIElement(win, kayo);
+		// p.appendChild(ptpChatContent);
+		// p.appendChild(ptpChatInput);
+		const vid = win.document.createElement("video");
+		if (kayo.project.ptpx.role.wsRole == "Leader") {
+			const supported = navigator.mediaDevices.getSupportedConstraints();
+			console.log(supported);
+			navigator.mediaDevices.getUserMedia({
+				video: true,
+				audio: true,
+				// eslint-disable-next-line local/no-anonymous-arrow-function
+			}).then((stream) => {
+				console.log(stream.getVideoTracks()[0].getCapabilities());
+				stream.getVideoTracks()[0].applyConstraints({ width: { exact: 1920 } });
+				vid.srcObject = stream;
+				vid.play();
+				for (const track of stream.getTracks()) {
+					for (const [_, con] of (kayo.project.ptpx.role as Leader).connectionsMap) {
+						con.addTrack(track, stream);
+					}
+				}
+			});
+		} else {
+			(kayo.project.ptpx.role as Follower).leaderConnection.addEventListener("track",
+				// eslint-disable-next-line local/no-anonymous-arrow-function
+				(e) => {
+					vid.srcObject = e.streams[0]
+					vid.play();
+				})
+		}
+		p.appendChild(vid);
+		return p;
 	}
 	public static getDomClass() {
 		return "ptp-chat";

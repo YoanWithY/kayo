@@ -17,26 +17,32 @@ import {
 import { Role } from "./Role";
 import { Follower } from "./Follower";
 import { Leader } from "./Leader";
-import { Project } from "../project/Project";
 
-export class PTPBase {
+export class PTPX {
 	public protocol: string;
 	public hostname: string;
-	public wsUrl: string;
+	public wsUrl!: string;
 	public role!: Role;
-	public ws: WebSocket;
+	public ws!: WebSocket;
 	public pendingFilename = "";
 	public dataArr: any[] = [];
 	public messageCallback: (value: string) => void;
+	private _connectLog: { onSuccess: () => void, onError: () => void }[] = [];
 
-	public constructor(project: Project) {
+	public constructor() {
 		this.protocol = "wss:";
 		this.hostname = window.location.hostname;
 		if (import.meta.env.DEV)
 			this.hostname = "localhost:3000";
-		this.wsUrl = `${this.protocol}//${this.hostname}?projectID=${project.fsRootName}`;
+
+		this.messageCallback = (_1: string) => { };
+	}
+
+	public connect(fsRootName: string, onSuccess: () => void, onError: () => void) {
+		this.wsUrl = `${this.protocol}//${this.hostname}?projectID=${fsRootName}`;
 		this.ws = new WebSocket(this.wsUrl);
 		this.ws.binaryType = "arraybuffer";
+		this._connectLog.push({ onSuccess, onError });
 
 		this.ws.onmessage = async (event: MessageEvent) => {
 			if (typeof event.data === "string") {
@@ -48,17 +54,15 @@ export class PTPBase {
 				this.dataArr.push(event.data);
 			}
 		};
-
-		this.messageCallback = (_1: string) => { };
 	}
 
 	public wsFuncMap: { [K in WSClientMessageType]: (content: any) => void } = {
-		offer: (content: any) => {
+		"offer": (content: any) => {
 			const wsOffer = content as WSClientOffer;
 			this.role.acceptOffer(wsOffer.offer, wsOffer.originIdentity);
 		},
 
-		string: (content: any) => {
+		"string": (content: any) => {
 			console.log(content);
 		},
 
@@ -67,6 +71,7 @@ export class PTPBase {
 			this.role = roleID.role == "Follower" ? new Follower(this, roleID.id) : new Leader(this, roleID.id);
 			this.role.answerRoleIsReady();
 			this.role.addMessageListener(this.messageCallback);
+			this._connectLog[0].onSuccess();
 		},
 
 		"new follower": (content: any) => {

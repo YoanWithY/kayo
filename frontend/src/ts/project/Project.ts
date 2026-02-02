@@ -2,14 +2,14 @@ import Scene from "./Scene";
 import { WrappingPane } from "../ui/Wrapping/WrappingPane";
 import { Kayo } from "../Kayo";
 import { Renderer } from "../Renderer";
-import { PTPBase } from "../collaborative/PTPBase";
+import { PTPX as PTPX } from "../collaborative/PTPX";
 import { Viewport } from "../rendering/Viewport";
 import { SceneRealtimeRepresentation } from "../rendering/SceneRealtimeRepresentation";
 import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import { Grid } from "../debug/Grid";
 import { AnimationRenderer } from "../ui/panes/animation/AnimationRenderer";
 import { VirtualTextureSystem } from "../Textures/VirtualTextureSystem";
-import WASMX, { KayoWasmAddress, StatePath } from "../WASMX";
+import { KayoWasmAddress, StatePath } from "../WASMX";
 import { PubID } from "../PubSub";
 import { RenderConfig } from "../rendering/config/RenderConfig";
 import { RealtimeSpecificRenderConfig } from "../rendering/config/RealtimeRenderConfig";
@@ -18,28 +18,25 @@ import { SVTDebugRenderer } from "../ui/panes/debug/svtDebug/SVTDebugRenderer";
 import { Material } from "../mesh/Material";
 
 export class Project {
-	private _name: string;
+	private _displayName: string;
 	private _fsRootName: string;
 	private _renderers = new Map<string, Renderer>();
 	private _renderConfigs = new Map<string, RenderConfig>();
 	private _virtualTextureSystem: VirtualTextureSystem;
 	private _kayo: Kayo;
-	private _wasmx: WASMX;
+	private _ptpx!: PTPX;
 	public scene!: Scene;
-	public ptpBase: PTPBase;
 
 	public constructor(kayo: Kayo, fsRootName: string) {
-		this._name = "Unnamed Project";
+		this._displayName = "Unnamed Project";
 		this._fsRootName = fsRootName;
 		this._kayo = kayo;
-		this.ptpBase = new PTPBase(this);
 		this.scene = new Scene();
-		this._wasmx = kayo.wasmx;
 		this._virtualTextureSystem = new VirtualTextureSystem(kayo);
 	}
 
-	public get name() {
-		return this._name;
+	public get displayName() {
+		return this._displayName;
 	}
 	public get fsRootName() {
 		return this._fsRootName;
@@ -50,11 +47,14 @@ export class Project {
 	public get virtualTextureSystem() {
 		return this._virtualTextureSystem;
 	}
-	public get wasmx() {
-		return this._wasmx;
-	}
 	public get renderConfigs() {
 		return this._renderConfigs;
+	}
+	public get ptpx() {
+		return this._ptpx;
+	}
+	public initPTP(ptpx: PTPX) {
+		this._ptpx = ptpx;
 	}
 
 	public open(onFinishCallback?: () => void) {

@@ -8,7 +8,7 @@ import {
 	RTMessage,
 	RTString,
 } from "../../../../shared/messageTypes";
-import { PTPBase } from "./PTPBase";
+import { PTPX } from "./PTPX";
 import { PTPMessage } from "./PTPChatPannel";
 import { Role } from "./Role";
 
@@ -17,7 +17,7 @@ export class Follower extends Role {
 	public readonly leaderConnection = new RTCPeerConnection();
 
 	public dataChannel!: RTCDataChannel;
-	public constructor(ptpBase: PTPBase, id: number) {
+	public constructor(ptpBase: PTPX, id: number) {
 		super(ptpBase, id);
 
 		this.leaderConnection.ondatachannel = (event: RTCDataChannelEvent) => {
@@ -63,7 +63,7 @@ export class Follower extends Role {
 		};
 	}
 	public answerRoleIsReady(): void {
-		this.base.sendWS<WSFollowerReady>({ type: "follower ready", content: null });
+		this.ptpx.sendWS<WSFollowerReady>({ type: "follower ready", content: null });
 	}
 
 	public async acceptOffer(offer: RTCSessionDescription, identity: Identity) {
@@ -72,7 +72,7 @@ export class Follower extends Role {
 			console.log("ICE connection state change:", e);
 		};
 		this.leaderConnection.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
-			this.base.sendWS<WSServerIceCandidateMessage>({
+			this.ptpx.sendWS<WSServerIceCandidateMessage>({
 				type: "ice candidate",
 				content: {
 					targetIdentity: identity,
@@ -92,10 +92,10 @@ export class Follower extends Role {
 			console.error("Description is null.");
 			return;
 		}
-		this.base.sendWS<WSServerRTCOfferMessage>({
+		this.ptpx.sendWS<WSServerRTCOfferMessage>({
 			type: "offer",
 			content: {
-				targetIdentity: { id: 0, origin: undefined },
+				targetIdentity: identity,
 				offer: backOffer,
 			},
 		});
@@ -105,6 +105,6 @@ export class Follower extends Role {
 	}
 
 	public sendMessage(value: PTPMessage): void {
-		this.base.sendRT<RTString>(this.dataChannel, { type: "string", content: JSON.stringify(value) });
+		this.ptpx.sendRT<RTString>(this.dataChannel, { type: "string", content: JSON.stringify(value) });
 	}
 }

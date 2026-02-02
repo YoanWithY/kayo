@@ -1,3 +1,4 @@
+import { PTPX } from "../../collaborative/PTPX";
 import { Kayo } from "../../Kayo";
 import { Project } from "../../project/Project";
 import { ViewportPane } from "./ViewportPane";
@@ -40,11 +41,11 @@ export class SplashScreen extends HTMLElement {
 
 		const h1 = win.document.createElement("h1");
 		h1.textContent = "Welcome to Kayo";
-		container.append(h1);
+		container.appendChild(h1);
 
 		const h2_1 = win.document.createElement("h2");
-		h2_1.textContent = "Open Project";
-		container.append(h2_1);
+		h2_1.textContent = "New Project";
+		container.appendChild(h2_1);
 
 		const newProjectButton = win.document.createElement("button");
 		newProjectButton.textContent = "New Project";
@@ -55,6 +56,19 @@ export class SplashScreen extends HTMLElement {
 			const projectOpenedCallback = () => {
 				kayo.registerProjectOnWindow(win, ViewportPane.getName(), true);
 				win.document.body.removeChild(p._kayoLoadingScreen);
+
+				// TODO redo: this is for dev only:
+				const ptpx = new PTPX();
+				ptpx.connect(project.fsRootName,
+					// eslint-disable-next-line local/no-anonymous-arrow-function
+					() => {
+						console.log(`connected to:\t ${project.fsRootName}`);
+						project.initPTP(ptpx);
+					},
+					// eslint-disable-next-line local/no-anonymous-arrow-function
+					() => {
+						console.error("Error!");
+					});
 			};
 			kayo.openProject(project, projectOpenedCallback);
 		}
@@ -62,19 +76,47 @@ export class SplashScreen extends HTMLElement {
 		container.append(newProjectButton)
 
 		const h2_3 = win.document.createElement("h2");
-		h2_1.textContent = "Join Project";
-		container.append(h2_3);
+		h2_3.textContent = "Join Project";
+		container.appendChild(h2_3);
+		const input = win.document.createElement("input");
+		input.type = "password";
+		input.autocomplete = "off";
+		container.appendChild(input);
+		const inputButton = win.document.createElement("button");
+		inputButton.textContent = "Join";
+		const joinProjectCallback = () => {
+			const id = input.value;
+			win.document.body.appendChild(p._kayoLoadingScreen);
+			win.document.body.removeChild(p);
+
+			const ptpx = new PTPX();
+			const projectOpenedCallback = () => {
+				kayo.registerProjectOnWindow(win, ViewportPane.getName(), true);
+				win.document.body.removeChild(p._kayoLoadingScreen);
+			};
+			const onSucess = () => {
+				const project = new Project(kayo, id);
+				kayo.openProject(project, projectOpenedCallback)
+				project.initPTP(ptpx);
+			};
+			const onError = () => {
+
+			};
+			ptpx.connect(id, onSucess, onError);
+		};
+		inputButton.addEventListener("click", joinProjectCallback);
+		container.appendChild(inputButton);
 
 		const wrapper1 = win.document.createElement("div");
 		wrapper1.classList.add("splashEntryTable");
-		container.append(wrapper1);
+		container.appendChild(wrapper1);
 
 		const h2_2 = win.document.createElement("h2");
 		h2_2.textContent = "Unsaved Projects";
-		container.append(h2_2);
+		container.appendChild(h2_2);
 
 		const wrapper2 = win.document.createElement("div");
-		container.append(wrapper2);
+		container.appendChild(wrapper2);
 
 		p._container = container;
 		return p;

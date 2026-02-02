@@ -148,3 +148,17 @@ ptp-message-element:state(other) {
 	background-color: rgb(60, 60, 60);
 	cursor: pointer;
 }
+
+input[type="password"] {
+	background-color: rgba(255, 255, 255, 0.1);
+	border: 1px solid gray;
+	border-radius: 4px;
+}
+
+input[type="password"]:focus {
+	outline: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+input[type="password"]:hover {
+	background-color: rgba(255, 255, 255, 0.15);
+}

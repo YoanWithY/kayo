@@ -18,7 +18,7 @@ export class Leader extends Role {
 	public readonly progressMap: Map<number, { progress: HTMLProgressElement; text: HTMLParagraphElement }> = new Map();
 
 	public answerRoleIsReady(): void {
-		this.base.sendWS<WSLeaderReady>({ type: "leader ready", content: null });
+		this.ptpx.sendWS<WSLeaderReady>({ type: "leader ready", content: null });
 	}
 
 	public async acceptOffer(offer: RTCSessionDescription, originIdentity: Identity) {
@@ -40,12 +40,49 @@ export class Leader extends Role {
 
 	public newFollower(identity: Identity) {
 		const peerConnection = new RTCPeerConnection();
-		const dataChannel = peerConnection.createDataChannel("fileTransfer");
+
 
 		peerConnection.oniceconnectionstatechange = (e) => {
 			console.log("ICE connection state to", JSON.stringify(identity), "change:", e);
 		};
 
+		peerConnection.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
+			this.ptpx.sendWS<WSServerIceCandidateMessage>({
+				type: "ice candidate",
+				content: {
+					targetIdentity: identity,
+					candidate: event.candidate,
+				},
+			});
+		};
+
+		this.connectionsMap.set(identity.id, peerConnection);
+		const offerCallback = (offerInit: RTCSessionDescriptionInit) => {
+			return peerConnection.setLocalDescription(offerInit);
+		};
+		const descriptionCallback = () => {
+			const description = peerConnection.localDescription;
+			if (!description) {
+				console.error("Description is null.");
+				return;
+			}
+			this.ptpx.sendWS<WSServerRTCOfferMessage>({
+				type: "offer",
+				content: {
+					targetIdentity: identity,
+					offer: description,
+				},
+			});
+		};
+		const errorCallback = (error: Error) => {
+			console.error(error);
+		};
+		peerConnection.onnegotiationneeded = () => {
+			peerConnection.createOffer().then(offerCallback).then(descriptionCallback).catch(errorCallback);
+		}
+
+		const dataChannel = peerConnection.createDataChannel("fileTransfer");
+		this.datachannelMap.set(identity.id, dataChannel);
 		dataChannel.onopen = () => {
 			console.log("Opened Channel:", dataChannel);
 		};
@@ -61,41 +98,6 @@ export class Leader extends Role {
 				}
 			}
 		};
-
-		peerConnection.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
-			this.base.sendWS<WSServerIceCandidateMessage>({
-				type: "ice candidate",
-				content: {
-					targetIdentity: identity,
-					candidate: event.candidate,
-				},
-			});
-		};
-
-		this.connectionsMap.set(identity.id, peerConnection);
-		this.datachannelMap.set(identity.id, dataChannel);
-		const offerCallback = (offerInit: RTCSessionDescriptionInit) => {
-			return peerConnection.setLocalDescription(offerInit);
-		};
-		const descriptionCallback = () => {
-			const description = peerConnection.localDescription;
-			if (!description) {
-				console.error("Description is null.");
-				return;
-			}
-			console.log(peerConnection.localDescription.sdp);
-			this.base.sendWS<WSServerRTCOfferMessage>({
-				type: "offer",
-				content: {
-					targetIdentity: identity,
-					offer: description,
-				},
-			});
-		};
-		const errorCallback = (error: Error) => {
-			console.error(error);
-		};
-		peerConnection.createOffer().then(offerCallback).then(descriptionCallback).catch(errorCallback);
 	}
 
 	public addIceCandidate(wsICECandidate: WSClientIceCandidate) {
@@ -109,7 +111,7 @@ export class Leader extends Role {
 	}
 
 	public sendMessage(value: PTPMessage): void {
-		this.base.multicastRT<RTString>(Array.from(this.datachannelMap.values()), {
+		this.ptpx.multicastRT<RTString>(Array.from(this.datachannelMap.values()), {
 			type: "string",
 			content: JSON.stringify(value),
 		});

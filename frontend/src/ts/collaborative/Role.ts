@@ -1,17 +1,17 @@
 import { Identity, WSClientIceCandidate, WSRole } from "../../../../shared/messageTypes";
-import { PTPBase } from "./PTPBase";
+import { PTPX } from "./PTPX";
 import { PTPMessage } from "./PTPChatPannel";
 
 export abstract class Role {
-	protected base: PTPBase;
+	protected ptpx: PTPX;
 	public readonly id;
 	public abstract readonly wsRole: WSRole;
 	public abstract answerRoleIsReady(): void;
 	public abstract acceptOffer(offer: RTCSessionDescription, identity: Identity): Promise<void>;
 	public abstract addIceCandidate(wsICECandidate: WSClientIceCandidate): void;
 	private messageListener: Set<(value: string) => void>;
-	public constructor(ptpBase: PTPBase, id: number) {
-		this.base = ptpBase;
+	public constructor(ptpBase: PTPX, id: number) {
+		this.ptpx = ptpBase;
 		this.id = id;
 		this.messageListener = new Set();
 	}

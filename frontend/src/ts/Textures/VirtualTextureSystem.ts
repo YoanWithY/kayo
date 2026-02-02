@@ -14,7 +14,7 @@ export class VirtualTextureSystem {
 	/**
 	 * The number of layers of the physical texture. This can be chose based on preference.
 	 */
-	private _physicalLayers = 4;
+	private _physicalLayers = 2;
 	/**
 	 * The size (= width = height) of the physical texture in texels. This will be set to approx. maxTextureDimension2D.
 	 */
