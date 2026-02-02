@@ -4,7 +4,6 @@ import { Kayo } from "../Kayo";
 import { Renderer } from "../Renderer";
 import { PTPBase } from "../collaborative/PTPBase";
 import { Viewport } from "../rendering/Viewport";
-import { TaskQueue } from "../ressourceManagement/TaskQueue";
 import { SceneRealtimeRepresentation } from "../rendering/SceneRealtimeRepresentation";
 import RealtimeRenderer from "../rendering/RealtimeRenderer";
 import { Grid } from "../debug/Grid";
@@ -21,7 +20,6 @@ import { Material } from "../mesh/Material";
 export class Project {
 	private _name: string;
 	private _fsRootName: string;
-	private _taskQueue!: TaskQueue;
 	private _renderers = new Map<string, Renderer>();
 	private _renderConfigs = new Map<string, RenderConfig>();
 	private _virtualTextureSystem: VirtualTextureSystem;
@@ -46,9 +44,6 @@ export class Project {
 	public get fsRootName() {
 		return this._fsRootName;
 	}
-	public get taskQueue() {
-		return this._taskQueue;
-	}
 	public get renderers() {
 		return this._renderers;
 	}
@@ -63,10 +58,7 @@ export class Project {
 	}
 
 	public open(onFinishCallback?: () => void) {
-		const taskQueue = new TaskQueue(this);
-		const initCallback = () => {
-			this._taskQueue = taskQueue;
-
+		const onInitCallback = () => {
 			this._renderConfigs.set(
 				"realtime default",
 				new RenderConfig("realtime default", new RealtimeSpecificRenderConfig()),
@@ -95,7 +87,10 @@ export class Project {
 
 			if (onFinishCallback) onFinishCallback();
 		};
-		taskQueue.initWorkers().then(initCallback);
+		const onErrorCallback = () => {
+			alert("Could not open Project for some reason! You may retry?");
+		};
+		this._kayo.taskQueue.initProject(this._fsRootName, onInitCallback, onErrorCallback)
 	}
 
 	public close(onFinishCallback?: () => void) {

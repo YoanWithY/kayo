@@ -11,7 +11,7 @@ import Collapsible, { CollapsibleButton, CollapsibleContentContainer } from "./c
 import Tooltip from "./components/Tooltip";
 import Grid2Col from "./components/Grid2Col";
 import Checkbox from "./components/Checkbox";
-import { StateSelectBox, SelectOption, SelectOptionWrapper, SelectBox } from "./components/StateSelectBox";
+import { DropDown, DropDownItem } from "./components/DropDown";
 import { WrappingPane } from "./Wrapping/WrappingPane";
 import { Footer } from "./Wrapping/Footer";
 import { FullStretch } from "./components/FullStretch";
@@ -30,6 +30,7 @@ import { TabbedPanel } from "./components/TabbedPanel";
 import { PerformancePanel } from "./panes/debug/performance/PerformancePanel";
 import { DebugPane } from "./panes/debug/DebugPane";
 import { SVTDebugPanel } from "./panes/debug/svtDebug/SVTDebugPanel";
+import { SelectBox } from "./components/SelectBox";
 
 export type MarkUneffectiveEntry = { stateVariableURL: string; anyOf: any[] };
 
@@ -43,7 +44,6 @@ export function initUI() {
 	window.customElements.define(NumberInput.getDomClass(), NumberInput);
 	window.customElements.define(PaneStripe.getDomClass(), PaneStripe);
 	window.customElements.define(Checkbox.getDomClass(), Checkbox);
-	window.customElements.define(StateSelectBox.getDomClass(), StateSelectBox);
 	window.customElements.define(RadioButtonWrapper.getDomClass(), RadioButtonWrapper);
 	window.customElements.define(RadioButton.getDomClass(), RadioButton);
 	window.customElements.define(SelectBox.getDomClass(), SelectBox);
@@ -51,8 +51,8 @@ export function initUI() {
 	window.customElements.define(PTPChatContent.getDomClass(), PTPChatContent);
 	window.customElements.define(PTPMessageElement.getDomClass(), PTPMessageElement);
 	window.customElements.define(TabbedPanel.getDomClass(), TabbedPanel);
-	window.customElements.define("select-option-wrapper", SelectOptionWrapper);
-	window.customElements.define("select-option", SelectOption);
+	window.customElements.define(DropDown.getDomClass(), DropDown);
+	window.customElements.define(DropDownItem.getDomClass(), DropDownItem);
 	window.customElements.define("iconed-toggle-button", IconedToggleButton);
 
 	window.customElements.define(ViewportPane.getDomClass(), ViewportPane);
@@ -97,7 +97,7 @@ const nameClassMap: { [key: string]: UIElement } = {
 	[Collapsible.getDomClass()]: Collapsible,
 	[Grid2Col.getDomClass()]: Grid2Col,
 	[SpanElement.getDomClass()]: SpanElement,
-	[StateSelectBox.getDomClass()]: StateSelectBox,
+	[SelectBox.getDomClass()]: SelectBox,
 	[PTPChatContent.getDomClass()]: PTPChatContent,
 	[PTPTextInput.getDomClass()]: PTPTextInput,
 	[VBox.getDomClass()]: VBox,
@@ -110,7 +110,7 @@ export function buildUIElement(win: Window, kayo: Kayo, obj: any, argMap?: { [ke
 }
 
 export interface UIElement {
-	new (): unknown;
+	new(): unknown;
 	createUIElement(win: Window, kayo: Kayo, obj: any, argMap?: { [key: string]: string }): HTMLElement;
 	getDomClass(): string;
 }

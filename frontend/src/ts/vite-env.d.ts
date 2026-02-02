@@ -4,6 +4,7 @@ declare module "*.wgsl?raw" {
 }
 
 interface ImportMetaEnv {
+	DEV: boolean;
 	readonly PACKAGE_VERSION: string;
 }
 

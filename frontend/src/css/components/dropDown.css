@@ -1,0 +1,19 @@
+drop-down-container {
+    position: absolute;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    background-color: black;
+}
+drop-down-item {
+	display: block;
+	padding: var(--var-padding) calc(var(--var-padding) + 2px);
+}
+
+drop-down-item:hover {
+	background-color: rgb(28, 28, 28);
+}
+
+drop-down-item:state(selected) {
+	background-color: rgb(28, 28, 28);
+}

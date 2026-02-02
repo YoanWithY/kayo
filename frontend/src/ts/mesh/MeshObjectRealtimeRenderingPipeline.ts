@@ -66,6 +66,5 @@ export class MeshObjectRealtimeRenderingPipeline extends AbstractRenderingPipeli
 	public update(config: RenderConfig) {
 		this._initFromConfig(config);
 		this.buildOrRebuildPipeline(this._gpux.gpuDevice, this._pipelineLayout);
-		console.log(config);
 	}
 }

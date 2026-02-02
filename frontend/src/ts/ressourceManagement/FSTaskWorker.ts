@@ -26,12 +26,24 @@ const getFileHandleFromPathAndName = async (path: string, fileName: string) => {
 	return await (await getDirHandleFromPath(path)).getFileHandle(fileName, { create: true });
 };
 
-const initWorkerFunction = async (args: { projectRootName: string }) => {
+const initWorkerFunction = async () => {
 	try {
 		systemRoot = await navigator.storage.getDirectory();
+	} catch (e) {
+		console.error(e);
+		return { returnValue: undefined, transfer: [] };
+	}
+	return { returnValue: `Initialized File system worker`, transfer: [] };
+};
+
+const initProjectFunction = async (args: { projectRootName: string }) => {
+	try {
 		projectRoot = await systemRoot.getDirectoryHandle(args.projectRootName, { create: true });
 		await projectRoot.getDirectoryHandle("cache", { create: true });
 		projectFile = await projectRoot.getFileHandle("project.json", { create: true });
+		if (projectFileSync) {
+			projectFileSync.close();
+		}
 		projectFileSync = await projectFile.createSyncAccessHandle();
 		projectFileSync.write(
 			new TextEncoder().encode(JSON.stringify({ created: new Date().toISOString() }, undefined, "\t")),
@@ -44,8 +56,8 @@ const initWorkerFunction = async (args: { projectRootName: string }) => {
 		console.error(e);
 		return { returnValue: undefined, transfer: [] };
 	}
-	return { returnValue: `Initialized File system worker`, transfer: [] };
-};
+	return { returnValue: `Initialized project of file system worker`, transfer: [] };
+}
 
 const storeFileFunction = async ({
 	path,
@@ -144,6 +156,7 @@ const deleteFSEntryTaskFunction = async ({ path, entry }: { path: string; entry:
 
 const taskMap: Record<string, (args: any) => Promise<ReturnValueType> | ReturnValueType> = {
 	initWorker: initWorkerFunction,
+	initProject: initProjectFunction,
 	storeFile: storeFileFunction,
 	loadFile: loadFileFunction,
 	queryFileSystem: queryFileSystemFunction,

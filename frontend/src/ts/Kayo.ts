@@ -13,12 +13,14 @@ export class Kayo {
 	private _audioContext: AudioContext;
 	private _windows: Set<Window>;
 	private _project!: Project;
+	private _taskQueue: TaskQueue;
 
 	public constructor(gpux: GPUX, wasmx: WASMX) {
 		this._wasmx = wasmx;
 		this._gpux = gpux;
 		this._audioContext = new AudioContext({ latencyHint: "interactive" });
 		this._windows = new Set();
+		this._taskQueue = new TaskQueue();
 	}
 
 	public get gpux(): GPUX {
@@ -30,7 +32,7 @@ export class Kayo {
 	}
 
 	public get taskQueue(): TaskQueue {
-		return this.project.taskQueue;
+		return this._taskQueue;
 	}
 
 	public get renderers() {
@@ -53,6 +55,10 @@ export class Kayo {
 		return this._windows;
 	}
 
+	public init(onFinished: () => void, onError: () => void) {
+		this._taskQueue.initWorkers().then(onFinished, onError);
+	}
+
 	public openProject(project: Project, onFinishCallback?: () => void) {
 		const installProject = () => {
 			window.document.title = `Kayo Engine - ${project.name}`;
@@ -70,7 +76,7 @@ export class Kayo {
 		open("/subwindow/", "_blank", "popup=true");
 	}
 
-	public registerWindow(win: Window, defaultPane: string, useHeader: boolean) {
+	public registerProjectOnWindow(win: Window, defaultPane: string, useHeader: boolean) {
 		if (this._windows.has(win)) return;
 
 		this._windows.add(win);

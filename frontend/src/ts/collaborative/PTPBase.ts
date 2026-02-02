@@ -22,7 +22,6 @@ import { Project } from "../project/Project";
 export class PTPBase {
 	public protocol: string;
 	public hostname: string;
-	public wsPort: number;
 	public wsUrl: string;
 	public role!: Role;
 	public ws: WebSocket;
@@ -30,11 +29,12 @@ export class PTPBase {
 	public dataArr: any[] = [];
 	public messageCallback: (value: string) => void;
 
-	public constructor(_: Project) {
-		this.protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+	public constructor(project: Project) {
+		this.protocol = "wss:";
 		this.hostname = window.location.hostname;
-		this.wsPort = 81;
-		this.wsUrl = `${this.protocol}//${this.hostname}:${this.wsPort}`;
+		if (import.meta.env.DEV)
+			this.hostname = "localhost:3000";
+		this.wsUrl = `${this.protocol}//${this.hostname}?projectID=${project.fsRootName}`;
 		this.ws = new WebSocket(this.wsUrl);
 		this.ws.binaryType = "arraybuffer";
 
@@ -49,7 +49,7 @@ export class PTPBase {
 			}
 		};
 
-		this.messageCallback = (_1: string) => {};
+		this.messageCallback = (_1: string) => { };
 	}
 
 	public wsFuncMap: { [K in WSClientMessageType]: (content: any) => void } = {

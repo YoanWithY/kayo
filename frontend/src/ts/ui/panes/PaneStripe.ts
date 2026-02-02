@@ -1,5 +1,5 @@
 import { Kayo } from "../../Kayo";
-import { SelectBox, SelectOptionValue } from "../components/StateSelectBox";
+import { SelectBox, SelectOptionValue } from "../components/SelectBox";
 import { SplitablePane } from "../splitpane/SplitablePane";
 import { panesNameClassMap } from "./PaneSelectorPane";
 
@@ -29,16 +29,14 @@ export class PaneStripe extends HTMLElement {
 		const p = win.document.createElement("pane-stripe") as PaneStripe;
 		p._kayo = kayo;
 
-		const selectBox = SelectBox.createUIElement(win);
-
 		const options: SelectOptionValue[] = [];
 		for (const name in panesNameClassMap) {
 			options.push({ text: name, value: name });
 		}
-		for (const option of options) selectBox.addOption(win, option);
+		const selectBox = SelectBox.createUIElement(win, kayo, { options });
 		selectBox.textContent = name;
 
-		selectBox.onValueChange = (optionValue: SelectOptionValue) => {
+		selectBox.onSetOption = (optionValue: SelectOptionValue) => {
 			const parent = p.parentElement;
 			if (!parent) return;
 			(parent as SplitablePane).recreateContent(win, kayo, panesNameClassMap[optionValue.value.toString()]);

@@ -1,4 +1,3 @@
-import { Project } from "../project/Project";
 import { SVTFSTask } from "./jsTasks/SVTFSTask";
 import { WasmTask, FSTask } from "./Task";
 
@@ -6,8 +5,32 @@ export function postFSMessage(worker: Worker, taskID: number, func: string, args
 	worker.postMessage({ func, taskID, args }, transfer);
 }
 
+class FSProjectInitTask extends FSTask {
+	private _onSuccessCallback: () => void;
+	private _onErrorCallback: () => void;
+	private _fsRootName: string;
+	public constructor(fsRootName: string, onSucessCallback: () => void, onErrorCallback: () => void) {
+		super();
+		this._fsRootName = fsRootName;
+		this._onSuccessCallback = onSucessCallback;
+		this._onErrorCallback = onErrorCallback;
+	}
+	public run(taskID: number, fsWorker: Worker): void {
+		postFSMessage(fsWorker, taskID, "initProject", { projectRootName: this._fsRootName }, []);
+	}
+	public progressCallback(_: number, __: number): void {
+		return;
+	}
+	public finishedCallback(returnValue: string | undefined): void {
+		if (returnValue === undefined)
+			this._onErrorCallback();
+		else
+			this._onSuccessCallback()
+	}
+
+}
+
 export class TaskQueue {
-	private _project: Project;
 	private _numThreads: number;
 	private _numRunningThreads: number;
 	private _taskID: number;
@@ -21,8 +44,7 @@ export class TaskQueue {
 	private _fsTaskMap: { [key: number]: FSTask };
 	private _fsWorker: Worker;
 
-	public constructor(project: Project) {
-		this._project = project;
+	public constructor() {
 		this._taskID = 0;
 		this._numThreads = navigator.hardwareConcurrency;
 		this._numRunningThreads = 0;
@@ -43,7 +65,52 @@ export class TaskQueue {
 		});
 	}
 
+	/**
+	 * Initializes the file system workers.
+	 * For project specific initilatization call {@link initProject}.
+	 */
 	public async initWorkers() {
+		const promices: Promise<void>[] = [];
+
+		// FS Worker
+		let externalResolve: (value: void | PromiseLike<void>) => void;
+		const executorCallback = (res: any) => {
+			externalResolve = res;
+		};
+		const promice = new Promise<void>(executorCallback);
+		promices.push(promice);
+
+		const fsWorkerMessageCallback = (e: MessageEvent) => {
+			const taskID = e.data.taskID;
+			const progress = e.data.progess as number | undefined;
+			if (progress !== undefined) {
+				const max = e.data.max as number;
+				console.log(`Progress (${taskID}) ${progress} / ${max}`);
+			} else {
+				this._fsTaskMap[taskID].finishedCallback(e.data.returnValue);
+				this._numRunningThreads--;
+				delete this._fsTaskMap[taskID];
+				this._conditonallyPopNextWasmTask();
+			}
+		};
+
+		const fsWorkerInitCallback = (e: MessageEvent) => {
+			const taskID = e.data.taskID;
+			if (taskID !== -1) return;
+			this._fsWorker.removeEventListener("message", fsWorkerInitCallback);
+			this._fsWorker.addEventListener("message", fsWorkerMessageCallback);
+			externalResolve();
+		};
+
+		this._fsWorker.addEventListener("message", fsWorkerInitCallback);
+		this.remoteFSCall(-1, "initWorker", undefined, []);
+
+
+		// eslint-disable-next-line local/no-await
+		await Promise.all(promices);
+	}
+
+	public initProject(fsRootName: string, onFinishedCallback: () => void, onErrorCallback: () => void) {
 		const promices: Promise<void>[] = [];
 		{
 			// FS Worker
@@ -54,30 +121,13 @@ export class TaskQueue {
 			const promice = new Promise<void>(executorCallback);
 			promices.push(promice);
 
-			const fsWorkerMessageCallback = (e: MessageEvent) => {
-				const taskID = e.data.taskID;
-				const progress = e.data.progess as number | undefined;
-				if (progress !== undefined) {
-					const max = e.data.max as number;
-					console.log(`Progress (${taskID}) ${progress} / ${max}`);
-				} else {
-					this._fsTaskMap[taskID].finishedCallback(e.data.returnValue);
-					this._numRunningThreads--;
-					delete this._fsTaskMap[taskID];
-					this._conditonallyPopNextWasmTask();
-				}
-			};
-
-			const fsWorkerInitCallback = (e: MessageEvent) => {
-				const taskID = e.data.taskID;
-				if (taskID !== -1) return;
-				this._fsWorker.removeEventListener("message", fsWorkerInitCallback);
-				this._fsWorker.addEventListener("message", fsWorkerMessageCallback);
+			const onSuccess = () => {
 				externalResolve();
 			};
-
-			this._fsWorker.addEventListener("message", fsWorkerInitCallback);
-			this.remoteFSCall(-1, "initWorker", { projectRootName: this._project.fsRootName }, []);
+			const onError = () => {
+				alert("Could not open Project!");
+			}
+			this.queueFSTask(new FSProjectInitTask(fsRootName, onSuccess, onError));
 		}
 
 		{
@@ -108,11 +158,11 @@ export class TaskQueue {
 			this._svtWorker.postMessage({
 				func: "initWorker",
 				taskID: -1,
-				args: { projectRootName: this._project.fsRootName },
+				args: { projectRootName: fsRootName },
 			});
 		}
-		// eslint-disable-next-line local/no-await
-		await Promise.all(promices);
+
+		Promise.all(promices).then(onFinishedCallback, onErrorCallback);
 	}
 
 	private _conditonallyPopNextWasmTask() {
@@ -126,7 +176,7 @@ export class TaskQueue {
 	}
 
 	public remoteFSCall(taskID: number, func: string, args: any, transfer: ArrayBuffer[]) {
-		this._fsWorker.postMessage({ func, taskID, args }, transfer);
+		postFSMessage(this._fsWorker, taskID, func, args, transfer);
 	}
 
 	public queueWasmTask(task: WasmTask) {

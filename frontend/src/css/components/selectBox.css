@@ -57,16 +57,3 @@ select-option-wrapper {
 select-option-wrapper:state(open-down) {
 	border-radius: 0 0 var(--radius) var(--radius);
 }
-
-select-option {
-	display: block;
-	padding: var(--var-padding) calc(var(--var-padding) + 2px);
-}
-
-select-option:hover {
-	background-color: rgb(28, 28, 28);
-}
-
-select-option:state(selected) {
-	background-color: rgb(28, 28, 28);
-}

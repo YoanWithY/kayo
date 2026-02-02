@@ -2,17 +2,9 @@
 import { initUI as initUIClasses } from "./ui/ui";
 import { Kayo } from "./Kayo";
 import initWasmx from "./ressourceManagement/KayoWasmLoader";
-import { ViewportPane } from "./ui/panes/ViewportPane";
 import { GPUX } from "./GPUX";
 import { SplashScreen } from "./ui/panes/SplashScreen";
 import TextureUtils from "./Textures/TextureUtils";
-import { Project } from "./project/Project";
-
-function randomString(length: number): string {
-	const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-	const randomIterator = () => chars[Math.floor(Math.random() * chars.length)];
-	return Array.from({ length }, randomIterator).join("");
-}
 
 const loadPara = window.document.getElementById("loadingParagraph") as HTMLParagraphElement;
 loadPara.textContent = "Initi UI...";
@@ -39,12 +31,15 @@ const beforeUnloadCallback = (_: any) => {
 };
 window.addEventListener("beforeunload", beforeUnloadCallback);
 
-loadPara.textContent = "Init Project...";
-const project = new Project(kayo, randomString(16));
-const projectOpendCallback = () => {
-	kayo.registerWindow(window, ViewportPane.getName(), true);
-	window.document.body.appendChild(SplashScreen.createUIElement(window, kayo));
-	window.document.body.removeChild(window.document.getElementById("kayoLoading") as HTMLDivElement);
+const kayoLoadingScreen = window.document.getElementById("kayoLoading") as HTMLDivElement;
+const onKayoInit = () => {
 	kayo.cleanUpFileSystem();
-};
-kayo.openProject(project, projectOpendCallback);
+	window.document.body.appendChild(SplashScreen.createUIElement(window, kayo, kayoLoadingScreen));
+	window.document.body.removeChild(kayoLoadingScreen);
+}
+const onKayoInitError = () => {
+	alert("Kayo could not initialize the File system. Your Browser or Browsersetting may be incompatible.")
+}
+loadPara.textContent = "Init Kayo...";
+kayo.init(onKayoInit, onKayoInitError);
+
