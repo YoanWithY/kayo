@@ -19,7 +19,7 @@ import { IconedToggleButton } from "./components/IconedToggleButton";
 import { Kayo } from "../Kayo";
 import OutputPane from "./panes/OutpuPane";
 import SpanElement from "./components/SpanElement";
-import { PTPChatContent, PTPChatPane, PTPMessageElement, PTPTextInput } from "../collaborative/PTPChatPannel";
+import { PTPChatPane } from "../collaborative/PTPChatPannel";
 import VBox from "./components/VBox";
 import { NumberInput } from "./components/NumberInput";
 import { FileSystemPanel } from "./panes/debug/FileSystemPanel";
@@ -47,9 +47,6 @@ export function initUI() {
 	window.customElements.define(RadioButtonWrapper.getDomClass(), RadioButtonWrapper);
 	window.customElements.define(RadioButton.getDomClass(), RadioButton);
 	window.customElements.define(SelectBox.getDomClass(), SelectBox);
-	window.customElements.define(PTPTextInput.getDomClass(), PTPTextInput, { extends: "form" });
-	window.customElements.define(PTPChatContent.getDomClass(), PTPChatContent);
-	window.customElements.define(PTPMessageElement.getDomClass(), PTPMessageElement);
 	window.customElements.define(TabbedPanel.getDomClass(), TabbedPanel);
 	window.customElements.define(DropDown.getDomClass(), DropDown);
 	window.customElements.define(DropDownItem.getDomClass(), DropDownItem);
@@ -98,8 +95,6 @@ const nameClassMap: { [key: string]: UIElement } = {
 	[Grid2Col.getDomClass()]: Grid2Col,
 	[SpanElement.getDomClass()]: SpanElement,
 	[SelectBox.getDomClass()]: SelectBox,
-	[PTPChatContent.getDomClass()]: PTPChatContent,
-	[PTPTextInput.getDomClass()]: PTPTextInput,
 	[VBox.getDomClass()]: VBox,
 	[Checkbox.getDomClass()]: Checkbox,
 	[NumberInput.getDomClass()]: NumberInput,

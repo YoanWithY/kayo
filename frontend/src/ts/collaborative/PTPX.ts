@@ -17,6 +17,7 @@ import {
 import { Role } from "./Role";
 import { Follower } from "./Follower";
 import { Leader } from "./Leader";
+import { PTPTrackLog } from "./PTPTrackLog";
 
 export class PTPX {
 	public protocol: string;
@@ -24,6 +25,7 @@ export class PTPX {
 	public wsUrl!: string;
 	public role!: Role;
 	public ws!: WebSocket;
+	public trackLog: PTPTrackLog;
 	public pendingFilename = "";
 	public dataArr: any[] = [];
 	public messageCallback: (value: string) => void;
@@ -36,6 +38,7 @@ export class PTPX {
 			this.hostname = `${window.location.hostname}:3000`;
 
 		this.messageCallback = (_1: string) => { };
+		this.trackLog = new PTPTrackLog();
 	}
 
 	public connect(fsRootName: string, onSuccess: () => void, onError: () => void) {
@@ -68,14 +71,21 @@ export class PTPX {
 
 		"role assignment": (content: any) => {
 			const roleID = content as WSRoleID;
-			this.role = roleID.role == "Follower" ? new Follower(this, roleID.id) : new Leader(this, roleID.id);
+			if (roleID.role == "Follower" && roleID.leaderIdentiy === null) {
+				console.error("Follower does not know its leader.")
+				return;
+			}
+			this.role = roleID.role == "Follower" ? new Follower(this, roleID.id, roleID.leaderIdentiy as Identity) : new Leader(this, roleID.id);
 			this.role.answerRoleIsReady();
 			this.role.addMessageListener(this.messageCallback);
 			this._connectLog[0].onSuccess();
+			if (this.role.wsRole === "Follower")
+				this.trackLog.prepConnection((this.role as Follower).leaderConnection, { id: roleID.id, origin: undefined });
 		},
 
 		"new follower": (content: any) => {
-			(this.role as Leader).newFollower(content as Identity);
+			const followerConnection = (this.role as Leader).newFollower(content as Identity);
+			this.trackLog.prepConnection(followerConnection, content as Identity);
 		},
 
 		"ice candidate": (content: any) => {

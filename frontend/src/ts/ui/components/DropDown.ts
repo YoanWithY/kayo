@@ -15,6 +15,7 @@ export class DropDown extends HTMLElement {
 	}
 
 	public open(anchorPositionX: number, anchorPositionY: number) {
+		this._win.document.body.appendChild(this);
 		this.style.left = `${anchorPositionX}px`;
 		this.style.top = `${anchorPositionY}px`;
 		this._win.addEventListener("mousedown", this.close);

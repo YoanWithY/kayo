@@ -1,6 +1,5 @@
 import { Identity, WSClientIceCandidate, WSRole, WSServerIceCandidateMessage, WSServerRTCOfferMessage } from "../../../../shared/messageTypes";
 import { PTPX } from "./PTPX";
-import { PTPMessage } from "./PTPChatPannel";
 
 export abstract class Role {
 	protected ptpx: PTPX;
@@ -15,8 +14,6 @@ export abstract class Role {
 		this.id = id;
 		this.messageListener = new Set();
 	}
-
-	public abstract sendMessage(value: PTPMessage): void;
 
 	public addMessageListener(callback: (value: string) => void) {
 		this.messageListener.add(callback);

@@ -1,6 +1,6 @@
 export type WSSharedMessageType = "string";
 export type WSRole = "Leader" | "Follower";
-export type WSRoleID = { role: WSRole, id: number };
+export type WSRoleID = { role: WSRole, id: number, leaderIdentiy: Identity | null };
 export type Identity = { id: number, origin: String | undefined };
 
 export type WSClientOffer = { originIdentity: Identity, targetIdentity: Identity, offer: RTCSessionDescription };

@@ -4,19 +4,19 @@ import {
 	Identity,
 	WSClientIceCandidate,
 	RTMessage,
-	RTString,
 } from "../../../../shared/messageTypes";
 import { PTPX } from "./PTPX";
-import { PTPMessage } from "./PTPChatPannel";
 import { Role } from "./Role";
 
 export class Follower extends Role {
 	public readonly wsRole: WSRole = "Follower";
 	public readonly leaderConnection = new RTCPeerConnection();
+	private _leaderIdentity: Identity
 
 	public dataChannel!: RTCDataChannel;
-	public constructor(ptpBase: PTPX, id: number) {
+	public constructor(ptpBase: PTPX, id: number, leaderIdentity: Identity) {
 		super(ptpBase, id);
+		this._leaderIdentity = leaderIdentity;
 		this.leaderConnection = new RTCPeerConnection();
 		this.leaderConnection.ondatachannel = (event: RTCDataChannelEvent) => {
 			this.dataChannel = event.channel;
@@ -59,15 +59,14 @@ export class Follower extends Role {
 				}
 			};
 		};
+		this.initializeConnection(this.leaderConnection, this._leaderIdentity);
 	}
 	public answerRoleIsReady(): void {
 		this.ptpx.sendWS<WSFollowerReady>({ type: "follower ready", content: null });
 	}
 
 	public acceptOffer(offer: RTCSessionDescription, identity: Identity) {
-		this.initializeConnection(this.leaderConnection, identity);
 		this.leaderConnection.setRemoteDescription(offer);
-
 		if (offer.type == "offer")
 			this.answerToOffer(this.leaderConnection, identity);
 	}
@@ -76,7 +75,4 @@ export class Follower extends Role {
 		this.leaderConnection.addIceCandidate(wsICECandidate.candidate ? wsICECandidate.candidate : undefined);
 	}
 
-	public sendMessage(value: PTPMessage): void {
-		this.ptpx.sendRT<RTString>(this.dataChannel, { type: "string", content: JSON.stringify(value) });
-	}
 }

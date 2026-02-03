@@ -46,7 +46,7 @@ export class SignaligServer {
 		ws.on("close", user.onWebSocketClose.bind(user));
 		ws.on("error", user.onWebSocketError.bind(user));
 
-		send<WSRoleAssignementMessage>(ws, { type: "role assignment", content: { role, id: user.guid } });
+		send<WSRoleAssignementMessage>(ws, { type: "role assignment", content: { role, id: user.guid, leaderIdentiy: kayoInstance.leader !== undefined ? kayoInstance.leader.getIdentity() : null } });
 	}
 
 	public deleteKayoInstance(kayoInstance: KayoInstance) {

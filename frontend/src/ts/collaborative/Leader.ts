@@ -4,9 +4,7 @@ import {
 	Identity,
 	WSClientIceCandidate,
 	RTMessage,
-	RTString,
 } from "../../../../shared/messageTypes";
-import { PTPMessage } from "./PTPChatPannel";
 import { Role } from "./Role";
 
 export class Leader extends Role {
@@ -29,7 +27,6 @@ export class Leader extends Role {
 
 		if (offer.type == "offer")
 			this.answerToOffer(followerConnection, identity);
-
 	}
 
 	public newFollower(identity: Identity) {
@@ -55,6 +52,7 @@ export class Leader extends Role {
 		};
 
 		this.initializeConnection(peerConnection, identity);
+		return peerConnection;
 	}
 
 	public addIceCandidate(wsICECandidate: WSClientIceCandidate) {
@@ -64,12 +62,5 @@ export class Leader extends Role {
 			return;
 		}
 		connection.addIceCandidate(wsICECandidate.candidate ? wsICECandidate.candidate : undefined);
-	}
-
-	public sendMessage(value: PTPMessage): void {
-		this.ptpx.multicastRT<RTString>(Array.from(this.datachannelMap.values()), {
-			type: "string",
-			content: JSON.stringify(value),
-		});
 	}
 }

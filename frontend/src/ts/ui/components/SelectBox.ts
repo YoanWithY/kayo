@@ -21,9 +21,8 @@ export class SelectBox extends HTMLElement {
 		super();
 		this._internals = this.attachInternals();
 		this.onclick = () => {
-			this._win.document.body.appendChild(this._dropDown);
 			const rect = this.getBoundingClientRect();
-			this._dropDown.open(rect.x, rect.bottom)
+			this._dropDown.open(rect.x, rect.bottom);
 			this._internals.states.add("open-down");
 			this._win.addEventListener("mousedown", this._hidingClosure);
 		};

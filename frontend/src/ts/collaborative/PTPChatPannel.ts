@@ -1,202 +1,111 @@
 import { Kayo } from "../Kayo";
-import { Follower } from "./Follower";
-import { Leader } from "./Leader";
+import { DropDown, DropDownItem } from "../ui/components/DropDown";
+import { IncomingStream, OutgoingStream } from "./PTPTrackLog";
 
-export type PTPMessage = { text: string; sender: number };
-
-export class PTPMessageElement extends HTMLElement {
-	public _internals: ElementInternals = this.attachInternals();
-
-	public static createUIElement(win: Window): PTPMessageElement {
-		return win.document.createElement(this.getDomClass()) as PTPMessageElement;
-	}
-	public static getDomClass() {
-		return "ptp-message-element";
-	}
-}
-
-export class PTPChatContent extends HTMLElement {
-	private _win!: Window;
-	private _kayo!: Kayo;
-	public texts: PTPMessageElement[] = [];
-	public rebuild(value: PTPMessage[]) {
-		for (const t of this.texts) this.removeChild(t);
-		this.texts.length = 0;
-		for (const v of value) {
-			const p = PTPMessageElement.createUIElement(this._win);
-			p._internals.states.add(v.sender === this._kayo.project.ptpx.role.id ? "own" : "other");
-			const name = this._win.document.createElement("h6");
-			name.textContent = String(v.sender);
-			const text = this._win.document.createElement("p");
-			text.textContent = v.text;
-			p.appendChild(name);
-			p.appendChild(text);
-			this.texts.push(p);
-			this.appendChild(p);
-		}
-	}
-
-	public setUiValue(_: string): void {
-		console.error("Method not implemented.");
-	}
-
-	public setValue(value: PTPMessage[]): void {
-		this.rebuild(value);
-		const newMessage = value[value.length - 1];
-		if (newMessage === undefined) return;
-
-		if (newMessage.sender === this._kayo.project.ptpx.role.id) return;
-		const permissionCallback = (permission: NotificationPermission) => {
-			if (permission === "granted") {
-				new Notification(`${newMessage.sender}:`, {
-					body: newMessage.text,
-					icon: "./favicon.ico",
-					badge: "./favicon.ico",
-				});
-			}
-		};
-		Notification.requestPermission().then(permissionCallback);
-	}
-
-	public static createUIElement(win: Window, kayo: Kayo): PTPChatContent {
-		const p = win.document.createElement(this.getDomClass()) as PTPChatContent;
-		p._win = win;
-		p._kayo = kayo;
-		return p;
-	}
-
-	public static getDomClass() {
-		return "ptp-chat-content";
-	}
-}
-
-export class PTPTextInput extends HTMLFormElement {
-	public constructor() {
-		super();
-		this.classList.add(PTPTextInput.getDomClass());
-	}
-
-	public static createUIElement(win: Window, _: Kayo): PTPTextInput {
-		const p = win.document.createElement("form", { is: this.getDomClass() }) as PTPTextInput;
-		const textInput = win.document.createElement("input");
-		textInput.setAttribute("type", "text");
-		textInput.setAttribute("placeholder", "Message");
-		p.appendChild(textInput);
-		const sendButton = win.document.createElement("input");
-		sendButton.setAttribute("type", "submit");
-		sendButton.setAttribute("value", "Send");
-		p.appendChild(sendButton);
-		const submitCallback = (e: SubmitEvent) => {
-			e.preventDefault();
-			p.reset();
-		};
-		p.addEventListener("submit", submitCallback);
-		return p;
-	}
-
-	public static getDomClass() {
-		return "ptp-text-input";
-	}
-}
 
 export class PTPChatPane extends HTMLElement {
+	private _kayo!: Kayo;
+	private _win!: Window;
 	public static createUIElement(win: Window, kayo: Kayo): PTPChatPane {
 		const p = win.document.createElement(this.getDomClass()) as PTPChatPane;
-		const dblClickCallback = (e: MouseEvent) => {
-			if (win.document.fullscreenElement) {
-				win.document.exitFullscreen();
-			} else {
-				(e.target as HTMLElement).requestFullscreen();
-			}
-		};
+		p._kayo = kayo;
+		p._win = win;
+		const newStreamButton = win.document.createElement("button");
+		newStreamButton.textContent = "Add Stream";
+		p.appendChild(newStreamButton);
 		const ptpx = kayo.project.ptpx;
-		const addTrackEvent = (e: RTCTrackEvent) => {
-			if (e.track.kind !== "video") return;
-			const vid = win.document.createElement("video");
-			vid.srcObject = e.streams[0]
-			vid.play();
-			vid.addEventListener("dblclick", dblClickCallback)
-			p.appendChild(vid);
-			console.log("sdfdfs");
-		}
-		if (ptpx.role.wsRole == "Leader") {
-			for (const [_, con] of (ptpx.role as Leader).connectionsMap) {
-				con.addEventListener("track", addTrackEvent);
-			}
-		} else {
-			(ptpx.role as Follower).leaderConnection.addEventListener("track", addTrackEvent);
-		}
 
-		const streamCallback = (stream: MediaStream) => {
-			const vid = win.document.createElement("video");
+		const clickCallback = () => {
+			const devicesCallback = (devices: MediaDeviceInfo[]) => {
+				const dropDown = DropDown.createSelectOptionWrapper(win);
 
-			vid.addEventListener("dblclick", dblClickCallback)
-			const videoCaps = stream.getVideoTracks()[0].getCapabilities();
-			stream.getVideoTracks()[0].applyConstraints({ width: { exact: videoCaps.width?.max } });
+				const onSelectScreen = () => {
+					ptpx.trackLog.requestDisplayMedia();
+				};
+				dropDown.addDropDownItem(DropDownItem.createDropDownItem(win, dropDown, "[Screen Cast]", onSelectScreen))
 
-			vid.srcObject = stream;
-			vid.play();
-			p.appendChild(vid);
-
-			if (!ptpx) return;
-			if (ptpx.role.wsRole == "Leader") {
-				for (const track of stream.getTracks()) {
-					for (const [_, con] of (ptpx.role as Leader).connectionsMap) {
-						con.addTrack(track, stream);
-						// eslint-disable-next-line local/no-anonymous-arrow-function
-						const sender = con.getSenders().find(s => s.track?.kind === "video");
-						if (sender) {
-							const params = sender.getParameters();
-							if (params.encodings && params.encodings.length) {
-								params.encodings[0].maxBitrate = 1_000_000_000; // 100 Gbps
-								sender.setParameters(params);
-							}
-						}
+				for (const dev of devices) {
+					if (dev.kind == "audioinput") {
+						const onSelect = () => {
+							ptpx.trackLog.requestUserMedia({
+								audio: {
+									deviceId: { exact: dev.deviceId }
+								}
+							});
+						};
+						dropDown.addDropDownItem(DropDownItem.createDropDownItem(win, dropDown, `[Audio] ${dev.label}`, onSelect))
+					} else if (dev.kind == "videoinput") {
+						const onSelect = () => {
+							ptpx.trackLog.requestUserMedia({
+								video: {
+									deviceId: { exact: dev.deviceId }
+								}
+							});
+						};
+						dropDown.addDropDownItem(DropDownItem.createDropDownItem(win, dropDown, `[Video] ${dev.label}`, onSelect))
 					}
 				}
-			} else {
-				for (const track of stream.getTracks()) {
-					(ptpx.role as Follower).leaderConnection.addTrack(track, stream);
-				}
+
+				const rect = newStreamButton.getBoundingClientRect();
+				dropDown.open(rect.x, rect.bottom);
 			}
+			navigator.mediaDevices.enumerateDevices().then(devicesCallback);
 		}
 
-		const displayShareButton = win.document.createElement("button");
-		displayShareButton.textContent = "Display Share";
-		// eslint-disable-next-line local/no-anonymous-arrow-function
-		displayShareButton.addEventListener("click", () => {
-			navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then(streamCallback);
-		});
-		p.appendChild(displayShareButton);
 
-		const devicesCallback = (devices: MediaDeviceInfo[]) => {
-			// eslint-disable-next-line local/no-anonymous-arrow-function
-			const cameras = devices.filter(d => d.kind === "videoinput");
-
-			for (const cam of cameras) {
-				const startVideoButton = win.document.createElement("button");
-				startVideoButton.textContent = `Start [${cam.label}]`;
-				const startCallback = () => {
-
-					navigator.mediaDevices.getUserMedia({
-						video: {
-							deviceId: { exact: cam.deviceId },
-						},
-						audio: {
-							noiseSuppression: { exact: false },
-							echoCancellation: { exact: false },
-							autoGainControl: { exact: false }
-						}
-					}).then(streamCallback);
-				};
-				startVideoButton.addEventListener("click", startCallback)
-				p.appendChild(startVideoButton);
-
-			}
-		}
-		navigator.mediaDevices.enumerateDevices().then(devicesCallback);
+		newStreamButton.addEventListener("click", clickCallback)
 		return p;
 	}
+
+	private _addOutgoingCallback = (outgoingStream: OutgoingStream) => {
+		const stream = outgoingStream.stream;
+		const track = stream.getTracks()[0];
+		if (track.kind == "video") {
+			const vid = this._win.document.createElement("video");
+			// eslint-disable-next-line local/no-anonymous-arrow-function
+			vid.addEventListener("dblclick", () => {
+				if (!this._win.document.fullscreenElement)
+					vid.requestFullscreen();
+			});
+			vid.srcObject = stream;
+			this.appendChild(vid);
+			vid.play();
+		} else {
+			console.log("I do not add loopback.");
+			// todo: audiovis.
+		}
+	};
+	private _addIncomingCallback = (incommingStream: IncomingStream) => {
+		const stream = incommingStream.stream;
+		const track = stream.getTracks()[0];
+		if (track.kind == "video") {
+			const vid = this._win.document.createElement("video");
+			// eslint-disable-next-line local/no-anonymous-arrow-function
+			vid.addEventListener("dblclick", () => {
+				if (!this._win.document.fullscreenElement)
+					vid.requestFullscreen();
+			});
+			vid.srcObject = stream;
+			this.appendChild(vid);
+			vid.play();
+		} else {
+			const aud = this._win.document.createElement("audio");
+			aud.srcObject = stream;
+			this.appendChild(aud);
+			aud.play();
+			this._win.document.body.appendChild(aud);
+		};
+	};
+	protected connectedCallback() {
+		this._kayo.project.ptpx.trackLog.addOutgoingListener(this._addOutgoingCallback);
+		this._kayo.project.ptpx.trackLog.addIncomingListener(this._addIncomingCallback);
+	}
+
+	protected disconnectedCallback() {
+		this._kayo.project.ptpx.trackLog.removeOutgoingListener(this._addOutgoingCallback);
+		this._kayo.project.ptpx.trackLog.removeIncommingListener(this._addIncomingCallback);
+	}
+
 	public static getDomClass() {
 		return "ptp-chat";
 	}
