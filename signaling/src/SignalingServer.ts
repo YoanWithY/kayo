@@ -65,7 +65,12 @@ export class SignaligServer {
 			console.log("Dev IP probably: \t", getDevHostIP())
 
 		} else {
-			this._server = http.createServer();
+			this._server = http.createServer((_, res) => {
+				res.writeHead(200, {
+					"Content-Type": "text/plain"
+				});
+				res.end("Signaling Server!");
+			});
 		}
 		this._wsServer = new WS.WebSocketServer({
 			server: this._server,
