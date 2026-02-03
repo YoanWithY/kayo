@@ -5,9 +5,9 @@ import fs from 'fs';
 import path from "path";
 import url from "url";
 import selfsigned from "selfsigned";
-import { KayoInstance, KayoUser } from "./KayoInstance.js";
-import { getDevHostIP, send } from "./utility.js";
-import { WSRole, WSRoleAssignementMessage } from "../../shared/messageTypes.js"
+import { KayoInstance, KayoUser } from "./KayoInstance";
+import { getDevHostIP, send } from "./utility";
+import { WSRole, WSRoleAssignementMessage } from "../../shared/messageTypes"
 
 const CERT_DIR = "certs";
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;

@@ -30,8 +30,8 @@ export class PTPX {
 	private _connectLog: { onSuccess: () => void, onError: () => void }[] = [];
 
 	public constructor() {
-		this.protocol = "wss:";
-		this.hostname = "todo";
+		this.protocol = "wss";
+		this.hostname = "kayo-engine-signaling.azurewebsites.net";
 		if (import.meta.env.DEV)
 			this.hostname = `${window.location.hostname}:3000`;
 
@@ -39,7 +39,7 @@ export class PTPX {
 	}
 
 	public connect(fsRootName: string, onSuccess: () => void, onError: () => void) {
-		this.wsUrl = `${this.protocol}//${this.hostname}?projectID=${fsRootName}`;
+		this.wsUrl = `${this.protocol}://${this.hostname}?projectID=${fsRootName}`;
 		this.ws = new WebSocket(this.wsUrl);
 		this.ws.binaryType = "arraybuffer";
 		this._connectLog.push({ onSuccess, onError });
