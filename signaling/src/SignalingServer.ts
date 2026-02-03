@@ -1,13 +1,13 @@
 import * as http from "http";
 import * as https from "https";
 import * as WS from "ws";
-import fs from 'fs';
+import fs from "fs";
 import path from "path";
 import url from "url";
 import selfsigned from "selfsigned";
 import { KayoInstance, KayoUser } from "./KayoInstance";
 import { getDevHostIP, send } from "./utility";
-import { WSRole, WSRoleAssignementMessage } from "../../shared/messageTypes"
+import { WSRole, WSRoleAssignementMessage } from "../../shared/messageTypes";
 
 const CERT_DIR = "certs";
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
@@ -25,7 +25,7 @@ export class SignaligServer {
 	private _webSocketServerConnect(ws: WS.WebSocket, req: http.IncomingMessage) {
 		const reqURL = url.parse(req.url!, true);
 		const projectID = reqURL.query.projectID;
-		if (typeof projectID != "string") {
+		if (typeof projectID !== "string") {
 			console.error("ProjectID is not a string!");
 			return;
 		}
@@ -39,11 +39,11 @@ export class SignaligServer {
 			role = "Leader";
 		}
 
-		const user = new KayoUser(kayoInstance, ws, role, req.socket.remoteAddress)
+		const user = new KayoUser(kayoInstance, ws, role, req.socket.remoteAddress);
 		kayoInstance.users.add(user);
 
-		ws.on('message', user.onWebSocketMessage.bind(user));
-		ws.on('close', user.onWebSocketClose.bind(user));
+		ws.on("message", user.onWebSocketMessage.bind(user));
+		ws.on("close", user.onWebSocketClose.bind(user));
 		ws.on("error", user.onWebSocketError.bind(user));
 
 		send<WSRoleAssignementMessage>(ws, { type: "role assignment", content: { role, id: user.guid } });
@@ -57,36 +57,23 @@ export class SignaligServer {
 	public async start() {
 		if (IS_DEV) {
 			this._server = https.createServer(await SignaligServer._ensureDevCerts(), (_, res) => {
-				res.writeHead(200, {
-					"Content-Type": "text/plain"
-				});
-				res.end("Signaling Server!");
+				res.writeHead(200, { "Content-Type": "text/plain" });
+				res.end("Signaling Server (Dev)!");
 			});
-			console.log("Dev IP probably: \t", getDevHostIP())
-
+			console.log("Dev IP probably: \t", getDevHostIP());
 		} else {
 			this._server = http.createServer((_, res) => {
-				res.writeHead(200, {
-					"Content-Type": "text/plain"
-				});
+				res.writeHead(200, { "Content-Type": "text/plain" });
 				res.end("Signaling Server!");
 			});
 		}
-		this._wsServer = new WS.WebSocketServer({
-			server: this._server,
-			maxPayload: 33554432
-		});
-		this._wsServer.on("error", (e) => { console.log(e); });
+
+		this._wsServer = new WS.WebSocketServer({ server: this._server, maxPayload: 33554432 });
+		this._wsServer.on("error", (e) => console.log(e));
 		this._wsServer.on("connection", this._webSocketServerConnect.bind(this));
+
 		this._server.listen(PORT, () => {
-			const address = this._server.address();
-			if (typeof address === "string") {
-				console.log("Server listening on: \t", address);
-			} else if (address) {
-				console.log(`Server listening on: \t${address.address}:${address.port}`);
-			} else {
-				console.log(`Undefined Server Address!`);
-			}
+			console.log(`Server listening on port ${PORT}`);
 		});
 	}
 
@@ -99,7 +86,6 @@ export class SignaligServer {
 		if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
 			const attrs = [{ name: "commonName" }];
 			const pems = await selfsigned.generate(attrs);
-
 			fs.writeFileSync(keyPath, pems.private);
 			fs.writeFileSync(certPath, pems.cert);
 		}
