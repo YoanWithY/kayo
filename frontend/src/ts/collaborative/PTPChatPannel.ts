@@ -102,38 +102,99 @@ export class PTPTextInput extends HTMLFormElement {
 export class PTPChatPane extends HTMLElement {
 	public static createUIElement(win: Window, kayo: Kayo): PTPChatPane {
 		const p = win.document.createElement(this.getDomClass()) as PTPChatPane;
-		// const ptpChatContent = PTPChatContent.createUIElement(win, kayo);
-		// const ptpChatInput = PTPTextInput.createUIElement(win, kayo);
-		// p.appendChild(ptpChatContent);
-		// p.appendChild(ptpChatInput);
-		const vid = win.document.createElement("video");
-		if (kayo.project.ptpx.role.wsRole == "Leader") {
-			const supported = navigator.mediaDevices.getSupportedConstraints();
-			console.log(supported);
-			navigator.mediaDevices.getUserMedia({
-				video: true,
-				audio: true,
-				// eslint-disable-next-line local/no-anonymous-arrow-function
-			}).then((stream) => {
-				console.log(stream.getVideoTracks()[0].getCapabilities());
-				stream.getVideoTracks()[0].applyConstraints({ width: { exact: 1920 } });
-				vid.srcObject = stream;
-				vid.play();
+		const dblClickCallback = (e: MouseEvent) => {
+			if (win.document.fullscreenElement) {
+				win.document.exitFullscreen();
+			} else {
+				(e.target as HTMLElement).requestFullscreen();
+			}
+		};
+		const ptpx = kayo.project.ptpx;
+		const addTrackEvent = (e: RTCTrackEvent) => {
+			if (e.track.kind !== "video") return;
+			const vid = win.document.createElement("video");
+			vid.srcObject = e.streams[0]
+			vid.play();
+			vid.addEventListener("dblclick", dblClickCallback)
+			p.appendChild(vid);
+			console.log("sdfdfs");
+		}
+		if (ptpx.role.wsRole == "Leader") {
+			for (const [_, con] of (ptpx.role as Leader).connectionsMap) {
+				con.addEventListener("track", addTrackEvent);
+			}
+		} else {
+			(ptpx.role as Follower).leaderConnection.addEventListener("track", addTrackEvent);
+		}
+
+		const streamCallback = (stream: MediaStream) => {
+			const vid = win.document.createElement("video");
+
+			vid.addEventListener("dblclick", dblClickCallback)
+			const videoCaps = stream.getVideoTracks()[0].getCapabilities();
+			stream.getVideoTracks()[0].applyConstraints({ width: { exact: videoCaps.width?.max } });
+
+			vid.srcObject = stream;
+			vid.play();
+			p.appendChild(vid);
+
+			if (!ptpx) return;
+			if (ptpx.role.wsRole == "Leader") {
 				for (const track of stream.getTracks()) {
-					for (const [_, con] of (kayo.project.ptpx.role as Leader).connectionsMap) {
+					for (const [_, con] of (ptpx.role as Leader).connectionsMap) {
 						con.addTrack(track, stream);
+						// eslint-disable-next-line local/no-anonymous-arrow-function
+						const sender = con.getSenders().find(s => s.track?.kind === "video");
+						if (sender) {
+							const params = sender.getParameters();
+							if (params.encodings && params.encodings.length) {
+								params.encodings[0].maxBitrate = 1_000_000_000; // 100 Gbps
+								sender.setParameters(params);
+							}
+						}
 					}
 				}
-			});
-		} else {
-			(kayo.project.ptpx.role as Follower).leaderConnection.addEventListener("track",
-				// eslint-disable-next-line local/no-anonymous-arrow-function
-				(e) => {
-					vid.srcObject = e.streams[0]
-					vid.play();
-				})
+			} else {
+				for (const track of stream.getTracks()) {
+					(ptpx.role as Follower).leaderConnection.addTrack(track, stream);
+				}
+			}
 		}
-		p.appendChild(vid);
+
+		const displayShareButton = win.document.createElement("button");
+		displayShareButton.textContent = "Display Share";
+		// eslint-disable-next-line local/no-anonymous-arrow-function
+		displayShareButton.addEventListener("click", () => {
+			navigator.mediaDevices.getDisplayMedia({ video: true, audio: true }).then(streamCallback);
+		});
+		p.appendChild(displayShareButton);
+
+		const devicesCallback = (devices: MediaDeviceInfo[]) => {
+			// eslint-disable-next-line local/no-anonymous-arrow-function
+			const cameras = devices.filter(d => d.kind === "videoinput");
+
+			for (const cam of cameras) {
+				const startVideoButton = win.document.createElement("button");
+				startVideoButton.textContent = `Start [${cam.label}]`;
+				const startCallback = () => {
+
+					navigator.mediaDevices.getUserMedia({
+						video: {
+							deviceId: { exact: cam.deviceId },
+						},
+						audio: {
+							noiseSuppression: { exact: false },
+							echoCancellation: { exact: false },
+							autoGainControl: { exact: false }
+						}
+					}).then(streamCallback);
+				};
+				startVideoButton.addEventListener("click", startCallback)
+				p.appendChild(startVideoButton);
+
+			}
+		}
+		navigator.mediaDevices.enumerateDevices().then(devicesCallback);
 		return p;
 	}
 	public static getDomClass() {

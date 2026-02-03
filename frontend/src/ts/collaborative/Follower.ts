@@ -2,8 +2,6 @@ import {
 	WSRole,
 	WSFollowerReady,
 	Identity,
-	WSServerIceCandidateMessage,
-	WSServerRTCOfferMessage,
 	WSClientIceCandidate,
 	RTMessage,
 	RTString,
@@ -19,7 +17,7 @@ export class Follower extends Role {
 	public dataChannel!: RTCDataChannel;
 	public constructor(ptpBase: PTPX, id: number) {
 		super(ptpBase, id);
-
+		this.leaderConnection = new RTCPeerConnection();
 		this.leaderConnection.ondatachannel = (event: RTCDataChannelEvent) => {
 			this.dataChannel = event.channel;
 
@@ -66,40 +64,14 @@ export class Follower extends Role {
 		this.ptpx.sendWS<WSFollowerReady>({ type: "follower ready", content: null });
 	}
 
-	public async acceptOffer(offer: RTCSessionDescription, identity: Identity) {
-		console.log("Follower accepts offer of", identity);
-		this.leaderConnection.oniceconnectionstatechange = (e) => {
-			console.log("ICE connection state change:", e);
-		};
-		this.leaderConnection.onicecandidate = (event: RTCPeerConnectionIceEvent) => {
-			this.ptpx.sendWS<WSServerIceCandidateMessage>({
-				type: "ice candidate",
-				content: {
-					targetIdentity: identity,
-					candidate: event.candidate,
-				},
-			});
-		};
+	public acceptOffer(offer: RTCSessionDescription, identity: Identity) {
+		this.initializeConnection(this.leaderConnection, identity);
+		this.leaderConnection.setRemoteDescription(offer);
 
-		// eslint-disable-next-line local/no-await
-		await this.leaderConnection.setRemoteDescription(offer);
-		// eslint-disable-next-line local/no-await
-		const answer = await this.leaderConnection.createAnswer();
-		// eslint-disable-next-line local/no-await
-		await this.leaderConnection.setLocalDescription(answer);
-		const backOffer = this.leaderConnection.localDescription;
-		if (!backOffer) {
-			console.error("Description is null.");
-			return;
-		}
-		this.ptpx.sendWS<WSServerRTCOfferMessage>({
-			type: "offer",
-			content: {
-				targetIdentity: identity,
-				offer: backOffer,
-			},
-		});
+		if (offer.type == "offer")
+			this.answerToOffer(this.leaderConnection, identity);
 	}
+
 	public addIceCandidate(wsICECandidate: WSClientIceCandidate) {
 		this.leaderConnection.addIceCandidate(wsICECandidate.candidate ? wsICECandidate.candidate : undefined);
 	}

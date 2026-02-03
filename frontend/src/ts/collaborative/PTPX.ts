@@ -31,9 +31,9 @@ export class PTPX {
 
 	public constructor() {
 		this.protocol = "wss:";
-		this.hostname = window.location.hostname;
+		this.hostname = "todo";
 		if (import.meta.env.DEV)
-			this.hostname = "localhost:3000";
+			this.hostname = `${window.location.hostname}:3000`;
 
 		this.messageCallback = (_1: string) => { };
 	}
