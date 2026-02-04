@@ -10,19 +10,43 @@ export class PTPChatPane extends HTMLElement {
 		const p = win.document.createElement(this.getDomClass()) as PTPChatPane;
 		p._kayo = kayo;
 		p._win = win;
+
+		if (!kayo.project.ptpx) {
+			const h = win.document.createElement("h2");
+			h.textContent = "Could not connect to peer session!";
+			p.appendChild(h);
+			return p;
+		}
+
+		const fsRootIDButton = win.document.createElement("button");
+		fsRootIDButton.textContent = "Copy Project ID";
+		const copyListener = () => {
+			const notifyCopyCallback = () => {
+				win.alert("Copyied Project ID to Clipboard.\nYou may share it with someone over a secure channel.");
+			}
+			navigator.clipboard.writeText(p._kayo.project.fsRootName).then(notifyCopyCallback);
+		};
+		fsRootIDButton.addEventListener("click", copyListener);
+		p.appendChild(fsRootIDButton);
+
+		if (!navigator.mediaDevices)
+			return p;
+
+		const ptpx = kayo.project.ptpx;
 		const newStreamButton = win.document.createElement("button");
 		newStreamButton.textContent = "Add Stream";
 		p.appendChild(newStreamButton);
-		const ptpx = kayo.project.ptpx;
 
 		const clickCallback = () => {
 			const devicesCallback = (devices: MediaDeviceInfo[]) => {
 				const dropDown = DropDown.createSelectOptionWrapper(win);
 
-				const onSelectScreen = () => {
-					ptpx.trackLog.requestDisplayMedia();
+				if (!!navigator.mediaDevices.getDisplayMedia) {
+					const onSelect = () => {
+						ptpx.trackLog.requestDisplayMedia();
+					};
+					dropDown.addDropDownItem(DropDownItem.createDropDownItem(win, dropDown, "[Screen Cast]", onSelect))
 				};
-				dropDown.addDropDownItem(DropDownItem.createDropDownItem(win, dropDown, "[Screen Cast]", onSelectScreen))
 
 				for (const dev of devices) {
 					if (dev.kind == "audioinput") {
