@@ -4,10 +4,10 @@ import * as WS from "ws";
 import fs from "fs";
 import path from "path";
 import url from "url";
-import selfsigned from "selfsigned";
 import { KayoInstance, KayoUser } from "./KayoInstance";
 import { getDevHostIP, send } from "./utility";
 import { WSRole, WSRoleAssignementMessage } from "../../shared/messageTypes";
+import { execSync } from "child_process";
 
 const CERT_DIR = "certs";
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
@@ -58,7 +58,7 @@ export class SignaligServer {
 		if (IS_DEV) {
 			this._server = https.createServer(await SignaligServer._ensureDevCerts(), (_, res) => {
 				res.writeHead(200, { "Content-Type": "text/plain" });
-				res.end("Signaling Server (Dev)!");
+				res.end("Signaling Server.");
 			});
 			console.log("Dev IP probably: \t", getDevHostIP());
 		} else {
@@ -77,18 +77,16 @@ export class SignaligServer {
 		});
 	}
 
-	private static async _ensureDevCerts() {
-		if (!fs.existsSync(CERT_DIR)) fs.mkdirSync(CERT_DIR);
-
+	private static _ensureDevCerts() {
+		const CERT_DIR = "certs";
 		const keyPath = path.join(CERT_DIR, "key.pem");
 		const certPath = path.join(CERT_DIR, "cert.pem");
+		const logPath = path.join(CERT_DIR, "log.txt");
 
-		if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
-			const attrs = [{ name: "commonName" }];
-			const pems = await selfsigned.generate(attrs);
-			fs.writeFileSync(keyPath, pems.private);
-			fs.writeFileSync(certPath, pems.cert);
+		if (!fs.existsSync(CERT_DIR)) {
+			fs.mkdirSync(CERT_DIR, { recursive: true });
 		}
+		execSync(`openssl req -x509 -newkey rsa:2048 -nodes -keyout ${keyPath} -out ${certPath} -days 365 -subj "/CN=localhost" > ${logPath} 2>&1`);
 
 		return {
 			key: fs.readFileSync(keyPath),

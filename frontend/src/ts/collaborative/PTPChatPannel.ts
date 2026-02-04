@@ -76,7 +76,6 @@ export class PTPChatPane extends HTMLElement {
 			navigator.mediaDevices.enumerateDevices().then(devicesCallback);
 		}
 
-
 		newStreamButton.addEventListener("click", clickCallback)
 		return p;
 	}
