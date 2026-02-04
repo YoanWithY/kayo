@@ -42,7 +42,7 @@ export class Footer extends HTMLElement {
 		p._end.appendChild(fullScreenButton);
 
 		const waterMark = document.createElement("span");
-		waterMark.textContent = `Kayo Engine ${import.meta.env.PACKAGE_VERSION}`;
+		waterMark.textContent = `${import.meta.env.PACKAGE_VERSION}`;
 		p._start.appendChild(waterMark);
 
 		p.appendChild(p._start);

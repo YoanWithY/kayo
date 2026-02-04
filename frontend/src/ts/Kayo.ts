@@ -61,7 +61,7 @@ export class Kayo {
 
 	public openProject(project: Project, onFinishCallback?: () => void) {
 		const installProject = () => {
-			window.document.title = `Kayo Engine - ${project.displayName}`;
+			window.document.title = `Kayo Engine ${import.meta.env.PACKAGE_VERSION} - ${project.displayName}`;
 			this._project = project;
 			project.open(onFinishCallback);
 		};
