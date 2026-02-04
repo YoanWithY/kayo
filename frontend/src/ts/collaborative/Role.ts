@@ -1,6 +1,18 @@
 import { Identity, WSClientIceCandidate, WSRole, WSServerIceCandidateMessage, WSServerRTCOfferMessage } from "../../../../shared/messageTypes";
 import { PTPX } from "./PTPX";
 
+export const iceServers = [
+	{ urls: "stun:stun.l.google.com:19302" },
+	{ urls: "stun:stun.l.google.com:5349" },
+	{ urls: "stun:stun1.l.google.com:3478" },
+	{ urls: "stun:stun1.l.google.com:5349" },
+	{ urls: "stun:stun2.l.google.com:19302" },
+	{ urls: "stun:stun2.l.google.com:5349" },
+	{ urls: "stun:stun3.l.google.com:3478" },
+	{ urls: "stun:stun3.l.google.com:5349" },
+	{ urls: "stun:stun4.l.google.com:19302" },
+	{ urls: "stun:stun4.l.google.com:5349" }];
+
 export abstract class Role {
 	protected ptpx: PTPX;
 	public readonly id;

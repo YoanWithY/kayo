@@ -6,18 +6,18 @@ import {
 	RTMessage,
 } from "../../../../shared/messageTypes";
 import { PTPX } from "./PTPX";
-import { Role } from "./Role";
+import { iceServers, Role } from "./Role";
 
 export class Follower extends Role {
 	public readonly wsRole: WSRole = "Follower";
-	public readonly leaderConnection = new RTCPeerConnection();
+	public readonly leaderConnection;
 	private _leaderIdentity: Identity
 
 	public dataChannel!: RTCDataChannel;
 	public constructor(ptpBase: PTPX, id: number, leaderIdentity: Identity) {
 		super(ptpBase, id);
 		this._leaderIdentity = leaderIdentity;
-		this.leaderConnection = new RTCPeerConnection();
+		this.leaderConnection = new RTCPeerConnection({ iceServers });
 		this.leaderConnection.ondatachannel = (event: RTCDataChannelEvent) => {
 			this.dataChannel = event.channel;
 

@@ -5,7 +5,7 @@ import {
 	WSClientIceCandidate,
 	RTMessage,
 } from "../../../../shared/messageTypes";
-import { Role } from "./Role";
+import { iceServers, Role } from "./Role";
 
 export class Leader extends Role {
 	public readonly wsRole: WSRole = "Leader";
@@ -30,7 +30,7 @@ export class Leader extends Role {
 	}
 
 	public newFollower(identity: Identity) {
-		const peerConnection = new RTCPeerConnection();
+		const peerConnection = new RTCPeerConnection({ iceServers });
 		this.connectionsMap.set(identity.id, peerConnection);
 
 		const dataChannel = peerConnection.createDataChannel("fileTransfer");
