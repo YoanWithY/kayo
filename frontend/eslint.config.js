@@ -54,7 +54,7 @@ const noAnonymousArrowRule = {
 };
 
 export default defineConfig([
-	globalIgnores(["node_modules/", "dist/", "**/*.config.js", "dev-dist/", "src/c/"]),
+	globalIgnores(["node_modules/", "dist/", "**/*.config.js", "dev-dist/", "src/Kayo/KayoInstance/c/"]),
 	tseslint.configs.recommended,
 	{
 		files: ["src/**/*.{js,mjs,cjs,ts,mts,cts}"],

@@ -1,0 +1,17 @@
+split-pane-divider {
+	background-color: var(--split-pane-divider-color);
+	flex-shrink: 0;
+	flex-grow: 0;
+}
+
+split-pane-divider[split-pane-divider-orientation="vertical"] {
+	width: var(--split-pane-divider-size);
+	min-width: var(--split-pane-divider-size);
+	height: 100%;
+}
+
+split-pane-divider[split-pane-divider-orientation="horizontal"] {
+	height: var(--split-pane-divider-size);
+	min-height: var(--split-pane-divider-size);
+	width: 100%;
+}

@@ -1,0 +1,22 @@
+splitable-pane {
+	position: relative;
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-width: calc(var(--pane-stripe-hight) * 2);
+	min-height: calc(var(--pane-stripe-hight) * 2);
+	overflow: hidden;
+	border-radius: var(--radius);
+
+	outline: 1px solid rgba(255, 255, 255, 0.05);
+	outline-offset: -1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	splitable-pane:hover {
+		outline-color: rgba(255, 255, 255, 0.15);
+	}
+splitable-pane:hover > pane-stripe {
+	background-color: var(--pane-stripe-hover-color);
+}
+}

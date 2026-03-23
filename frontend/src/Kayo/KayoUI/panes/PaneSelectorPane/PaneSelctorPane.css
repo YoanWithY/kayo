@@ -1,0 +1,26 @@
+pane-selector-pane {
+    display: flex;
+    flex-direction: row;
+    flex: 1 1 0px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.selectorButton {
+    color: var(--text-color);
+    font-size: var(--font-size);
+
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: var(--button-background-color);
+    box-shadow: 0px 2px 0px rgba(0, 0, 0, 0.25);
+    padding: 8px;
+
+    margin: 2px;
+}
+
+.selectorButton:hover {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}

@@ -17,11 +17,10 @@ function ensureDevCertsSync() {
 	const certPath = path.join(CERT_DIR, "cert.pem");
 	const logPath = path.join(CERT_DIR, "log.txt");
 
-	if (!fs.existsSync(CERT_DIR)) {
+	if (!fs.existsSync(CERT_DIR))
 		fs.mkdirSync(CERT_DIR, { recursive: true });
-	}
-	execSync(`openssl req -x509 -newkey rsa:2048 -nodes -keyout ${keyPath} -out ${certPath} -days 365 -subj "/CN=localhost" > ${logPath} 2>&1`);
-
+	if (!fs.existsSync(keyPath) || !fs.existsSync(certPath))
+		execSync(`openssl req -x509 -newkey rsa:2048 -nodes -keyout ${keyPath} -out ${certPath} -days 365 -subj "/CN=localhost" > ${logPath} 2>&1`);
 	return {
 		key: fs.readFileSync(keyPath),
 		cert: fs.readFileSync(certPath),
@@ -37,7 +36,7 @@ export default defineConfig(
 			plugins: [
 				svgLoader(),
 				viteStaticCopy({
-					targets: [{ src: "src/c/KayoCorePP.wasm.map", dest: "./assets/" }],
+					targets: [{ src: "src/Kayo/KayoInstance/c/KayoCorePP.wasm.map", dest: "./assets/" }],
 				}),
 				checker({
 					eslint: {

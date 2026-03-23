@@ -1,0 +1,13 @@
+#libUIWrapper {
+	flex: 1 1 0;
+}
+
+wrapping-pane {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: nowrap;
+	width: 100dvw;
+	height: 100dvh;
+	max-width: 100dvw;
+	max-height: 100dvh;
+}

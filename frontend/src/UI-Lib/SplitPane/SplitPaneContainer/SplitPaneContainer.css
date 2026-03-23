@@ -1,0 +1,15 @@
+split-pane-container {
+	display: flex;
+}
+
+split-pane-container[split-pane-container-orientation="none"] {
+	flex-direction: unset;
+}
+
+split-pane-container[split-pane-container-orientation="vertical"] {
+	flex-direction: row;
+}
+
+split-pane-container[split-pane-container-orientation="horizontal"] {
+	flex-direction: column;
+}

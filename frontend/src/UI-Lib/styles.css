@@ -1,0 +1,154 @@
+@font-face {
+    font-family: 'KayoFont';
+    src: url('/fonts/NotoSans/NotoSans-VariableFont_wdth,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: block;
+}
+
+@font-face {
+    font-family: 'KayoFont';
+    src: url('/fonts/NotoSans/NotoSans-Italic-VariableFont_wdth,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: block;
+}
+
+:root {
+    --font-size: 0.8rem;
+    --font-weight: 400;
+    --text-color: rgb(200, 200, 200);
+    --var-padding: 4px;
+
+    --radius: 4px;
+    --transition-duration: 200ms;
+
+    --button-background-color: rgb(50, 50, 50);
+
+    /* Must be changed in static class */
+    --split-pane-divider-size: 0px;
+
+    --pane-background-color: rgb(22, 22, 22);
+    --pane-stripe-color: rgb(34, 34, 34);
+    --pane-stripe-hover-color: rgb(40, 40, 40);
+    --split-pane-divider-color: var(--pane-background-color);
+    --uneffective-opacity: 0.4;
+
+    --accent-color: rgb(0, 114, 220);
+    --accent-color-hover: rgb(0, 130, 240);
+
+    --split-pane-grabber-size: 8px;
+    --split-button-size: 16px;
+}
+
+@media (pointer: coarse) {
+    :root {
+        --font-size: 1.0rem;
+        --var-padding: 6px;
+        --split-pane-grabber-size: 25px;
+        --split-button-size: 30px;
+    }
+}
+
+body {
+    color: var(--text-color);
+    font-size: var(--font-size);
+    margin: 0;
+    background-color: var(--split-pane-divider-color);
+    font-family: 'KayoFont';
+    font-weight: var(--font-weight);
+    user-select: none;
+    touch-action: none;
+}
+
+button {
+    color: var(--text-color);
+    background-color: var(--button-background-color);
+    font-family: 'KayoFont';
+    font-weight: var(--font-weight);
+    border: none;
+    border-radius: var(--radius);
+    padding: var(--var-padding) calc(var(--var-padding) + 2px);
+    font-size: var(--font-size);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    button:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+input {
+    font-size: var(--font-size);
+}
+
+input[type="password"] {
+    border: 1px solid gray;
+    border-radius: var(--radius);
+}
+
+h1 {
+    text-align: center;
+    font-weight: var(--font-weight);
+}
+
+h2 {
+    font-weight: var(--font-weight);
+}
+
+canvas {
+    image-rendering: pixelated;
+}
+
+select {
+    color: var(--text-color);
+    font-size: var(--font-size);
+    font-family: inherit;
+
+    border-radius: var(--radius);
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    background-color: rgb(20, 20, 20);
+    padding: 4px;
+}
+
+span {
+    margin: 4px 0px;
+}
+
+select:focus {
+    outline: none;
+}
+
+pre {
+    font-family: inherit;
+    margin: 0;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+::-webkit-scrollbar-corner {
+    background-color: none;
+}

@@ -24,7 +24,6 @@
     "vite-env.d.ts",
   ],
   "exclude": [
-    "src/c/**/*",
-    "!src/c/*"
+    "src/Kayo/KayoInstance/c/**/*",
   ]
 }

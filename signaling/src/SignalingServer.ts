@@ -86,8 +86,8 @@ export class SignaligServer {
 		if (!fs.existsSync(CERT_DIR)) {
 			fs.mkdirSync(CERT_DIR, { recursive: true });
 		}
-		execSync(`openssl req -x509 -newkey rsa:2048 -nodes -keyout ${keyPath} -out ${certPath} -days 365 -subj "/CN=localhost" > ${logPath} 2>&1`);
-
+		if (!fs.existsSync(keyPath) || !fs.existsSync(certPath))
+			execSync(`openssl req -x509 -newkey rsa:2048 -nodes -keyout ${keyPath} -out ${certPath} -days 365 -subj "/CN=localhost" > ${logPath} 2>&1`);
 		return {
 			key: fs.readFileSync(keyPath),
 			cert: fs.readFileSync(certPath),

@@ -1,0 +1,20 @@
+split-pane-grabber {
+	display: flex;
+	position: relative;
+	z-index: 2;
+	background-color: none;
+}
+
+split-pane-grabber[split-pane-divider-orientation="vertical"] {
+	left: calc(var(--split-pane-divider-size) / 2 - var(--split-pane-grabber-size) / 2);
+	min-width: var(--split-pane-grabber-size);
+	height: 100%;
+	cursor: ew-resize;
+}
+
+split-pane-grabber[split-pane-divider-orientation="horizontal"] {
+	top: calc(var(--split-pane-divider-size) / 2 - var(--split-pane-grabber-size) / 2);
+	min-height: var(--split-pane-grabber-size);
+	width: 100%;
+	cursor: ns-resize;
+}

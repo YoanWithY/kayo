@@ -1,0 +1,23 @@
+split-button-ll {
+	width: var(--split-button-size);
+	height: var(--split-button-size);
+	overflow: hidden;
+	background-color: gray;
+	opacity: 0;
+	cursor: cell;
+	transition: var(--transition-duration);
+	z-index: 3;
+}
+
+split-button-ll {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	border-radius: 0 var(--radius) 0 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+	split-button-ll:hover {
+		opacity: 0.5;
+	}
+}
