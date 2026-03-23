@@ -1,5 +1,6 @@
 
 import { UIElementBuilder } from "../../../../UI-Lib/UIElementBuilder";
+import { WindowUIBuilder } from "../../../../UI-Lib/WindowUIBUilder";
 import { KayoAPI } from "../../../KayoAPI/KayoAPI";
 import css from "./SplashScreen.css?inline";
 
@@ -14,38 +15,38 @@ export class SplashScreenBuilder extends UIElementBuilder<KayoAPI, SplashScreen>
 		return SplashScreen;
 	}
 
-	public build(_: any) {
-		const splashScreen = this.createElement<SplashScreen>(this._domClassName);
-		splashScreen.win = this.windowUIBuilder.window;
+	public build(windowUIBuilder: WindowUIBuilder<KayoAPI>, _: any) {
+		const splashScreen = windowUIBuilder.createElement<SplashScreen>(this._domClassName);
+		splashScreen.win = windowUIBuilder.window;
 
-		const container = this.createElement<HTMLDivElement>("div");
+		const container = windowUIBuilder.createElement<HTMLDivElement>("div");
 		container.classList.add("splashScreenContainer");
 		splashScreen.appendChild(container);
 
-		const h1 = this.createElement<HTMLHeadingElement>("h1");
+		const h1 = windowUIBuilder.createElement<HTMLHeadingElement>("h1");
 		h1.textContent = "Welcome to Kayo";
 		container.appendChild(h1);
 
-		const h2_1 = this.createElement<HTMLHeadElement>("h2");
+		const h2_1 = windowUIBuilder.createElement<HTMLHeadElement>("h2");
 		h2_1.textContent = "New Project";
 		container.appendChild(h2_1);
 
-		const newProjectButton = this.createElement<HTMLButtonElement>("button");
+		const newProjectButton = windowUIBuilder.createElement<HTMLButtonElement>("button");
 		newProjectButton.textContent = "New Project";
 		const newProjectCallback = () => {
-			this.windowUIBuilder.IOAPI.openProject();
+			windowUIBuilder.IOAPI.openProject();
 		}
 		newProjectButton.addEventListener("click", newProjectCallback);
 		container.append(newProjectButton)
 
-		const h2_3 = this.createElement<HTMLHeadingElement>("h2");
+		const h2_3 = windowUIBuilder.createElement<HTMLHeadingElement>("h2");
 		h2_3.textContent = "Join Project";
 		container.appendChild(h2_3);
-		const input = this.createElement<HTMLInputElement>("input");
+		const input = windowUIBuilder.createElement<HTMLInputElement>("input");
 		input.type = "password";
 		input.autocomplete = "off";
 		container.appendChild(input);
-		const inputButton = this.createElement<HTMLButtonElement>("button");
+		const inputButton = windowUIBuilder.createElement<HTMLButtonElement>("button");
 		inputButton.textContent = "Join";
 		const joinProjectCallback = () => {
 			// const id = input.value;
@@ -70,22 +71,22 @@ export class SplashScreenBuilder extends UIElementBuilder<KayoAPI, SplashScreen>
 		inputButton.addEventListener("click", joinProjectCallback);
 		container.appendChild(inputButton);
 
-		const wrapper1 = this.createElement<HTMLDivElement>("div");
+		const wrapper1 = windowUIBuilder.createElement<HTMLDivElement>("div");
 		wrapper1.classList.add("splashEntryTable");
 		container.appendChild(wrapper1);
 
-		const h2_2 = this.createElement<HTMLHeadingElement>("h2");
+		const h2_2 = windowUIBuilder.createElement<HTMLHeadingElement>("h2");
 		h2_2.textContent = "Unsaved Projects";
 		container.appendChild(h2_2);
 
-		const wrapper2 = this.createElement<HTMLDivElement>("div");
+		const wrapper2 = windowUIBuilder.createElement<HTMLDivElement>("div");
 		container.appendChild(wrapper2);
 
 		return splashScreen;
 	}
 
-	public _initWindowComponentStyles(): void {
-		this.addStyle(css);
+	public _initWindowComponentStyles(windowUIBuilder: WindowUIBuilder<KayoAPI>): void {
+		windowUIBuilder.addStyle(css);
 	}
 
 }

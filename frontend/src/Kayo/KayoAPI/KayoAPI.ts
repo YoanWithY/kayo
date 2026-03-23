@@ -41,7 +41,7 @@ export class KayoAPI implements IOAPI {
 
             this._project = new ProjectAPI(this);
 
-            for (const winUI of this.ui.windowUIInstances)
+            for (const winUI of this.ui.windowUIBuilder)
                 this._kayoUI.requestInstanceUI(winUI, "viewport-3d-pane", true);
 
             this._kayoUI.removeLoadingScreen();
@@ -109,8 +109,16 @@ export class KayoAPI implements IOAPI {
         kayoUI.init(kayoAPI);
 
         const winUIBuilder = new WindowUIBuilder(window, kayoAPI)
-        KayoUI.prepWindowUIBuilder(winUIBuilder);
+
         kayoUI.registerUIWindowBuilder(winUIBuilder);
+
+        const beforeUnloadCallback = (_: Event) => {
+            for (const windowUI of kayoUI.windowUIBuilder) {
+                if (windowUI.window !== window)
+                    windowUI.window.close();
+            }
+        }
+        window.addEventListener("beforeunload", beforeUnloadCallback)
 
         kayoUI.setLoadingParagraphText("Init Kayo...");
 

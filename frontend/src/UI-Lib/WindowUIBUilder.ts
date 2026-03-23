@@ -1,6 +1,6 @@
 import { IOAPI } from "../IO-Interface/IOAPI";
 import { SplitablePaneBuilder } from "./SplitPane/SplitablePane/SplitablePane";
-import { SplitButtonLLBuilder, SplitButtonLRBuilder, SplitButtonULBuilder, SplitButtonURBuilder } from "./SplitPane/SplitButton/SplitButton";
+import { SplitButtonBuilder } from "./SplitPane/SplitButton/SplitButton";
 import { SplitPaneContainerBuilder } from "./SplitPane/SplitPaneContainer/SplitPaneContainer";
 import { SplitPaneDividerBuilder } from "./SplitPane/SplitPaneDivider/SplitPaneDivider";
 import { SplitPaneGrabberBuilder } from "./SplitPane/SplitPaneDivider/SplitPaneGrabber";
@@ -23,15 +23,29 @@ export class WindowUIBuilder<T extends IOAPI> {
         this._builders = new Map();
         this._registerBuilderCallbacks = new Set();
 
-        this.registerBuilder(new WrappingPaneBuilder());
-        this.registerBuilder(new SplitPaneContainerBuilder());
-        this.registerBuilder(new SplitablePaneBuilder());
-        this.registerBuilder(new SplitButtonULBuilder());
-        this.registerBuilder(new SplitButtonURBuilder());
-        this.registerBuilder(new SplitButtonLLBuilder());
-        this.registerBuilder(new SplitButtonLRBuilder());
-        this.registerBuilder(new SplitPaneDividerBuilder());
-        this.registerBuilder(new SplitPaneGrabberBuilder());
+        const dynamicBuildDomClass = (b: UIElementBuilder<any, any>) => {
+            try {
+                // eslint-disable-next-line prefer-const
+                let DynamicCustomClass: CustomElementConstructor = HTMLElement;
+                eval(`DynamicCustomClass = ${b.domClassCodeString}`);
+
+                b.initWindowComponent(this, DynamicCustomClass);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        this.addRegisterBuilderListener(dynamicBuildDomClass, true);
+    }
+
+    public static getBaseElementBuilderInstances<T extends IOAPI>(): UIElementBuilder<T, any>[] {
+        return [
+            new WrappingPaneBuilder<T>(),
+            new SplitPaneContainerBuilder<T>(),
+            new SplitablePaneBuilder<T>(),
+            new SplitButtonBuilder<T>(),
+            new SplitPaneDividerBuilder<T>(),
+            new SplitPaneGrabberBuilder<T>(),
+        ]
     }
 
     public get window() {
@@ -43,7 +57,6 @@ export class WindowUIBuilder<T extends IOAPI> {
     }
 
     public registerBuilder<U extends HTMLElement>(builder: UIElementBuilder<T, U>) {
-        builder.windowUIBuilder = this;
         this._builders.set(builder.domClassName, builder);
         for (const f of this._registerBuilderCallbacks)
             f(builder);
@@ -53,7 +66,18 @@ export class WindowUIBuilder<T extends IOAPI> {
         const builder = this._builders.get(config.domClassName) as UIElementBuilder<T, U>;
         if (!builder)
             return undefined;
-        return builder.build(config);
+        return builder.build(this, config);
+    }
+
+    public createElement<X extends HTMLElement>(type: string): X {
+        return this.window.document.createElement(type) as X;
+    }
+
+    public addStyle(css: string): HTMLStyleElement {
+        const style = this.createElement<HTMLStyleElement>("style");
+        style.innerHTML = css;
+        this.window.document.head.appendChild(style);
+        return style;
     }
 
     public getBuilder<X extends UIElementBuilder<T, any>>(domClass: string) {

@@ -76,8 +76,8 @@ export class SplitPaneContainerBuilder<T extends IOAPI> extends UIElementBuilder
 		return SplitPaneContainer;
 	}
 
-	public build(config: { domClassName: string, orientation: string, rect: DOMRect }) {
-		const c = this.createElement<SplitPaneContainer>(this._domClassName);
+	public build(windowUIBuilder: WindowUIBuilder<T>, config: { domClassName: string, orientation: string, rect: DOMRect }) {
+		const c = windowUIBuilder.createElement<SplitPaneContainer>(this._domClassName);
 		c.setAttribute("split-pane-container-orientation", config.orientation);
 		if (config.orientation == "vertical") {
 			c.style.height = config.rect.height + "px";
@@ -87,12 +87,12 @@ export class SplitPaneContainerBuilder<T extends IOAPI> extends UIElementBuilder
 		return c;
 	}
 
-	protected _initWindowComponentStyles(): void {
-		this.addStyle(css);
+	protected _initWindowComponentStyles(windowUIBuilder: WindowUIBuilder<T>): void {
+		windowUIBuilder.addStyle(css);
 	}
 
 	public createRoot(winUIBuilder: WindowUIBuilder<T>, config: { uiRoot: HTMLElement, defaultElementClassName: string }) {
-		const rootSplitPaneContainer = this.createElement<SplitPaneContainer>(this._domClassName);
+		const rootSplitPaneContainer = winUIBuilder.createElement<SplitPaneContainer>(this._domClassName);
 		rootSplitPaneContainer.setAttribute("split-pane-container-orientation", "none");
 		rootSplitPaneContainer.setAttribute("id", "libUIWrapper");
 

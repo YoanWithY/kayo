@@ -17,6 +17,6 @@ export class KayoNullUI implements KayoUIAPI {
     public registerUIWindowBuilder(_: WindowUIBuilder<KayoAPI>): void { }
     public requestInstanceUI(_: WindowUIBuilder<KayoAPI>, __: string, ___: boolean): void { }
     public openNewWindow(): void { }
-    public get windowUIInstances(): Iterable<WindowUIBuilder<KayoAPI>> { return [] }
+    public get windowUIBuilder(): Iterable<WindowUIBuilder<KayoAPI>> { return [] }
     public get viewports() { return [] };
 }

@@ -16,12 +16,14 @@ export class KayoUI implements KayoUIAPI {
     private _loadingParagraph: HTMLParagraphElement;
     private _splashScreen!: SplashScreen;
     private _viewports = new Set<UIViewport>();
-    private _windowUIInstances: Set<WindowUIBuilder<KayoAPI>>;
+    private _windowUIBuilders: Set<WindowUIBuilder<KayoAPI>>;
+    private _uiElementBuilder: Set<UIElementBuilder<KayoAPI, any>>;
 
     private constructor(loadingScreen: HTMLDivElement, loadingParagraph: HTMLParagraphElement) {
         this._loadingScreen = loadingScreen;
         this._loadingParagraph = loadingParagraph;
-        this._windowUIInstances = new Set();
+        this._windowUIBuilders = new Set();
+        this._uiElementBuilder = new Set();
     }
     public openNewWindow(): void {
         open("/subwindow/", "_blank", "popup=true");
@@ -83,6 +85,26 @@ export class KayoUI implements KayoUIAPI {
 
     public init(kayoAPI: KayoAPI) {
         this._kayoAPI = kayoAPI;
+
+        const paneSelectorPaneBuilder = new PaneSelectorPaneBuilder();
+        paneSelectorPaneBuilder.addPaneType("viewport-3d-pane", "Viewport 3D");
+
+        const builders = WindowUIBuilder.getBaseElementBuilderInstances<KayoAPI>().concat([
+            new SplashScreenBuilder(),
+            new Viewport3DPaneBuilder(),
+            new Viewport3DPaneContentBuilder(),
+            new Viewport3DPaneStripeBuilder(),
+            paneSelectorPaneBuilder,
+        ]);
+
+        for (const elementBuilder of builders)
+            this.addUIElementBuilder(elementBuilder);
+    }
+
+    public addUIElementBuilder(elementBuilder: UIElementBuilder<KayoAPI, any>) {
+        this._uiElementBuilder.add(elementBuilder);
+        for (const windowUIBuilder of this._windowUIBuilders)
+            windowUIBuilder.registerBuilder(elementBuilder);
     }
 
     public setLoadingParagraphText(text: string): void {
@@ -109,46 +131,31 @@ export class KayoUI implements KayoUIAPI {
         return kayoUI;
     }
 
-    public get windowUIInstances() {
-        return this._windowUIInstances.values();
+    public get windowUIBuilder() {
+        return this._windowUIBuilders.values();
     }
 
     public get viewports() {
         return this._viewports.values();
     }
 
-    public static prepWindowUIBuilder(winUIBuilder: WindowUIBuilder<KayoAPI>) {
-        const paneSelectorPaneBuilder = new PaneSelectorPaneBuilder();
-        paneSelectorPaneBuilder.addPaneType("viewport-3d-pane", "Viewport 3D");
-
-        const builders: UIElementBuilder<KayoAPI, any>[] = [
-            new SplashScreenBuilder(),
-            new Viewport3DPaneBuilder(),
-            new Viewport3DPaneContentBuilder(),
-            new Viewport3DPaneStripeBuilder(),
-            paneSelectorPaneBuilder,
-        ];
-        for (const builder of builders)
-            winUIBuilder.registerBuilder(builder);
-
-        const f = (b: UIElementBuilder<KayoAPI, any>) => b.initWindowComponent();
-        winUIBuilder.addRegisterBuilderListener(f, true);
-    }
-
     /**
      * This must by called from JS controlflow that owns the window provided!
      */
     public registerUIWindowBuilder(winUIBuilder: WindowUIBuilder<KayoAPI>): void {
-        if (this._windowUIInstances.has(winUIBuilder))
+        if (this._windowUIBuilders.has(winUIBuilder))
             return;
 
         (winUIBuilder.window as any).kayoAPI = this._kayoAPI;
-        this._windowUIInstances.add(winUIBuilder);
+        this._windowUIBuilders.add(winUIBuilder);
 
         const contextMenueCallback = (e: Event) => {
             e.preventDefault();
         };
         winUIBuilder.window.document.addEventListener("contextmenu", contextMenueCallback);
+
+        for (const builder of this._uiElementBuilder)
+            winUIBuilder.registerBuilder(builder);
 
         const splashScreen = winUIBuilder.build<SplashScreen>({ domClassName: "splash-screen" });
         if (!splashScreen) {
@@ -161,7 +168,7 @@ export class KayoUI implements KayoUIAPI {
     }
 
     public requestInstanceUI(winUIBuilder: WindowUIBuilder<KayoAPI>, defaultElementClassName: string, useHeader: boolean) {
-        if (!this._windowUIInstances.has(winUIBuilder)) {
+        if (!this._windowUIBuilders.has(winUIBuilder)) {
             console.error("The window the the instance UI is requested for ist not registered!")
             return;
         }

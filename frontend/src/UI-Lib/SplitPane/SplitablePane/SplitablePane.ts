@@ -1,7 +1,7 @@
 import { IOAPI } from "../../../IO-Interface/IOAPI";
 import { WindowUIBuilder } from "../../WindowUIBUilder";
 import { UIElementBuilder } from "../../UIElementBuilder";
-import { SplitButtonLL, SplitButtonLR, SplitButtonUL, SplitButtonUR } from "../SplitButton/SplitButton";
+import { SplitButton } from "../SplitButton/SplitButton";
 import { SplitPaneContainer } from "../SplitPaneContainer/SplitPaneContainer";
 import { SplitPaneDivider } from "../SplitPaneDivider/SplitPaneDivider";
 import { WrappingPane } from "../WrappingPane/WrappingPane";
@@ -14,10 +14,10 @@ export class SplitablePane<T extends IOAPI> extends HTMLElement {
 	public dummy!: HTMLDivElement;
 	public _win!: Window;
 	public uiRoot!: WrappingPane;
-	public sbUL!: SplitButtonUL<T>;
-	public sbUR!: SplitButtonUR<T>;
-	public sbLL!: SplitButtonLL<T>;
-	public sbLR!: SplitButtonLR<T>;
+	public sbUL!: SplitButton<T>;
+	public sbUR!: SplitButton<T>;
+	public sbLL!: SplitButton<T>;
+	public sbLR!: SplitButton<T>;
 
 	private keyListener = (e: KeyboardEvent) => {
 		if (e.ctrlKey && e.key === " " && !e.shiftKey) {
@@ -155,7 +155,7 @@ export class SplitablePaneBuilder<T extends IOAPI> extends UIElementBuilder<T, S
 		return SplitablePane;
 	}
 
-	public build(
+	public build(windowUIBuilder: WindowUIBuilder<T>,
 		config:
 			{
 				domClassName: string,
@@ -164,27 +164,27 @@ export class SplitablePaneBuilder<T extends IOAPI> extends UIElementBuilder<T, S
 				orientation?: string,
 				rect?: DOMRect
 			}): SplitablePane<T> {
-		const splitablePane = this.createElement<SplitablePane<T>>(this._domClassName);
-		splitablePane.dummy = this.createElement<HTMLDivElement>("div");
-		splitablePane._win = this.windowUIBuilder.window;
+		const splitablePane = windowUIBuilder.createElement<SplitablePane<T>>(this._domClassName);
+		splitablePane.dummy = windowUIBuilder.createElement<HTMLDivElement>("div");
+		splitablePane._win = windowUIBuilder.window;
 		splitablePane.uiRoot = config.uiRoot;
 
-		const sbUL = this.windowUIBuilder.build<SplitButtonUL<T>>({ domClassName: "split-button-ul", uiRoot: config.uiRoot });
+		const sbUL = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot });
 		if (!sbUL) {
 			console.log("Could not create SplitButtonUL!")
 			return splitablePane;
 		}
-		const sbUR = this.windowUIBuilder.build<SplitButtonUR<T>>({ domClassName: "split-button-ur", uiRoot: config.uiRoot });
+		const sbUR = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot });
 		if (!sbUR) {
 			console.log("Could not create SplitButtonUR!")
 			return splitablePane;
 		}
-		const sbLL = this.windowUIBuilder.build<SplitButtonLL<T>>({ domClassName: "split-button-ll", uiRoot: config.uiRoot });
+		const sbLL = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot });
 		if (!sbLL) {
 			console.log("Could not create SplitButtonLL!")
 			return splitablePane;
 		}
-		const sbLR = this.windowUIBuilder.build<SplitButtonLR<T>>({ domClassName: "split-button-lr", uiRoot: config.uiRoot });
+		const sbLR = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot });
 		if (!sbLR) {
 			console.log("Could not create SplitButtonLL!")
 			return splitablePane;
@@ -194,7 +194,7 @@ export class SplitablePaneBuilder<T extends IOAPI> extends UIElementBuilder<T, S
 		splitablePane.sbLL = sbLL;
 		splitablePane.sbLR = sbLR;
 
-		splitablePane.setContent(this.windowUIBuilder, { domClassName: config.paneDomClassName });
+		splitablePane.setContent(windowUIBuilder, { domClassName: config.paneDomClassName });
 
 		splitablePane.installSplitButtons();
 
@@ -207,7 +207,7 @@ export class SplitablePaneBuilder<T extends IOAPI> extends UIElementBuilder<T, S
 		return splitablePane;
 	}
 
-	protected _initWindowComponentStyles(): void {
-		this.addStyle(css);
+	protected _initWindowComponentStyles(windowUIBuilder: WindowUIBuilder<T>): void {
+		windowUIBuilder.addStyle(css);
 	}
 }

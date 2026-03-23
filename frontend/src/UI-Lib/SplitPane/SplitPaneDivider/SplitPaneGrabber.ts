@@ -1,5 +1,6 @@
 import { IOAPI } from "../../../IO-Interface/IOAPI";
 import { UIElementBuilder } from "../../UIElementBuilder";
+import { WindowUIBuilder } from "../../WindowUIBUilder";
 import { SplitablePane } from "../SplitablePane/SplitablePane";
 import { SplitPaneContainer } from "../SplitPaneContainer/SplitPaneContainer";
 import { SplitPaneDivider } from "./SplitPaneDivider";
@@ -76,13 +77,13 @@ export class SplitPaneGrabberBuilder<T extends IOAPI> extends UIElementBuilder<T
     protected get _domClass() {
         return SplitPaneGrabber;
     }
-    public build(_: { domClassName: string; }) {
-        const grabber = this.createElement<SplitPaneGrabber>(this._domClassName);
-        grabber.window = this.windowUIBuilder.window;
+    public build(windowUIBuilder: WindowUIBuilder<T>, _: { domClassName: string; }) {
+        const grabber = windowUIBuilder.createElement<SplitPaneGrabber>(this._domClassName);
+        grabber.window = windowUIBuilder.window;
         return grabber;
     }
-    protected _initWindowComponentStyles(): void {
-        this.addStyle(css);
+    protected _initWindowComponentStyles(windowUIBuilder: WindowUIBuilder<T>): void {
+        windowUIBuilder.addStyle(css);
     }
 
 }

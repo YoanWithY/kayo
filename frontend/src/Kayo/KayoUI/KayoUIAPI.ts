@@ -17,6 +17,6 @@ export interface KayoUIAPI {
     showLoadingScreen(): void;
     registerUIWindowBuilder(win: WindowUIBuilder<KayoAPI>): void;
     requestInstanceUI(win: WindowUIBuilder<KayoAPI>, defaultElementClassName: string, useHeader: boolean): void
-    get windowUIInstances(): Iterable<WindowUIBuilder<KayoAPI>>;
+    get windowUIBuilder(): Iterable<WindowUIBuilder<KayoAPI>>;
     get viewports(): Iterable<UIViewport>;
 }

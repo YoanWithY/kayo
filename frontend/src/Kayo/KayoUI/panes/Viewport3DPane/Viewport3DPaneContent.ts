@@ -6,11 +6,12 @@ import { Viewport } from "../../../KayoInstance/ts/Viewport/Viewport";
 import LookAtTransform from "../../../KayoInstance/ts/transformation/LookAt";
 import ViewportCamera from "../../../KayoInstance/ts/Viewport/ViewportCamera";
 import { RenderConfigAPI } from "../../../KayoAPI/Project/RenderConfigAPI";
+import { WindowUIBuilder } from "../../../../UI-Lib/WindowUIBUilder";
 import css from "./ViewportPaneContent.css?inline";
 
 export class Viewport3DPaneContent extends HTMLElement implements Viewport {
     public kayoAPI!: KayoAPI;
-    public camera = new ViewportCamera();
+    public camera!: ViewportCamera;
 
     public canvasContext!: GPUCanvasContext;
     public canvas!: HTMLCanvasElement;
@@ -36,15 +37,10 @@ export class Viewport3DPaneContent extends HTMLElement implements Viewport {
     public lable = "My Viewport";
     public window!: Window;
     public config!: RenderConfigAPI;
-    protected _lookAt = new LookAtTransform(new vec3(0, 0, 0), 10, 1, 1);
+    public lookAt!: LookAtTransform;
 
     public get rendererKey() {
         return this.config.configKey;
-    }
-
-    public constructor() {
-        super();
-        this.camera.transformationStack.push(this._lookAt);
     }
 
     public useOverlays: boolean = false;
@@ -113,20 +109,20 @@ export class Viewport3DPaneContent extends HTMLElement implements Viewport {
     protected _wheelCallback = (e: WheelEvent) => {
         e.preventDefault();
         const val = e.deltaY / this.window.devicePixelRatio;
-        this._lookAt.r += (this._lookAt.r * val) / 1024;
+        this.lookAt.r += (this.lookAt.r * val) / 1024;
         this.kayoAPI.ui.requestAnimationFrameWith(this);
     };
 
     protected _rotateView = (dx: number, dy: number) => {
-        this._lookAt.phi -= dx / 256;
-        this._lookAt.theta -= dy / 256;
+        this.lookAt.phi -= dx / 256;
+        this.lookAt.theta -= dy / 256;
     };
 
     protected _shiftView = (dx: number, dy: number) => {
-        const lat = vec3.latitudeTangent(this._lookAt.phi);
-        const lon = vec3.longitudeTangent(this._lookAt.theta, this._lookAt.phi);
-        this._lookAt.p = this._lookAt.p.add(
-            lat.mulS((-dx / 256) * this._lookAt.r).add(lon.mulS((-dy / 256) * this._lookAt.r)),
+        const lat = vec3.latitudeTangent(this.lookAt.phi);
+        const lon = vec3.longitudeTangent(this.lookAt.theta, this.lookAt.phi);
+        this.lookAt.p = this.lookAt.p.add(
+            lat.mulS((-dx / 256) * this.lookAt.r).add(lon.mulS((-dy / 256) * this.lookAt.r)),
         );
     };
 
@@ -158,7 +154,7 @@ export class Viewport3DPaneContent extends HTMLElement implements Viewport {
             const zoom = lastD / thisD;
             this._touches[thisT1.identifier] = thisT1;
             this._touches[thisT2.identifier] = thisT2;
-            this._lookAt.r *= zoom;
+            this.lookAt.r *= zoom;
             this._shiftView((dx1 + dx2) / 2, (dy1 + dy2) / 2);
         }
     };
@@ -194,10 +190,10 @@ export class Viewport3DPaneContent extends HTMLElement implements Viewport {
             const camPos1 = this.camera.getWorldLocation();
             const dphi = e.movementX / 256;
             const dtheta = e.movementY / 256;
-            this._lookAt.phi -= dphi;
-            this._lookAt.theta -= dtheta;
+            this.lookAt.phi -= dphi;
+            this.lookAt.theta -= dtheta;
             const camPos2 = this.camera.getWorldLocation();
-            this._lookAt.p = this._lookAt.p.add(camPos1.sub(camPos2));
+            this.lookAt.p = this.lookAt.p.add(camPos1.sub(camPos2));
             this.kayoAPI.ui.requestAnimationFrameWith(this);
         };
 
@@ -215,22 +211,22 @@ export class Viewport3DPaneContent extends HTMLElement implements Viewport {
                 const walkMove = () => {
                     const mat = this.camera.transformationStack.getTransformationMatrix();
                     if (this._keyMap["w"]) {
-                        this._lookAt.p = this._lookAt.p.sub(mat.getColumn(2).xyz.mulS(speed));
+                        this.lookAt.p = this.lookAt.p.sub(mat.getColumn(2).xyz.mulS(speed));
                         this.kayoAPI.ui.requestAnimationFrameWith(this);
                     }
 
                     if (this._keyMap["s"]) {
-                        this._lookAt.p = this._lookAt.p.sub(mat.getColumn(2).xyz.mulS(-speed));
+                        this.lookAt.p = this.lookAt.p.sub(mat.getColumn(2).xyz.mulS(-speed));
                         this.kayoAPI.ui.requestAnimationFrameWith(this);
                     }
 
                     if (this._keyMap["a"]) {
-                        this._lookAt.p = this._lookAt.p.sub(mat.getColumn(0).xyz.mulS(speed));
+                        this.lookAt.p = this.lookAt.p.sub(mat.getColumn(0).xyz.mulS(speed));
                         this.kayoAPI.ui.requestAnimationFrameWith(this);
                     }
 
                     if (this._keyMap["d"]) {
-                        this._lookAt.p = this._lookAt.p.sub(mat.getColumn(0).xyz.mulS(-speed));
+                        this.lookAt.p = this.lookAt.p.sub(mat.getColumn(0).xyz.mulS(-speed));
                         this.kayoAPI.ui.requestAnimationFrameWith(this);
                     }
                 };
@@ -283,13 +279,16 @@ export class Viewport3DPaneContentBuilder extends UIElementBuilder<KayoAPI, View
         return Viewport3DPaneContent;
     }
 
-    public build(_: any): Viewport3DPaneContent {
-        const viewport3DContent = this.createElement<Viewport3DPaneContent>(this._domClassName);
+    public build(windowUIBuilder: WindowUIBuilder<KayoAPI>, _: any): Viewport3DPaneContent {
+        const viewport3DContent = windowUIBuilder.createElement<Viewport3DPaneContent>(this._domClassName);
 
-        viewport3DContent.window = this.windowUIBuilder.window;
-        viewport3DContent.kayoAPI = this.windowUIBuilder.IOAPI;
+        viewport3DContent.window = windowUIBuilder.window;
+        viewport3DContent.kayoAPI = windowUIBuilder.IOAPI;
+        viewport3DContent.lookAt = new LookAtTransform(new vec3(0, 0, 0), 10, 1, 1);
+        viewport3DContent.camera = new ViewportCamera();
+        viewport3DContent.camera.transformationStack.push(viewport3DContent.lookAt);
 
-        viewport3DContent.canvas = this.createElement<HTMLCanvasElement>("canvas");
+        viewport3DContent.canvas = windowUIBuilder.createElement<HTMLCanvasElement>("canvas");
         viewport3DContent.appendChild(viewport3DContent.canvas);
         viewport3DContent.canvasContext = viewport3DContent.canvas.getContext("webgpu") as GPUCanvasContext;
 
@@ -304,7 +303,7 @@ export class Viewport3DPaneContentBuilder extends UIElementBuilder<KayoAPI, View
         return viewport3DContent;
     }
 
-    protected _initWindowComponentStyles(): void {
-        this.addStyle(css);
+    protected _initWindowComponentStyles(windowUIBuilder: WindowUIBuilder<KayoAPI>): void {
+        windowUIBuilder.addStyle(css);
     }
 }
