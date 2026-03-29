@@ -1,7 +1,9 @@
+import { SplitablePane } from "../../../../UI-Lib/SplitPane/SplitablePane/SplitablePane";
 import { UIElementBuilder } from "../../../../UI-Lib/UIElementBuilder";
 import { PointerButtons } from "../../../../UI-Lib/UIUtils";
 import { WindowUIBuilder } from "../../../../UI-Lib/WindowUIBUilder";
 import { KayoAPI } from "../../../KayoAPI/KayoAPI";
+import { createPaneSelectBox } from "../PaneUtils";
 import css from "./Viewport3DPaneStripe.css?inline";
 
 export class Viewport3DPaneStripe extends HTMLElement {
@@ -31,14 +33,17 @@ export class Viewport3DPaneStripeBuilder extends UIElementBuilder<KayoAPI, Viewp
         return Viewport3DPaneStripe;
     }
 
-    public build(windowUIBuilder: WindowUIBuilder<KayoAPI>, _: any): Viewport3DPaneStripe {
+    public build(windowUIBuilder: WindowUIBuilder<KayoAPI>, config: { splitablePane: SplitablePane<KayoAPI> }): Viewport3DPaneStripe {
         const stripe = windowUIBuilder.createElement<Viewport3DPaneStripe>(this._domClassName);
         stripe.PointerButtons = PointerButtons;
         stripe.kayoAPI = windowUIBuilder.IOAPI;
 
-        const span = windowUIBuilder.createElement<HTMLSpanElement>("span");
-        stripe.appendChild(span);
-        span.textContent = "Viewport 3D";
+        const dropDown = createPaneSelectBox(windowUIBuilder, config.splitablePane, "3D Viewport")
+        if (!dropDown) {
+            console.error("Could not create pane select SelectBox!");
+            return stripe;
+        }
+        stripe.appendChild(dropDown);
 
         return stripe;
     }

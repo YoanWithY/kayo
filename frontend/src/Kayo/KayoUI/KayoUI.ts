@@ -9,6 +9,11 @@ import { PaneSelectorPaneBuilder } from "./panes/PaneSelectorPane/PaneSelectorPa
 import { Viewport3DPaneBuilder } from "./panes/Viewport3DPane/Viewport3DPane";
 import { Viewport3DPaneContentBuilder } from "./panes/Viewport3DPane/Viewport3DPaneContent";
 import { Viewport3DPaneStripeBuilder } from "./panes/Viewport3DPane/Viewport3DPaneStripe";
+import { DebugPaneBuilder } from "./panes/debug/Debug/DebugPane";
+import { DebugPaneStripeBuilder } from "./panes/debug/Debug/DebugPaneStripe";
+import { HeaderStripeBuilder } from "./wrapping/Header/HeaderStripe";
+import { FooterStripeBuilder } from "./wrapping/Footer/FooterStripe";
+import { DropDownButtonBuilder } from "../../UI-Lib/Components/DropDownButton/DropDownButton";
 
 export class KayoUI implements KayoUIAPI {
     private _kayoAPI!: KayoAPI;
@@ -18,12 +23,14 @@ export class KayoUI implements KayoUIAPI {
     private _viewports = new Set<UIViewport>();
     private _windowUIBuilders: Set<WindowUIBuilder<KayoAPI>>;
     private _uiElementBuilder: Set<UIElementBuilder<KayoAPI, any>>;
+    private _paneTypes: Set<{ displayText: string, domClassName: string }>;
 
     private constructor(loadingScreen: HTMLDivElement, loadingParagraph: HTMLParagraphElement) {
         this._loadingScreen = loadingScreen;
         this._loadingParagraph = loadingParagraph;
         this._windowUIBuilders = new Set();
         this._uiElementBuilder = new Set();
+        this._paneTypes = new Set();
     }
     public openNewWindow(): void {
         open("/subwindow/", "_blank", "popup=true");
@@ -83,17 +90,28 @@ export class KayoUI implements KayoUIAPI {
         renderer.unregisterViewport(viewport);
     }
 
+    public registerPaneType(domClassName: string, displayText: string) {
+        this._paneTypes.add({ displayText, domClassName });
+    }
+
     public init(kayoAPI: KayoAPI) {
         this._kayoAPI = kayoAPI;
 
         const paneSelectorPaneBuilder = new PaneSelectorPaneBuilder();
-        paneSelectorPaneBuilder.addPaneType("viewport-3d-pane", "Viewport 3D");
+
+        kayoAPI.ui.registerPaneType("viewport-3d-pane", "Viewport 3D");
+        kayoAPI.ui.registerPaneType("debug-pane", "Debug");
 
         const builders = WindowUIBuilder.getBaseElementBuilderInstances<KayoAPI>().concat([
             new SplashScreenBuilder(),
             new Viewport3DPaneBuilder(),
             new Viewport3DPaneContentBuilder(),
             new Viewport3DPaneStripeBuilder(),
+            new DebugPaneBuilder(),
+            new DebugPaneStripeBuilder(),
+            new HeaderStripeBuilder(),
+            new FooterStripeBuilder(),
+            new DropDownButtonBuilder(),
             paneSelectorPaneBuilder,
         ]);
 
@@ -139,9 +157,10 @@ export class KayoUI implements KayoUIAPI {
         return this._viewports.values();
     }
 
-    /**
-     * This must by called from JS controlflow that owns the window provided!
-     */
+    public get paneTypes() {
+        return this._paneTypes.values();
+    }
+
     public registerUIWindowBuilder(winUIBuilder: WindowUIBuilder<KayoAPI>): void {
         if (this._windowUIBuilders.has(winUIBuilder))
             return;
@@ -156,24 +175,24 @@ export class KayoUI implements KayoUIAPI {
 
         for (const builder of this._uiElementBuilder)
             winUIBuilder.registerBuilder(builder);
+    }
 
-        const splashScreen = winUIBuilder.build<SplashScreen>({ domClassName: "splash-screen" });
+    public setMainUIWindow(win: WindowUIBuilder<KayoAPI>): void {
+        const splashScreen = win.build<SplashScreen>({ domClassName: "splash-screen" });
         if (!splashScreen) {
             console.error("Could not create Splash screen!");
             return
         }
         this._splashScreen = splashScreen;
-        // -------------------------------------
-
     }
 
-    public requestInstanceUI(winUIBuilder: WindowUIBuilder<KayoAPI>, defaultElementClassName: string, useHeader: boolean) {
+    public requestInstanceUI(winUIBuilder: WindowUIBuilder<KayoAPI>, defaultElementClassName: string, buildHeader: boolean, buildFooter: boolean) {
         if (!this._windowUIBuilders.has(winUIBuilder)) {
             console.error("The window the the instance UI is requested for ist not registered!")
             return;
         }
 
-        const wrappingPane = winUIBuilder.build<WrappingPane>({ domClassName: "wrapping-pane", defaultElementClassName: defaultElementClassName, useHeader: useHeader });
+        const wrappingPane = winUIBuilder.build<WrappingPane>({ domClassName: "wrapping-pane", defaultElementClassName: defaultElementClassName, buildHeader: buildHeader, buildFooter: buildFooter });
         if (!wrappingPane) {
             console.error("Could not build Wrapping pane!");
             return;

@@ -6,8 +6,9 @@ import css from "./WrappingPane.css?inline";
 import { WindowUIBuilder } from "../../WindowUIBUilder";
 
 export class WrappingPane extends HTMLElement {
-	public _header?: HTMLDivElement;
+	public header?: HTMLDivElement;
 	public baseSplitPaneContainer!: SplitPaneContainer;
+	public footer!: HTMLDivElement;
 }
 
 export class WrappingPaneBuilder<T extends IOAPI> extends UIElementBuilder<T, WrappingPane> {
@@ -16,7 +17,7 @@ export class WrappingPaneBuilder<T extends IOAPI> extends UIElementBuilder<T, Wr
 		return WrappingPane;
 	}
 
-	public build(windowUIBuilder: WindowUIBuilder<T>, config: { domClassName: string, defaultElementClassName: string, useHeader: boolean }): WrappingPane {
+	public build(windowUIBuilder: WindowUIBuilder<T>, config: { domClassName: string, defaultElementClassName: string, buildHeader: boolean, buildFooter: boolean }): WrappingPane {
 		const wrappingPane = windowUIBuilder.createElement<WrappingPane>(this._domClassName);
 
 		const splitPaneContainerBuilder = windowUIBuilder.getBuilder<SplitPaneContainerBuilder<T>>("split-pane-container");
@@ -26,11 +27,26 @@ export class WrappingPaneBuilder<T extends IOAPI> extends UIElementBuilder<T, Wr
 		}
 		wrappingPane.baseSplitPaneContainer = splitPaneContainerBuilder.createRoot(windowUIBuilder, { defaultElementClassName: config.defaultElementClassName, uiRoot: wrappingPane });
 
-		if (config.useHeader) {
-			// todo
+		if (config.buildFooter) {
+			const header = windowUIBuilder.build({ domClassName: "header-stripe" });
+			if (!header) {
+				console.error("Coudl not build header!");
+			} else {
+				wrappingPane.appendChild(header);
+			}
 		}
 
 		wrappingPane.appendChild(wrappingPane.baseSplitPaneContainer);
+
+		if (config.buildFooter) {
+			const footer = windowUIBuilder.build({ domClassName: "footer-stripe" });
+			if (!footer) {
+				console.error("Could not build Footer!");
+			} else {
+				wrappingPane.appendChild(footer);
+			}
+		}
+
 		return wrappingPane;
 	}
 

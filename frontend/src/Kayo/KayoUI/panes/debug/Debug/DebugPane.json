@@ -1,0 +1,36 @@
+{
+    "children": [
+        {
+            "domClassName": "debug-pane-stripe"
+        },
+        {
+            "domClassName": "tabbed-pane",
+            "tabs": [
+                {
+                    "displayName": "API",
+                    "config": {
+                        "domClassName": "api-panel"
+                    }
+                },
+                {
+                    "displayName": "Filesystem",
+                    "config": {
+                        "domClassName": "file-system-panel"
+                    }
+                },
+                {
+                    "displayName": "SVT",
+                    "config": {
+                        "domClassName": "svt-debug-panel"
+                    }
+                },
+                {
+                    "displayName": "Performance",
+                    "config": {
+                        "domClassName": "performance-pane"
+                    }
+                }
+            ]
+        }
+    ]
+}

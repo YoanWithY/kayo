@@ -1,7 +1,14 @@
-export interface BindingTarget<T> {
-    addBindingObserver(f: (v: T) => void, fireImmediately: boolean): void;
+export interface ViewTarget<O> {
+    addChangeObserver(o: View<O>, fireImmediately: boolean): void;
 }
 
-export interface Bindable<T> {
-    bind(target: BindingTarget<T>): void;
+export interface ControlTarget<I> {
+    setValue(v: I, fireImmediately: boolean): void;
+}
+
+export interface ViewControllTarget<I, O> extends ControlTarget<I>, ViewTarget<O> {
+}
+
+export interface View<O> {
+    recieveValueChange(v: O): void;
 }

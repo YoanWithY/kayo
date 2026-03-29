@@ -9,9 +9,17 @@ import initWasmx from "../KayoInstance/ts/ressourceManagement/KayoWasmLoader";
 import { IOAPI } from "../../IO-Interface/IOAPI";
 import { ProjectAPI } from "./Project/ProjectAPI";
 import { WindowUIBuilder } from "../../UI-Lib/WindowUIBUilder";
+import { KayoNumber } from "../KayoInstance/c/KayoCorePP";
+import { View } from "../../IO-Interface/Binding";
 
 export function allocUUID(): string {
     return crypto.randomUUID();
+}
+
+export function isKayoNumber(n: any): n is KayoNumber {
+    if (Array.isArray(n) && n.length === 2)
+        return true;
+    return false;
 }
 
 export class KayoAPI implements IOAPI {
@@ -22,6 +30,64 @@ export class KayoAPI implements IOAPI {
     private constructor(kayoInstance: KayoInstance, kayoUI: KayoUIAPI) {
         this._kayoInstance = kayoInstance;
         this._kayoUI = kayoUI;
+    }
+
+    private _urlToPath(apiURL: string) {
+        const stringPath = apiURL.split(apiURL);
+        const path: { name: string, object: any }[] = [];
+
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        let obj: any = this;
+        for (const entry of stringPath) {
+            if (obj === undefined) {
+                console.error("URL", apiURL, "could not be resolved!");
+                return undefined;
+            }
+            obj = obj[entry];
+            path.push({ name: entry, object: obj });
+        }
+        return path;
+    }
+
+    public setAPIValue(apiURL: string, value: any): void {
+        const path = this._urlToPath(apiURL);
+        if (!path) {
+            console.error("Could not set value.");
+            return;
+        }
+
+        const parent = path.at(-2);
+        if (!parent) {
+            console.error("Parent not found!");
+            return;
+        }
+        const val = path.at(-1);
+        if (!val) {
+            console.error("Value property not found!")
+            return;
+        }
+        parent.object[val.name] = value;
+    }
+
+    public addChangeObserver<T>(apiURL: string, observer: View<T>, fireImmediately: boolean) {
+        const path = this._urlToPath(apiURL);
+        if (!path) {
+            console.error("Could not set value.");
+            return;
+        }
+
+        const obj = path.at(-1);
+        if (!obj) {
+            console.error("Object not found!")
+            return;
+        }
+
+        if (!obj.object.addChangeObserver) {
+            console.error("Object at", apiURL, "is no ViewTarget!");
+            return;
+        }
+
+        obj.object.addChangeObserver(observer, fireImmediately);
     }
 
     public openProject(projectID?: string) {
@@ -42,7 +108,7 @@ export class KayoAPI implements IOAPI {
             this._project = new ProjectAPI(this);
 
             for (const winUI of this.ui.windowUIBuilder)
-                this._kayoUI.requestInstanceUI(winUI, "viewport-3d-pane", true);
+                this._kayoUI.requestInstanceUI(winUI, "viewport-3d-pane", true, true);
 
             this._kayoUI.removeLoadingScreen();
             this._kayoUI.removeSplashScreen();
@@ -53,34 +119,6 @@ export class KayoAPI implements IOAPI {
         } else {
             installProject();
         }
-    }
-
-    public get ui() {
-        return this._kayoUI;
-    }
-
-    public get project() {
-        return this._project;
-    }
-
-    public get gpux() {
-        return this._kayoInstance.gpux;
-    }
-
-    public get wasmx() {
-        return this._kayoInstance.wasmx;
-    }
-
-    public get wasm() {
-        return this.wasmx.wasm;
-    }
-
-    public get KN() {
-        return this.wasm.KN;
-    }
-
-    public get internal() {
-        return this._kayoInstance;
     }
 
     private static _initialized = false;
@@ -108,9 +146,10 @@ export class KayoAPI implements IOAPI {
         const kayoAPI = new KayoAPI(new KayoInstance(gpux, wasmx), kayoUI);
         kayoUI.init(kayoAPI);
 
-        const winUIBuilder = new WindowUIBuilder(window, kayoAPI)
+        const winUIBuilder = new WindowUIBuilder(window, kayoAPI, true)
 
         kayoUI.registerUIWindowBuilder(winUIBuilder);
+        kayoUI.setMainUIWindow(winUIBuilder)
 
         const beforeUnloadCallback = (_: Event) => {
             for (const windowUI of kayoUI.windowUIBuilder) {
@@ -139,6 +178,34 @@ export class KayoAPI implements IOAPI {
 
     public get APIName() {
         return `Kayo ${import.meta.env.PACKAGE_VERSION}`;
+    }
+
+    public get ui() {
+        return this._kayoUI;
+    }
+
+    public get project() {
+        return this._project;
+    }
+
+    public get gpux() {
+        return this._kayoInstance.gpux;
+    }
+
+    public get wasmx() {
+        return this._kayoInstance.wasmx;
+    }
+
+    public get wasm() {
+        return this.wasmx.wasm;
+    }
+
+    public get KN() {
+        return this.wasm.KN;
+    }
+
+    public get internal() {
+        return this._kayoInstance;
     }
 
 }

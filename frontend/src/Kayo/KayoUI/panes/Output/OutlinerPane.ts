@@ -1,4 +1,4 @@
-import { KayoInstance } from "../../KayoInstance/ts/KayoInstance";
+import { KayoInstance } from "../../../KayoInstance/ts/KayoInstance";
 
 export default class OutlinerPane extends HTMLElement {
 	public static createUIElement(win: Window, __: KayoInstance, _: any): OutlinerPane {

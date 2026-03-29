@@ -1,0 +1,6 @@
+header-stripe {
+    display: flex;
+    align-items: center;
+    padding: 2px;
+    gap: 2px;
+}

@@ -1,0 +1,11 @@
+drop-down {
+    position: absolute;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    border: 1px solid var(--component-border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+    filter: drop-shadow(0 0 1px black);
+    min-width: 80px;
+}

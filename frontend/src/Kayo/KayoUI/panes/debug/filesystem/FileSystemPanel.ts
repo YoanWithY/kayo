@@ -1,7 +1,7 @@
 import { EditorState } from "@codemirror/state";
-import { KayoInstance } from "../../../KayoInstance/ts/KayoInstance";
-import { LoadFileTask } from "../../../KayoInstance/ts/ressourceManagement/jsTasks/LoadFileTask";
-import { DirectoryEntry, QueryFileSystemTask } from "../../../KayoInstance/ts/ressourceManagement/jsTasks/QuereyFileSystemTask";
+import { KayoInstance } from "../../../../KayoInstance/ts/KayoInstance";
+import { LoadFileTask } from "../../../../KayoInstance/ts/ressourceManagement/jsTasks/LoadFileTask";
+import { DirectoryEntry, QueryFileSystemTask } from "../../../../KayoInstance/ts/ressourceManagement/jsTasks/QuereyFileSystemTask";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";

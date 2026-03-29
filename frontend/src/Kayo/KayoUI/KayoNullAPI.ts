@@ -15,8 +15,11 @@ export class KayoNullUI implements KayoUIAPI {
     public removeLoadingScreen(): void { }
     public setLoadingParagraphText(_: string): void { }
     public registerUIWindowBuilder(_: WindowUIBuilder<KayoAPI>): void { }
-    public requestInstanceUI(_: WindowUIBuilder<KayoAPI>, __: string, ___: boolean): void { }
+    public setMainUIWindow(_: WindowUIBuilder<KayoAPI>): void { }
+    public requestInstanceUI(_: WindowUIBuilder<KayoAPI>, __: string, ___: boolean, ____: boolean): void { }
     public openNewWindow(): void { }
+    public registerPaneType(_: string, __: string): void { }
     public get windowUIBuilder(): Iterable<WindowUIBuilder<KayoAPI>> { return [] }
     public get viewports() { return [] };
+    public get paneTypes(): Iterable<{ displayText: string; domClassName: string; }> { return []; }
 }

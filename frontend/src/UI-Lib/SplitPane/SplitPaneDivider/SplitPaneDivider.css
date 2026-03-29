@@ -1,5 +1,5 @@
 split-pane-divider {
-	background-color: var(--split-pane-divider-color);
+	background-color: var(--kayo-ui-background-color);
 	flex-shrink: 0;
 	flex-grow: 0;
 }

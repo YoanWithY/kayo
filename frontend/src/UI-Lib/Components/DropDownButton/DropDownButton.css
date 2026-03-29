@@ -1,0 +1,10 @@
+drop-down-button {
+    padding: var(--var-text-padding);
+    border: none;
+    border-radius: var(--radius);
+}
+
+drop-down-button:hover {
+    background-color: var(--kayo-ui-background-hover-color);
+
+}

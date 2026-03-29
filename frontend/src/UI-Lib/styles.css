@@ -19,20 +19,26 @@
     --font-weight: 400;
     --text-color: rgb(200, 200, 200);
     --var-padding: 4px;
+    --var-text-padding: var(--var-padding) calc(var(--var-padding) + 2px);
 
     --radius: 4px;
     --transition-duration: 200ms;
 
-    --button-background-color: rgb(50, 50, 50);
 
     /* Must be changed in static class */
     --split-pane-divider-size: 0px;
 
-    --pane-background-color: rgb(22, 22, 22);
-    --pane-stripe-color: rgb(34, 34, 34);
-    --pane-stripe-hover-color: rgb(40, 40, 40);
-    --split-pane-divider-color: var(--pane-background-color);
+
+    --kayo-ui-background-color: rgb(22, 22, 22);
+    --kayo-ui-background-hover-color: rgb(34, 34, 34);
+
+    --kayo-ui-surface-color: rgb(34, 34, 34);
+    --kayo-ui-surface-hover-color: rgb(40, 40, 40);
+
+    --kayo-ui-on-surface-color: rgb(50, 50, 50);
+
     --uneffective-opacity: 0.4;
+    --component-border-color: rgb(50, 50, 50);
 
     --accent-color: rgb(0, 114, 220);
     --accent-color-hover: rgb(0, 130, 240);
@@ -54,7 +60,7 @@ body {
     color: var(--text-color);
     font-size: var(--font-size);
     margin: 0;
-    background-color: var(--split-pane-divider-color);
+    background-color: var(--kayo-ui-background-color);
     font-family: 'KayoFont';
     font-weight: var(--font-weight);
     user-select: none;
@@ -63,12 +69,12 @@ body {
 
 button {
     color: var(--text-color);
-    background-color: var(--button-background-color);
+    background-color: var(--kayo-ui-on-surface-color);
     font-family: 'KayoFont';
     font-weight: var(--font-weight);
     border: none;
     border-radius: var(--radius);
-    padding: var(--var-padding) calc(var(--var-padding) + 2px);
+    padding: var(--var-text-padding);
     font-size: var(--font-size);
 }
 

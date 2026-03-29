@@ -16,7 +16,10 @@ export interface KayoUIAPI {
     removeLoadingScreen(): void;
     showLoadingScreen(): void;
     registerUIWindowBuilder(win: WindowUIBuilder<KayoAPI>): void;
-    requestInstanceUI(win: WindowUIBuilder<KayoAPI>, defaultElementClassName: string, useHeader: boolean): void
+    registerPaneType(domClassName: string, displayText: string): void;
+    setMainUIWindow(win: WindowUIBuilder<KayoAPI>): void;
+    requestInstanceUI(win: WindowUIBuilder<KayoAPI>, defaultElementClassName: string, buildHeader: boolean, buildFooter: boolean): void
     get windowUIBuilder(): Iterable<WindowUIBuilder<KayoAPI>>;
     get viewports(): Iterable<UIViewport>;
+    get paneTypes(): Iterable<{ displayText: string, domClassName: string }>
 }

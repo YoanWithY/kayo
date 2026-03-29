@@ -8,7 +8,7 @@ if (!kayoAPI) {
 
 window.name = "KayoUI Subwindow";
 
-const windowUIBuilder = new WindowUIBuilder(window, kayoAPI);
+const windowUIBuilder = new WindowUIBuilder(window, kayoAPI, false);
 
 kayoAPI.ui.registerUIWindowBuilder(windowUIBuilder);
-kayoAPI.ui.requestInstanceUI(windowUIBuilder, "pane-selector-pane", false)
+kayoAPI.ui.requestInstanceUI(windowUIBuilder, "pane-selector-pane", false, true)

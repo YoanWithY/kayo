@@ -1,0 +1,54 @@
+{
+    "children": [
+        {
+            "domClassName": "drop-down-button",
+            "displayText": "File",
+            "dropDown": {
+                "domClassName": "drop-down",
+                "options": [
+                    {
+                        "displayText": "Save (WIP)"
+                    },
+                    {
+                        "displayText": "Import (WIP)"
+                    },
+                    {
+                        "displayText": "Export (WIP)",
+                        "childDropDown": {
+                            "domClassName": "drop-down",
+                            "options": [
+                                {
+                                    "displayText": "Current Image (WIP)"
+                                },
+                                {
+                                    "displayText": "Object (.OBJ) (WIP)"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "domClassName": "drop-down-button",
+            "displayText": "Edit",
+            "dropDown": {
+                "domClassName": "drop-down",
+                "options": [
+                    {
+                        "displayText": "Undo (WIP)"
+                    },
+                    {
+                        "displayText": "Redo (WIP)"
+                    },
+                    {
+                        "displayText": "Copy (WIP)"
+                    },
+                    {
+                        "displayText": "Paste (WIP)"
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -4,6 +4,7 @@ import { Viewport3DPaneContent } from "./Viewport3DPaneContent";
 import css from "./Viewport3DPane.css?inline";
 import { Viewport3DPaneStripe } from "./Viewport3DPaneStripe";
 import { WindowUIBuilder } from "../../../../UI-Lib/WindowUIBUilder";
+import { SplitablePane } from "../../../../UI-Lib/SplitPane/SplitablePane/SplitablePane";
 
 export class Viewport3DPane extends HTMLElement {
 	public stripe!: Viewport3DPaneStripe;
@@ -17,10 +18,10 @@ export class Viewport3DPaneBuilder extends UIElementBuilder<KayoAPI, Viewport3DP
 		return Viewport3DPane;
 	}
 
-	public build(windowUIBuilder: WindowUIBuilder<KayoAPI>, _: any): Viewport3DPane {
+	public build(windowUIBuilder: WindowUIBuilder<KayoAPI>, config: { splitablePane: SplitablePane<KayoAPI> }): Viewport3DPane {
 		const viewport3DPane = windowUIBuilder.createElement<Viewport3DPane>(this._domClassName);
 
-		const stripe = windowUIBuilder.build<Viewport3DPaneStripe>({ domClassName: "viewport-3d-pane-stripe" });
+		const stripe = windowUIBuilder.build<Viewport3DPaneStripe>({ domClassName: "viewport-3d-pane-stripe", splitablePane: config.splitablePane });
 		if (!stripe) {
 			console.error("Could not build Viewport3DStripe!")
 			return viewport3DPane;

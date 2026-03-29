@@ -1,0 +1,20 @@
+drop-down-item {
+    padding: var(--var-padding);
+    background-color: var(--kayo-ui-background-color);
+}
+
+drop-down-item:hover {
+    background-color: var(--kayo-ui-background-hover-color);
+}
+
+.dropDownParentItem::after {
+    content: "";
+    display: inline-block;
+    margin-left: 8px;
+    width: calc(var(--font-size) / 2);
+    height: calc(var(--font-size) / 2);
+    right: 0;
+    border: 1px solid var(--text-color);
+    border-width: 0 1px 1px 0;
+    transform: rotate(-45deg) translateY(-40%);
+}

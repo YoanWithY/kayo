@@ -1,4 +1,8 @@
 import { IOAPI } from "../IO-Interface/IOAPI";
+import { DropDownBuilder } from "./Components/DropDown/DropDown";
+import { DropDownItemBuilder } from "./Components/DropDown/DropDownItem";
+import { SelectBoxBuilder } from "./Components/SelectBox/SelectBox";
+import { TabbedPaneBuilder } from "./Components/TabbedPane/TabbedPane";
 import { SplitablePaneBuilder } from "./SplitPane/SplitablePane/SplitablePane";
 import { SplitButtonBuilder } from "./SplitPane/SplitButton/SplitButton";
 import { SplitPaneContainerBuilder } from "./SplitPane/SplitPaneContainer/SplitPaneContainer";
@@ -16,12 +20,14 @@ export class WindowUIBuilder<T extends IOAPI> {
     private _ioapi: T;
     private _builders: Map<string, UIElementBuilder<T, any>>;
     private _registerBuilderCallbacks: Set<((builder: UIElementBuilder<T, any>) => void)>;
+    private _isMainWindow: boolean;
 
-    public constructor(window: Window, ioapi: T) {
+    public constructor(window: Window, ioapi: T, isMainWindow: boolean) {
         this._window = window;
         this._ioapi = ioapi;
         this._builders = new Map();
         this._registerBuilderCallbacks = new Set();
+        this._isMainWindow = isMainWindow;
 
         const dynamicBuildDomClass = (b: UIElementBuilder<any, any>) => {
             try {
@@ -45,6 +51,10 @@ export class WindowUIBuilder<T extends IOAPI> {
             new SplitButtonBuilder<T>(),
             new SplitPaneDividerBuilder<T>(),
             new SplitPaneGrabberBuilder<T>(),
+            new TabbedPaneBuilder<T>(),
+            new SelectBoxBuilder<T, any>(),
+            new DropDownBuilder<T>(),
+            new DropDownItemBuilder<T>(),
         ]
     }
 
@@ -54,6 +64,10 @@ export class WindowUIBuilder<T extends IOAPI> {
 
     public get IOAPI() {
         return this._ioapi;
+    }
+
+    public get isMainWindow() {
+        return this._isMainWindow;
     }
 
     public registerBuilder<U extends HTMLElement>(builder: UIElementBuilder<T, U>) {

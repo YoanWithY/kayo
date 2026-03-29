@@ -16,18 +16,22 @@ export class Viewport3DPaneContent extends HTMLElement implements Viewport {
     public canvasContext!: GPUCanvasContext;
     public canvas!: HTMLCanvasElement;
 
+    public vec2!: typeof vec2;
+    public vec3!: typeof vec3;
+
     private _resizeCallback = (e: ResizeObserverEntry[]) => {
         const sizeDPX = e[0].devicePixelContentBoxSize[0];
-        const sizeCPX = e[0].contentBoxSize[0];
+        const sizeCPX = e[0].contentRect;
         const s = 1;
-        this.canvas.width = Math.ceil(sizeDPX.inlineSize / s);
-        this.canvas.height = Math.ceil(sizeDPX.blockSize / s);
+
+        this.canvas.width = Math.max(Math.ceil(sizeDPX.inlineSize / s), 1);
+        this.canvas.height = Math.max(Math.ceil(sizeDPX.blockSize / s), 1);
         if (s === 1) {
             this.canvas.style.width = "auto";
             this.canvas.style.height = "auto";
         } else {
-            this.canvas.style.width = `${Math.ceil(sizeCPX.inlineSize / s) * s}px`;
-            this.canvas.style.height = `${Math.ceil(sizeCPX.blockSize / s) * s}px`;
+            this.canvas.style.width = `${Math.ceil(sizeCPX.width / s) * s}px`;
+            this.canvas.style.height = `${Math.ceil(sizeCPX.height / s) * s}px`;
         }
         if (this.isConnected) this.kayoAPI.ui.requestAnimationFrameWith(this);
     };
@@ -119,8 +123,8 @@ export class Viewport3DPaneContent extends HTMLElement implements Viewport {
     };
 
     protected _shiftView = (dx: number, dy: number) => {
-        const lat = vec3.latitudeTangent(this.lookAt.phi);
-        const lon = vec3.longitudeTangent(this.lookAt.theta, this.lookAt.phi);
+        const lat = this.vec3.latitudeTangent(this.lookAt.phi);
+        const lon = this.vec3.longitudeTangent(this.lookAt.theta, this.lookAt.phi);
         this.lookAt.p = this.lookAt.p.add(
             lat.mulS((-dx / 256) * this.lookAt.r).add(lon.mulS((-dy / 256) * this.lookAt.r)),
         );
@@ -287,6 +291,8 @@ export class Viewport3DPaneContentBuilder extends UIElementBuilder<KayoAPI, View
         viewport3DContent.lookAt = new LookAtTransform(new vec3(0, 0, 0), 10, 1, 1);
         viewport3DContent.camera = new ViewportCamera();
         viewport3DContent.camera.transformationStack.push(viewport3DContent.lookAt);
+        viewport3DContent.vec2 = vec2;
+        viewport3DContent.vec3 = vec3;
 
         viewport3DContent.canvas = windowUIBuilder.createElement<HTMLCanvasElement>("canvas");
         viewport3DContent.appendChild(viewport3DContent.canvas);

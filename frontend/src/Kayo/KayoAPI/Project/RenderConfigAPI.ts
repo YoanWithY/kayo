@@ -2,24 +2,20 @@ import { KayoNumber } from "../../KayoInstance/c/KayoCorePP";
 import { RenderConfig } from "../../KayoInstance/ts/rendering/config/RenderConfig";
 import { KayoAPI } from "../KayoAPI";
 import { AnimatableBooleanAPIValue, AnimatableEnumAPIValue } from "../Utils/APIValue";
-import { ValueSetter } from "../Utils/ValueConsumer";
 
 export class SwapChainRenderConfigAPI {
-    private _kayoAPI: KayoAPI;
     private _bitDepth: AnimatableEnumAPIValue<number>;
     private _colorSpace: AnimatableEnumAPIValue<string>;
     private _toneMappingMode: AnimatableEnumAPIValue<string>;
 
     public constructor(kayoAPI: KayoAPI, renderConfig: RenderConfig) {
-        this._kayoAPI = kayoAPI;
-
         this._bitDepth = new AnimatableEnumAPIValue(kayoAPI, renderConfig.general.swapChain.bitDepth, renderConfig.general.swapChain.bitDepthEnum);
         this._colorSpace = new AnimatableEnumAPIValue(kayoAPI, renderConfig.general.swapChain.colorSpace, renderConfig.general.swapChain.colorSpaceEnum);
         this._toneMappingMode = new AnimatableEnumAPIValue(kayoAPI, renderConfig.general.swapChain.toneMappingMode, renderConfig.general.swapChain.toneMappingModeEnum);
     }
 
     public set bitDepth(bitDepth: number | KayoNumber) {
-        ValueSetter.numberEnum(this._kayoAPI, bitDepth, this._bitDepth);
+        this._bitDepth.setValue(bitDepth, true);
     }
 
     public get bitDepth() {
@@ -27,7 +23,7 @@ export class SwapChainRenderConfigAPI {
     }
 
     public set colorSpace(colorSpace: string | KayoNumber) {
-        ValueSetter.stringEnum(this._kayoAPI, colorSpace, this._colorSpace);
+        this._colorSpace.setValue(colorSpace, true);
     }
 
     public get colorSpace() {
@@ -35,7 +31,7 @@ export class SwapChainRenderConfigAPI {
     }
 
     public set toneMappingMode(toneMappingMode: string | KayoNumber) {
-        ValueSetter.stringEnum(this._kayoAPI, toneMappingMode, this._toneMappingMode);
+        this._toneMappingMode.setValue(toneMappingMode, true);
     }
 
     public get toneMappingMode() {
@@ -44,22 +40,20 @@ export class SwapChainRenderConfigAPI {
 }
 
 export class CustomColorQuantizationRenderConfigAPI {
-    private _kayoAPI: KayoAPI;
     private _useCustomColorQunatization: AnimatableBooleanAPIValue;
     private _useDithering: AnimatableBooleanAPIValue;
 
     public constructor(kayoAPI: KayoAPI, renderConfig: RenderConfig) {
-        this._kayoAPI = kayoAPI;
         this._useCustomColorQunatization = new AnimatableBooleanAPIValue(kayoAPI, renderConfig.general.customColorQuantisation.useCustomColorQuantization);
         this._useDithering = new AnimatableBooleanAPIValue(kayoAPI, renderConfig.general.customColorQuantisation.useDithering);
     }
 
     public set useCustomColorQuantisation(useCustomColorQuantisation: boolean | KayoNumber) {
-        ValueSetter.booleanValue(this._kayoAPI, useCustomColorQuantisation, this._useCustomColorQunatization);
+        this._useCustomColorQunatization.setValue(useCustomColorQuantisation, true);
     }
 
     public set useDithering(useDithering: boolean | KayoNumber) {
-        ValueSetter.booleanValue(this._kayoAPI, useDithering, this._useDithering);
+        this._useDithering.setValue(useDithering, true);
     }
 }
 

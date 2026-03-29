@@ -5,3 +5,8 @@ viewport-3d-pane-content {
     min-width: 0;
     min-height: 0;
 }
+
+viewport-3d-pane-content>canvas {
+    min-width: 1px;
+    min-height: 1px;
+}

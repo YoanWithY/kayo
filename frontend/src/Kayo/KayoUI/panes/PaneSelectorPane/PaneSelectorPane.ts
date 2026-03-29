@@ -9,7 +9,7 @@ export class PaneSelectorPane extends HTMLElement {
 
 export class PaneSelectorPaneBuilder extends UIElementBuilder<KayoAPI, PaneSelectorPane> {
 	protected _domClassName = "pane-selector-pane";
-	protected _panesClassNameMap: Map<string, string> = new Map();
+
 
 	protected get _domClass(): CustomElementConstructor {
 		return PaneSelectorPane;
@@ -17,14 +17,14 @@ export class PaneSelectorPaneBuilder extends UIElementBuilder<KayoAPI, PaneSelec
 
 	public build(windowUIBuilder: WindowUIBuilder<KayoAPI>, _: any): PaneSelectorPane {
 		const paneSelctorPane = windowUIBuilder.createElement<PaneSelectorPane>(this._domClassName);
-		for (const [domClassName, displayName] of this._panesClassNameMap) {
+		for (const info of windowUIBuilder.IOAPI.ui.paneTypes) {
 			const button = windowUIBuilder.createElement<PaneSelectorPane>("button");
 			button.className = "selectorButton";
-			button.textContent = displayName;
+			button.textContent = info.displayText;
 			button.onclick = () => {
 				const parent = paneSelctorPane.parentElement;
 				if (!parent) return;
-				(parent as SplitablePane<KayoAPI>).setContent(windowUIBuilder, { domClassName: domClassName });
+				(parent as SplitablePane<KayoAPI>).setContent(windowUIBuilder, { domClassName: info.domClassName });
 			};
 			paneSelctorPane.appendChild(button);
 		}
@@ -33,9 +33,5 @@ export class PaneSelectorPaneBuilder extends UIElementBuilder<KayoAPI, PaneSelec
 
 	protected _initWindowComponentStyles(windowUIBuilder: WindowUIBuilder<KayoAPI>): void {
 		windowUIBuilder.addStyle(css);
-	}
-
-	public addPaneType(paneDomClassName: string, paneDisplayName: string) {
-		this._panesClassNameMap.set(paneDomClassName, paneDisplayName);
 	}
 }

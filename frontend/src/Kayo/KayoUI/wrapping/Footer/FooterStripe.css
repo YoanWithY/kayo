@@ -1,0 +1,8 @@
+footer-stripe {
+    display: flex;
+    background-color: var(--kayo-ui-surface-color);
+    padding: 2px 6px;
+    gap: 6px;
+    align-items: center;
+    background-color: var(--kayo-ui-background-color);
+}

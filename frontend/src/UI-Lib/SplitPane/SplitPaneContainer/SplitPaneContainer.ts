@@ -2,10 +2,11 @@ import { IOAPI } from "../../../IO-Interface/IOAPI";
 import { WindowUIBuilder } from "../../WindowUIBUilder";
 import { UIElementBuilder } from "../../UIElementBuilder";
 import { SplitablePane } from "../SplitablePane/SplitablePane";
-import { SplitPaneDivider } from "../SplitPaneDivider/SplitPaneDivider";
 import css from "./SplitPaneContainer.css?inline";
+import { splitPaneDividerSize } from "../SplitPaneDivider/SplitPaneDivider";
 
 export class SplitPaneContainer extends HTMLElement {
+	public splitPandeDividerSize!: number;
 	public minHeight() {
 		return Number.parseInt(this.style.minHeight.replace("px", ""));
 	}
@@ -27,20 +28,23 @@ export class SplitPaneContainer extends HTMLElement {
 		} else if (orientation == "vertical") {
 			let minWidth = 0;
 			let minHeight = 0;
-			for (const sp of this.childNodes) {
-				if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
+			for (const node of this.childNodes) {
+				if (node.nodeName === "SPLITABLE-PANE" || node.nodeName === "SPLIT-PANE-CONTAINER") {
+					const sp = node as SplitablePane<any> || SplitPaneContainer;
 					sp.style.height = "";
 					if (sp.nextElementSibling) {
 						sp.style.width = sp.getBoundingClientRect().width + "px";
 					} else {
 						sp.style.width = sp.getBoundingClientRect().width + "px";
 					}
-					if (sp instanceof SplitPaneContainer) sp.updateSizesRecursively();
+					if (sp.nodeName === "SPLIT-PANE-CONTAINER")
+						(sp as unknown as SplitPaneContainer).updateSizesRecursively();
 
 					minHeight = Math.max(minHeight, sp.minHeight());
 					minWidth += sp.minWidth();
-				} else if (sp instanceof SplitPaneDivider) {
-					minWidth += SplitPaneDivider.size;
+				}
+				else if (node.nodeName === "SPLIT-PANE-DIVIDER") {
+					minWidth += this.splitPandeDividerSize;
 				}
 			}
 			this.style.minWidth = minWidth + "px";
@@ -48,20 +52,22 @@ export class SplitPaneContainer extends HTMLElement {
 		} else {
 			let minWidth = 0;
 			let minHeight = 0;
-			for (const sp of this.childNodes) {
-				if (sp instanceof SplitablePane || sp instanceof SplitPaneContainer) {
+			for (const node of this.childNodes) {
+				if (node.nodeName === "SPLITABLE-PANE" || node.nodeName === "SPLIT-PANE-CONTAINER") {
+					const sp = node as SplitablePane<any> || SplitPaneContainer;
 					sp.style.width = "";
 					if (sp.nextElementSibling) {
 						sp.style.height = sp.getBoundingClientRect().height + "px";
 					} else {
 						sp.style.height = sp.getBoundingClientRect().height + "px";
 					}
-					if (sp instanceof SplitPaneContainer) sp.updateSizesRecursively();
+					if (sp.nodeName === "SPLIT-PANE-CONTAINER")
+						(sp as unknown as SplitPaneContainer).updateSizesRecursively();
 
 					minHeight += sp.minHeight();
 					minWidth = Math.max(minWidth, sp.minWidth());
-				} else if (sp instanceof SplitPaneDivider) {
-					minHeight += SplitPaneDivider.size;
+				} else if (node.nodeName === "SPLIT-PANE-DIVIDER") {
+					minWidth += this.splitPandeDividerSize;
 				}
 			}
 			this.style.minWidth = minWidth + "px";
@@ -77,14 +83,15 @@ export class SplitPaneContainerBuilder<T extends IOAPI> extends UIElementBuilder
 	}
 
 	public build(windowUIBuilder: WindowUIBuilder<T>, config: { domClassName: string, orientation: string, rect: DOMRect }) {
-		const c = windowUIBuilder.createElement<SplitPaneContainer>(this._domClassName);
-		c.setAttribute("split-pane-container-orientation", config.orientation);
+		const splitPaneContainer = windowUIBuilder.createElement<SplitPaneContainer>(this._domClassName);
+		splitPaneContainer.setAttribute("split-pane-container-orientation", config.orientation);
+		splitPaneContainer.splitPandeDividerSize = splitPaneDividerSize;
 		if (config.orientation == "vertical") {
-			c.style.height = config.rect.height + "px";
+			splitPaneContainer.style.height = config.rect.height + "px";
 		} else {
-			c.style.width = config.rect.width + "px";
+			splitPaneContainer.style.width = config.rect.width + "px";
 		}
-		return c;
+		return splitPaneContainer;
 	}
 
 	protected _initWindowComponentStyles(windowUIBuilder: WindowUIBuilder<T>): void {

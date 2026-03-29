@@ -1,5 +1,9 @@
-import { KayoInstance } from "../../../KayoInstance/ts/KayoInstance";
-import { objectToUl } from "../../../../UI-Lib/UIUtils";
+import { KayoInstance } from "../../../../KayoInstance/ts/KayoInstance";
+import { objectToUl } from "../../../../../UI-Lib/UIUtils";
+import { UIElementBuilder } from "../../../../../UI-Lib/UIElementBuilder";
+import { KayoAPI } from "../../../../KayoAPI/KayoAPI";
+import { WindowUIBuilder } from "../../../../../UI-Lib/WindowUIBUilder";
+import css from "./APIPanel.css";
 
 function groupBy(array: any[], key: string) {
 	const reduceCallback = (accumulator: any, value: any) => {
@@ -19,7 +23,7 @@ async function checkPermissions() {
 	return camera.state == "granted" && microphone.state == "granted";
 }
 
-export default class APIPanel extends HTMLElement {
+class APIPanel extends HTMLElement {
 	private _kayo!: KayoInstance;
 	private _tree: HTMLElement | null = null;
 	private _win!: Window;
@@ -117,8 +121,19 @@ export default class APIPanel extends HTMLElement {
 	public static getDomClass(): string {
 		return "api-panel";
 	}
+}
 
-	public static getName() {
-		return "Web API";
+export class APIPanelBuilder extends UIElementBuilder<KayoAPI, APIPanel> {
+	protected _domClassName = "api-panel";
+	protected get _domClass(): CustomElementConstructor {
+		return APIPanel;
 	}
+	public build(windowUIBuilder: WindowUIBuilder<KayoAPI>, _: any): APIPanel {
+		const apiPanel = windowUIBuilder.createElement<APIPanel>(this.domClassName);
+		return apiPanel;
+	}
+	protected _initWindowComponentStyles(windowUIBuilder: WindowUIBuilder<KayoAPI>): void {
+		windowUIBuilder.addStyle(css);
+	}
+
 }

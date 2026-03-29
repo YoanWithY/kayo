@@ -3,7 +3,7 @@ import { WindowUIBuilder } from "../../WindowUIBUilder";
 import { UIElementBuilder } from "../../UIElementBuilder";
 import { SplitButton } from "../SplitButton/SplitButton";
 import { SplitPaneContainer } from "../SplitPaneContainer/SplitPaneContainer";
-import { SplitPaneDivider } from "../SplitPaneDivider/SplitPaneDivider";
+import { splitPaneDividerSize } from "../SplitPaneDivider/SplitPaneDivider";
 import { WrappingPane } from "../WrappingPane/WrappingPane";
 import css from "./SplitablePane.css?inline";
 
@@ -18,6 +18,7 @@ export class SplitablePane<T extends IOAPI> extends HTMLElement {
 	public sbUR!: SplitButton<T>;
 	public sbLL!: SplitButton<T>;
 	public sbLR!: SplitButton<T>;
+	public splitPaneDividerSize!: number;
 
 	private keyListener = (e: KeyboardEvent) => {
 		if (e.ctrlKey && e.key === " " && !e.shiftKey) {
@@ -79,7 +80,7 @@ export class SplitablePane<T extends IOAPI> extends HTMLElement {
 
 	public setContent(winUIBuilder: WindowUIBuilder<T>, config: { domClassName: string }) {
 		this.innerHTML = "";
-		const pane = winUIBuilder.build(config);
+		const pane = winUIBuilder.build({ domClassName: config.domClassName, splitablePane: this });
 		if (!pane) {
 			console.error(`Could not build ${JSON.stringify(config)}!`);
 			return;
@@ -100,13 +101,13 @@ export class SplitablePane<T extends IOAPI> extends HTMLElement {
 			if (orientation == "verical")
 				this.style.width =
 					this.getBoundingClientRect().width +
-					SplitPaneDivider.size +
+					this.splitPaneDividerSize +
 					prev.getBoundingClientRect().width +
 					"px";
 			else
 				this.style.height =
 					this.getBoundingClientRect().height +
-					SplitPaneDivider.size +
+					this.splitPaneDividerSize +
 					prev.getBoundingClientRect().height +
 					"px";
 			container.removeChild(prev);
@@ -124,13 +125,13 @@ export class SplitablePane<T extends IOAPI> extends HTMLElement {
 			if (orientation == "vertical")
 				this.style.width =
 					this.getBoundingClientRect().width +
-					SplitPaneDivider.size +
+					this.splitPaneDividerSize +
 					next.getBoundingClientRect().width +
 					"px";
 			else
 				this.style.height =
 					this.getBoundingClientRect().height +
-					SplitPaneDivider.size +
+					this.splitPaneDividerSize +
 					next.getBoundingClientRect().height +
 					"px";
 			container.removeChild(next);
@@ -169,22 +170,25 @@ export class SplitablePaneBuilder<T extends IOAPI> extends UIElementBuilder<T, S
 		splitablePane._win = windowUIBuilder.window;
 		splitablePane.uiRoot = config.uiRoot;
 
-		const sbUL = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot });
+
+		splitablePane.splitPaneDividerSize = splitPaneDividerSize;
+
+		const sbUL = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot, type: "UL" });
 		if (!sbUL) {
 			console.log("Could not create SplitButtonUL!")
 			return splitablePane;
 		}
-		const sbUR = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot });
+		const sbUR = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot, type: "UR" });
 		if (!sbUR) {
 			console.log("Could not create SplitButtonUR!")
 			return splitablePane;
 		}
-		const sbLL = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot });
+		const sbLL = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot, type: "LL" });
 		if (!sbLL) {
 			console.log("Could not create SplitButtonLL!")
 			return splitablePane;
 		}
-		const sbLR = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot });
+		const sbLR = windowUIBuilder.build<SplitButton<T>>({ domClassName: "split-button", uiRoot: config.uiRoot, type: "LR" });
 		if (!sbLR) {
 			console.log("Could not create SplitButtonLL!")
 			return splitablePane;
@@ -200,8 +204,8 @@ export class SplitablePaneBuilder<T extends IOAPI> extends UIElementBuilder<T, S
 
 		if (config.orientation && config.rect) {
 			if (config.orientation == "vertical")
-				splitablePane.style.width = Math.round((config.rect.width - SplitPaneDivider.size) / 2) + "px";
-			else splitablePane.style.height = Math.round((config.rect.height - SplitPaneDivider.size) / 2) + "px";
+				splitablePane.style.width = Math.round((config.rect.width - splitPaneDividerSize) / 2) + "px";
+			else splitablePane.style.height = Math.round((config.rect.height - splitPaneDividerSize) / 2) + "px";
 		}
 
 		return splitablePane;

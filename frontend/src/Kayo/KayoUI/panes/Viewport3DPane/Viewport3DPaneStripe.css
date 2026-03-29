@@ -3,9 +3,9 @@ viewport-3d-pane-stripe {
     height: fit-content;
     width: 100%;
     padding: 2px;
-    background-color: var(--pane-stripe-color);
+    background-color: var(--kayo-ui-surface-color);
 }
 
 viewport-3d-pane:hover viewport-3d-pane-stripe {
-    background-color: var(--pane-stripe-hover-color);
+    background-color: var(--kayo-ui-surface-hover-color);
 }

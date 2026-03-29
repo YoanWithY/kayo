@@ -4,6 +4,8 @@ import { commaSeperatedStringToNumberArray } from "../../UIUtils";
 import { WindowUIBuilder } from "../../WindowUIBUilder";
 import css from "./SplitPaneDivider.css?inline";
 
+export const splitPaneDividerSize = 0;
+
 export class SplitPaneDivider extends HTMLElement {
 	public static size = parseFloat(
 		getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-size").replace("px", ""),
@@ -11,7 +13,7 @@ export class SplitPaneDivider extends HTMLElement {
 
 	public static getColor() {
 		return commaSeperatedStringToNumberArray(
-			getComputedStyle(document.documentElement).getPropertyValue("--split-pane-divider-color"),
+			getComputedStyle(document.documentElement).getPropertyValue("--kayo-ui-background-color"),
 		);
 	}
 }

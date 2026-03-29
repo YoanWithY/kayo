@@ -1,4 +1,5 @@
-split-button-ul {
+split-button {
+	position: absolute;
 	width: var(--split-button-size);
 	height: var(--split-button-size);
 	overflow: hidden;
@@ -7,17 +8,35 @@ split-button-ul {
 	cursor: cell;
 	transition: var(--transition-duration);
 	z-index: 3;
+	border: 0px solid;
 }
 
-split-button-ul {
-	position: absolute;
+split-button.UL {
 	top: 0;
 	left: 0;
 	border-radius: 0 0 var(--radius) 0;
 }
 
+split-button.UR {
+	top: 0;
+	right: 0;
+	border-radius: 0 0 0 var(--radius);
+}
+
+split-button.LL {
+	bottom: 0;
+	left: 0;
+	border-radius: 0 var(--radius) 0 0;
+}
+
+split-button.LR {
+	bottom: 0;
+	right: 0;
+	border-radius: var(--radius) 0 0 0;
+}
+
 @media (hover: hover) and (pointer: fine) {
-	split-button-ul:hover {
+	split-button:hover {
 		opacity: 0.5;
 	}
 }
